@@ -1,35 +1,36 @@
 #root {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
-  color: #e8ecf2;
+  padding: 2.5rem 2rem;
+  color: #e6e9ef;
 }
 
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .page__header h1 {
   margin: 0;
-  font-size: 2.2rem;
-  letter-spacing: 0.02em;
+  font-size: 2.4rem;
+  letter-spacing: 0.01em;
 }
 
 .page__subtitle {
   margin: 0.35rem 0 0;
-  color: #b7c2d2;
+  color: #a8b4c7;
 }
 
 .panel {
-  background: linear-gradient(135deg, #1f2532, #1d2b3a);
-  border: 1px solid #2f3a4b;
-  border-radius: 14px;
-  padding: 1.5rem;
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid #1f2a3a;
+  border-radius: 18px;
+  padding: 1.75rem;
   display: grid;
   gap: 1rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
 .field {
@@ -46,28 +47,29 @@
 
 label {
   font-weight: 600;
-  color: #dce4f2;
+  color: #d7deeb;
 }
 
 input,
 textarea,
 select {
   width: 100%;
-  background: #151b28;
-  border: 1px solid #2f3a4b;
-  border-radius: 10px;
-  color: #e8ecf2;
-  padding: 0.75rem 0.9rem;
+  background: #0b1221;
+  border: 1px solid #1f2a3a;
+  border-radius: 12px;
+  color: #e6e9ef;
+  padding: 0.9rem 1rem;
   font-size: 1rem;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: #5ca0f6;
-  box-shadow: 0 0 0 3px rgba(92, 160, 246, 0.15);
+  border-color: #6ca4ff;
+  box-shadow: 0 0 0 3px rgba(108, 164, 255, 0.15);
+  background: #0f172a;
 }
 
 textarea {
@@ -76,21 +78,21 @@ textarea {
 }
 
 button {
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid transparent;
-  padding: 0.75rem 1.2rem;
+  padding: 0.85rem 1.25rem;
   font-size: 1rem;
   font-weight: 600;
   font-family: inherit;
-  background-color: #5ca0f6;
-  color: #0d1624;
+  background-color: #6ca4ff;
+  color: #0b1221;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
 }
 
 button:hover {
-  background-color: #7ab5ff;
-  box-shadow: 0 6px 18px rgba(92, 160, 246, 0.35);
+  background-color: #86b5ff;
+  box-shadow: 0 8px 22px rgba(108, 164, 255, 0.35);
   transform: translateY(-1px);
 }
 
@@ -100,13 +102,13 @@ button:active {
 
 button.ghost {
   background: transparent;
-  color: #e8ecf2;
-  border: 1px solid #2f3a4b;
+  color: #e6e9ef;
+  border: 1px solid #2a3445;
 }
 
 button.ghost:hover {
-  border-color: #5ca0f6;
-  background: rgba(92, 160, 246, 0.08);
+  border-color: #6ca4ff;
+  background: rgba(108, 164, 255, 0.1);
 }
 
 .field--actions {
@@ -121,15 +123,16 @@ button.ghost:hover {
 
 .messages {
   display: grid;
-  gap: 0.75rem;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .message-card {
-  background: #161c29;
-  border: 1px solid #2a3344;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+  background: #0f172a;
+  border: 1px solid #1f2a3a;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
 }
 
 .message-card__title {
