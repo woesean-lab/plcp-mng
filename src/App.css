@@ -180,6 +180,22 @@ button.ghost:hover {
   background: rgba(120, 168, 255, 0.1);
 }
 
+.actions-inline {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+button.danger {
+  border-color: rgba(255, 92, 92, 0.45);
+  color: #ff8f8f;
+}
+
+button.danger:hover {
+  border-color: rgba(255, 118, 118, 0.8);
+  background: rgba(255, 118, 118, 0.12);
+}
+
 .field--actions {
   display: flex;
   align-items: center;

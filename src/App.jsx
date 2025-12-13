@@ -50,6 +50,18 @@ function App() {
     setSelectedTemplate(safeTitle)
   }
 
+  const handleDeleteTemplate = () => {
+    if (templates.length <= 1) {
+      alert('En az bir şablon kalmalı.')
+      return
+    }
+    const nextTemplates = templates.filter((tpl) => tpl.label !== selectedTemplate)
+    const fallback = nextTemplates[0]
+    setTemplates(nextTemplates)
+    setSelectedTemplate(fallback.label)
+    setMessage(fallback.value)
+  }
+
   return (
     <div className="page">
       <header className="page__header">
@@ -86,9 +98,14 @@ function App() {
                     </option>
                   ))}
                 </select>
-                <button type="button" className="ghost" onClick={handleCopy}>
-                  Kopyala
-                </button>
+                <div className="actions-inline">
+                  <button type="button" className="ghost" onClick={handleCopy}>
+                    Kopyala
+                  </button>
+                  <button type="button" className="ghost danger" onClick={handleDeleteTemplate}>
+                    Sil
+                  </button>
+                </div>
               </div>
             </div>
           </div>
