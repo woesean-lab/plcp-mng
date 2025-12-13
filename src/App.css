@@ -121,36 +121,6 @@ button.ghost:hover {
   color: #9db1ce;
 }
 
-.messages {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.message-card {
-  background: #0f172a;
-  border: 1px solid #1f2a3a;
-  border-radius: 14px;
-  padding: 1rem 1.1rem;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
-}
-
-.message-card__title {
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-  color: #ffffff;
-}
-
-.message-card__body {
-  margin: 0;
-  color: #c9d3e1;
-}
-
-.empty {
-  margin: 0.5rem 0;
-  color: #8f9bb0;
-}
-
 @media (max-width: 640px) {
   #root {
     padding: 1.25rem;
