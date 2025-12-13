@@ -40,3 +40,9 @@
 .read-the-docs {
   color: #888;
 }
+
+.random-note {
+  margin-top: 1rem;
+  color: #7fffd4;
+  font-weight: 600;
+}
