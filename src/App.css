@@ -249,7 +249,7 @@ button.danger::after {
 .copy-btn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   padding: 0;
   background: #111721;
   color: #dce9ff;
@@ -265,18 +265,9 @@ button.danger::after {
 }
 
 .copy-btn__label {
-  padding: 12px 16px 12px 18px;
+  padding: 12px 18px;
   font-size: 14px;
   font-weight: 800;
-}
-
-.copy-btn__icon {
-  display: grid;
-  place-items: center;
-  padding: 12px 16px;
-  background: rgba(110, 168, 255, 0.08);
-  border-left: 1px solid #3a4d66;
-  color: #dce9ff;
 }
 
 .copy-btn:hover,
