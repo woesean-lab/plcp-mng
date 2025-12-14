@@ -90,7 +90,7 @@ body {
 
 .panel__grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
 }
 
@@ -138,9 +138,20 @@ textarea {
 }
 
 .field__inline {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.field__inline select {
+  min-width: 200px;
+  flex: 1;
+}
+
+.actions-inline {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 button {
@@ -180,12 +191,6 @@ button.danger:hover {
   background: rgba(255, 138, 138, 0.12);
 }
 
-.actions-inline {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .field--actions {
   display: flex;
   align-items: center;
@@ -206,19 +211,11 @@ button.danger:hover {
   #root {
     padding: 36px 18px 44px;
   }
-
-  .panel__grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 600px) {
   #root {
     padding: 28px 14px 36px;
-  }
-
-  .field__inline {
-    grid-template-columns: 1fr;
   }
 
   button {
