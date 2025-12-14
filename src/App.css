@@ -166,7 +166,6 @@ button:hover,
 button:focus-visible {
   border-color: #3a4657;
   background-color: #1b2230;
-  transform: translateY(-1px);
   color: #ffffff;
 }
 
