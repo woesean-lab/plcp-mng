@@ -150,16 +150,15 @@ textarea {
 
 button {
   border-radius: 10px;
-  border: 1px solid #2a3240;
+  border: 1px solid #3a2f32;
   padding: 11px 15px;
   font-size: 14px;
   font-weight: 700;
   font-family: inherit;
-  background-color: #141a26;
-  color: #e9edf4;
+  background-color: #16171d;
+  color: #f3c0c0;
   cursor: pointer;
-  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease,
-    transform 120ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
 }
 
 button:hover,
@@ -174,14 +173,14 @@ button:active {
 }
 
 button.ghost {
-  background-color: #141a26;
-  border-color: #2a3240;
-  color: #e9edf4;
+  background-color: #16171d;
+  border-color: #3a2f32;
+  color: #f3c0c0;
 }
 
 button.danger {
   border-color: #3a2f32;
-  color: #f19a9a;
+  color: #f3c0c0;
 }
 
 button.danger:hover,
