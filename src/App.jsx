@@ -32,32 +32,14 @@ function App() {
     try {
       await navigator.clipboard.writeText(message)
       toast.success('Kopyalandı', {
-        icon: '✓',
         duration: 1500,
         position: 'top-right',
-        style: {
-          background: '#111821',
-          color: '#e8ecf3',
-          border: '1px solid rgba(110, 168, 255, 0.7)',
-          boxShadow: '0 12px 28px rgba(0, 0, 0, 0.34)',
-          fontWeight: 700,
-          letterSpacing: '0.02em',
-        },
       })
     } catch (error) {
       console.error('Copy failed', error)
       toast.error('Kopyalanamadı', {
-        icon: '✕',
         duration: 1800,
         position: 'top-right',
-        style: {
-          background: '#111821',
-          color: '#e8ecf3',
-          border: '1px solid rgba(255, 138, 138, 0.8)',
-          boxShadow: '0 12px 28px rgba(0, 0, 0, 0.34)',
-          fontWeight: 700,
-          letterSpacing: '0.02em',
-        },
       })
     }
   }
@@ -159,21 +141,7 @@ function App() {
           </div>
         </div>
       </section>
-      <Toaster
-        position="top-right"
-        gutter={8}
-        containerStyle={{ top: 16, right: 16 }}
-        toastOptions={{
-          style: {
-            background: '#111821',
-            color: '#e8ecf3',
-            border: '1px solid #2c3646',
-            boxShadow: '0 12px 28px rgba(0, 0, 0, 0.34)',
-            fontWeight: 700,
-            letterSpacing: '0.02em',
-          },
-        }}
-      />
+      <Toaster position="top-right" />
     </div>
   )
 }
