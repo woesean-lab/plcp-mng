@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import './App.css'
 
 const initialTemplates = [
@@ -30,8 +32,22 @@ function App() {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(message)
+      toast.success('Kopyalandı', {
+        position: 'top-right',
+        autoClose: 1400,
+        hideProgressBar: true,
+        pauseOnHover: false,
+        closeOnClick: true,
+      })
     } catch (error) {
       console.error('Copy failed', error)
+      toast.error('Kopyalanamadı', {
+        position: 'top-right',
+        autoClose: 1500,
+        hideProgressBar: true,
+        pauseOnHover: false,
+        closeOnClick: true,
+      })
     }
   }
 
@@ -132,6 +148,7 @@ function App() {
           </div>
         </div>
       </section>
+      <ToastContainer theme="dark" newestOnTop closeOnClick pauseOnFocusLoss={false} />
     </div>
   )
 }
