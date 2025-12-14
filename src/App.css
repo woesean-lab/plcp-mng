@@ -150,12 +150,12 @@ textarea {
 
 button {
   border-radius: 10px;
-  border: 1px solid #2b3444;
+  border: 1px solid #293240;
   padding: 11px 14px;
   font-size: 14px;
   font-weight: 700;
   font-family: inherit;
-  background-color: #111723;
+  background-color: #131a26;
   color: #e8ecf3;
   cursor: pointer;
   transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease,
@@ -163,7 +163,7 @@ button {
 }
 
 button:hover {
-  border-color: var(--accent);
+  border-color: #3a4657;
   background-color: #182132;
   transform: translateY(-1px);
 }
@@ -173,17 +173,19 @@ button:active {
 }
 
 button.ghost {
-  background: transparent;
-  border-color: #2b3444;
+  background-color: #131a26;
+  border-color: #293240;
+  color: #e8ecf3;
 }
 
 button.danger {
-  border-color: var(--danger);
-  color: var(--danger);
+  border-color: #3a2d2d;
+  color: #f29a9a;
 }
 
 button.danger:hover {
-  background: rgba(255, 138, 138, 0.12);
+  background: #1c1b1b;
+  border-color: #4a3a3a;
 }
 
 .field--actions {
