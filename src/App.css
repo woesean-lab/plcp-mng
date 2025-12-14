@@ -256,8 +256,8 @@ button.danger::after {
   border-radius: 12px;
   border: 1px solid #314258;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  text-transform: none;
-  letter-spacing: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .copy-btn::after {
@@ -266,7 +266,7 @@ button.danger::after {
 
 .copy-btn__label {
   padding: 12px 18px;
-  font-size: clamp(15px, 3vw, 17px);
+  font-size: 13px;
   font-weight: 800;
 }
 
