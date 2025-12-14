@@ -308,6 +308,33 @@ button.danger::after {
   font-size: 13px;
 }
 
+.app-toast {
+  background: #111821 !important;
+  color: #e8ecf3 !important;
+  border: 1px solid #2c3646;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+  border-radius: 12px !important;
+  min-height: 0;
+  padding: 12px 14px !important;
+}
+
+.app-toast--success {
+  border-color: rgba(110, 168, 255, 0.7);
+}
+
+.app-toast--error {
+  border-color: rgba(255, 138, 138, 0.8);
+}
+
+.app-toast__body {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.app-toast__progress {
+  background: linear-gradient(90deg, #6ea8ff, #9cc8ff);
+}
+
 @media (max-width: 900px) {
   #root {
     padding: 36px 18px 44px;

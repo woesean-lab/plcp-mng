@@ -15,6 +15,18 @@ function App() {
   const [templates, setTemplates] = useState(initialTemplates)
   const [selectedTemplate, setSelectedTemplate] = useState(initialTemplates[0].label)
 
+  const toastBase = {
+    position: 'top-right',
+    autoClose: 1500,
+    hideProgressBar: true,
+    closeOnClick: true,
+    pauseOnHover: false,
+    pauseOnFocusLoss: false,
+    draggable: false,
+    bodyClassName: 'app-toast__body',
+    progressClassName: 'app-toast__progress',
+  }
+
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
     [selectedTemplate, templates],
@@ -33,20 +45,16 @@ function App() {
     try {
       await navigator.clipboard.writeText(message)
       toast.success('Kopyalandı', {
-        position: 'top-right',
-        autoClose: 1400,
-        hideProgressBar: true,
-        pauseOnHover: false,
-        closeOnClick: true,
+        ...toastBase,
+        className: 'app-toast app-toast--success',
+        icon: '✓',
       })
     } catch (error) {
       console.error('Copy failed', error)
       toast.error('Kopyalanamadı', {
-        position: 'top-right',
-        autoClose: 1500,
-        hideProgressBar: true,
-        pauseOnHover: false,
-        closeOnClick: true,
+        ...toastBase,
+        className: 'app-toast app-toast--error',
+        icon: '✕',
       })
     }
   }
