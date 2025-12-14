@@ -187,10 +187,10 @@ button.danger:hover {
 }
 
 .field--actions {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
-  flex-wrap: wrap;
+  align-items: stretch;
 }
 
 .helper {
