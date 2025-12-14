@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap');
 
 :root {
-  --bg: #f6f7fb;
-  --panel: #ffffff;
-  --border: #e2e7f0;
-  --text: #0f172a;
-  --muted: #606b85;
-  --accent: #0f6fec;
-  --accent-soft: rgba(15, 111, 236, 0.08);
-  --danger: #e54848;
+  --bg: #0f1218;
+  --panel: #161b24;
+  --border: #232a37;
+  --text: #e8ecf3;
+  --muted: #9aa4b8;
+  --accent: #6ea8ff;
+  --accent-soft: rgba(110, 168, 255, 0.12);
+  --danger: #ff8a8a;
 }
 
 * {
@@ -115,7 +115,7 @@ input,
 textarea,
 select {
   width: 100%;
-  background: #f9fbff;
+  background: #0f131b;
   border: 1px solid var(--border);
   border-radius: 12px;
   color: var(--text);
@@ -129,7 +129,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--accent);
-  background: #ffffff;
+  background: #111722;
 }
 
 textarea {
@@ -150,7 +150,7 @@ button {
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
-  background-color: #ffffff;
+  background-color: #1b202a;
   color: var(--text);
   cursor: pointer;
   transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease,
@@ -159,7 +159,7 @@ button {
 
 button:hover {
   border-color: var(--accent);
-  background-color: #eef4ff;
+  background-color: rgba(110, 168, 255, 0.12);
   transform: translateY(-1px);
 }
 
@@ -168,7 +168,7 @@ button:active {
 }
 
 button.ghost {
-  background: #ffffff;
+  background: #1b202a;
 }
 
 button.danger {
@@ -177,7 +177,7 @@ button.danger {
 }
 
 button.danger:hover {
-  background: rgba(229, 72, 72, 0.08);
+  background: rgba(255, 138, 138, 0.12);
 }
 
 .actions-inline {
