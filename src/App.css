@@ -164,9 +164,9 @@ button {
 
 button:hover,
 button:focus-visible {
-  border-color: #7fb4ff;
-  background-color: #1c2535;
-  color: #ffffff;
+  border-color: #e07d7d;
+  background-color: #1d1a1a;
+  color: #ffb3b3;
 }
 
 button:active {
