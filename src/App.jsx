@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import './App.css'
 
 const initialTemplates = [
@@ -12,8 +12,6 @@ function App() {
   const [message, setMessage] = useState(initialTemplates[0].value)
   const [templates, setTemplates] = useState(initialTemplates)
   const [selectedTemplate, setSelectedTemplate] = useState(initialTemplates[0].label)
-  const [copyStatus, setCopyStatus] = useState('')
-  const copyTimerRef = useRef(null)
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -30,22 +28,12 @@ function App() {
   }
 
   const handleCopy = async () => {
-    if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
     try {
       await navigator.clipboard.writeText(message)
-      setCopyStatus('Kopyalandı')
-      copyTimerRef.current = setTimeout(() => setCopyStatus(''), 1500)
     } catch (error) {
       console.error('Copy failed', error)
-      setCopyStatus('Kopyalanamadı')
     }
   }
-
-  useEffect(() => {
-    return () => {
-      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
-    }
-  }, [])
 
   const handleAdd = () => {
     if (!title.trim() && !message.trim()) return
@@ -104,11 +92,6 @@ function App() {
                   Sil
                 </button>
               </div>
-              {copyStatus && (
-                <span className="copy-status" role="status" aria-live="polite">
-                  {copyStatus}
-                </span>
-              )}
             </div>
           </div>
           <p className="hint">
