@@ -193,18 +193,14 @@ function App() {
                   Kendi tonunu bul, hazır şablonlarını hızla düzenle ve tek tıkla ekibinle paylaş.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-3">
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
                   <span className="h-2 w-2 rounded-full bg-accent-400" />
-                  Şablon: {templates.length}
+                  ?ablon: {templates.length}
                 </span>
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
-                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
-                  Karakter: {messageLength}
-                </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
-                  <span className="h-2 w-2 rounded-full bg-fuchsia-300" />
-                  Başlık: {title.trim() ? title : "Pulcip Message Copy"}
+                  <span className="h-2 w-2 rounded-full bg-amber-300" />
+                  Kategori say?s?: {categories.length}
                 </span>
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
                   <span className="h-2 w-2 rounded-full bg-amber-300" />
