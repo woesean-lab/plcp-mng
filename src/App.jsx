@@ -120,6 +120,13 @@ function App() {
     toast.success("Şablon silindi")
   }
 
+  const handleDeleteWithConfirm = (targetLabel) => {
+    const message = "Şablonu silmek istediğine emin misin?"
+    if (window.confirm(message)) {
+      handleDeleteTemplate(targetLabel)
+    }
+  }
+
   const handleCategoryAdd = () => {
     const next = newCategory.trim()
     if (!next) {
@@ -282,7 +289,7 @@ function App() {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  handleDeleteTemplate(tpl.label)
+                                  handleDeleteWithConfirm(tpl.label)
                                 }}
                                 className="absolute right-3 top-3 rounded-full border border-rose-500/60 bg-rose-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/25"
                               >
