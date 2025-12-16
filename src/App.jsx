@@ -96,11 +96,11 @@ function App() {
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-                Pulcip Studio
+                Pulcip Message
               </span>
               <div className="space-y-2">
                 <h1 className="font-display text-4xl font-semibold leading-tight text-white md:text-5xl">
-                  Mesaj Stüdyosu
+                  Pulcip Message
                 </h1>
                 <p className="max-w-2xl text-base text-slate-200/80">
                   Kendi tonunu bul, hazır şablonları hızlıca düzenle ve tek tıkla ekibinle paylaş.
