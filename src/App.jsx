@@ -79,22 +79,6 @@ function App() {
     }
   }
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(message)
-      toast.success("Kopyalandı", {
-        duration: 1500,
-        position: "top-right",
-      })
-    } catch (error) {
-      console.error("Copy failed", error)
-      toast.error("Kopyalanamadı", {
-        duration: 1800,
-        position: "top-right",
-      })
-    }
-  }
-
   const handleAdd = () => {
     if (!title.trim() && !message.trim()) {
       toast.error("Başlık veya mesaj ekleyin.")
@@ -120,17 +104,24 @@ function App() {
     setSelectedCategory(safeCategory)
   }
 
-  const handleDeleteTemplate = () => {
+  const handleDeleteTemplate = (targetLabel = selectedTemplate) => {
     if (templates.length <= 1) {
       toast.error("En az bir şablon kalmalı.")
       return
     }
-    const nextTemplates = templates.filter((tpl) => tpl.label !== selectedTemplate)
+    const nextTemplates = templates.filter((tpl) => tpl.label !== targetLabel)
     const fallback = nextTemplates[0]
     setTemplates(nextTemplates)
-    setSelectedTemplate(fallback.label)
-    setMessage(fallback.value)
-    setSelectedCategory(fallback.category || "Genel")
+    const nextSelected =
+      selectedTemplate === targetLabel ? fallback?.label ?? selectedTemplate : selectedTemplate
+    if (nextSelected) {
+      setSelectedTemplate(nextSelected)
+      const nextTpl = nextTemplates.find((tpl) => tpl.label === nextSelected)
+      if (nextTpl) {
+        setMessage(nextTpl.value)
+        setSelectedCategory(nextTpl.category || "Genel")
+      }
+    }
     toast.success("Şablon silindi")
   }
 
@@ -278,33 +269,42 @@ function App() {
                             className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
                               isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
                             }`}
-                            aria-hidden="true"
-                          >
-                            ▼
+                            aria-hidden="true">
+                            >
                           </span>
                         </button>
 
                         {isOpen && (
-                          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            {list.length === 0 && (
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">\n                            {list.length === 0 && (
                               <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
                                 Bu kategoride şablon yok.
                               </div>
                             )}
                             {list.map((tpl) => (
-                              <button
-                                key={tpl.label}
-                                type="button"
-                                onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
-                                className={`h-full rounded-xl border px-4 py-3 text-left transition ${
-                                  tpl.label === selectedTemplate
-                                    ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                                    : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
-                                }`}
-                              >
-                                <p className="font-display text-lg">{tpl.label}</p>
-                                <p className="mt-1 h-[54px] overflow-hidden text-sm text-slate-400">{tpl.value}</p>
-                              </button>
+                              <div key={tpl.label} className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
+                                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
+                                    tpl.label === selectedTemplate
+                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                      : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                                  }`}
+                                >
+                                  <p className="font-display text-lg">{tpl.label}</p>
+                                  <p className="mt-1 h-[54px] overflow-hidden text-sm text-slate-400">{tpl.value}</p>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteTemplate(tpl.label)
+                                  }}
+                                  className="absolute right-3 top-3 rounded-full border border-rose-500/60 bg-rose-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/25"
+                                >
+                                  Sil
+                                </button>
+                              </div>
                             ))}
                           </div>
                         )}
@@ -524,59 +524,7 @@ function App() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-4 shadow-inner">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Önizleme</p>
-                      <p className="font-display text-lg text-slate-100">
-                        {activeTemplate?.label || "Yeni şablon"}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {activeTemplate?.category || selectedCategory || "Genel"}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-200">
-                      {messageLength} karakter
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                    {message || activeTemplate?.value || "Mesajını düzenleyip kaydetmeye başla."}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className="flex-1 min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                  >
-                    Kopyala
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDeleteTemplate}
-                    className="min-w-[120px] rounded-xl border border-rose-500/60 bg-rose-500/10 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-400 hover:bg-rose-500/20"
-                  >
-                    Sil
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-xl border border-white/10 bg-ink-900/60 px-4 py-4 text-sm text-slate-300">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-100">{activeTemplate?.label}</span>
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-wide text-slate-200">
-                    Önizleme
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">
-                  {activeTemplate?.category || selectedCategory || "Genel"}
-                </p>
-                <p className="mt-2 text-slate-300">{message || activeTemplate?.value}</p>
-              </div>
-            </div>
-
-            <div className={`${panelClass} bg-ink-800/60`}>
+                `${panelClass} bg-ink-800/60`}>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                 Hızlı ipuçları
               </p>
@@ -610,3 +558,9 @@ function App() {
 }
 
 export default App
+
+
+
+
+
+
