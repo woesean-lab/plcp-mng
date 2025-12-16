@@ -27,6 +27,11 @@ function App() {
   )
 
   const messageLength = message.trim().length
+  const categories = useMemo(() => {
+    const set = new Set(templates.map((tpl) => tpl.category || "Genel"))
+    if (category) set.add(category)
+    return Array.from(set)
+  }, [templates, category])
 
   const handleTemplateChange = async (nextTemplate, options = {}) => {
     setSelectedTemplate(nextTemplate)
@@ -231,18 +236,37 @@ function App() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-100" htmlFor="category">
-                    Kategori
-                  </label>
-                  <input
-                    id="category"
-                    type="text"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    placeholder="Örn: Hatırlatma"
-                    className="w-full rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
-                  />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-100" htmlFor="category-select">
+                      Kategori seç
+                    </label>
+                    <select
+                      id="category-select"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-100" htmlFor="category">
+                      Yeni kategori (opsiyonel)
+                    </label>
+                    <input
+                      id="category"
+                      type="text"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      placeholder="Örn: Hatırlatma"
+                      className="w-full rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
