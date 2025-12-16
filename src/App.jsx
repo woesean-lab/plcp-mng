@@ -25,7 +25,7 @@ function App() {
   const [templates, setTemplates] = useState(initialTemplates)
   const [selectedTemplate, setSelectedTemplate] = useState(initialTemplates[0].label)
   const [openCategories, setOpenCategories] = useState(() =>
-    categories.reduce((acc, cat) => ({ ...acc, [cat]: true }), {}),
+    categories.reduce((acc, cat) => ({ ...acc, [cat]: false }), {}),
   )
   const [confirmTarget, setConfirmTarget] = useState(null)
   const [confirmCategoryTarget, setConfirmCategoryTarget] = useState(null)
