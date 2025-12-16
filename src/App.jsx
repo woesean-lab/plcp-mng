@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { Toaster, toast } from 'react-hot-toast'
 
 const initialTemplates = [
-  { label: 'Hoş geldin', value: 'Hoş geldin! Burada herkese yer var.' },
-  { label: 'Bilgilendirme', value: 'Son durum: Görev planlandığı gibi ilerliyor.' },
-  { label: 'Hatırlatma', value: 'Unutma: Akşam 18:00 toplantısına hazır ol.' },
+  { label: 'HoÅŸ geldin', value: 'HoÅŸ geldin! Burada herkese yer var.' },
+  { label: 'Bilgilendirme', value: 'Son durum: GÃ¶rev planlandÄ±ÄŸÄ± gibi ilerliyor.' },
+  { label: 'HatÄ±rlatma', value: 'Unutma: AkÅŸam 18:00 toplantÄ±sÄ±na hazÄ±r ol.' },
 ]
 
 const panelClass =
@@ -31,10 +31,10 @@ function App() {
       if (options.shouldCopy) {
         try {
           await navigator.clipboard.writeText(tpl.value)
-          toast.success('Şablon kopyalandı', { duration: 1400, position: 'top-right' })
+          toast.success('Åablon kopyalandÄ±', { duration: 1400, position: 'top-right' })
         } catch (error) {
           console.error('Copy failed', error)
-          toast.error('Kopyalanamadı', { duration: 1600, position: 'top-right' })
+          toast.error('KopyalanamadÄ±', { duration: 1600, position: 'top-right' })
         }
       }
     }
@@ -43,13 +43,13 @@ function App() {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(message)
-      toast.success('Kopyalandı', {
+      toast.success('KopyalandÄ±', {
         duration: 1500,
         position: 'top-right',
       })
     } catch (error) {
       console.error('Copy failed', error)
-      toast.error('Kopyalanamadı', {
+      toast.error('KopyalanamadÄ±', {
         duration: 1800,
         position: 'top-right',
       })
@@ -58,7 +58,7 @@ function App() {
 
   const handleAdd = () => {
     if (!title.trim() && !message.trim()) {
-      toast.error('Başlık veya mesaj ekleyin.')
+      toast.error('BaÅŸlÄ±k veya mesaj ekleyin.')
       return
     }
 
@@ -69,16 +69,16 @@ function App() {
     if (!exists) {
       const nextTemplates = [...templates, { label: safeTitle, value: safeMessage }]
       setTemplates(nextTemplates)
-      toast.success('Yeni şablon eklendi')
+      toast.success('Yeni ÅŸablon eklendi')
     } else {
-      toast('Var olan şablon aktif edildi', { position: 'top-right' })
+      toast('Var olan ÅŸablon aktif edildi', { position: 'top-right' })
     }
     setSelectedTemplate(safeTitle)
   }
 
   const handleDeleteTemplate = () => {
     if (templates.length <= 1) {
-      toast.error('En az bir şablon kalmalı.')
+      toast.error('En az bir ÅŸablon kalmalÄ±.')
       return
     }
     const nextTemplates = templates.filter((tpl) => tpl.label !== selectedTemplate)
@@ -86,7 +86,7 @@ function App() {
     setTemplates(nextTemplates)
     setSelectedTemplate(fallback.label)
     setMessage(fallback.value)
-    toast.success('Şablon silindi')
+    toast.success('Åablon silindi')
   }
 
   return (
@@ -103,13 +103,13 @@ function App() {
                   Pulcip Message
                 </h1>
                 <p className="max-w-2xl text-base text-slate-200/80">
-                  Kendi tonunu bul, hazır şablonları hızlıca düzenle ve tek tıkla ekibinle paylaş.
+                  Kendi tonunu bul, hazÄ±r ÅŸablonlarÄ± hÄ±zlÄ±ca dÃ¼zenle ve tek tÄ±kla ekibinle paylaÅŸ.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
                   <span className="h-2 w-2 rounded-full bg-accent-400" />
-                  Şablon: {templates.length}
+                  Åablon: {templates.length}
                 </span>
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
                   <span className="h-2 w-2 rounded-full bg-emerald-300" />
@@ -117,7 +117,7 @@ function App() {
                 </span>
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
                   <span className="h-2 w-2 rounded-full bg-fuchsia-300" />
-                  Başlık: {title.trim() ? title : 'Pulcip Message'}
+                  BaÅŸlÄ±k: {title.trim() ? title : 'Pulcip Message'}
                 </span>
               </div>
             </div>
@@ -126,18 +126,18 @@ function App() {
               <div className="absolute inset-x-6 -bottom-16 h-40 rounded-full bg-accent-400/30 blur-3xl" />
               <div className="relative rounded-2xl border border-white/10 bg-white/10 p-6 shadow-glow backdrop-blur-md">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200/70">
-                  Aktif Şablon
+                  Aktif Åablon
                 </p>
                 <h3 className="mt-3 font-display text-2xl font-semibold text-white">
-                  {activeTemplate?.label || 'Yeni şablon'}
+                  {activeTemplate?.label || 'Yeni ÅŸablon'}
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
-                  {activeTemplate?.value || 'Mesajını düzenleyip kaydetmeye başla.'}
+                  {activeTemplate?.value || 'MesajÄ±nÄ± dÃ¼zenleyip kaydetmeye baÅŸla.'}
                 </p>
                 <div className="mt-4 flex items-center justify-between text-xs text-slate-300/80">
                   <span>{messageLength} karakter</span>
                   <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">
-                    Hazır
+                    HazÄ±r
                   </span>
                 </div>
               </div>
@@ -151,14 +151,14 @@ function App() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                    Şablon listesi
+                    Åablon listesi
                   </p>
                   <p className="text-sm text-slate-400">
-                    Başlıklarına dokunarak düzenlemek istediğini seç ve kopyala.
+                    BaÅŸlÄ±klarÄ±na dokunarak dÃ¼zenlemek istediÄŸini seÃ§ ve kopyala.
                   </p>
                 </div>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                  {templates.length} seçenek
+                  {templates.length} seÃ§enek
                 </span>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -184,26 +184,26 @@ function App() {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                    Mesaj Alanı
+                    Mesaj AlanÄ±
                   </p>
-                  <p className="text-sm text-slate-400">Başlığı seç, metni güncelle, ekle ya da temizi çek.</p>
+                  <p className="text-sm text-slate-400">BaÅŸlÄ±ÄŸÄ± seÃ§, metni gÃ¼ncelle, ekle ya da temizi Ã§ek.</p>
                 </div>
                 <span className="rounded-full bg-accent-500/20 px-3 py-1 text-xs font-semibold text-accent-100">
-                  Canlı
+                  CanlÄ±
                 </span>
               </div>
 
               <div className="mt-6 space-y-5">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-100" htmlFor="title">
-                    Başlık
+                    BaÅŸlÄ±k
                   </label>
                   <input
                     id="title"
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Örn: Karşılama notu"
+                    placeholder="Ã–rn: KarÅŸÄ±lama notu"
                     className="w-full rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
                   />
                 </div>
@@ -211,20 +211,20 @@ function App() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm font-medium text-slate-100">
                     <label htmlFor="message">Mesaj</label>
-                    <span className="text-xs text-slate-400">Anlık karakter: {messageLength}</span>
+                    <span className="text-xs text-slate-400">AnlÄ±k karakter: {messageLength}</span>
                   </div>
                   <textarea
                     id="message"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={8}
-                    placeholder="Mesaj içeriği..."
+                    placeholder="Mesaj iÃ§eriÄŸi..."
                     className="w-full rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-base text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
                   />
                   <div className="flex flex-wrap items-center justify-between text-xs text-slate-500">
-                    <span>Listeden tıkladığında otomatik kopyalanır.</span>
+                    <span>Listeden tÄ±kladÄ±ÄŸÄ±nda otomatik kopyalanÄ±r.</span>
                     <span className="rounded-full border border-white/10 px-3 py-1 text-[11px] text-slate-300">
-                      Kısayol: Ctrl/Cmd + C
+                      KÄ±sayol: Ctrl/Cmd + C
                     </span>
                   </div>
                 </div>
@@ -235,7 +235,7 @@ function App() {
                     onClick={handleAdd}
                     className="flex-1 min-w-[180px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-5 py-3 text-center text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                   >
-                    Şablona Ekle
+                    Åablona Ekle
                   </button>
                   <button
                     type="button"
@@ -254,9 +254,9 @@ function App() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                    Şablon Seç &amp; Kopyala
+                    Åablon SeÃ§ &amp; Kopyala
                   </p>
-                  <p className="text-sm text-slate-400">Aktif şablonu kopyala ya da sil.</p>
+                  <p className="text-sm text-slate-400">Aktif ÅŸablonu kopyala ya da sil.</p>
                 </div>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                   {messageLength} karakter
@@ -264,21 +264,49 @@ function App() {
               </div>
 
               <div className="mt-4 space-y-4">
-                <label className="text-sm font-medium text-slate-100" htmlFor="template">
-                  Şablon seç
-                </label>
-                <select
-                  id="template"
-                  value={selectedTemplate}
-                  onChange={(event) => handleTemplateChange(event.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+                <div className="flex items-center justify-between text-sm font-medium text-slate-100">
+                  <span>Sablon sec</span>
+                  <span className="text-xs text-accent-200">Kayan liste</span>
+                </div>
+                <div
+                  role="listbox"
+                  aria-label="Sablon sec"
+                  className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-900 p-2 shadow-inner"
                 >
-                  {templates.map((tpl) => (
-                    <option key={tpl.label} value={tpl.label}>
-                      {tpl.label}
-                    </option>
-                  ))}
-                </select>
+                  <div className="flex max-h-52 flex-col gap-2 overflow-auto pr-1">
+                    {templates.map((tpl) => {
+                      const isActive = tpl.label === selectedTemplate
+                      return (
+                        <button
+                          key={tpl.label}
+                          type="button"
+                          role="option"
+                          aria-selected={isActive}
+                          onClick={() => handleTemplateChange(tpl.label)}
+                          className={`group flex w-full items-start justify-between gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                            isActive
+                              ? 'border-accent-400/80 bg-accent-500/10 text-accent-50 shadow-glow'
+                              : 'border-white/10 bg-white/5 text-slate-100 hover:border-accent-400/60 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="space-y-1">
+                            <p className="font-display text-sm leading-tight">{tpl.label}</p>
+                            <p className="text-xs text-slate-400 line-clamp-2">{tpl.value}</p>
+                          </div>
+                          <span
+                            className={`mt-1 inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-wide ${
+                              isActive
+                                ? 'border-accent-300/70 bg-accent-400/20 text-accent-50'
+                                : 'border-white/10 bg-white/5 text-slate-300 group-hover:border-accent-300/70 group-hover:text-accent-50'
+                            }`}
+                          >
+                            {isActive ? 'Aktif' : 'Sec'}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
 
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -302,7 +330,7 @@ function App() {
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-slate-100">{activeTemplate?.label}</span>
                   <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-wide text-slate-200">
-                    Önizleme
+                    Ã–nizleme
                   </span>
                 </div>
                 <p className="mt-2 text-slate-300">{message || activeTemplate?.value}</p>
@@ -311,12 +339,12 @@ function App() {
 
             <div className={`${panelClass} bg-ink-800/60`}>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                Hızlı ipuçları
+                HÄ±zlÄ± ipuÃ§larÄ±
               </p>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>• Başlığı boş bırakırsan otomatik bir isimle kaydedilir.</li>
-                <li>• Kopyala tuşu güncel metni panoya gönderir.</li>
-                <li>• Tüm alanlar canlı; değiştirince hemen önizlenir.</li>
+                <li>â€¢ BaÅŸlÄ±ÄŸÄ± boÅŸ bÄ±rakÄ±rsan otomatik bir isimle kaydedilir.</li>
+                <li>â€¢ Kopyala tuÅŸu gÃ¼ncel metni panoya gÃ¶nderir.</li>
+                <li>â€¢ TÃ¼m alanlar canlÄ±; deÄŸiÅŸtirince hemen Ã¶nizlenir.</li>
               </ul>
             </div>
           </div>
@@ -343,3 +371,7 @@ function App() {
 }
 
 export default App
+
+
+
+
