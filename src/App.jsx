@@ -27,6 +27,7 @@ function App() {
   const [openCategories, setOpenCategories] = useState(() =>
     categories.reduce((acc, cat) => ({ ...acc, [cat]: true }), {}),
   )
+  const [confirmTarget, setConfirmTarget] = useState(null)
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -121,10 +122,13 @@ function App() {
   }
 
   const handleDeleteWithConfirm = (targetLabel) => {
-    const message = "Şablonu silmek istediğine emin misin?"
-    if (window.confirm(message)) {
+    if (confirmTarget === targetLabel) {
       handleDeleteTemplate(targetLabel)
+      setConfirmTarget(null)
+      return
     }
+    setConfirmTarget(targetLabel)
+    toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
   const handleCategoryAdd = () => {
@@ -291,9 +295,13 @@ function App() {
                                   e.stopPropagation()
                                   handleDeleteWithConfirm(tpl.label)
                                 }}
-                                className="absolute right-3 top-3 rounded-full border border-rose-500/60 bg-rose-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/25"
+                                className={`absolute right-3 top-3 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                                  confirmTarget === tpl.label
+                                    ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                    : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
+                                }`}
                               >
-                                Sil
+                                {confirmTarget === tpl.label ? "Emin misin?" : "Sil"}
                               </button>
                             </div>
                           ))}
