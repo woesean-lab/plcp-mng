@@ -28,6 +28,7 @@ function App() {
     categories.reduce((acc, cat) => ({ ...acc, [cat]: true }), {}),
   )
   const [confirmTarget, setConfirmTarget] = useState(null)
+  const [confirmCategoryTarget, setConfirmCategoryTarget] = useState(null)
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -163,6 +164,16 @@ function App() {
       setSelectedCategory(safeCategories[0])
     }
     toast.success("Kategori silindi")
+  }
+
+  const handleCategoryDeleteWithConfirm = (cat) => {
+    if (confirmCategoryTarget === cat) {
+      setConfirmCategoryTarget(null)
+      handleCategoryDelete(cat)
+      return
+    }
+    setConfirmCategoryTarget(cat)
+    toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
   return (
@@ -437,10 +448,14 @@ function App() {
                     {cat !== "Genel" && (
                       <button
                         type="button"
-                        onClick={() => handleCategoryDelete(cat)}
-                        className="rounded-full border border-rose-400/60 bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
+                        onClick={() => handleCategoryDeleteWithConfirm(cat)}
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
+                          confirmCategoryTarget === cat
+                            ? "border-rose-300 bg-rose-500/20 text-rose-50"
+                            : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                        }`}
                       >
-                        Sil
+                        {confirmCategoryTarget === cat ? "Emin misin?" : "Sil"}
                       </button>
                     )}
                   </span>
