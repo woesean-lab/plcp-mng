@@ -21,3 +21,39 @@
       linear-gradient(180deg, #0b0f19 0%, #0f1625 50%, #0b0f19 100%);
   }
 }
+
+.theme-light {
+  color-scheme: light;
+  background-color: #f5f7fb;
+}
+
+.theme-light body {
+  background: radial-gradient(circle at 14% 18%, rgba(43, 159, 255, 0.08), transparent 30%),
+    radial-gradient(circle at 78% 12%, rgba(255, 176, 110, 0.12), transparent 35%),
+    linear-gradient(180deg, #f7fafc 0%, #eef2f7 50%, #f7fafc 100%);
+}
+
+.theme-light .bg-ink-800\/60 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.theme-light .bg-ink-900\/60 {
+  background-color: rgba(246, 248, 252, 0.92) !important;
+}
+
+.theme-light .bg-ink-900\/70 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.theme-light .bg-ink-900 {
+  background-color: #f8fafc !important;
+}
+
+.theme-light .text-slate-50,
+.theme-light .text-white {
+  color: #0f172a !important;
+}
+
+.theme-light .border-white\/10 {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}

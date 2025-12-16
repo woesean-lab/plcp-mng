@@ -13,11 +13,11 @@ const initialTemplates = [
 
 const initialCategories = Array.from(new Set(["Genel", ...initialTemplates.map((tpl) => tpl.category || "Genel")]))
 
-const panelClass =
-  "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
+const panelClass = "rounded-2xl border px-6 py-6 shadow-card backdrop-blur-sm"
 
 function App() {
   const [title, setTitle] = useState("Pulcip Message Copy")
+  const [isLight, setIsLight] = useState(false)
   const [message, setMessage] = useState(initialTemplates[0].value)
   const [selectedCategory, setSelectedCategory] = useState(initialTemplates[0].category || "Genel")
   const [newCategory, setNewCategory] = useState("")
@@ -177,36 +177,87 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
+    <div
+      className={`${isLight ? "theme-light text-slate-900" : "text-slate-50"} min-h-screen px-4 pb-16 pt-10 transition-colors`}
+    >
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
+        <header
+          className={`overflow-hidden rounded-3xl border p-6 shadow-card ${
+            isLight
+              ? "border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100"
+              : "border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700"
+          }`}
+        >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-accent-200">
-                Pulcip Message Copy
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] ${
+                    isLight
+                      ? "border-slate-200 bg-white text-accent-500"
+                      : "border-white/10 bg-white/10 text-accent-200"
+                  }`}
+                >
+                  Pulcip Message Copy
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsLight((prev) => !prev)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] transition ${
+                    isLight
+                      ? "border-slate-200 bg-white text-slate-700 hover:border-accent-300 hover:text-accent-600"
+                      : "border-white/20 bg-white/10 text-slate-100 hover:border-accent-300 hover:text-accent-100"
+                  }`}
+                >
+                  {isLight ? "Karanlık mod" : "Aydınlık mod"}
+                </button>
+              </div>
               <div className="space-y-1">
-                <h1 className="font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
+                <h1
+                  className={`font-display text-3xl font-semibold leading-tight md:text-4xl ${
+                    isLight ? "text-slate-900" : "text-white"
+                  }`}
+                >
                   Pulcip Message Copy
                 </h1>
-                <p className="max-w-2xl text-sm text-slate-200/80 md:text-base">
+                <p
+                  className={`max-w-2xl text-sm md:text-base ${
+                    isLight ? "text-slate-600" : "text-slate-200/80"
+                  }`}
+                >
                   Kendi tonunu bul, hazır şablonlarını hızla düzenle ve tek tıkla ekibinle paylaş.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-accent-200 md:text-sm">
+                <span
+                  className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs md:text-sm ${
+                    isLight ? "border-slate-200 bg-white text-accent-600" : "border-white/10 bg-white/5 text-accent-200"
+                  }`}
+                >
                   <span className="h-2 w-2 rounded-full bg-accent-400" />
                   Şablon: {templates.length}
                 </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-accent-200 md:text-sm">
+                <span
+                  className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs md:text-sm ${
+                    isLight ? "border-slate-200 bg-white text-emerald-700" : "border-white/10 bg-white/5 text-accent-200"
+                  }`}
+                >
                   <span className="h-2 w-2 rounded-full bg-emerald-300" />
                   Karakter: {messageLength}
                 </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-accent-200 md:text-sm">
+                <span
+                  className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs md:text-sm ${
+                    isLight ? "border-slate-200 bg-white text-fuchsia-700" : "border-white/10 bg-white/5 text-accent-200"
+                  }`}
+                >
                   <span className="h-2 w-2 rounded-full bg-fuchsia-300" />
                   Başlık: {title.trim() ? title : "Pulcip Message Copy"}
                 </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-accent-200 md:text-sm">
+                <span
+                  className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs md:text-sm ${
+                    isLight ? "border-slate-200 bg-white text-amber-700" : "border-white/10 bg-white/5 text-accent-200"
+                  }`}
+                >
                   <span className="h-2 w-2 rounded-full bg-amber-300" />
                   Kategori: {selectedCategory.trim() || "Genel"}
                 </span>
@@ -214,25 +265,49 @@ function App() {
             </div>
 
             <div className="relative w-full max-w-sm">
-              <div className="absolute inset-x-6 -bottom-14 h-32 rounded-full bg-accent-400/30 blur-3xl" />
-              <div className="relative rounded-2xl border border-white/10 bg-white/10 p-5 shadow-glow backdrop-blur-md">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">
+              <div
+                className={`absolute inset-x-6 -bottom-14 h-32 rounded-full blur-3xl ${
+                  isLight ? "bg-accent-400/20" : "bg-accent-400/30"
+                }`}
+              />
+              <div
+                className={`relative rounded-2xl border p-5 shadow-glow backdrop-blur-md ${
+                  isLight ? "border-slate-200 bg-white" : "border-white/10 bg-white/10"
+                }`}
+              >
+                <p
+                  className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${
+                    isLight ? "text-slate-500" : "text-slate-200/70"
+                  }`}
+                >
                   Aktif şablon
                 </p>
                 <div className="mt-2.5 flex items-center gap-3">
-                  <h3 className="font-display text-2xl font-semibold text-white">
+                  <h3
+                    className={`font-display text-2xl font-semibold ${isLight ? "text-slate-900" : "text-white"}`}
+                  >
                     {activeTemplate?.label || "Yeni şablon"}
                   </h3>
                   <span className="rounded-full border border-accent-300/60 bg-accent-500/15 px-3 py-1 text-[11px] font-semibold text-accent-50">
                     {activeTemplate?.category || selectedCategory || "Genel"}
                   </span>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
+                <p className={`mt-3 text-sm leading-relaxed ${isLight ? "text-slate-600" : "text-slate-200/90"}`}>
                   {activeTemplate?.value || "Mesajını düzenleyip kaydetmeye başla."}
                 </p>
-                <div className="mt-3 flex items-center justify-between text-[11px] text-slate-300/80">
+                <div
+                  className={`mt-3 flex items-center justify-between text-[11px] ${
+                    isLight ? "text-slate-500" : "text-slate-300/80"
+                  }`}
+                >
                   <span>{messageLength} karakter</span>
-                  <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">Hazır</span>
+                  <span
+                    className={`rounded-full px-3 py-1 font-semibold ${
+                      isLight ? "bg-slate-100 text-accent-600" : "bg-white/10 text-accent-100"
+                    }`}
+                  >
+                    Hazır
+                  </span>
                 </div>
               </div>
             </div>
@@ -241,7 +316,11 @@ function App() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            <div className={`${panelClass} bg-ink-800/60`}>
+            <div
+              className={`${panelClass} ${
+                isLight ? "border-slate-200 bg-white text-slate-800" : "border-white/10 bg-ink-800/60"
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
@@ -261,7 +340,12 @@ function App() {
                   const list = groupedTemplates[cat] || []
                   const isOpen = openCategories[cat] ?? true
                   return (
-                    <div key={cat} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
+                    <div
+                      key={cat}
+                      className={`rounded-2xl border p-3 shadow-inner ${
+                        isLight ? "border-slate-200 bg-slate-50" : "border-white/10 bg-ink-900/60"
+                      }`}
+                    >
                       <button
                         type="button"
                         onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true) }))}
@@ -286,7 +370,13 @@ function App() {
                       {isOpen && (
                         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                           {list.length === 0 && (
-                            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                            <div
+                              className={`rounded-xl border px-4 py-3 text-sm ${
+                                isLight
+                                  ? "border-slate-200 bg-white text-slate-500"
+                                  : "border-white/10 bg-white/5 text-slate-400"
+                              }`}
+                            >
                               Bu kategoride şablon yok.
                             </div>
                           )}
@@ -298,7 +388,9 @@ function App() {
                                 className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
                                   tpl.label === selectedTemplate
                                     ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                                    : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                                    : isLight
+                                      ? "border-slate-200 bg-white text-slate-700 hover:border-accent-400/60 hover:text-accent-700"
+                                      : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
                                 }`}
                               >
                                 <p className="font-display text-lg">{tpl.label}</p>
@@ -330,7 +422,11 @@ function App() {
           </div>
 
           <div className="space-y-6">
-            <div className={`${panelClass} bg-ink-800/60`}>
+            <div
+              className={`${panelClass} ${
+                isLight ? "border-slate-200 bg-white text-slate-800" : "border-white/10 bg-ink-800/60"
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
@@ -348,7 +444,11 @@ function App() {
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="Örn: Duyuru"
-                  className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+                  className={`flex-1 rounded-xl border px-4 py-3 text-sm focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40 ${
+                    isLight
+                      ? "border-slate-200 bg-white text-slate-800 placeholder:text-slate-400"
+                      : "border-white/10 bg-ink-900 text-slate-100 placeholder:text-slate-500"
+                  }`}
                 />
                 <button
                   type="button"
@@ -383,7 +483,11 @@ function App() {
               </div>
             </div>
 
-            <div className={`${panelClass} bg-ink-900/60`}>
+            <div
+              className={`${panelClass} ${
+                isLight ? "border-slate-200 bg-slate-50 text-slate-800" : "border-white/10 bg-ink-900/60"
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Mini panel</p>
@@ -394,7 +498,11 @@ function App() {
                 </span>
               </div>
 
-              <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+              <div
+                className={`mt-4 space-y-4 rounded-xl border p-4 shadow-inner ${
+                  isLight ? "border-slate-200 bg-white" : "border-white/10 bg-ink-900/70"
+                }`}
+              >
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-slate-200" htmlFor="title-mini">
                     Başlık
@@ -405,7 +513,11 @@ function App() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Örn: Karşılama notu"
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 ${
+                      isLight
+                        ? "border-slate-200 bg-white text-slate-800 placeholder:text-slate-400"
+                        : "border-white/10 bg-ink-900 text-slate-100 placeholder:text-slate-500"
+                    }`}
                   />
                 </div>
 
@@ -417,7 +529,9 @@ function App() {
                     id="category-mini"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 ${
+                      isLight ? "border-slate-200 bg-white text-slate-800" : "border-white/10 bg-ink-900 text-slate-100"
+                    }`}
                   >
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>
@@ -438,7 +552,11 @@ function App() {
                     onChange={(e) => setMessage(e.target.value)}
                     rows={4}
                     placeholder="Mesaj içeriği..."
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 ${
+                      isLight
+                        ? "border-slate-200 bg-white text-slate-800 placeholder:text-slate-400"
+                        : "border-white/10 bg-ink-900 text-slate-100 placeholder:text-slate-500"
+                    }`}
                   />
                 </div>
 
