@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
 
 const initialTemplates = [
@@ -29,7 +29,6 @@ function App() {
   )
   const [confirmTarget, setConfirmTarget] = useState(null)
   const [confirmCategoryTarget, setConfirmCategoryTarget] = useState(null)
-  const [composerOpen, setComposerOpen] = useState(true)
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -246,7 +245,9 @@ function App() {
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                     Şablon listesi
                   </p>
-                  <p className="text-sm text-slate-400">Başlıklarına dokunarak düzenlemek istediğini seç ve kopyala.</p>
+                  <p className="text-sm text-slate-400">
+                    Başlıklarına dokunarak düzenlemek istediğini seç ve kopyala.
+                  </p>
                 </div>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                   {templates.length} seçenek
@@ -324,180 +325,9 @@ function App() {
                 })}
               </div>
             </div>
-
-            <div className={`${panelClass} bg-ink-800/60`}>
-              <button
-                type="button"
-                onClick={() => setComposerOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 text-left text-sm font-semibold text-slate-100"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-accent-200">
-                    Şablon oluştur
-                  </span>
-                  <span className="text-xs text-slate-400">Başlık, kategori ve mesajı ekle</span>
-                </span>
-                <span
-                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
-                    composerOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
-                  }`}
-                  aria-hidden="true"
-                >
-                  &gt;
-                </span>
-              </button>
-
-              {composerOpen && (
-                <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/70 p-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-200" htmlFor="title">
-                        Başlık
-                      </label>
-                      <input
-                        id="title"
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Örn: Karşılama notu"
-                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-200" htmlFor="category-select">
-                        Kategori seç
-                      </label>
-                      <select
-                        id="category-select"
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                      >
-                        {categories.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="md:col-span-2 space-y-2">
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
-                        <label htmlFor="message">Mesaj</label>
-                        <span className="text-[11px] text-slate-400">Anlık karakter: {messageLength}</span>
-                      </div>
-                      <textarea
-                        id="message"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        rows={5}
-                        placeholder="Mesaj içeriği..."
-                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={handleAdd}
-                      className="flex-1 min-w-[160px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                    >
-                      Şablona Ekle
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMessage("")}
-                      className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                    >
-                      Temizle
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           <div className="space-y-6">
-            <div className={`${panelClass} bg-ink-900/60`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Mini panel</p>
-                  <p className="text-sm text-slate-400">BaŸlk, kategori ve mesaj ekleyip kaydet.</p>
-                </div>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                  Hzl ekle
-                </span>
-              </div>
-
-              <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-200" htmlFor="title-mini">
-                    BaŸlk
-                  </label>
-                  <input
-                    id="title-mini"
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="™rn: KarŸlama notu"
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-200" htmlFor="category-mini">
-                    Kategori
-                  </label>
-                  <select
-                    id="category-mini"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
-                    <label htmlFor="message-mini">Mesaj</label>
-                    <span className="text-[11px] text-slate-400">Anlk karakter: {messageLength}</span>
-                  </div>
-                  <textarea
-                    id="message-mini"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={4}
-                    placeholder="Mesaj i‡eri§i..."
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                  />
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={handleAdd}
-                    className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                  >
-                    Kaydet
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMessage("")}
-                    className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                  >
-                    Temizle
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <div className={`${panelClass} bg-ink-800/60`}>
               <div className="flex items-center justify-between">
                 <div>
@@ -551,12 +381,90 @@ function App() {
               </div>
             </div>
 
+            <div className={`${panelClass} bg-ink-900/60`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Mini panel</p>
+                  <p className="text-sm text-slate-400">Başlık, kategori ve mesajı ekleyip kaydet.</p>
+                </div>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                  Hızlı ekle
+                </span>
+              </div>
+
+              <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-200" htmlFor="title-mini">
+                    Başlık
+                  </label>
+                  <input
+                    id="title-mini"
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Örn: Karşılama notu"
+                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-200" htmlFor="category-mini">
+                    Kategori
+                  </label>
+                  <select
+                    id="category-mini"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
+                    <label htmlFor="message-mini">Mesaj</label>
+                    <span className="text-[11px] text-slate-400">Anlık karakter: {messageLength}</span>
+                  </div>
+                  <textarea
+                    id="message-mini"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    rows={4}
+                    placeholder="Mesaj içeriği..."
+                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={handleAdd}
+                    className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                  >
+                    Kaydet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMessage("")}
+                    className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                  >
+                    Temizle
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className={`${panelClass} bg-ink-800/60`}>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Hızlı ipuçları</p>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>• Başlığını boş bırakırsan otomatik bir isimle kaydedilir.</li>
-                <li>• Kopyala tuşu güncel metni panoya gönderir.</li>
-                <li>• Tüm alanlar canlı; değiştirince hemen önizlenir.</li>
+                <li>- Başlığın boş kalırsa otomatik bir isimle kaydedilir.</li>
+                <li>- Kopyala tuşu güncel metni panoya gönderir.</li>
+                <li>- Tüm alanlar canlı; değiştirince hemen önizlenir.</li>
               </ul>
             </div>
           </div>
