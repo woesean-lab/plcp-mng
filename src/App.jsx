@@ -275,9 +275,10 @@ function App() {
                             <span className="text-xs text-slate-400">{list.length} şablon</span>
                           </span>
                           <span
-                            className={`transition ${
-                              isOpen ? "rotate-180" : ""
-                            } text-slate-300`}
+                            className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
+                              isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
+                            }`}
+                            aria-hidden="true"
                           >
                             ▼
                           </span>
