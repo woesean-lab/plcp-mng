@@ -17,7 +17,7 @@ const panelClass =
   "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
 
 function App() {
-  const [title, setTitle] = useState("Pulcip Message")
+  const [title, setTitle] = useState("Pulcip Message Copy")
   const [message, setMessage] = useState(initialTemplates[0].value)
   const [selectedCategory, setSelectedCategory] = useState(initialTemplates[0].category || "Genel")
   const [newCategory, setNewCategory] = useState("")
@@ -178,35 +178,35 @@ function App() {
 
   return (
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-8 shadow-card">
-          <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-                Pulcip Message
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-accent-200">
+                Pulcip Message Copy
               </span>
-              <div className="space-y-2">
-                <h1 className="font-display text-4xl font-semibold leading-tight text-white md:text-5xl">
-                  Pulcip Message
+              <div className="space-y-1">
+                <h1 className="font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
+                  Pulcip Message Copy
                 </h1>
-                <p className="max-w-2xl text-base text-slate-200/80">
+                <p className="max-w-2xl text-sm text-slate-200/80 md:text-base">
                   Kendi tonunu bul, hazır şablonlarını hızla düzenle ve tek tıkla ekibinle paylaş.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
+                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-accent-200 md:text-sm">
                   <span className="h-2 w-2 rounded-full bg-accent-400" />
                   Şablon: {templates.length}
                 </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
+                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-accent-200 md:text-sm">
                   <span className="h-2 w-2 rounded-full bg-emerald-300" />
                   Karakter: {messageLength}
                 </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
+                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-accent-200 md:text-sm">
                   <span className="h-2 w-2 rounded-full bg-fuchsia-300" />
-                  Başlık: {title.trim() ? title : "Pulcip Message"}
+                  Başlık: {title.trim() ? title : "Pulcip Message Copy"}
                 </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
+                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-accent-200 md:text-sm">
                   <span className="h-2 w-2 rounded-full bg-amber-300" />
                   Kategori: {selectedCategory.trim() || "Genel"}
                 </span>
@@ -214,21 +214,23 @@ function App() {
             </div>
 
             <div className="relative w-full max-w-sm">
-              <div className="absolute inset-x-6 -bottom-16 h-40 rounded-full bg-accent-400/30 blur-3xl" />
-              <div className="relative rounded-2xl border border-white/10 bg-white/10 p-6 shadow-glow backdrop-blur-md">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-200/70">Aktif şablon</p>
-                <div className="mt-3 flex items-center gap-3">
+              <div className="absolute inset-x-6 -bottom-14 h-32 rounded-full bg-accent-400/30 blur-3xl" />
+              <div className="relative rounded-2xl border border-white/10 bg-white/10 p-5 shadow-glow backdrop-blur-md">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">
+                  Aktif şablon
+                </p>
+                <div className="mt-2.5 flex items-center gap-3">
                   <h3 className="font-display text-2xl font-semibold text-white">
                     {activeTemplate?.label || "Yeni şablon"}
                   </h3>
-                  <span className="rounded-full border border-accent-300/60 bg-accent-500/15 px-3 py-1 text-xs font-semibold text-accent-50">
+                  <span className="rounded-full border border-accent-300/60 bg-accent-500/15 px-3 py-1 text-[11px] font-semibold text-accent-50">
                     {activeTemplate?.category || selectedCategory || "Genel"}
                   </span>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
                   {activeTemplate?.value || "Mesajını düzenleyip kaydetmeye başla."}
                 </p>
-                <div className="mt-4 flex items-center justify-between text-xs text-slate-300/80">
+                <div className="mt-3 flex items-center justify-between text-[11px] text-slate-300/80">
                   <span>{messageLength} karakter</span>
                   <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">Hazır</span>
                 </div>
