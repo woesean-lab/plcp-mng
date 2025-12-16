@@ -193,7 +193,7 @@ function App() {
                   Kendi tonunu bul, hazır şablonlarını hızla düzenle ve tek tıkla ekibinle paylaş.
                 </p>
               </div>
-                            <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3">
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-accent-200">
                   <span className="h-2 w-2 rounded-full bg-accent-400" />
                   Şablon: {templates.length}
@@ -380,7 +380,7 @@ function App() {
             <div className={`${panelClass} bg-ink-900/60`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Mini panel</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon ekle</p>
                   <p className="text-sm text-slate-400">Başlık, kategori ve mesajı ekleyip kaydet.</p>
                 </div>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
