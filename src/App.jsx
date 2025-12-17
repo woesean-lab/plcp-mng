@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
 
-const initialTemplates = [
+const fallbackTemplates = [
   { label: "Hoş geldin", value: "Hoş geldin! Burada herkese yer var.", category: "Karşılama" },
   {
     label: "Bilgilendirme",
@@ -11,7 +11,7 @@ const initialTemplates = [
   { label: "Hatırlatma", value: "Unutma: Akşam 18:00 toplantısına hazır ol.", category: "Hatırlatma" },
 ]
 
-const initialCategories = Array.from(new Set(["Genel", ...initialTemplates.map((tpl) => tpl.category || "Genel")]))
+const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map((tpl) => tpl.category || "Genel")]))
 
 const panelClass =
   "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
@@ -21,14 +21,13 @@ function App() {
   const [message, setMessage] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Genel")
   const [newCategory, setNewCategory] = useState("")
-  const [categories, setCategories] = useState(initialCategories)
-  const [templates, setTemplates] = useState(initialTemplates)
-  const [selectedTemplate, setSelectedTemplate] = useState(initialTemplates[0].label)
-  const [openCategories, setOpenCategories] = useState(() =>
-    categories.reduce((acc, cat) => ({ ...acc, [cat]: false }), {}),
-  )
+  const [categories, setCategories] = useState([])
+  const [templates, setTemplates] = useState([])
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [openCategories, setOpenCategories] = useState({})
   const [confirmTarget, setConfirmTarget] = useState(null)
   const [confirmCategoryTarget, setConfirmCategoryTarget] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -61,6 +60,7 @@ function App() {
 
   useEffect(() => {
     const controller = new AbortController()
+    setIsLoading(true)
 
     ;(async () => {
       try {
@@ -78,17 +78,19 @@ function App() {
         setCategories(safeCategories)
         setTemplates(serverTemplates ?? [])
 
-        setSelectedTemplate((prev) => {
-          const hasPrev = (serverTemplates ?? []).some((tpl) => tpl.label === prev)
-          if (hasPrev) return prev
-          return serverTemplates?.[0]?.label ?? prev
-        })
-
-        const first = serverTemplates?.[0]
-        if (first?.category) setSelectedCategory(first.category)
+        const firstTemplate = serverTemplates?.[0]
+        setSelectedTemplate(firstTemplate?.label ?? null)
+        if (firstTemplate?.category) setSelectedCategory(firstTemplate.category)
       } catch (error) {
         if (error?.name === "AbortError") return
+        // Hata durumunda en azından fallback verileri göster.
+        setCategories(fallbackCategories)
+        setTemplates(fallbackTemplates)
+        setSelectedTemplate(fallbackTemplates[0]?.label ?? null)
+        setSelectedCategory(fallbackTemplates[0]?.category ?? "Genel")
         toast.error("Sunucuya bağlanılamadı. (API/DB kontrol edin)")
+      } finally {
+        setIsLoading(false)
       }
     })()
 
@@ -98,15 +100,13 @@ function App() {
   const handleTemplateChange = async (nextTemplate, options = {}) => {
     setSelectedTemplate(nextTemplate)
     const tpl = templates.find((item) => item.label === nextTemplate)
-    if (tpl) {
-      if (options.shouldCopy) {
-        try {
-          await navigator.clipboard.writeText(tpl.value)
-          toast.success("Şablon kopyalandı", { duration: 1400, position: "top-right" })
-        } catch (error) {
-          console.error("Copy failed", error)
-          toast.error("Kopyalanamadı", { duration: 1600, position: "top-right" })
-        }
+    if (tpl && options.shouldCopy) {
+      try {
+        await navigator.clipboard.writeText(tpl.value)
+        toast.success("Şablon kopyalandı", { duration: 1400, position: "top-right" })
+      } catch (error) {
+        console.error("Copy failed", error)
+        toast.error("Kopyalanamadı", { duration: 1600, position: "top-right" })
       }
     }
   }
@@ -129,7 +129,7 @@ function App() {
       })
 
       if (res.status === 409) {
-        toast("Var olan Yablon aktif edildi", { position: "top-right" })
+        toast("Var olan şablon aktif edildi", { position: "top-right" })
         setSelectedTemplate(safeTitle)
         setSelectedCategory(safeCategory)
         return
@@ -144,26 +144,11 @@ function App() {
       }
       setSelectedTemplate(created.label)
       setSelectedCategory(created.category || safeCategory)
-      toast.success("Yeni Yablon eklendi")
-      return
+      toast.success("Yeni şablon eklendi")
     } catch (error) {
       console.error(error)
       toast.error("Kaydedilemedi (API/DB kontrol edin).")
     }
-
-    const exists = templates.some((tpl) => tpl.label === safeTitle)
-    if (!exists) {
-      const nextTemplates = [...templates, { label: safeTitle, value: safeMessage, category: safeCategory }]
-      setTemplates(nextTemplates)
-      if (!categories.includes(safeCategory)) {
-        setCategories((prev) => [...prev, safeCategory])
-      }
-      toast.success("Yeni şablon eklendi")
-    } else {
-      toast("Var olan şablon aktif edildi", { position: "top-right" })
-    }
-    setSelectedTemplate(safeTitle)
-    setSelectedCategory(safeCategory)
   }
 
   const handleDeleteTemplate = async (targetLabel = selectedTemplate) => {
@@ -194,24 +179,10 @@ function App() {
         }
       }
       toast.success("Şablon silindi")
-      return
     } catch (error) {
       console.error(error)
       toast.error("Silinemedi (API/DB kontrol edin).")
     }
-
-    const nextTemplates = templates.filter((tpl) => tpl.label !== targetLabel)
-    const fallback = nextTemplates[0]
-    setTemplates(nextTemplates)
-    const nextSelected = selectedTemplate === targetLabel ? fallback?.label ?? selectedTemplate : selectedTemplate
-    if (nextSelected) {
-      setSelectedTemplate(nextSelected)
-      const nextTpl = nextTemplates.find((tpl) => tpl.label === nextSelected)
-      if (nextTpl) {
-        setSelectedCategory(nextTpl.category || "Genel")
-      }
-    }
-    toast.success("Şablon silindi")
   }
 
   const handleDeleteWithConfirm = (targetLabel) => {
@@ -305,6 +276,10 @@ function App() {
     toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
+  const templateCountText = isLoading ? "…" : templates.length
+  const categoryCountText = isLoading ? "…" : categories.length
+  const selectedCategoryText = isLoading ? "Yükleniyor" : selectedCategory.trim() || "Genel"
+
   return (
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
@@ -325,15 +300,15 @@ function App() {
               <div className="flex flex-wrap gap-2.5">
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
                   <span className="h-2 w-2 rounded-full bg-accent-400" />
-                  Şablon: {templates.length}
+                  Şablon: {templateCountText}
                 </span>
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
                   <span className="h-2 w-2 rounded-full bg-amber-300" />
-                  Kategori sayısı: {categories.length}
+                  Kategori sayısı: {categoryCountText}
                 </span>
                 <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
                   <span className="h-2 w-2 rounded-full bg-amber-300" />
-                  Kategori: {selectedCategory.trim() || "Genel"}
+                  Kategori: {selectedCategoryText}
                 </span>
               </div>
             </div>
@@ -346,7 +321,7 @@ function App() {
                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">Aktif şablon</p>
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-display text-2xl font-semibold text-white">
-                        {activeTemplate?.label || "Yeni şablon"}
+                        {activeTemplate?.label || (isLoading ? "Yükleniyor..." : "Yeni şablon")}
                       </h3>
                       <span className="rounded-full border border-accent-300/60 bg-accent-500/15 px-3 py-1 text-[11px] font-semibold text-accent-50">
                         {activeTemplate?.category || selectedCategory || "Genel"}
@@ -361,16 +336,20 @@ function App() {
                         ? "border-rose-300 bg-rose-500/25 text-rose-50"
                         : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
                     }`}
+                    disabled={!selectedTemplate}
                   >
                     {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
                   </button>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
-                  {activeTemplate?.value || "Mesajını düzenleyip kaydetmeye başla."}
+                  {activeTemplate?.value ||
+                    (isLoading ? "Veriler yükleniyor..." : "Mesajını düzenleyip kaydetmeye başla.")}
                 </p>
                 <div className="mt-4 flex items-center justify-between text-xs text-slate-300/80">
                   <span>{messageLength} karakter</span>
-                  <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">Hazır</span>
+                  <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">
+                    {isLoading ? "Bekle" : "Hazır"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -382,19 +361,20 @@ function App() {
             <div className={`${panelClass} bg-ink-800/60`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                    Şablon listesi
-                  </p>
-                  <p className="text-sm text-slate-400">
-                    Başlıklarına dokunarak düzenlemek istediğini seç ve kopyala.
-                  </p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon listesi</p>
+                  <p className="text-sm text-slate-400">Başlıklarına dokunarak düzenle ve kopyala.</p>
                 </div>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                  {templates.length} seçenek
+                  {templateCountText} seçenek
                 </span>
               </div>
 
               <div className="mt-4 space-y-3">
+                {isLoading && categories.length === 0 && (
+                  <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 text-sm text-slate-300">
+                    Yükleniyor...
+                  </div>
+                )}
                 {categories.map((cat) => {
                   const list = groupedTemplates[cat] || []
                   const isOpen = openCategories[cat] ?? true
@@ -461,7 +441,7 @@ function App() {
                   <p className="text-sm text-slate-400">Yeni kategori ekle, ardından mesaj alanından seç.</p>
                 </div>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                  {categories.length} kategori
+                  {categoryCountText} kategori
                 </span>
               </div>
 
@@ -513,9 +493,7 @@ function App() {
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon ekle</p>
                   <p className="text-sm text-slate-400">Başlık, kategori ve mesajı ekleyip kaydet.</p>
                 </div>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                  Hızlı ekle
-                </span>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">Hızlı ekle</span>
               </div>
 
               <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
@@ -588,9 +566,9 @@ function App() {
             <div className={`${panelClass} bg-ink-800/60`}>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Hızlı ipuçları</p>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>- Başlığın boş kalırsa otomatik bir isimle kaydedilir.</li>
-                <li>- Kopyala tuşu güncel metni panoya gönderir.</li>
-                <li>- Tüm alanlar canlı; değiştirince hemen önizlenir.</li>
+                <li>- Başlık boş kalırsa otomatik bir isimle kaydedilir.</li>
+                <li>- Şablona tıklamak metni panoya kopyalar.</li>
+                <li>- Kategori silince şablonlar “Genel”e taşınır.</li>
               </ul>
             </div>
           </div>
