@@ -1,16 +1,47 @@
-# React + Vite
+# Pulcip Message Copy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ortak mesaj şablonlarını kategorilere göre yönetmek ve tek tıkla panoya kopyalamak için yapılmış küçük bir uygulama.
 
-Currently, two official plugins are available:
+- Frontend: Vite + React + Tailwind
+- Backend: Express (Node)
+- DB: PostgreSQL (Prisma)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Local geliştirme
 
-## React Compiler
+1) Bağımlılıklar:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+`npm install`
 
-## Expanding the ESLint configuration
+2) `.env` oluştur:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+`.env.example` içindeki `DATABASE_URL` değerini kendi Postgres bağlantına göre doldur.
+
+3) DB şemasını uygula (migrations yerine hızlı kurulum):
+
+`npm run db:push`
+
+4) Backend’i başlat:
+
+`npm run dev:api`
+
+5) Frontend’i başlat:
+
+`npm run dev`
+
+Frontend, API’yi aynı origin üzerinden `/api/*` ile çağırır. Prod ortamda Node server hem API’yi hem de `dist/` dosyalarını servis eder.
+
+## Easypanel deploy (tek servis)
+
+Öneri: Tek **Node app service** ile deploy edin (static servis yerine). Akış:
+
+- **Build command**: `npm run build`
+- **Start command**: `npm run start`
+- **Env vars**:
+  - `DATABASE_URL`: Easypanel Postgres servisinin connection string’i
+  - `PORT`: Easypanel’in verdiği port (genelde otomatik set edilir; set etmene gerek olmayabilir)
+
+İlk deploy’da DB tabloları yoksa container içinde bir kez:
+
+`npm run db:push`
+
+Not: Server ilk açılışta `Genel` kategorisini ve birkaç örnek şablonu otomatik oluşturur (DB boşsa).

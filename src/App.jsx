@@ -59,6 +59,42 @@ function App() {
     })
   }, [categories])
 
+  useEffect(() => {
+    const controller = new AbortController()
+
+    ;(async () => {
+      try {
+        const [catsRes, templatesRes] = await Promise.all([
+          fetch("/api/categories", { signal: controller.signal }),
+          fetch("/api/templates", { signal: controller.signal }),
+        ])
+
+        if (!catsRes.ok || !templatesRes.ok) throw new Error("api_error")
+
+        const serverCategories = await catsRes.json()
+        const serverTemplates = await templatesRes.json()
+
+        const safeCategories = Array.from(new Set(["Genel", ...(serverCategories ?? [])]))
+        setCategories(safeCategories)
+        setTemplates(serverTemplates ?? [])
+
+        setSelectedTemplate((prev) => {
+          const hasPrev = (serverTemplates ?? []).some((tpl) => tpl.label === prev)
+          if (hasPrev) return prev
+          return serverTemplates?.[0]?.label ?? prev
+        })
+
+        const first = serverTemplates?.[0]
+        if (first?.category) setSelectedCategory(first.category)
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        toast.error("Sunucuya bağlanılamadı. (API/DB kontrol edin)")
+      }
+    })()
+
+    return () => controller.abort()
+  }, [])
+
   const handleTemplateChange = async (nextTemplate, options = {}) => {
     setSelectedTemplate(nextTemplate)
     const tpl = templates.find((item) => item.label === nextTemplate)
@@ -75,7 +111,7 @@ function App() {
     }
   }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!title.trim() && !message.trim()) {
       toast.error("Başlık veya mesaj ekleyin.")
       return
@@ -84,6 +120,36 @@ function App() {
     const safeTitle = title.trim() || `Mesaj ${templates.length + 1}`
     const safeMessage = message.trim()
     const safeCategory = selectedCategory.trim() || "Genel"
+
+    try {
+      const res = await fetch("/api/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: safeTitle, value: safeMessage, category: safeCategory }),
+      })
+
+      if (res.status === 409) {
+        toast("Var olan Yablon aktif edildi", { position: "top-right" })
+        setSelectedTemplate(safeTitle)
+        setSelectedCategory(safeCategory)
+        return
+      }
+
+      if (!res.ok) throw new Error("create_failed")
+
+      const created = await res.json()
+      setTemplates((prev) => [...prev, created])
+      if (!categories.includes(safeCategory)) {
+        setCategories((prev) => [...prev, safeCategory])
+      }
+      setSelectedTemplate(created.label)
+      setSelectedCategory(created.category || safeCategory)
+      toast.success("Yeni Yablon eklendi")
+      return
+    } catch (error) {
+      console.error(error)
+      toast.error("Kaydedilemedi (API/DB kontrol edin).")
+    }
 
     const exists = templates.some((tpl) => tpl.label === safeTitle)
     if (!exists) {
@@ -100,11 +166,40 @@ function App() {
     setSelectedCategory(safeCategory)
   }
 
-  const handleDeleteTemplate = (targetLabel = selectedTemplate) => {
+  const handleDeleteTemplate = async (targetLabel = selectedTemplate) => {
     if (templates.length <= 1) {
       toast.error("En az bir şablon kalmalı.")
       return
     }
+    const target = templates.find((tpl) => tpl.label === targetLabel)
+    const targetId = target?.id
+    if (!targetId) {
+      toast.error("Silinecek şablon bulunamadı.")
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/templates/${targetId}`, { method: "DELETE" })
+      if (!res.ok && res.status !== 404) throw new Error("delete_failed")
+
+      const nextTemplates = templates.filter((tpl) => tpl.label !== targetLabel)
+      const fallback = nextTemplates[0]
+      setTemplates(nextTemplates)
+      const nextSelected = selectedTemplate === targetLabel ? fallback?.label ?? selectedTemplate : selectedTemplate
+      if (nextSelected) {
+        setSelectedTemplate(nextSelected)
+        const nextTpl = nextTemplates.find((tpl) => tpl.label === nextSelected)
+        if (nextTpl) {
+          setSelectedCategory(nextTpl.category || "Genel")
+        }
+      }
+      toast.success("Şablon silindi")
+      return
+    } catch (error) {
+      console.error(error)
+      toast.error("Silinemedi (API/DB kontrol edin).")
+    }
+
     const nextTemplates = templates.filter((tpl) => tpl.label !== targetLabel)
     const fallback = nextTemplates[0]
     setTemplates(nextTemplates)
@@ -129,7 +224,7 @@ function App() {
     toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
-  const handleCategoryAdd = () => {
+  const handleCategoryAdd = async () => {
     const next = newCategory.trim()
     if (!next) {
       toast.error("Kategori girin.")
@@ -141,6 +236,25 @@ function App() {
       setNewCategory("")
       return
     }
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: next }),
+      })
+      if (!res.ok) throw new Error("category_create_failed")
+
+      const nextCategories = [...categories, next]
+      setCategories(nextCategories)
+      setSelectedCategory(next)
+      setNewCategory("")
+      toast.success("Kategori eklendi")
+      return
+    } catch (error) {
+      console.error(error)
+      toast.error("Kategori eklenemedi (API/DB kontrol edin).")
+    }
+
     const nextCategories = [...categories, next]
     setCategories(nextCategories)
     setSelectedCategory(next)
@@ -148,11 +262,29 @@ function App() {
     toast.success("Kategori eklendi")
   }
 
-  const handleCategoryDelete = (cat) => {
+  const handleCategoryDelete = async (cat) => {
     if (cat === "Genel") {
       toast.error("Genel kategorisi silinemez.")
       return
     }
+    try {
+      const res = await fetch(`/api/categories/${encodeURIComponent(cat)}`, { method: "DELETE" })
+      if (!res.ok && res.status !== 404) throw new Error("category_delete_failed")
+
+      const nextCategories = categories.filter((item) => item !== cat)
+      const safeCategories = nextCategories.length ? nextCategories : ["Genel"]
+      setCategories(safeCategories)
+      setTemplates((prev) => prev.map((tpl) => (tpl.category === cat ? { ...tpl, category: "Genel" } : tpl)))
+      if (selectedCategory === cat) {
+        setSelectedCategory(safeCategories[0])
+      }
+      toast.success("Kategori silindi")
+      return
+    } catch (error) {
+      console.error(error)
+      toast.error("Kategori silinemedi (API/DB kontrol edin).")
+    }
+
     const nextCategories = categories.filter((item) => item !== cat)
     const safeCategories = nextCategories.length ? nextCategories : ["Genel"]
     setCategories(safeCategories)
