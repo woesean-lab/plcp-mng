@@ -387,72 +387,80 @@ function App() {
               </div>
 
               <div className="mt-4 space-y-3">
-                {showLoading && categories.length === 0 && (
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {Array.from({ length: 3 }).map((_, idx) => (
-                      <div
-                        key={idx}
-                        className="h-20 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-300"
-                      >
-                        <div className="h-full animate-pulse rounded-xl bg-ink-800/80" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {categories.map((cat) => {
-                  const list = groupedTemplates[cat] || []
-                  const isOpen = openCategories[cat] ?? true
-                  return (
-                    <div key={cat} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
-                      <button
-                        type="button"
-                        onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true) }))}
-                        className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200">
-                            {cat}
-                          </span>
-                          <span className="text-xs text-slate-400">{list.length} şablon</span>
-                        </span>
-                        <span
-                          className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
-                            isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
-                          }`}
-                          aria-hidden="true"
-                        >
-                          &gt;
-                        </span>
-                      </button>
-
-                      {isOpen && (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                          {list.length === 0 && (
-                            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                              Bu kategoride şablon yok.
-                            </div>
-                          )}
-                          {list.map((tpl) => (
-                            <div key={tpl.label} className="relative">
-                              <button
-                                type="button"
-                                onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
-                                className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
-                                  tpl.label === selectedTemplate
-                                    ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                                    : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
-                                }`}
-                              >
-                                <p className="font-display text-lg">{tpl.label}</p>
-                                <p className="mt-1 h-[54px] overflow-hidden text-sm text-slate-400">{tpl.value}</p>
-                              </button>
+                {showLoading ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, idx) => (
+                      <div key={idx} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
+                        <div className="mb-3 h-4 w-24 animate-pulse rounded-full bg-white/10" />
+                        <div className="grid gap-2">
+                          {Array.from({ length: 2 }).map((__, jdx) => (
+                            <div
+                              key={`${idx}-${jdx}`}
+                              className="h-20 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-300"
+                            >
+                              <div className="h-full animate-pulse rounded-xl bg-ink-800/80" />
                             </div>
                           ))}
                         </div>
-                      )}
-                    </div>
-                  )
-                })}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  categories.map((cat) => {
+                    const list = groupedTemplates[cat] || []
+                    const isOpen = openCategories[cat] ?? true
+                    return (
+                      <div key={cat} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
+                        <button
+                          type="button"
+                          onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true) }))}
+                          className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200">
+                              {cat}
+                            </span>
+                            <span className="text-xs text-slate-400">{list.length} şablon</span>
+                          </span>
+                          <span
+                            className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
+                              isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
+                            }`}
+                            aria-hidden="true"
+                          >
+                            &gt;
+                          </span>
+                        </button>
+
+                        {isOpen && (
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {list.length === 0 && (
+                              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                                Bu kategoride şablon yok.
+                              </div>
+                            )}
+                            {list.map((tpl) => (
+                              <div key={tpl.label} className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
+                                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
+                                    tpl.label === selectedTemplate
+                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                      : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                                  }`}
+                                >
+                                  <p className="font-display text-lg">{tpl.label}</p>
+                                  <p className="mt-1 h-[54px] overflow-hidden text-sm text-slate-400">{tpl.value}</p>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </div>
           </div>
