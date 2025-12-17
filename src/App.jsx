@@ -1,38 +1,39 @@
 import { useEffect, useMemo, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
 
-const initialTemplates = [
-  { label: "Hoş geldin", value: "Hoş geldin! Burada herkese yer var.", category: "Karşılama" },
-  {
-    label: "Bilgilendirme",
-    value: "Son durum: Görev planlandığı gibi ilerliyor.",
-    category: "Bilgilendirme",
-  },
-  { label: "Hatırlatma", value: "Unutma: Akşam 18:00 toplantısına hazır ol.", category: "Hatırlatma" },
-]
-
-const initialCategories = Array.from(new Set(["Genel", ...initialTemplates.map((tpl) => tpl.category || "Genel")]))
-
 const panelClass =
   "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
+
+const API_BASE = import.meta.env.VITE_API_BASE || "/api"
+
+async function fetchJSON(path, options = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(body || res.statusText)
+  }
+  return res.json()
+}
 
 function App() {
   const [title, setTitle] = useState("Pulcip Message Copy")
   const [message, setMessage] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Genel")
   const [newCategory, setNewCategory] = useState("")
-  const [categories, setCategories] = useState(initialCategories)
-  const [templates, setTemplates] = useState(initialTemplates)
-  const [selectedTemplate, setSelectedTemplate] = useState(initialTemplates[0].label)
-  const [openCategories, setOpenCategories] = useState(() =>
-    categories.reduce((acc, cat) => ({ ...acc, [cat]: false }), {}),
-  )
+  const [categories, setCategories] = useState([{ id: null, name: "Genel" }])
+  const [templates, setTemplates] = useState([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null)
+  const [openCategories, setOpenCategories] = useState({ Genel: true })
   const [confirmTarget, setConfirmTarget] = useState(null)
   const [confirmCategoryTarget, setConfirmCategoryTarget] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   const activeTemplate = useMemo(
-    () => templates.find((tpl) => tpl.label === selectedTemplate),
-    [selectedTemplate, templates],
+    () => templates.find((tpl) => tpl.id === selectedTemplateId),
+    [selectedTemplateId, templates],
   )
 
   const messageLength = message.trim().length
@@ -46,36 +47,59 @@ function App() {
     }, {})
   }, [templates])
 
-  useEffect(() => {
-    setOpenCategories((prev) => {
-      const next = { ...prev }
-      categories.forEach((cat) => {
-        if (!(cat in next)) next[cat] = true
-      })
-      Object.keys(next).forEach((cat) => {
-        if (!categories.includes(cat)) delete next[cat]
-      })
-      return next
-    })
-  }, [categories])
+  const normalizeCategories = (data = []) => {
+    const names = new Set(data.map((c) => c.name))
+    if (!names.has("Genel")) {
+      return [...data, { id: null, name: "Genel" }]
+    }
+    return data
+  }
 
-  const handleTemplateChange = async (nextTemplate, options = {}) => {
-    setSelectedTemplate(nextTemplate)
-    const tpl = templates.find((item) => item.label === nextTemplate)
-    if (tpl) {
-      if (options.shouldCopy) {
-        try {
-          await navigator.clipboard.writeText(tpl.value)
-          toast.success("Şablon kopyalandı", { duration: 1400, position: "top-right" })
-        } catch (error) {
-          console.error("Copy failed", error)
-          toast.error("Kopyalanamadı", { duration: 1600, position: "top-right" })
-        }
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      try {
+        const [{ data: catData }, { data: tplData }] = await Promise.all([
+          fetchJSON("/categories"),
+          fetchJSON("/templates"),
+        ])
+        const safeCats = normalizeCategories(catData)
+        setCategories(safeCats)
+        setTemplates(tplData || [])
+        const firstId = tplData?.[0]?.id ?? null
+        setSelectedTemplateId(firstId)
+        setOpenCategories((prev) => {
+          const next = { ...prev }
+          safeCats.forEach((cat) => {
+            if (!(cat.name in next)) next[cat.name] = true
+          })
+          return next
+        })
+      } catch (error) {
+        console.error(error)
+        toast.error("Veriler alınamadı")
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const handleTemplateChange = async (templateId, options = {}) => {
+    setSelectedTemplateId(templateId)
+    const tpl = templates.find((item) => item.id === templateId)
+    if (tpl && options.shouldCopy) {
+      try {
+        await navigator.clipboard.writeText(tpl.value)
+        toast.success("Şablon kopyalandı", { duration: 1400, position: "top-right" })
+      } catch (error) {
+        console.error("Copy failed", error)
+        toast.error("Kopyalanamadı", { duration: 1600, position: "top-right" })
       }
     }
   }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!title.trim() && !message.trim()) {
       toast.error("Başlık veya mesaj ekleyin.")
       return
@@ -85,91 +109,119 @@ function App() {
     const safeMessage = message.trim()
     const safeCategory = selectedCategory.trim() || "Genel"
 
-    const exists = templates.some((tpl) => tpl.label === safeTitle)
-    if (!exists) {
-      const nextTemplates = [...templates, { label: safeTitle, value: safeMessage, category: safeCategory }]
-      setTemplates(nextTemplates)
-      if (!categories.includes(safeCategory)) {
-        setCategories((prev) => [...prev, safeCategory])
-      }
+    try {
+      const { data } = await fetchJSON("/templates", {
+        method: "POST",
+        body: JSON.stringify({ label: safeTitle, value: safeMessage, category: safeCategory }),
+      })
+      setTemplates((prev) => {
+        const exists = prev.find((tpl) => tpl.id === data.id)
+        if (exists) {
+          return prev.map((tpl) => (tpl.id === data.id ? data : tpl))
+        }
+        return [data, ...prev]
+      })
+      setCategories((prev) => {
+        if (prev.some((cat) => cat.name === safeCategory)) return prev
+        return [...prev, { id: data.category_id || null, name: safeCategory }]
+      })
+      setSelectedTemplateId(data.id)
+      setSelectedCategory(safeCategory)
       toast.success("Yeni şablon eklendi")
-    } else {
-      toast("Var olan şablon aktif edildi", { position: "top-right" })
+    } catch (error) {
+      console.error(error)
+      toast.error("Şablon eklenemedi")
     }
-    setSelectedTemplate(safeTitle)
-    setSelectedCategory(safeCategory)
   }
 
-  const handleDeleteTemplate = (targetLabel = selectedTemplate) => {
+  const handleDeleteTemplate = async (targetId = selectedTemplateId) => {
+    if (!targetId) {
+      toast.error("Silinecek şablon yok.")
+      return
+    }
     if (templates.length <= 1) {
       toast.error("En az bir şablon kalmalı.")
       return
     }
-    const nextTemplates = templates.filter((tpl) => tpl.label !== targetLabel)
-    const fallback = nextTemplates[0]
-    setTemplates(nextTemplates)
-    const nextSelected = selectedTemplate === targetLabel ? fallback?.label ?? selectedTemplate : selectedTemplate
-    if (nextSelected) {
-      setSelectedTemplate(nextSelected)
-      const nextTpl = nextTemplates.find((tpl) => tpl.label === nextSelected)
-      if (nextTpl) {
-        setSelectedCategory(nextTpl.category || "Genel")
-      }
+    try {
+      await fetchJSON(`/templates/${targetId}`, { method: "DELETE" })
+      setTemplates((prev) => prev.filter((tpl) => tpl.id !== targetId))
+      const remaining = templates.filter((tpl) => tpl.id !== targetId)
+      const nextSelected = remaining[0]?.id ?? null
+      setSelectedTemplateId(nextSelected)
+      toast.success("Şablon silindi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Şablon silinemedi")
     }
-    toast.success("Şablon silindi")
   }
 
-  const handleDeleteWithConfirm = (targetLabel) => {
-    if (confirmTarget === targetLabel) {
-      handleDeleteTemplate(targetLabel)
+  const handleDeleteWithConfirm = (targetId) => {
+    if (confirmTarget === targetId) {
+      handleDeleteTemplate(targetId)
       setConfirmTarget(null)
       return
     }
-    setConfirmTarget(targetLabel)
+    setConfirmTarget(targetId)
     toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
-  const handleCategoryAdd = () => {
+  const handleCategoryAdd = async () => {
     const next = newCategory.trim()
     if (!next) {
       toast.error("Kategori girin.")
       return
     }
-    if (categories.includes(next)) {
+    if (categories.some((cat) => cat.name === next)) {
       toast("Kategori zaten mevcut", { position: "top-right" })
       setSelectedCategory(next)
       setNewCategory("")
       return
     }
-    const nextCategories = [...categories, next]
-    setCategories(nextCategories)
-    setSelectedCategory(next)
-    setNewCategory("")
-    toast.success("Kategori eklendi")
+    try {
+      const { data } = await fetchJSON("/categories", {
+        method: "POST",
+        body: JSON.stringify({ name: next }),
+      })
+      setCategories((prev) => [...prev, data])
+      setSelectedCategory(data.name)
+      setNewCategory("")
+      toast.success("Kategori eklendi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Kategori eklenemedi")
+    }
   }
 
-  const handleCategoryDelete = (cat) => {
-    if (cat === "Genel") {
-      toast.error("Genel kategorisi silinemez.")
+  const handleCategoryDelete = async (catId, catName) => {
+    if (!catId) {
+      toast.error("Bu kategori silinemez.")
       return
     }
-    const nextCategories = categories.filter((item) => item !== cat)
-    const safeCategories = nextCategories.length ? nextCategories : ["Genel"]
-    setCategories(safeCategories)
-    setTemplates((prev) => prev.map((tpl) => (tpl.category === cat ? { ...tpl, category: "Genel" } : tpl)))
-    if (selectedCategory === cat) {
-      setSelectedCategory(safeCategories[0])
+    try {
+      await fetchJSON(`/categories/${catId}`, { method: "DELETE" })
+      const nextCategories = categories.filter((item) => item.id !== catId)
+      setCategories(normalizeCategories(nextCategories))
+      setTemplates((prev) =>
+        prev.map((tpl) => (tpl.category === catName ? { ...tpl, category: "Genel" } : tpl)),
+      )
+      if (selectedCategory === catName) {
+        setSelectedCategory("Genel")
+      }
+      toast.success("Kategori silindi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Kategori silinemedi")
     }
-    toast.success("Kategori silindi")
   }
 
   const handleCategoryDeleteWithConfirm = (cat) => {
-    if (confirmCategoryTarget === cat) {
+    if (confirmCategoryTarget === cat.id) {
       setConfirmCategoryTarget(null)
-      handleCategoryDelete(cat)
+      handleCategoryDelete(cat.id, cat.name)
       return
     }
-    setConfirmCategoryTarget(cat)
+    setConfirmCategoryTarget(cat.id)
     toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
@@ -211,7 +263,9 @@ function App() {
               <div className="relative rounded-2xl border border-white/10 bg-white/10 p-6 shadow-glow backdrop-blur-md">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">Aktif şablon</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">
+                      Aktif şablon
+                    </p>
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-display text-2xl font-semibold text-white">
                         {activeTemplate?.label || "Yeni şablon"}
@@ -223,14 +277,14 @@ function App() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleDeleteWithConfirm(selectedTemplate)}
+                    onClick={() => handleDeleteWithConfirm(selectedTemplateId)}
                     className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
-                      confirmTarget === selectedTemplate
+                      confirmTarget === selectedTemplateId
                         ? "border-rose-300 bg-rose-500/25 text-rose-50"
                         : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
                     }`}
                   >
-                    {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
+                    {confirmTarget === selectedTemplateId ? "Emin misin?" : "Sil"}
                   </button>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
@@ -264,18 +318,18 @@ function App() {
 
               <div className="mt-4 space-y-3">
                 {categories.map((cat) => {
-                  const list = groupedTemplates[cat] || []
-                  const isOpen = openCategories[cat] ?? true
+                  const list = groupedTemplates[cat.name] || []
+                  const isOpen = openCategories[cat.name] ?? true
                   return (
-                    <div key={cat} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
+                    <div key={cat.id ?? cat.name} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
                       <button
                         type="button"
-                        onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true) }))}
+                        onClick={() => setOpenCategories((prev) => ({ ...prev, [cat.name]: !(prev[cat.name] ?? true) }))}
                         className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
                       >
                         <span className="inline-flex items-center gap-2">
                           <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200">
-                            {cat}
+                            {cat.name}
                           </span>
                           <span className="text-xs text-slate-400">{list.length} şablon</span>
                         </span>
@@ -297,12 +351,12 @@ function App() {
                             </div>
                           )}
                           {list.map((tpl) => (
-                            <div key={tpl.label} className="relative">
+                            <div key={tpl.id} className="relative">
                               <button
                                 type="button"
-                                onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
+                                onClick={() => handleTemplateChange(tpl.id, { shouldCopy: true })}
                                 className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
-                                  tpl.label === selectedTemplate
+                                  tpl.id === selectedTemplateId
                                     ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
                                     : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
                                 }`}
@@ -353,21 +407,21 @@ function App() {
               <div className="mt-4 flex flex-wrap gap-2">
                 {categories.map((cat) => (
                   <span
-                    key={cat}
+                    key={cat.id ?? cat.name}
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200"
                   >
-                    <span className="font-semibold">{cat}</span>
-                    {cat !== "Genel" && (
+                    <span className="font-semibold">{cat.name}</span>
+                    {cat.name !== "Genel" && (
                       <button
                         type="button"
                         onClick={() => handleCategoryDeleteWithConfirm(cat)}
                         className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
-                          confirmCategoryTarget === cat
+                          confirmCategoryTarget === cat.id
                             ? "border-rose-300 bg-rose-500/20 text-rose-50"
                             : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
                         }`}
                       >
-                        {confirmCategoryTarget === cat ? "Emin misin?" : "Sil"}
+                        {confirmCategoryTarget === cat.id ? "Emin misin?" : "Sil"}
                       </button>
                     )}
                   </span>
@@ -412,8 +466,8 @@ function App() {
                     className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                   >
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
+                      <option key={cat.id ?? cat.name} value={cat.name}>
+                        {cat.name}
                       </option>
                     ))}
                   </select>
