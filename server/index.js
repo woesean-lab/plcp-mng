@@ -2,10 +2,16 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import pkg from "pg"
+import path from "path"
+import fs from "fs"
+import { fileURLToPath } from "url"
 
 dotenv.config()
 
 const { Pool } = pkg
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const distPath = path.join(__dirname, "..", "dist")
 
 const app = express()
 const PORT = process.env.PORT || 4000
@@ -157,6 +163,16 @@ app.delete("/api/templates/:id", async (req, res) => {
     res.status(500).json({ error: "Şablon silinemedi" })
   }
 })
+
+// Serve static frontend if built
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"))
+  })
+} else {
+  console.warn("dist/ not found; API-only mode")
+}
 
 const start = async () => {
   try {
