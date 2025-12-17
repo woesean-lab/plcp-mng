@@ -451,7 +451,6 @@ function App() {
                                   }`}
                                 >
                                   <p className="font-display text-lg">{tpl.label}</p>
-                                  <p className="mt-1 h-[54px] overflow-hidden text-sm text-slate-400">{tpl.value}</p>
                                 </button>
                               </div>
                             ))}
