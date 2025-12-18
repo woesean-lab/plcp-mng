@@ -793,10 +793,6 @@ function App() {
                             <span className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-accent-200 break-all">
                               {pb.username}
                             </span>
-                            <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-300/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-100">
-                              <span className="h-2 w-2 rounded-full bg-amber-300" />
-                              Açık
-                            </span>
                           </div>
                           <button
                             type="button"
@@ -857,10 +853,6 @@ function App() {
                           <div className="flex flex-col gap-1">
                             <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-emerald-50 break-all">
                               {pb.username}
-                            </span>
-                            <span className="inline-flex w-fit items-center gap-1 rounded-full border border-emerald-200/60 bg-emerald-400/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-50">
-                              <span className="h-2 w-2 rounded-full bg-emerald-200" />
-                              Çözüldü
                             </span>
                           </div>
                           <button
