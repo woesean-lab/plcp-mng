@@ -786,7 +786,7 @@ function App() {
                     {openProblems.map((pb) => (
                       <div
                         key={pb.id}
-                        className="flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-ink-900 p-4 shadow-inner"
+                        className="flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-ink-900 p-4 shadow-inner transition hover:border-accent-300/80 hover:shadow-glow"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
@@ -802,7 +802,9 @@ function App() {
                             Kopyala
                           </button>
                         </div>
-                        <p className="text-sm text-slate-200">{pb.issue}</p>
+                        <p className="rounded-lg border border-white/10 bg-ink-800/80 px-3 py-2 text-sm text-slate-200 shadow-inner">
+                          {pb.issue}
+                        </p>
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="button"
@@ -847,7 +849,7 @@ function App() {
                     {resolvedProblems.map((pb) => (
                       <div
                         key={pb.id}
-                        className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/40 bg-emerald-950/50 p-4 shadow-inner"
+                        className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/40 bg-emerald-950/50 p-4 shadow-inner transition hover:border-emerald-200 hover:shadow-glow"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex flex-col gap-1">
