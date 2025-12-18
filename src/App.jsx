@@ -13,6 +13,11 @@ const fallbackTemplates = [
 
 const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map((tpl) => tpl.category || "Genel")]))
 
+const initialProblems = [
+  { id: 1, username: "@ornek1", issue: "Ödeme ekranda takıldı, 2 kez kart denemiş.", status: "open" },
+  { id: 2, username: "@ornek2", issue: "Teslimat gecikmesi şikayeti.", status: "open" },
+]
+
 const panelClass =
   "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
 
@@ -35,6 +40,7 @@ function LoadingIndicator({ label = "Yükleniyor..." }) {
 }
 
 function App() {
+  const [activeTab, setActiveTab] = useState("messages")
   const [title, setTitle] = useState("Pulcip Message Copy")
   const [message, setMessage] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Genel")
@@ -47,6 +53,11 @@ function App() {
   const [confirmCategoryTarget, setConfirmCategoryTarget] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [delayDone, setDelayDone] = useState(false)
+
+  const [problems, setProblems] = useState(initialProblems)
+  const [problemUsername, setProblemUsername] = useState("")
+  const [problemIssue, setProblemIssue] = useState("")
+  const [confirmProblemTarget, setConfirmProblemTarget] = useState(null)
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -85,6 +96,9 @@ function App() {
 
   useEffect(() => {
     const controller = new AbortController()
+    const startedAt = Date.now()
+    let timeoutId = null
+
     setIsLoading(true)
 
     ;(async () => {
@@ -108,18 +122,22 @@ function App() {
         if (firstTemplate?.category) setSelectedCategory(firstTemplate.category)
       } catch (error) {
         if (error?.name === "AbortError") return
-        // Hata durumunda en azından fallback verileri göster.
         setCategories(fallbackCategories)
         setTemplates(fallbackTemplates)
         setSelectedTemplate(fallbackTemplates[0]?.label ?? null)
         setSelectedCategory(fallbackTemplates[0]?.category ?? "Genel")
         toast.error("Sunucuya bağlanılamadı. (API/DB kontrol edin)")
       } finally {
-        setIsLoading(false)
+        const elapsed = Date.now() - startedAt
+        const delay = Math.max(0, 600 - elapsed)
+        timeoutId = window.setTimeout(() => setIsLoading(false), delay)
       }
     })()
 
-    return () => controller.abort()
+    return () => {
+      controller.abort()
+      if (timeoutId) window.clearTimeout(timeoutId)
+    }
   }, [])
 
   const handleTemplateChange = async (nextTemplate, options = {}) => {
@@ -325,320 +343,585 @@ function App() {
 
   const getCategoryClass = (cat) => categoryColors[cat] || "border-white/10 bg-white/5 text-slate-200"
 
-  return (
-    <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-                Pulcip Message Copy
-              </span>
-              <div className="space-y-1.5">
-                <h1 className="font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
-                  Pulcip Message Copy
-                </h1>
-                <p className="max-w-2xl text-sm text-slate-200/80 md:text-base">
-                  Kendi tonunu bul, hazır şablonlarını hızla düzenle ve tek tıkla ekibinle paylaş.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2.5">
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
-                  <span className="h-2 w-2 rounded-full bg-accent-400" />
-                  Şablon: {templateCountText}
-                </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
-                  <span className="h-2 w-2 rounded-full bg-amber-300" />
-                  Kategori sayısı: {categoryCountText}
-                </span>
-                <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
-                  <span className="h-2 w-2 rounded-full bg-amber-300" />
-                  Kategori: {selectedCategoryText}
-                </span>
-              </div>
-            </div>
+  const handleProblemAdd = () => {
+    const user = problemUsername.trim()
+    const issue = problemIssue.trim()
+    if (!user || !issue) {
+      toast.error("Kullanıcı adı ve sorun girin.")
+      return
+    }
+    const next = {
+      id: Date.now(),
+      username: user,
+      issue,
+      status: "open",
+    }
+    setProblems((prev) => [...prev, next])
+    setProblemUsername("")
+    setProblemIssue("")
+    toast.success("Problem eklendi")
+  }
 
-            <div className="relative w-full max-w-sm">
-              <div className="absolute inset-x-6 -bottom-16 h-40 rounded-full bg-accent-400/30 blur-3xl" />
-              <div className="relative rounded-2xl border border-white/10 bg-white/10 p-6 shadow-glow backdrop-blur-md">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">Aktif şablon</p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-display text-2xl font-semibold text-white">
-                        {activeTemplate?.label || (showLoading ? "Yükleniyor..." : "Yeni şablon")}
-                      </h3>
-                      <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getCategoryClass(
-                          activeTemplate?.category || selectedCategory || "Genel",
-                        )}`}
+  const handleProblemResolve = (id) => {
+    setProblems((prev) => prev.map((p) => (p.id === id ? { ...p, status: "resolved" } : p)))
+    toast.success("Problem çözüldü")
+  }
+
+  const handleProblemDeleteWithConfirm = (id) => {
+    if (confirmProblemTarget === id) {
+      setProblems((prev) => prev.filter((p) => p.id !== id))
+      setConfirmProblemTarget(null)
+      toast.success("Problem silindi")
+      return
+    }
+    setConfirmProblemTarget(id)
+    toast("Silmek için tekrar tıkla", { position: "top-right" })
+  }
+
+  const openProblems = problems.filter((p) => p.status !== "resolved")
+  const resolvedProblems = problems.filter((p) => p.status === "resolved")
+
+  return (
+    <div className="min-h-screen bg-ink-900 text-slate-50">
+      <div className="mx-auto max-w-6xl p-6 space-y-8">
+        <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/70 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("messages")}
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "messages"
+                ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                : "bg-white/5 text-slate-200 hover:bg-white/10"
+            }`}
+          >
+            Message Copy
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("problems")}
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "problems"
+                ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                : "bg-white/5 text-slate-200 hover:bg-white/10"
+            }`}
+          >
+            Problemli Müşteriler
+          </button>
+        </div>
+
+        {activeTab === "messages" && (
+          <>
+            <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-3">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
+                    Pulcip Message Copy
+                  </span>
+                  <div className="space-y-1.5">
+                    <h1 className="font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
+                      Pulcip Message Copy
+                    </h1>
+                    <p className="max-w-2xl text-sm text-slate-200/80 md:text-base">
+                      Kendi tonunu bul, hazır şablonlarını hızla düzenle ve tek tıkla ekibinle paylaş.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
+                      <span className="h-2 w-2 rounded-full bg-accent-400" />
+                      Şablon: {templateCountText}
+                    </span>
+                    <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
+                      <span className="h-2 w-2 rounded-full bg-amber-300" />
+                      Kategori sayısı: {categoryCountText}
+                    </span>
+                    <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
+                      <span className="h-2 w-2 rounded-full bg-amber-300" />
+                      Kategori: {selectedCategoryText}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="relative w-full max-w-sm">
+                  <div className="absolute inset-x-6 -bottom-16 h-40 rounded-full bg-accent-400/30 blur-3xl" />
+                  <div className="relative rounded-2xl border border-white/10 bg-white/10 p-6 shadow-glow backdrop-blur-md">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">
+                          Aktif şablon
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-display text-2xl font-semibold text-white">
+                            {activeTemplate?.label || (showLoading ? "Yükleniyor..." : "Yeni şablon")}
+                          </h3>
+                          <span
+                            className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getCategoryClass(
+                              activeTemplate?.category || selectedCategory || "Genel",
+                            )}`}
+                          >
+                            {activeTemplate?.category || selectedCategory || "Genel"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteWithConfirm(selectedTemplate)}
+                        className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                          confirmTarget === selectedTemplate
+                            ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                            : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
+                        }`}
+                        disabled={!selectedTemplate}
                       >
-                        {activeTemplate?.category || selectedCategory || "Genel"}
+                        {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
+                      </button>
+                    </div>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
+                      {activeTemplate?.value ||
+                        (showLoading ? "Veriler yükleniyor..." : "Mesajını düzenleyip kaydetmeye başla.")}
+                    </p>
+                    <div className="mt-4 flex items-center justify-between text-xs text-slate-300/80">
+                      <span>{messageLength} karakter</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">
+                        {showLoading ? "Bekle" : "Hazır"}
                       </span>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteWithConfirm(selectedTemplate)}
-                    className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
-                      confirmTarget === selectedTemplate
-                        ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                        : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
-                    }`}
-                    disabled={!selectedTemplate}
-                  >
-                    {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
-                  </button>
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
-                  {activeTemplate?.value ||
-                    (isLoading ? "Veriler yükleniyor..." : "Mesajını düzenleyip kaydetmeye başla.")}
-                </p>
-                <div className="mt-4 flex items-center justify-between text-xs text-slate-300/80">
-                  <span>{messageLength} karakter</span>
-                  <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">
-                    {showLoading ? "Bekle" : "Hazır"}
-                  </span>
                 </div>
               </div>
-            </div>
-          </div>
-        </header>
+            </header>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
-            <div className={`${panelClass} bg-ink-800/60`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon listesi</p>
-                  <p className="text-sm text-slate-400">Başlıklarına dokunarak düzenle ve kopyala.</p>
-                </div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                  {showLoading && <span className="h-2 w-2 animate-pulse rounded-full bg-accent-400" />}
-                  {templateCountText} {showLoading ? "" : "seçenek"}
-                </span>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {showLoading ? (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {Array.from({ length: 6 }).map((_, idx) => (
-                      <div key={idx} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
-                        <div className="mb-3 h-4 w-24 animate-pulse rounded-full bg-white/10" />
-                        <div className="grid gap-2">
-                          {Array.from({ length: 2 }).map((__, jdx) => (
-                            <div
-                              key={`${idx}-${jdx}`}
-                              className="h-20 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-300"
-                            >
-                              <div className="h-full animate-pulse rounded-xl bg-ink-800/80" />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon listesi</p>
+                      <p className="text-sm text-slate-400">Başlıklarına dokunarak düzenle ve kopyala.</p>
+                    </div>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {showLoading && <span className="h-2 w-2 animate-pulse rounded-full bg-accent-400" />}
+                      {templateCountText} {showLoading ? "" : "seçenek"}
+                    </span>
                   </div>
-                ) : (
-                  categories.map((cat) => {
-                    const list = groupedTemplates[cat] || []
-                    const isOpen = openCategories[cat] ?? true
-                    return (
-                      <div key={cat} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
-                        <button
-                          type="button"
-                          onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true) }))}
-                          className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <span
-                              className={`rounded-full border px-3 py-1 text-[11px] ${getCategoryClass(cat)}`}
-                            >
-                              {cat}
-                            </span>
-                            <span className="text-xs text-slate-400">{list.length} şablon</span>
-                          </span>
-                          <span
-                            className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
-                              isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
-                            }`}
-                            aria-hidden="true"
-                          >
-                            &gt;
-                          </span>
-                        </button>
 
-                        {isOpen && (
-                          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            {list.length === 0 && (
-                              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                                Bu kategoride şablon yok.
+                  <div className="mt-4 space-y-3">
+                    {showLoading ? (
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {Array.from({ length: 6 }).map((_, idx) => (
+                          <div key={idx} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
+                            <div className="mb-3 h-4 w-24 animate-pulse rounded-full bg-white/10" />
+                            <div className="grid gap-2">
+                              {Array.from({ length: 2 }).map((__, jdx) => (
+                                <div
+                                  key={`${idx}-${jdx}`}
+                                  className="h-20 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-300"
+                                >
+                                  <div className="h-full animate-pulse rounded-xl bg-ink-800/80" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      categories.map((cat) => {
+                        const list = groupedTemplates[cat] || []
+                        const isOpen = openCategories[cat] ?? true
+                        return (
+                          <div key={cat} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
+                            <button
+                              type="button"
+                              onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true) }))}
+                              className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
+                            >
+                              <span className="inline-flex items-center gap-2">
+                                <span
+                                  className={`rounded-full border px-3 py-1 text-[11px] ${getCategoryClass(cat)}`}
+                                >
+                                  {cat}
+                                </span>
+                                <span className="text-xs text-slate-400">{list.length} şablon</span>
+                              </span>
+                              <span
+                                className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
+                                  isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
+                                }`}
+                                aria-hidden="true"
+                              >
+                                &gt;
+                              </span>
+                            </button>
+
+                            {isOpen && (
+                              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                {list.length === 0 && (
+                                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                                    Bu kategoride şablon yok.
+                                  </div>
+                                )}
+                                {list.map((tpl) => (
+                                  <div key={tpl.label} className="relative">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
+                                      className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
+                                        tpl.label === selectedTemplate
+                                          ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                          : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                                      }`}
+                                    >
+                                      <p className="font-display text-lg">{tpl.label}</p>
+                                      <p className="mt-1 h-[54px] overflow-hidden text-sm text-slate-400">{tpl.value}</p>
+                                    </button>
+                                  </div>
+                                ))}
                               </div>
                             )}
-                            {list.map((tpl) => (
-                              <div key={tpl.label} className="relative">
-                                <button
-                                  type="button"
-                                  onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
-                                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
-                                    tpl.label === selectedTemplate
-                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                                      : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
-                                  }`}
-                                >
-                                  <p className="font-display text-lg">{tpl.label}</p>
-                                </button>
-                              </div>
-                            ))}
                           </div>
-                        )}
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className={`${panelClass} bg-ink-800/60`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
-                  <p className="text-sm text-slate-400">Yeni kategori ekle, ardından mesaj alanından seç.</p>
+                        )
+                      })
+                    )}
+                  </div>
                 </div>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                  {categoryCountText} kategori
-                </span>
               </div>
 
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <input
-                  id="category-new"
-                  type="text"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="Örn: Duyuru"
-                  className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
-                />
-                <button
-                  type="button"
-                  onClick={handleCategoryAdd}
-                  className="min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                >
-                  Ekle
-                </button>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <span
-                    key={cat}
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs ${getCategoryClass(cat)}`}
-                  >
-                    <span className="font-semibold">{cat}</span>
-                    {cat !== "Genel" && (
+              <div className="space-y-6">
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
+                      <p className="text-sm text-slate-400">Yeni kategori ekle, ardından mesaj alanından seç.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {categoryCountText} kategori
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <input
+                      id="category-new"
+                      type="text"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      placeholder="Örn: Duyuru"
+                      className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCategoryAdd}
+                      className="min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                    >
+                      Ekle
+                    </button>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {categories.map((cat) => (
+                      <span
+                        key={cat}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs ${getCategoryClass(cat)}`}
+                      >
+                        <span className="font-semibold">{cat}</span>
+                        {cat !== "Genel" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCategoryDeleteWithConfirm(cat)}
+                            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
+                              confirmCategoryTarget === cat
+                                ? "border-rose-300 bg-rose-500/20 text-rose-50"
+                                : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                            }`}
+                          >
+                            {confirmCategoryTarget === cat ? "Emin misin?" : "Sil"}
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon ekle</p>
+                      <p className="text-sm text-slate-400">Başlık, kategori ve mesajı ekleyip kaydet.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">Hızlı ekle</span>
+                  </div>
+
+                  <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="title-mini">
+                        Başlık
+                      </label>
+                      <input
+                        id="title-mini"
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Örn: Karşılama notu"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="category-mini">
+                        Kategori
+                      </label>
+                      <select
+                        id="category-mini"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
+                        <label htmlFor="message-mini">Mesaj</label>
+                        <span className="text-[11px] text-slate-400">Anlık karakter: {messageLength}</span>
+                      </div>
+                      <textarea
+                        id="message-mini"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        rows={4}
+                        placeholder="Mesaj içeriği..."
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
                       <button
                         type="button"
-                        onClick={() => handleCategoryDeleteWithConfirm(cat)}
-                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
-                          confirmCategoryTarget === cat
-                            ? "border-rose-300 bg-rose-500/20 text-rose-50"
-                            : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
-                        }`}
+                        onClick={handleAdd}
+                        className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                       >
-                        {confirmCategoryTarget === cat ? "Emin misin?" : "Sil"}
+                        Kaydet
                       </button>
-                    )}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className={`${panelClass} bg-ink-900/60`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon ekle</p>
-                  <p className="text-sm text-slate-400">Başlık, kategori ve mesajı ekleyip kaydet.</p>
-                </div>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">Hızlı ekle</span>
-              </div>
-
-              <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-200" htmlFor="title-mini">
-                    Başlık
-                  </label>
-                  <input
-                    id="title-mini"
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Örn: Karşılama notu"
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-200" htmlFor="category-mini">
-                    Kategori
-                  </label>
-                  <select
-                    id="category-mini"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
-                    <label htmlFor="message-mini">Mesaj</label>
-                    <span className="text-[11px] text-slate-400">Anlık karakter: {messageLength}</span>
+                      <button
+                        type="button"
+                        onClick={() => setMessage("")}
+                        className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                      >
+                        Temizle
+                      </button>
+                    </div>
                   </div>
-                  <textarea
-                    id="message-mini"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={4}
-                    placeholder="Mesaj içeriği..."
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                  />
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={handleAdd}
-                    className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                  >
-                    Kaydet
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMessage("")}
-                    className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                  >
-                    Temizle
-                  </button>
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Hızlı ipuçları</p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                    <li>- Başlık boş kalırsa otomatik bir isimle kaydedilir.</li>
+                    <li>- Şablona tıklamak metni panoya kopyalar.</li>
+                    <li>- Kategori silince şablonlar “Genel”e taşınır.</li>
+                  </ul>
                 </div>
               </div>
             </div>
+          </>
+        )}
 
-            <div className={`${panelClass} bg-ink-800/60`}>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Hızlı ipuçları</p>
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>- Başlık boş kalırsa otomatik bir isimle kaydedilir.</li>
-                <li>- Şablona tıklamak metni panoya kopyalar.</li>
-                <li>- Kategori silince şablonlar “Genel”e taşınır.</li>
-              </ul>
+        {activeTab === "problems" && (
+          <div className="space-y-6">
+            <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
+                    Problemli Müşteriler
+                  </span>
+                  <h1 className="font-display text-3xl font-semibold text-white">Problemli Müşteriler</h1>
+                  <p className="max-w-2xl text-sm text-slate-200/80">
+                    Müşteri kullanıcı adı ve sorununu kaydet; çözülünce “Problem çözüldü” ile kapat veya sil.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Açık problem: {openProblems.length}
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Çözülen: {resolvedProblems.length}
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Toplam: {problems.length}
+                  </span>
+                </div>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Açık problemler</p>
+                      <p className="text-sm text-slate-400">Kullanıcı adı ve sorun bilgisi listelenir.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {openProblems.length} kayıt
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {openProblems.length === 0 && (
+                      <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                        Açık problem yok.
+                      </div>
+                    )}
+                    {openProblems.map((pb) => (
+                      <div
+                        key={pb.id}
+                        className="flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-ink-900 p-4 shadow-inner"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent-200">
+                              {pb.username}
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleProblemResolve(pb.id)}
+                              className="rounded-full border border-emerald-300/70 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25"
+                            >
+                              Problem çözüldü
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleProblemDeleteWithConfirm(pb.id)}
+                              className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                                confirmProblemTarget === pb.id
+                                  ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                  : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                              }`}
+                            >
+                              {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-200">{pb.issue}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Çözülen problemler</p>
+                      <p className="text-sm text-slate-400">Çözülmüş kayıtları sakla ya da sil.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {resolvedProblems.length} kayıt
+                    </span>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {resolvedProblems.length === 0 && (
+                      <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                        Çözülen kayıt yok.
+                      </div>
+                    )}
+                    {resolvedProblems.map((pb) => (
+                      <div
+                        key={pb.id}
+                        className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/60 bg-emerald-500/10 p-4 shadow-inner"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">
+                            {pb.username}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleProblemDeleteWithConfirm(pb.id)}
+                            className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                              confirmProblemTarget === pb.id
+                                ? "border-rose-200 bg-rose-500/25 text-rose-50"
+                                : "border-rose-200/80 bg-rose-500/10 text-rose-50 hover:border-rose-100 hover:bg-rose-500/20"
+                            }`}
+                          >
+                            {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
+                          </button>
+                        </div>
+                        <p className="text-sm text-emerald-50/90">{pb.issue}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Problem ekle</p>
+                      <p className="text-sm text-slate-400">Kullanıcı adı ve sorunu yazıp kaydet.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      Toplam: {problems.length}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="pb-username">
+                        Kullanıcı adı
+                      </label>
+                      <input
+                        id="pb-username"
+                        type="text"
+                        value={problemUsername}
+                        onChange={(e) => setProblemUsername(e.target.value)}
+                        placeholder="@kullanici"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="pb-issue">
+                        Sorun
+                      </label>
+                      <textarea
+                        id="pb-issue"
+                        value={problemIssue}
+                        onChange={(e) => setProblemIssue(e.target.value)}
+                        rows={4}
+                        placeholder="Sorunun kısa özeti..."
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={handleProblemAdd}
+                        className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                      >
+                        Kaydet
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProblemUsername("")
+                          setProblemIssue("")
+                        }}
+                        className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                      >
+                        Temizle
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
       <Toaster
         position="top-right"
