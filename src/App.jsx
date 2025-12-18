@@ -16,6 +16,15 @@ const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map
 const panelClass =
   "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
 
+const categoryPalette = [
+  "border-emerald-300/50 bg-emerald-500/15 text-emerald-50",
+  "border-amber-300/50 bg-amber-500/15 text-amber-50",
+  "border-sky-300/50 bg-sky-500/15 text-sky-50",
+  "border-fuchsia-300/50 bg-fuchsia-500/15 text-fuchsia-50",
+  "border-rose-300/50 bg-rose-500/15 text-rose-50",
+  "border-indigo-300/50 bg-indigo-500/15 text-indigo-50",
+]
+
 function LoadingIndicator({ label = "Yükleniyor..." }) {
   return (
     <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-200">
@@ -305,6 +314,16 @@ function App() {
   const categoryCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : categories.length
   const selectedCategoryText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : selectedCategory.trim() || "Genel"
 
+  const categoryColors = useMemo(() => {
+    const map = {}
+    categories.forEach((cat, idx) => {
+      map[cat] = categoryPalette[idx % categoryPalette.length]
+    })
+    return map
+  }, [categories])
+
+  const getCategoryClass = (cat) => categoryColors[cat] || "border-white/10 bg-white/5 text-slate-200"
+
   return (
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
@@ -348,7 +367,11 @@ function App() {
                       <h3 className="font-display text-2xl font-semibold text-white">
                         {activeTemplate?.label || (showLoading ? "Yükleniyor..." : "Yeni şablon")}
                       </h3>
-                      <span className="rounded-full border border-accent-300/60 bg-accent-500/15 px-3 py-1 text-[11px] font-semibold text-accent-50">
+                      <span
+                        className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getCategoryClass(
+                          activeTemplate?.category || selectedCategory || "Genel",
+                        )}`}
+                      >
                         {activeTemplate?.category || selectedCategory || "Genel"}
                       </span>
                     </div>
@@ -426,7 +449,9 @@ function App() {
                           className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
                         >
                           <span className="inline-flex items-center gap-2">
-                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200">
+                            <span
+                              className={`rounded-full border px-3 py-1 text-[11px] ${getCategoryClass(cat)}`}
+                            >
                               {cat}
                             </span>
                             <span className="text-xs text-slate-400">{list.length} şablon</span>
@@ -506,7 +531,7 @@ function App() {
                 {categories.map((cat) => (
                   <span
                     key={cat}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200"
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs ${getCategoryClass(cat)}`}
                   >
                     <span className="font-semibold">{cat}</span>
                     {cat !== "Genel" && (
