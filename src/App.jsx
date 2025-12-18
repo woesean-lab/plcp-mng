@@ -776,24 +776,32 @@ function App() {
                     {openProblems.map((pb) => (
                       <div
                         key={pb.id}
-                        className="flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-ink-900 p-4 shadow-inner"
+                        className="flex h-full flex-col gap-3 rounded-xl border border-accent-400/20 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-900 p-4 shadow-inner"
                       >
-                        <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent-200 break-all">
-                          {pb.username}
-                        </span>
-                        <p className="text-sm text-slate-200">{pb.issue}</p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-accent-400/30 bg-accent-500/10 px-3 py-1 text-xs font-semibold text-accent-50 break-all">
+                            {pb.username}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-100">
+                            <span className="h-2 w-2 rounded-full bg-amber-300" />
+                            Açık
+                          </span>
+                        </div>
+                        <p className="rounded-lg border border-white/5 bg-ink-800/80 px-3 py-2 text-sm text-slate-200 shadow-inner">
+                          {pb.issue}
+                        </p>
+                        <div className="flex flex-wrap gap-2 border-t border-white/5 pt-2">
                           <button
                             type="button"
                             onClick={() => handleProblemResolve(pb.id)}
-                            className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25"
+                            className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25"
                           >
                             Çözüldü
                           </button>
                           <button
                             type="button"
                             onClick={() => handleProblemDeleteWithConfirm(pb.id)}
-                            className={`rounded-lg border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
+                            className={`rounded-lg border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition ${
                               confirmProblemTarget === pb.id
                                 ? "border-rose-300 bg-rose-500/25 text-rose-50"
                                 : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
@@ -826,16 +834,24 @@ function App() {
                     {resolvedProblems.map((pb) => (
                       <div
                         key={pb.id}
-                        className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/60 bg-emerald-500/10 p-4 shadow-inner"
+                        className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/50 bg-gradient-to-br from-emerald-900/40 via-emerald-800/30 to-emerald-900/60 p-4 shadow-inner"
                       >
-                        <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white break-all">
-                          {pb.username}
-                        </span>
-                        <p className="text-sm text-emerald-50/90">{pb.issue}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-emerald-50 break-all">
+                            {pb.username}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/60 bg-emerald-400/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-50">
+                            <span className="h-2 w-2 rounded-full bg-emerald-200" />
+                            Çözüldü
+                          </span>
+                        </div>
+                        <p className="rounded-lg border border-emerald-200/20 bg-emerald-950/30 px-3 py-2 text-sm text-emerald-50/90 shadow-inner">
+                          {pb.issue}
+                        </p>
                         <button
                           type="button"
                           onClick={() => handleProblemDeleteWithConfirm(pb.id)}
-                          className={`w-fit rounded-lg border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
+                          className={`w-fit rounded-lg border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition ${
                             confirmProblemTarget === pb.id
                               ? "border-rose-200 bg-rose-500/25 text-rose-50"
                               : "border-rose-200/80 bg-rose-500/10 text-rose-50 hover:border-rose-100 hover:bg-rose-500/20"
