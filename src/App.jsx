@@ -66,9 +66,10 @@ function App() {
 
   useEffect(() => {
     setOpenCategories((prev) => {
+      if (categories.length === 0) return {}
       const next = { ...prev }
-      categories.forEach((cat) => {
-        if (!(cat in next)) next[cat] = true
+      categories.forEach((cat, idx) => {
+        if (!(cat in next)) next[cat] = idx === 0
       })
       Object.keys(next).forEach((cat) => {
         if (!categories.includes(cat)) delete next[cat]
