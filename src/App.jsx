@@ -367,6 +367,16 @@ function App() {
     toast.success("Problem çözüldü")
   }
 
+  const handleProblemCopy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success("Sorun kopyalandı", { duration: 1400, position: "top-right" })
+    } catch (error) {
+      console.error(error)
+      toast.error("Kopyalanamadı", { duration: 1600, position: "top-right" })
+    }
+  }
+
   const handleProblemDeleteWithConfirm = (id) => {
     if (confirmProblemTarget === id) {
       setProblems((prev) => prev.filter((p) => p.id !== id))
@@ -776,18 +786,27 @@ function App() {
                     {openProblems.map((pb) => (
                       <div
                         key={pb.id}
-                        className="flex h-full flex-col gap-3 rounded-xl border border-accent-400/20 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-900 p-4 shadow-inner"
+                        className="flex h-full flex-col gap-3 rounded-xl border border-white/10 border-l-4 border-l-amber-300 bg-gradient-to-br from-amber-500/10 via-ink-900 to-ink-900 p-4 shadow-[0_12px_50px_-24px_rgba(0,0,0,0.8)]"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-accent-400/30 bg-accent-500/10 px-3 py-1 text-xs font-semibold text-accent-50 break-all">
-                            {pb.username}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-100">
-                            <span className="h-2 w-2 rounded-full bg-amber-300" />
-                            Açık
-                          </span>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-amber-300/50 bg-amber-500/15 px-3 py-1 text-[11px] font-semibold text-amber-50 break-all">
+                              {pb.username}
+                            </span>
+                            <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-300/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-100">
+                              <span className="h-2 w-2 rounded-full bg-amber-300" />
+                              Açık
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleProblemCopy(pb.issue)}
+                            className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
+                          >
+                            Kopyala
+                          </button>
                         </div>
-                        <p className="rounded-lg border border-white/5 bg-ink-800/80 px-3 py-2 text-sm text-slate-200 shadow-inner">
+                        <p className="rounded-lg border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-200 shadow-inner">
                           {pb.issue}
                         </p>
                         <div className="flex flex-wrap gap-2 border-t border-white/5 pt-2">
@@ -834,16 +853,25 @@ function App() {
                     {resolvedProblems.map((pb) => (
                       <div
                         key={pb.id}
-                        className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/50 bg-gradient-to-br from-emerald-900/40 via-emerald-800/30 to-emerald-900/60 p-4 shadow-inner"
+                        className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/40 border-l-4 border-l-emerald-300 bg-gradient-to-br from-emerald-900/40 via-emerald-800/30 to-emerald-900/60 p-4 shadow-[0_12px_50px_-24px_rgba(0,0,0,0.8)]"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-emerald-50 break-all">
-                            {pb.username}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/60 bg-emerald-400/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-50">
-                            <span className="h-2 w-2 rounded-full bg-emerald-200" />
-                            Çözüldü
-                          </span>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-emerald-50 break-all">
+                              {pb.username}
+                            </span>
+                            <span className="inline-flex w-fit items-center gap-1 rounded-full border border-emerald-200/60 bg-emerald-400/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-50">
+                              <span className="h-2 w-2 rounded-full bg-emerald-200" />
+                              Çözüldü
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleProblemCopy(pb.issue)}
+                            className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-emerald-200 hover:text-emerald-50"
+                          >
+                            Kopyala
+                          </button>
                         </div>
                         <p className="rounded-lg border border-emerald-200/20 bg-emerald-950/30 px-3 py-2 text-sm text-emerald-50/90 shadow-inner">
                           {pb.issue}
