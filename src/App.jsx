@@ -788,14 +788,14 @@ function App() {
                             <button
                               type="button"
                               onClick={() => handleProblemResolve(pb.id)}
-                              className="rounded-full border border-emerald-300/70 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25"
+                              className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25"
                             >
-                              Problem çözüldü
+                              Çözüldü
                             </button>
                             <button
                               type="button"
                               onClick={() => handleProblemDeleteWithConfirm(pb.id)}
-                              className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                              className={`rounded-lg border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
                                 confirmProblemTarget === pb.id
                                   ? "border-rose-300 bg-rose-500/25 text-rose-50"
                                   : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
@@ -839,7 +839,7 @@ function App() {
                           <button
                             type="button"
                             onClick={() => handleProblemDeleteWithConfirm(pb.id)}
-                            className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                            className={`rounded-lg border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
                               confirmProblemTarget === pb.id
                                 ? "border-rose-200 bg-rose-500/25 text-rose-50"
                                 : "border-rose-200/80 bg-rose-500/10 text-rose-50 hover:border-rose-100 hover:bg-rose-500/20"
