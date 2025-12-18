@@ -778,13 +778,13 @@ function App() {
                         key={pb.id}
                         className="flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-ink-900 p-4 shadow-inner"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent-200">
+                        <div className="flex flex-col gap-2">
+                          <div className="inline-flex max-w-full flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent-200 break-all">
                               {pb.username}
                             </span>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
                               onClick={() => handleProblemResolve(pb.id)}
@@ -832,14 +832,14 @@ function App() {
                         key={pb.id}
                         className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/60 bg-emerald-500/10 p-4 shadow-inner"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">
+                        <div className="flex flex-col gap-2">
+                          <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white break-all">
                             {pb.username}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleProblemDeleteWithConfirm(pb.id)}
-                            className={`rounded-lg border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
+                            className={`w-fit rounded-lg border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
                               confirmProblemTarget === pb.id
                                 ? "border-rose-200 bg-rose-500/25 text-rose-50"
                                 : "border-rose-200/80 bg-rose-500/10 text-rose-50 hover:border-rose-100 hover:bg-rose-500/20"
