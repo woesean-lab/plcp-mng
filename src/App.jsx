@@ -382,8 +382,8 @@ function App() {
   const resolvedProblems = problems.filter((p) => p.status === "resolved")
 
   return (
-    <div className="min-h-screen bg-ink-900 text-slate-50">
-      <div className="mx-auto max-w-6xl p-6 space-y-8">
+    <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/70 px-3 py-2">
           <button
             type="button"
@@ -597,23 +597,23 @@ function App() {
                     </span>
                   </div>
 
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                    <input
-                      id="category-new"
-                      type="text"
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      placeholder="Örn: Duyuru"
-                      className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleCategoryAdd}
-                      className="min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                    >
-                      Ekle
-                    </button>
-                  </div>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    id="category-new"
+                    type="text"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="Örn: Duyuru"
+                    className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCategoryAdd}
+                    className="w-full min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 sm:w-auto"
+                  >
+                    Ekle
+                  </button>
+                </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {categories.map((cat) => (
                       <span
