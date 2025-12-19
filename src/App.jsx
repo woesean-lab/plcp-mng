@@ -1059,14 +1059,14 @@ function App() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Yeni ürün ekle</p>
-                      <p className="text-sm text-slate-400">Hızlı ürün listesi oluştur; silme için tekrar tıkla.</p>
+                      <p className="text-sm text-slate-400">Message Copy bölümündeki kategori ekleme akışı gibi hızlı ürün listesi.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                       {productNames.length} ürün
                     </span>
                   </div>
 
-                  <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                  <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <input
                         type="text"
@@ -1084,32 +1084,38 @@ function App() {
                       </button>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      {productNames.length === 0 && (
-                        <span className="text-sm text-slate-400">Liste boş. Ürün ekleyin.</span>
-                      )}
-                      {productNames.map((name) => (
-                        <span
-                          key={name}
-                          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-100"
-                        >
-                          {name}
-                          <span className="rounded-full border border-white/10 bg-ink-900/60 px-2 py-0.5 text-[11px] text-slate-200">
-                            Stok: {productCounts[name] ?? 0}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleProductDeleteWithConfirm(name)}
-                            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
-                              confirmProductTarget === name
-                                ? "border-rose-300 bg-rose-500/20 text-rose-50"
-                                : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
-                            }`}
+                    <div className="rounded-xl border border-white/10 bg-ink-900/80 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Ürünler</div>
+                        <span className="text-[11px] text-slate-400">Toplam stok: {stockStats.totalUnits}</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {productNames.length === 0 && (
+                          <span className="text-sm text-slate-400">Liste boş. Ürün ekleyin.</span>
+                        )}
+                        {productNames.map((name) => (
+                          <span
+                            key={name}
+                            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-100"
                           >
-                            {confirmProductTarget === name ? "Emin misin?" : "Sil"}
-                          </button>
-                        </span>
-                      ))}
+                            {name}
+                            <span className="rounded-full border border-white/10 bg-ink-900/60 px-2 py-0.5 text-[11px] text-slate-200">
+                              Stok: {productCounts[name] ?? 0}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleProductDeleteWithConfirm(name)}
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
+                                confirmProductTarget === name
+                                  ? "border-rose-300 bg-rose-500/20 text-rose-50"
+                                  : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                              }`}
+                            >
+                              {confirmProductTarget === name ? "Emin misin?" : "Sil"}
+                            </button>
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
