@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
+import { HiOutlineChatBubbleLeftRight, HiOutlineChevronDown, HiOutlineTrash } from "react-icons/hi2"
 
 const fallbackTemplates = [
   { label: "Hoş geldin", value: "Hoş geldin! Burada herkese yer var.", category: "Karşılama" },
@@ -1066,7 +1067,7 @@ function App() {
                               className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
                               aria-label="Teslimat mesajını kopyala"
                             >
-                              <i className="ri-chat-3-line text-base leading-none not-italic" aria-hidden="true" />
+                              <HiOutlineChatBubbleLeftRight className="h-4 w-4" aria-hidden="true" />
                             </button>
                             <button
                               type="button"
@@ -1081,14 +1082,14 @@ function App() {
                               }`}
                               aria-label="Ürünü sil"
                             >
-                              <i className="ri-delete-bin-line text-base leading-none not-italic" aria-hidden="true" />
+                              <HiOutlineTrash className="h-4 w-4" aria-hidden="true" />
                             </button>
                             <span
                               className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
                                 openProducts[product.id] ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
                               }`}
                             >
-                              <i className="ri-arrow-down-s-line text-sm leading-none not-italic" aria-hidden="true" />
+                              <HiOutlineChevronDown className="h-4 w-4" aria-hidden="true" />
                             </span>
                           </div>
                         </button>
