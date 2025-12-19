@@ -1066,58 +1066,49 @@ function App() {
                     </span>
                   </div>
 
-                  <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-                    <div className="flex flex-col gap-3 sm:flex-row">
-                      <input
-                        type="text"
-                        value={newProduct}
-                        onChange={(e) => setNewProduct(e.target.value)}
-                        placeholder="Örn: Cyberpunk 2077 (Steam)"
-                        className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleProductAdd}
-                        className="min-w-[120px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                      >
-                        Ekle
-                      </button>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-ink-900/80 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Ürünler</div>
-                        <span className="text-[11px] text-slate-400">Toplam stok: {stockStats.totalUnits}</span>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {productNames.length === 0 && (
-                          <span className="text-sm text-slate-400">Liste boş. Ürün ekleyin.</span>
-                        )}
-                        {productNames.map((name) => (
-                          <span
-                            key={name}
-                            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-100"
-                          >
-                            {name}
-                            <span className="rounded-full border border-white/10 bg-ink-900/60 px-2 py-0.5 text-[11px] text-slate-200">
-                              Stok: {productCounts[name] ?? 0}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleProductDeleteWithConfirm(name)}
-                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
-                                confirmProductTarget === name
-                                  ? "border-rose-300 bg-rose-500/20 text-rose-50"
-                                  : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
-                              }`}
-                            >
-                              {confirmProductTarget === name ? "Emin misin?" : "Sil"}
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <input
+                      type="text"
+                      value={newProduct}
+                      onChange={(e) => setNewProduct(e.target.value)}
+                      placeholder="Örn: Cyberpunk 2077 (Steam)"
+                      className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleProductAdd}
+                      className="w-full min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 sm:w-auto"
+                    >
+                      Ekle
+                    </button>
                   </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {productNames.length === 0 && <span className="text-sm text-slate-400">Liste boş. Ürün ekleyin.</span>}
+                    {productNames.map((name) => (
+                      <span
+                        key={name}
+                        className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs text-slate-100"
+                      >
+                        <span className="font-semibold">{name}</span>
+                        <span className="rounded-full border border-white/10 bg-ink-900/60 px-2 py-0.5 text-[11px] text-slate-200">
+                          Stok: {productCounts[name] ?? 0}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleProductDeleteWithConfirm(name)}
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
+                            confirmProductTarget === name
+                              ? "border-rose-300 bg-rose-500/20 text-rose-50"
+                              : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                          }`}
+                        >
+                          {confirmProductTarget === name ? "Emin misin?" : "Sil"}
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
                 </div>
 
                 <div className={`${panelClass} bg-ink-900/60`}>
