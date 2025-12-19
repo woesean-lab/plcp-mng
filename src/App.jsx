@@ -94,6 +94,7 @@ function App() {
     return map
   })
   const [confirmProductTarget, setConfirmProductTarget] = useState(null)
+  const [bulkCount, setBulkCount] = useState({})
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -458,6 +459,29 @@ function App() {
     )
     resetStockForm()
     toast.success("Stok eklendi")
+  }
+
+  const handleBulkCopyAndDelete = (productId) => {
+    const count = Math.max(1, Number(bulkCount[productId] || 0))
+    const product = products.find((p) => p.id === productId)
+    if (!product) return
+    const codes = product.stocks.slice(0, count).map((stk) => stk.code)
+    if (codes.length === 0) {
+      toast.error("Bu üründe kopyalanacak stok yok.")
+      return
+    }
+    const joined = codes.join("\n")
+    navigator.clipboard
+      .writeText(joined)
+      .then(() => {
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === productId ? { ...p, stocks: p.stocks.slice(codes.length) } : p,
+          ),
+        )
+        toast.success(`${codes.length} stok kopyalandı ve silindi`, { duration: 1800, position: "top-right" })
+      })
+      .catch(() => toast.error("Kopyalanamadı"))
   }
 
   const handleProductDeleteWithConfirm = (productId) => {
@@ -1122,6 +1146,33 @@ function App() {
                                 Bu üründe stok yok.
                               </div>
                             )}
+                            {product.stocks.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2">
+                                <label className="text-xs font-semibold text-slate-300" htmlFor={`bulk-${product.id}`}>
+                                  Toplu kopyala & sil (adet):
+                                </label>
+                                <input
+                                  id={`bulk-${product.id}`}
+                                  type="number"
+                                  min="1"
+                                  value={bulkCount[product.id] ?? product.stocks.length}
+                                  onChange={(e) =>
+                                    setBulkCount((prev) => ({
+                                      ...prev,
+                                      [product.id]: e.target.value,
+                                    }))
+                                  }
+                                  className="w-20 rounded-md border border-white/10 bg-ink-900 px-2 py-1 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/40"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleBulkCopyAndDelete(product.id)}
+                                  className="rounded-md border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
+                                >
+                                  Uygula
+                                </button>
+                              </div>
+                            )}
                             {product.stocks.map((stk, idx) => (
                               <div
                                 key={stk.id}
@@ -1131,7 +1182,7 @@ function App() {
                                   #{idx + 1}
                                 </span>
                                 <p className="flex-1 break-all font-mono text-sm text-slate-100 group-hover:text-accent-50">{stk.code}</p>
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-2">
                                   <button
                                     type="button"
                                     onClick={() => handleStockCopy(stk.code)}
