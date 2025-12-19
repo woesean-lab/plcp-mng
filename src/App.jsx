@@ -87,6 +87,7 @@ function App() {
   const [productForm, setProductForm] = useState({ name: "", note: "" })
   const [stockForm, setStockForm] = useState({ productId: initialProducts[0]?.id || "", code: "" })
   const [confirmStockTarget, setConfirmStockTarget] = useState(null)
+  const [productSearch, setProductSearch] = useState("")
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -113,6 +114,17 @@ function App() {
     })
     return { total }
   }, [products])
+
+  const filteredProducts = useMemo(() => {
+    const text = productSearch.trim().toLowerCase()
+    if (!text) return products
+    return products.filter(
+      (prd) =>
+        prd.name.toLowerCase().includes(text) ||
+        (prd.note || "").toLowerCase().includes(text) ||
+        prd.stocks.some((stk) => stk.code.toLowerCase().includes(text)),
+    )
+  }, [productSearch, products])
 
   useEffect(() => {
     setOpenCategories((prev) => {
@@ -939,18 +951,30 @@ function App() {
                       </p>
                       <p className="text-sm text-slate-400">Tıkla, kopyala ve gerekirse sil.</p>
                     </div>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      {products.length} ürün / {stockSummary.total} stok
-                    </span>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                      <div className="flex items-center gap-2 rounded-full border border-white/10 bg-ink-900 px-3 py-1.5 shadow-inner">
+                        <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
+                        <input
+                          type="text"
+                          value={productSearch}
+                          onChange={(e) => setProductSearch(e.target.value)}
+                          placeholder="ürün ya da kod"
+                          className="w-40 bg-transparent text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                        />
+                      </div>
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                        {products.length} ürün / {stockSummary.total} stok
+                      </span>
+                    </div>
                   </div>
 
                   <div className="mt-4 grid gap-3">
-                    {products.length === 0 && (
+                    {filteredProducts.length === 0 && (
                       <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
                         Henüz ürün yok.
                       </div>
                     )}
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <div
                         key={product.id}
                         className="rounded-2xl border border-white/10 bg-ink-900 p-4 shadow-inner"
