@@ -22,3 +22,11 @@ model Category {
   createdAt DateTime @default(now())
 }
 
+model Problem {
+  id        Int      @id @default(autoincrement())
+  username  String
+  issue     String
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

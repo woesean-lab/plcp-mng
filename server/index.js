@@ -192,6 +192,86 @@ app.delete("/api/categories/:name", async (req, res) => {
   res.status(204).end()
 })
 
+const allowedProblemStatus = new Set(["open", "resolved"])
+
+app.get("/api/problems", async (_req, res) => {
+  const problems = await prisma.problem.findMany({ orderBy: { createdAt: "desc" } })
+  res.json(problems)
+})
+
+app.post("/api/problems", async (req, res) => {
+  const username = String(req.body?.username ?? "").trim()
+  const issue = String(req.body?.issue ?? "").trim()
+  if (!username || !issue) {
+    res.status(400).json({ error: "username and issue are required" })
+    return
+  }
+  const created = await prisma.problem.create({ data: { username, issue, status: "open" } })
+  res.status(201).json(created)
+})
+
+app.put("/api/problems/:id", async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const username = req.body?.username === undefined ? undefined : String(req.body.username).trim()
+  const issue = req.body?.issue === undefined ? undefined : String(req.body.issue).trim()
+  const statusRaw = req.body?.status === undefined ? undefined : String(req.body.status).trim()
+  const status = statusRaw === undefined ? undefined : statusRaw || "open"
+
+  if (status !== undefined && !allowedProblemStatus.has(status)) {
+    res.status(400).json({ error: "invalid status" })
+    return
+  }
+  if (username !== undefined && !username) {
+    res.status(400).json({ error: "username cannot be empty" })
+    return
+  }
+  if (issue !== undefined && !issue) {
+    res.status(400).json({ error: "issue cannot be empty" })
+    return
+  }
+
+  try {
+    const updated = await prisma.problem.update({
+      where: { id },
+      data: {
+        ...(username === undefined ? {} : { username }),
+        ...(issue === undefined ? {} : { issue }),
+        ...(status === undefined ? {} : { status }),
+      },
+    })
+    res.json(updated)
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Problem not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/problems/:id", async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+  try {
+    await prisma.problem.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Problem not found" })
+      return
+    }
+    throw error
+  }
+})
+
 app.use(express.static(distDir))
 app.get(/^\/(?!api\/).*/, (req, res) => {
   res.sendFile(path.join(distDir, "index.html"))
