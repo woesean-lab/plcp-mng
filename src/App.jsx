@@ -1134,21 +1134,11 @@ function App() {
                                 <div className="flex items-center gap-1.5">
                                   <button
                                     type="button"
-                                    onClick={() => handleStockCopy(stk.code)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
+                                  onClick={() => handleStockCopy(stk.code)}
+                                    className="flex h-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
                                     aria-label="Stoku kopyala"
                                   >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      className="h-4 w-4"
-                                    >
-                                      <rect x="9" y="9" width="11" height="11" rx="2" ry="2" />
-                                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                    </svg>
+                                    Kopyala
                                   </button>
                                   <button
                                     type="button"
@@ -1156,45 +1146,22 @@ function App() {
                                       handleStockCopy(stk.code)
                                       handleStockDeleteWithConfirm(product.id, stk.id)
                                     }}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-500/15 hover:text-amber-50"
+                                    className="flex h-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-500/15 hover:text-amber-50"
                                     aria-label="Kopyala ve sil"
                                   >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      className="h-4 w-4"
-                                    >
-                                      <rect x="9" y="9" width="11" height="11" rx="2" ry="2" />
-                                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                      <path d="M19 6l-1 14H6L5 6" />
-                                    </svg>
+                                    Kopyala & Sil
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
-                                    className={`flex h-8 w-8 items-center justify-center rounded-lg border text-slate-200 transition hover:-translate-y-0.5 ${
+                                    className={`flex h-8 items-center justify-center rounded-lg border px-3 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 ${
                                       confirmStockTarget === `${product.id}-${stk.id}`
                                         ? "border-rose-300 bg-rose-500/25 text-rose-50"
                                         : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
                                     }`}
                                     aria-label="Stoku sil"
                                   >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      className="h-4 w-4"
-                                    >
-                                      <path d="M3 6h18" />
-                                      <path d="M8 6V4h8v2" />
-                                      <path d="M19 6l-1 14H6L5 6" />
-                                      <path d="M10 11v6M14 11v6" />
-                                    </svg>
+                                    Sil
                                   </button>
                                 </div>
                               </div>
