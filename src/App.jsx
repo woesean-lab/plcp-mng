@@ -1134,22 +1134,11 @@ function App() {
                                 <div className="flex items-center gap-1.5">
                                   <button
                                     type="button"
-                                  onClick={() => handleStockCopy(stk.code)}
+                                    onClick={() => handleStockCopy(stk.code)}
                                     className="flex h-7 items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
                                     aria-label="Stoku kopyala"
                                   >
                                     Kopyala
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      handleStockCopy(stk.code)
-                                      handleStockDeleteWithConfirm(product.id, stk.id)
-                                    }}
-                                    className="flex h-7 items-center justify-center rounded-md border border-white/10 bg-white/5 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-500/15 hover:text-amber-50"
-                                    aria-label="Kopyala ve sil"
-                                  >
-                                    Kopyala & Sil
                                   </button>
                                   <button
                                     type="button"
