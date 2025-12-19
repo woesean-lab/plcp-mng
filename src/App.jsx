@@ -403,6 +403,23 @@ function App() {
     }
   }
 
+  const handleProblemReopen = async (id) => {
+    try {
+      const res = await fetch(`/api/problems/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "open" }),
+      })
+      if (!res.ok) throw new Error("problem_reopen_failed")
+      const updated = await res.json()
+      setProblems((prev) => prev.map((p) => (p.id === id ? updated : p)))
+      toast.success("Aktif probleme taşındı")
+    } catch (error) {
+      console.error(error)
+      toast.error("Güncellenemedi (API/DB kontrol edin).")
+    }
+  }
+
   const handleProblemCopy = async (text) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -913,6 +930,14 @@ function App() {
                         <p className="rounded-lg border border-emerald-200/20 bg-emerald-950/30 px-3 py-2 text-sm text-emerald-50/90 shadow-inner">
                           {pb.issue}
                         </p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleProblemReopen(pb.id)}
+                            className="rounded-lg border border-amber-300/70 bg-amber-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25"
+                          >
+                            Çözülmedi
+                          </button>
                         <button
                           type="button"
                           onClick={() => handleProblemDeleteWithConfirm(pb.id)}
@@ -924,6 +949,7 @@ function App() {
                         >
                           {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
                         </button>
+                        </div>
                       </div>
                     ))}
                   </div>
