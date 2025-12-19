@@ -1122,17 +1122,22 @@ function App() {
                                 Bu üründe stok yok.
                               </div>
                             )}
-                            {product.stocks.map((stk) => (
+                            {product.stocks.map((stk, idx) => (
                               <div
                                 key={stk.id}
                                 className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-800/70 px-3 py-2"
                               >
-                                <p className="flex-1 font-mono text-sm text-slate-100 break-all">{stk.code}</p>
+                                <div className="flex items-center gap-2">
+                                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300">
+                                    #{idx + 1}
+                                  </span>
+                                  <p className="flex-1 font-mono text-sm text-slate-100 break-all">{stk.code}</p>
+                                </div>
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
                                     onClick={() => handleStockCopy(stk.code)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-50"
+                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-indigo-300/60 bg-indigo-500/15 text-indigo-50 transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-500/25"
                                     aria-label="Stoku kopyala"
                                   >
                                     <svg
@@ -1153,7 +1158,7 @@ function App() {
                                       handleStockCopy(stk.code)
                                       handleStockDeleteWithConfirm(product.id, stk.id)
                                     }}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-500/15 hover:text-amber-50"
+                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-300/70 bg-amber-500/20 text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/30"
                                     aria-label="Kopyala ve sil"
                                   >
                                     <svg
@@ -1175,7 +1180,7 @@ function App() {
                                     className={`flex h-8 w-8 items-center justify-center rounded-full border text-slate-200 transition ${
                                       confirmStockTarget === `${product.id}-${stk.id}`
                                         ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                        : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
+                                        : "border-rose-400/70 bg-rose-500/15 hover:border-rose-300 hover:bg-rose-500/25"
                                     }`}
                                     aria-label="Stoku sil"
                                   >
