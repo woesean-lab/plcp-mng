@@ -1,58 +1,57 @@
-import { useEffect, useMemo, useState } from "react"
-import toast, { Toaster } from "react-hot-toast"
+﻿import { useEffect, useMemo, useState } from "react"
+import { Toaster, toast } from "react-hot-toast"
 
-const categoryPalette = [
-  "from-cyan-500/70 to-sky-400/70",
-  "from-amber-500/70 to-orange-400/70",
-  "from-emerald-500/70 to-lime-400/70",
-  "from-rose-500/70 to-pink-400/70",
-  "from-indigo-500/70 to-blue-400/70",
-  "from-teal-500/70 to-cyan-300/70",
+const fallbackTemplates = [
+  { label: "HoÅŸ geldin", value: "HoÅŸ geldin! Burada herkese yer var.", category: "KarÅŸÄ±lama" },
+  {
+    label: "Bilgilendirme",
+    value: "Son durum: GÃ¶rev planlandÄ±ÄŸÄ± gibi ilerliyor.",
+    category: "Bilgilendirme",
+  },
+  { label: "HatÄ±rlatma", value: "Unutma: AkÅŸam 18:00 toplantÄ±sÄ±na hazÄ±r ol.", category: "HatÄ±rlatma" },
 ]
+
+const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map((tpl) => tpl.category || "Genel")]))
 
 const initialProblems = [
-  { id: 1, username: "musteri_akarsu", issue: "Sipariş iki kez oluşturulmuş, ücret iadesi bekliyor.", status: "open" },
-  { id: 2, username: "elifkar", issue: "Kargo adresi yanlış, teslimat durdurulmalı.", status: "open" },
+  { id: 1, username: "@ornek1", issue: "Ã–deme ekranda takÄ±ldÄ±, 2 kez kart denemiÅŸ.", status: "open" },
+  { id: 2, username: "@ornek2", issue: "Teslimat gecikmesi ÅŸikayeti.", status: "open" },
 ]
 
-function formatColor(index) {
-  const gradient = categoryPalette[index % categoryPalette.length]
-  return `bg-gradient-to-r ${gradient}`
-}
+const panelClass =
+  "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
 
-function SkeletonLine({ className = "" }) {
-  return <div className={`animate-pulse rounded-md bg-white/5 ${className}`} />
-}
+const categoryPalette = [
+  "border-emerald-300/50 bg-emerald-500/15 text-emerald-50",
+  "border-amber-300/50 bg-amber-500/15 text-amber-50",
+  "border-sky-300/50 bg-sky-500/15 text-sky-50",
+  "border-fuchsia-300/50 bg-fuchsia-500/15 text-fuchsia-50",
+  "border-rose-300/50 bg-rose-500/15 text-rose-50",
+  "border-indigo-300/50 bg-indigo-500/15 text-indigo-50",
+]
 
-function SkeletonCard() {
+function LoadingIndicator({ label = "YÃ¼kleniyor..." }) {
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/5 p-4 shadow-inner shadow-black/20 backdrop-blur">
-      <SkeletonLine className="mb-3 h-4 w-32" />
-      <SkeletonLine className="mb-2 h-3 w-full" />
-      <SkeletonLine className="mb-2 h-3 w-5/6" />
-      <div className="mt-4 flex gap-2">
-        <SkeletonLine className="h-8 w-24" />
-        <SkeletonLine className="h-8 w-24" />
-      </div>
-    </div>
+    <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-200">
+      <span className="h-2 w-2 animate-pulse rounded-full bg-accent-400" />
+      {label}
+    </span>
   )
 }
 
-export default function App() {
+function App() {
   const [activeTab, setActiveTab] = useState("messages")
-
-  const [title, setTitle] = useState("")
+  const [title, setTitle] = useState("Pulcip Message Copy")
   const [message, setMessage] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Genel")
   const [newCategory, setNewCategory] = useState("")
   const [categories, setCategories] = useState([])
   const [templates, setTemplates] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
-  const [openCategories, setOpenCategories] = useState([])
+  const [openCategories, setOpenCategories] = useState({})
   const [confirmTarget, setConfirmTarget] = useState(null)
   const [confirmCategoryTarget, setConfirmCategoryTarget] = useState(null)
-
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [delayDone, setDelayDone] = useState(false)
 
   const [problems, setProblems] = useState([])
@@ -60,560 +59,968 @@ export default function App() {
   const [problemIssue, setProblemIssue] = useState("")
   const [confirmProblemTarget, setConfirmProblemTarget] = useState(null)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDelayDone(true), 1200)
-    return () => clearTimeout(timer)
-  }, [])
+  const activeTemplate = useMemo(
+    () => templates.find((tpl) => tpl.label === selectedTemplate),
+    [selectedTemplate, templates],
+  )
 
-  useEffect(() => {
-    loadTemplates()
-    loadProblems()
-  }, [])
+  const messageLength = message.trim().length
 
-  async function loadTemplates() {
-    setIsLoading(true)
-    try {
-      const [catRes, tplRes] = await Promise.all([fetch("/api/categories"), fetch("/api/templates")])
-      const fetchedCategories = (await catRes.json()) ?? []
-      const fetchedTemplates = (await tplRes.json()) ?? []
-
-      setCategories(fetchedCategories)
-      setTemplates(fetchedTemplates)
-
-      if (!selectedCategory && fetchedCategories.length > 0) {
-        setSelectedCategory(fetchedCategories[0])
-      }
-      if (fetchedCategories.length > 0) {
-        setOpenCategories((prev) => (prev.length ? prev : [fetchedCategories[0]]))
-      }
-      setSelectedTemplate((prev) => prev ?? fetchedTemplates[0] ?? null)
-    } catch (error) {
-      console.error("Templates load failed", error)
-      toast.error("Şablonlar yüklenemedi")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  async function loadProblems() {
-    try {
-      const res = await fetch("/api/problems")
-      if (!res.ok) throw new Error("fail")
-      const data = await res.json()
-      setProblems(data)
-    } catch (error) {
-      console.error("Problems load failed", error)
-      setProblems(initialProblems)
-      toast.error("Problemli müşteriler yüklenemedi, örnekler gösteriliyor")
-    }
-  }
-
-  const showLoading = isLoading || !delayDone
-
-  const filteredTemplates = useMemo(() => {
-    return templates.filter((tpl) => tpl.category === selectedCategory)
-  }, [templates, selectedCategory])
-
-  const templateCountByCategory = useMemo(() => {
-    return categories.reduce((acc, cat) => {
-      acc[cat] = templates.filter((t) => t.category === cat).length
+  const groupedTemplates = useMemo(() => {
+    return templates.reduce((acc, tpl) => {
+      const cat = tpl.category || "Genel"
+      if (!acc[cat]) acc[cat] = []
+      acc[cat].push(tpl)
       return acc
     }, {})
-  }, [categories, templates])
+  }, [templates])
 
-  async function handleSaveTemplate(e) {
-    e.preventDefault()
-    const trimmedTitle = title.trim()
-    const trimmedMessage = message.trim()
-    if (!trimmedTitle || !trimmedMessage) {
-      toast.error("Başlık ve mesaj zorunlu")
+  useEffect(() => {
+    setOpenCategories((prev) => {
+      if (categories.length === 0) return {}
+      const next = { ...prev }
+      categories.forEach((cat, idx) => {
+        if (!(cat in next)) next[cat] = idx === 0
+      })
+      Object.keys(next).forEach((cat) => {
+        if (!categories.includes(cat)) delete next[cat]
+      })
+      return next
+    })
+  }, [categories])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDelayDone(true), 1200)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    ;(async () => {
+      try {
+        const res = await fetch("/api/problems", { signal: controller.signal })
+        if (!res.ok) throw new Error("api_error")
+        const data = await res.json()
+        setProblems(data ?? [])
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        setProblems(initialProblems)
+        toast.error("Problem listesi alÄ±namadÄ± (API/DB kontrol edin)")
+      }})()
+
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const startedAt = Date.now()
+    let timeoutId = null
+
+    setIsLoading(true)
+
+    ;(async () => {
+      try {
+        const [catsRes, templatesRes] = await Promise.all([
+          fetch("/api/categories", { signal: controller.signal }),
+          fetch("/api/templates", { signal: controller.signal }),
+        ])
+
+        if (!catsRes.ok || !templatesRes.ok) throw new Error("api_error")
+
+        const serverCategories = await catsRes.json()
+        const serverTemplates = await templatesRes.json()
+
+        const safeCategories = Array.from(new Set(["Genel", ...(serverCategories ?? [])]))
+        setCategories(safeCategories)
+        setTemplates(serverTemplates ?? [])
+
+        const firstTemplate = serverTemplates?.[0]
+        setSelectedTemplate(firstTemplate?.label ?? null)
+        if (firstTemplate?.category) setSelectedCategory(firstTemplate.category)
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        setCategories(fallbackCategories)
+        setTemplates(fallbackTemplates)
+        setSelectedTemplate(fallbackTemplates[0]?.label ?? null)
+        setSelectedCategory(fallbackTemplates[0]?.category ?? "Genel")
+        toast.error("Sunucuya baÄŸlanÄ±lamadÄ±. (API/DB kontrol edin)")
+      } finally {
+        const elapsed = Date.now() - startedAt
+        const delay = Math.max(0, 600 - elapsed)
+        timeoutId = window.setTimeout(() => setIsLoading(false), delay)
+      }
+    })()
+
+    return () => {
+      controller.abort()
+      if (timeoutId) window.clearTimeout(timeoutId)
+    }
+  }, [])
+
+  const handleTemplateChange = async (nextTemplate, options = {}) => {
+    setSelectedTemplate(nextTemplate)
+    const tpl = templates.find((item) => item.label === nextTemplate)
+    if (tpl && options.shouldCopy) {
+      try {
+        await navigator.clipboard.writeText(tpl.value)
+        toast.success("Åablon kopyalandÄ±", { duration: 1600, position: "top-right" })
+        toast(
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200">
+              Kopyalanan mesaj
+            </p>
+            <p className="text-sm text-slate-50/90 whitespace-pre-wrap">{tpl.value}</p>
+          </div>,
+          { duration: 3200, position: "top-right" },
+        )
+      } catch (error) {
+        console.error("Copy failed", error)
+        toast.error("KopyalanamadÄ±", { duration: 1600, position: "top-right" })
+      }
+    }
+  }
+
+  const handleAdd = async () => {
+    if (!title.trim() && !message.trim()) {
+      toast.error("BaÅŸlÄ±k veya mesaj ekleyin.")
       return
     }
+
+    const safeTitle = title.trim() || `Mesaj ${templates.length + 1}`
+    const safeMessage = message.trim()
+    const safeCategory = selectedCategory.trim() || "Genel"
+
     try {
       const res = await fetch("/api/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: trimmedTitle, value: trimmedMessage, category: selectedCategory || "Genel" }),
+        body: JSON.stringify({ label: safeTitle, value: safeMessage, category: safeCategory }),
       })
-      if (!res.ok) throw new Error("create failed")
+
+      if (res.status === 409) {
+        toast("Var olan ÅŸablon aktif edildi", { position: "top-right" })
+        setSelectedTemplate(safeTitle)
+        setSelectedCategory(safeCategory)
+        return
+      }
+
+      if (!res.ok) throw new Error("create_failed")
+
       const created = await res.json()
       setTemplates((prev) => [...prev, created])
-      setTitle("")
-      setMessage("")
-      setSelectedTemplate(created)
-      toast.success("Şablon kaydedildi")
+      if (!categories.includes(safeCategory)) {
+        setCategories((prev) => [...prev, safeCategory])
+      }
+      setSelectedTemplate(created.label)
+      setSelectedCategory(created.category || safeCategory)
+      toast.success("Yeni ÅŸablon eklendi")
     } catch (error) {
-      console.error("Template create error", error)
-      toast.error("Şablon eklenemedi")
+      console.error(error)
+      toast.error("Kaydedilemedi (API/DB kontrol edin).")
     }
   }
 
-  async function handleDeleteTemplate(id) {
-    if (confirmTarget !== id) {
-      setConfirmTarget(id)
-      toast("Silmek için tekrar tıkla")
+  const handleDeleteTemplate = async (targetLabel = selectedTemplate) => {
+    if (templates.length <= 1) {
+      toast.error("En az bir ÅŸablon kalmalÄ±.")
       return
     }
+    const target = templates.find((tpl) => tpl.label === targetLabel)
+    const targetId = target?.id
+    if (!targetId) {
+      toast.error("Silinecek ÅŸablon bulunamadÄ±.")
+      return
+    }
+
     try {
-      const res = await fetch(`/api/templates/${id}`, { method: "DELETE" })
-      if (!res.ok && res.status !== 404) throw new Error("delete failed")
-      setTemplates((prev) => prev.filter((tpl) => tpl.id !== id))
-      setConfirmTarget(null)
-      if (selectedTemplate?.id === id) setSelectedTemplate(null)
-      toast.success("Şablon silindi")
+      const res = await fetch(`/api/templates/${targetId}`, { method: "DELETE" })
+      if (!res.ok && res.status !== 404) throw new Error("delete_failed")
+
+      const nextTemplates = templates.filter((tpl) => tpl.label !== targetLabel)
+      const fallback = nextTemplates[0]
+      setTemplates(nextTemplates)
+      const nextSelected = selectedTemplate === targetLabel ? fallback?.label ?? selectedTemplate : selectedTemplate
+      if (nextSelected) {
+        setSelectedTemplate(nextSelected)
+        const nextTpl = nextTemplates.find((tpl) => tpl.label === nextSelected)
+        if (nextTpl) {
+          setSelectedCategory(nextTpl.category || "Genel")
+        }
+      }
+      toast.success("Åablon silindi")
     } catch (error) {
-      console.error("Template delete error", error)
-      toast.error("Şablon silinemedi")
+      console.error(error)
+      toast.error("Silinemedi (API/DB kontrol edin).")
     }
   }
 
-  async function handleAddCategory(e) {
-    e.preventDefault()
-    const name = newCategory.trim()
-    if (!name) return
+  const handleDeleteWithConfirm = (targetLabel) => {
+    if (confirmTarget === targetLabel) {
+      handleDeleteTemplate(targetLabel)
+      setConfirmTarget(null)
+      return
+    }
+    setConfirmTarget(targetLabel)
+    toast("Silmek iÃ§in tekrar tÄ±kla", { position: "top-right" })
+  }
+
+  const handleCategoryAdd = async () => {
+    const next = newCategory.trim()
+    if (!next) {
+      toast.error("Kategori girin.")
+      return
+    }
+    if (categories.includes(next)) {
+      toast("Kategori zaten mevcut", { position: "top-right" })
+      setSelectedCategory(next)
+      setNewCategory("")
+      return
+    }
     try {
       const res = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: next }),
       })
-      if (!res.ok) throw new Error("category add failed")
-      const created = await res.json()
-      setCategories((prev) => [...prev, created.name].sort())
+      if (!res.ok) throw new Error("category_create_failed")
+
+      const nextCategories = [...categories, next]
+      setCategories(nextCategories)
+      setSelectedCategory(next)
       setNewCategory("")
       toast.success("Kategori eklendi")
+      return
     } catch (error) {
-      console.error("Category add error", error)
-      toast.error("Kategori eklenemedi")
+      console.error(error)
+      toast.error("Kategori eklenemedi (API/DB kontrol edin).")
     }
+
+    const nextCategories = [...categories, next]
+    setCategories(nextCategories)
+    setSelectedCategory(next)
+    setNewCategory("")
+    toast.success("Kategori eklendi")
   }
 
-  async function handleDeleteCategory(name) {
-    if (name === "Genel") {
-      toast.error("Genel silinemez")
-      return
-    }
-    if (confirmCategoryTarget !== name) {
-      setConfirmCategoryTarget(name)
-      toast("Silmek için tekrar tıkla")
+  const handleCategoryDelete = async (cat) => {
+    if (cat === "Genel") {
+      toast.error("Genel kategorisi silinemez.")
       return
     }
     try {
-      const res = await fetch(`/api/categories/${encodeURIComponent(name)}`, { method: "DELETE" })
-      if (!res.ok && res.status !== 404) throw new Error("category delete failed")
-      setCategories((prev) => prev.filter((c) => c !== name))
-      setTemplates((prev) => prev.map((tpl) => (tpl.category === name ? { ...tpl, category: "Genel" } : tpl)))
-      setConfirmCategoryTarget(null)
-      if (selectedCategory === name) setSelectedCategory("Genel")
+      const res = await fetch(`/api/categories/${encodeURIComponent(cat)}`, { method: "DELETE" })
+      if (!res.ok && res.status !== 404) throw new Error("category_delete_failed")
+
+      const nextCategories = categories.filter((item) => item !== cat)
+      const safeCategories = nextCategories.length ? nextCategories : ["Genel"]
+      setCategories(safeCategories)
+      setTemplates((prev) => prev.map((tpl) => (tpl.category === cat ? { ...tpl, category: "Genel" } : tpl)))
+      if (selectedCategory === cat) {
+        setSelectedCategory(safeCategories[0])
+      }
       toast.success("Kategori silindi")
+      return
     } catch (error) {
-      console.error("Category delete error", error)
-      toast.error("Kategori silinemedi")
+      console.error(error)
+      toast.error("Kategori silinemedi (API/DB kontrol edin).")
     }
+
+    const nextCategories = categories.filter((item) => item !== cat)
+    const safeCategories = nextCategories.length ? nextCategories : ["Genel"]
+    setCategories(safeCategories)
+    setTemplates((prev) => prev.map((tpl) => (tpl.category === cat ? { ...tpl, category: "Genel" } : tpl)))
+    if (selectedCategory === cat) {
+      setSelectedCategory(safeCategories[0])
+    }
+    toast.success("Kategori silindi")
   }
 
-  async function handleCopyTemplate(tpl) {
-    try {
-      await navigator.clipboard.writeText(tpl.value)
-      toast.success("Şablon kopyalandı")
-      toast(tpl.value, { duration: 3500, icon: "📋" })
-    } catch (error) {
-      console.error("Copy failed", error)
-      toast.error("Kopyalanamadı")
+  const handleCategoryDeleteWithConfirm = (cat) => {
+    if (confirmCategoryTarget === cat) {
+      setConfirmCategoryTarget(null)
+      handleCategoryDelete(cat)
+      return
     }
+    setConfirmCategoryTarget(cat)
+    toast("Silmek iÃ§in tekrar tÄ±kla", { position: "top-right" })
   }
 
-  async function handleAddProblem(e) {
-    e.preventDefault()
-    const username = problemUsername.trim()
+  const showLoading = isLoading || !delayDone
+  const templateCountText = showLoading ? <LoadingIndicator label="YÃ¼kleniyor" /> : templates.length
+  const categoryCountText = showLoading ? <LoadingIndicator label="YÃ¼kleniyor" /> : categories.length
+  const selectedCategoryText = showLoading ? <LoadingIndicator label="YÃ¼kleniyor" /> : selectedCategory.trim() || "Genel"
+
+  const categoryColors = useMemo(() => {
+    const map = {}
+    categories.forEach((cat, idx) => {
+      map[cat] = categoryPalette[idx % categoryPalette.length]
+    })
+    return map
+  }, [categories])
+
+  const getCategoryClass = (cat) => categoryColors[cat] || "border-white/10 bg-white/5 text-slate-200"
+
+  const handleProblemAdd = async () => {
+    const user = problemUsername.trim()
     const issue = problemIssue.trim()
-    if (!username || !issue) {
-      toast.error("Kullanıcı ve sorun zorunlu")
+    if (!user || !issue) {
+      toast.error("Kullanıcı adı ve sorun girin.")
       return
     }
     try {
       const res = await fetch("/api/problems", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, issue }),
+        body: JSON.stringify({ username: user, issue }),
       })
-      if (!res.ok) throw new Error("create failed")
+      if (!res.ok) throw new Error("problem_create_failed")
       const created = await res.json()
-      setProblems((prev) => [created, ...prev])
+      setProblems((prev) => [...prev, created])
       setProblemUsername("")
       setProblemIssue("")
-      toast.success("Eklendi")
+      toast.success("Problem eklendi")
     } catch (error) {
-      console.error("Problem add error", error)
-      toast.error("Eklenemedi")
+      console.error(error)
+      toast.error("Problem eklenemedi (API/DB kontrol edin).")
     }
   }
 
-  async function handleResolveProblem(id) {
+  const handleProblemResolve = async (id) => {
     try {
       const res = await fetch(`/api/problems/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "resolved" }),
       })
-      if (!res.ok) throw new Error("resolve failed")
+      if (!res.ok) throw new Error("problem_update_failed")
       const updated = await res.json()
       setProblems((prev) => prev.map((p) => (p.id === id ? updated : p)))
-      toast.success("Çözüldü olarak işaretlendi")
+      toast.success("Problem çözüldü")
     } catch (error) {
-      console.error("Resolve error", error)
-      toast.error("Güncellenemedi")
+      console.error(error)
+      toast.error("Güncellenemedi (API/DB kontrol edin).")
     }
   }
 
-  async function handleDeleteProblem(id) {
-    if (confirmProblemTarget !== id) {
-      setConfirmProblemTarget(id)
-      toast("Silmek için tekrar tıkla")
-      return
-    }
+  const handleProblemCopy = async (text) => {
     try {
-      const res = await fetch(`/api/problems/${id}`, { method: "DELETE" })
-      if (!res.ok && res.status !== 404) throw new Error("delete failed")
-      setProblems((prev) => prev.filter((p) => p.id !== id))
-      setConfirmProblemTarget(null)
-      toast.success("Silindi")
+      await navigator.clipboard.writeText(text)
+      toast.success("Kullanıcı adı kopyalandı", { duration: 1400, position: "top-right" })
     } catch (error) {
-      console.error("Delete problem error", error)
-      toast.error("Silinemedi")
+      console.error(error)
+      toast.error("Kopyalanamadı", { duration: 1600, position: "top-right" })
     }
   }
 
-  async function handleCopyUsername(username) {
-    try {
-      await navigator.clipboard.writeText(username)
-      toast.success("Kullanıcı adı kopyalandı")
-      toast(username, { duration: 3000, icon: "👤" })
-    } catch (error) {
-      console.error("Copy username failed", error)
-      toast.error("Kopyalanamadı")
+  const handleProblemDeleteWithConfirm = async (id) => {
+    if (confirmProblemTarget === id) {
+      try {
+        const res = await fetch(`/api/problems/${id}`, { method: "DELETE" })
+        if (!res.ok && res.status !== 404) throw new Error("problem_delete_failed")
+        setProblems((prev) => prev.filter((p) => p.id !== id))
+        setConfirmProblemTarget(null)
+        toast.success("Problem silindi")
+        return
+      } catch (error) {
+        console.error(error)
+        toast.error("Silinemedi (API/DB kontrol edin).")
+        setConfirmProblemTarget(null)
+        return
+      }
     }
+    setConfirmProblemTarget(id)
+    toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
-  const problemStats = useMemo(() => {
-    const total = problems.length
-    const resolved = problems.filter((p) => p.status === "resolved").length
-    const open = total - resolved
-    return { total, resolved, open }
-  }, [problems])
+  const openProblems = problems.filter((p) => p.status !== "resolved")
+  const resolvedProblems = problems.filter((p) => p.status === "resolved")
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-cyan-300/70">Pulcip Manage</p>
-            <h1 className="text-3xl font-semibold text-white">Mesaj & Problem Yönetimi</h1>
-            <p className="text-sm text-slate-400">Mesaj şablonlarını ve problemli müşterileri tek panelden yönetin.</p>
-          </div>
-          <nav className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1">
-            {[
-              { key: "messages", label: "Message Copy" },
-              { key: "problems", label: "Problemli Müşteriler" },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  activeTab === tab.key ? "bg-white text-slate-900 shadow" : "text-slate-300 hover:text-white"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </header>
+    <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/70 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("messages")}
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "messages"
+                ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                : "bg-white/5 text-slate-200 hover:bg-white/10"
+            }`}
+          >
+            Message Copy
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("problems")}
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "problems"
+                ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                : "bg-white/5 text-slate-200 hover:bg-white/10"
+            }`}
+          >
+            Problemli MÃ¼ÅŸteriler
+          </button>
+        </div>
 
-        {activeTab === "messages" ? (
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-            <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/20 backdrop-blur">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-emerald-300/70">Şablon</p>
-                  <h2 className="text-2xl font-semibold text-white">Yeni Mesaj</h2>
+        {activeTab === "messages" && (
+          <>
+            <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-3">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
+                    Pulcip Message Copy
+                  </span>
+                  <div className="space-y-1.5">
+                    <h1 className="font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
+                      Pulcip Message Copy
+                    </h1>
+                    <p className="max-w-2xl text-sm text-slate-200/80 md:text-base">
+                      Kendi tonunu bul, hazÄ±r ÅŸablonlarÄ±nÄ± hÄ±zla dÃ¼zenle ve tek tÄ±kla ekibinle paylaÅŸ.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
+                      <span className="h-2 w-2 rounded-full bg-accent-400" />
+                      Åablon: {templateCountText}
+                    </span>
+                    <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
+                      <span className="h-2 w-2 rounded-full bg-amber-300" />
+                      Kategori sayÄ±sÄ±: {categoryCountText}
+                    </span>
+                    <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
+                      <span className="h-2 w-2 rounded-full bg-amber-300" />
+                      Kategori: {selectedCategoryText}
+                    </span>
+                  </div>
                 </div>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-                  {selectedCategory || "Genel"}
-                </span>
+
+                <div className="relative w-full max-w-sm">
+                  <div className="absolute inset-x-6 -bottom-16 h-40 rounded-full bg-accent-400/30 blur-3xl" />
+                  <div className="relative rounded-2xl border border-white/10 bg-white/10 p-6 shadow-glow backdrop-blur-md">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">
+                          Aktif ÅŸablon
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-display text-2xl font-semibold text-white">
+                            {activeTemplate?.label || (showLoading ? "YÃ¼kleniyor..." : "Yeni ÅŸablon")}
+                          </h3>
+                          <span
+                            className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getCategoryClass(
+                              activeTemplate?.category || selectedCategory || "Genel",
+                            )}`}
+                          >
+                            {activeTemplate?.category || selectedCategory || "Genel"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteWithConfirm(selectedTemplate)}
+                        className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                          confirmTarget === selectedTemplate
+                            ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                            : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
+                        }`}
+                        disabled={!selectedTemplate}
+                      >
+                        {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
+                      </button>
+                    </div>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
+                      {activeTemplate?.value ||
+                        (showLoading ? "Veriler yÃ¼kleniyor..." : "MesajÄ±nÄ± dÃ¼zenleyip kaydetmeye baÅŸla.")}
+                    </p>
+                    <div className="mt-4 flex items-center justify-between text-xs text-slate-300/80">
+                      <span>{messageLength} karakter</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">
+                        {showLoading ? "Bekle" : "HazÄ±r"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Åablon listesi</p>
+                      <p className="text-sm text-slate-400">BaÅŸlÄ±klarÄ±na dokunarak dÃ¼zenle ve kopyala.</p>
+                    </div>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {showLoading && <span className="h-2 w-2 animate-pulse rounded-full bg-accent-400" />}
+                      {templateCountText} {showLoading ? "" : "seÃ§enek"}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {showLoading ? (
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {Array.from({ length: 6 }).map((_, idx) => (
+                          <div key={idx} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
+                            <div className="mb-3 h-4 w-24 animate-pulse rounded-full bg-white/10" />
+                            <div className="grid gap-2">
+                              {Array.from({ length: 2 }).map((__, jdx) => (
+                                <div
+                                  key={`${idx}-${jdx}`}
+                                  className="h-20 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-300"
+                                >
+                                  <div className="h-full animate-pulse rounded-xl bg-ink-800/80" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      categories.map((cat) => {
+                        const list = groupedTemplates[cat] || []
+                        const isOpen = openCategories[cat] ?? true
+                        return (
+                          <div key={cat} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
+                            <button
+                              type="button"
+                              onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true) }))}
+                              className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
+                            >
+                              <span className="inline-flex items-center gap-2">
+                                <span
+                                  className={`rounded-full border px-3 py-1 text-[11px] ${getCategoryClass(cat)}`}
+                                >
+                                  {cat}
+                                </span>
+                                <span className="text-xs text-slate-400">{list.length} ÅŸablon</span>
+                              </span>
+                              <span
+                                className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
+                                  isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
+                                }`}
+                                aria-hidden="true"
+                              >
+                                &gt;
+                              </span>
+                            </button>
+
+                            {isOpen && (
+                              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                {list.length === 0 && (
+                                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                                    Bu kategoride ÅŸablon yok.
+                                  </div>
+                                )}
+                                {list.map((tpl) => (
+                                  <div key={tpl.label} className="relative">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
+                                      className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
+                                        tpl.label === selectedTemplate
+                                          ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                          : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                                      }`}
+                                >
+                                  <p className="font-display text-lg">{tpl.label}</p>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <form onSubmit={handleSaveTemplate} className="mt-6 space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm text-slate-300">Başlık</label>
-                  <input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-3 text-sm text-white outline-none ring-emerald-400/30 focus:ring-2"
-                    placeholder="Örn: Hoş Geldin Mesajı"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm text-slate-300">Mesaj</label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={5}
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-3 text-sm text-white outline-none ring-emerald-400/30 focus:ring-2"
-                    placeholder="Mesaj içeriğini yazın..."
-                  />
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1">
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="bg-transparent px-2 py-1 text-sm text-white outline-none"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat} className="bg-slate-900 text-white">
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
+              <div className="space-y-6">
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
+                      <p className="text-sm text-slate-400">Yeni kategori ekle, ardÄ±ndan mesaj alanÄ±ndan seÃ§.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {categoryCountText} kategori
+                    </span>
                   </div>
-                  <button
-                    type="submit"
-                    className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-emerald-400"
-                  >
-                    Kaydet
-                  </button>
-                </div>
-              </form>
-            </section>
 
-            <section className="space-y-4">
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl shadow-black/20 backdrop-blur">
-                <h3 className="mb-3 text-lg font-semibold text-white">Kategoriler</h3>
-                <form onSubmit={handleAddCategory} className="flex flex-wrap items-center gap-2">
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                   <input
+                    id="category-new"
+                    type="text"
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    placeholder="Yeni kategori"
-                    className="flex-1 min-w-[180px] rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none ring-cyan-400/30 focus:ring-2"
+                    placeholder="Ã–rn: Duyuru"
+                    className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
                   />
                   <button
-                    type="submit"
-                    className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-cyan-400"
+                    type="button"
+                    onClick={handleCategoryAdd}
+                    className="w-full min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 sm:w-auto"
                   >
                     Ekle
                   </button>
-                </form>
-                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {categories.map((cat, index) => (
-                    <div
-                      key={cat}
-                      className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/40 p-3"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={`h-7 w-7 rounded-xl ${formatColor(index)}`} />
-                        <div>
-                          <p className="text-sm font-semibold text-white">{cat}</p>
-                          <p className="text-xs text-slate-400">{templateCountByCategory[cat] ?? 0} şablon</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedCategory(cat)
-                            setOpenCategories((prev) =>
-                              prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
-                            )
-                          }}
-                          className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-300 hover:border-cyan-300/60 hover:text-white"
-                        >
-                          Aç/Kapa
-                        </button>
+                </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {categories.map((cat) => (
+                      <span
+                        key={cat}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs ${getCategoryClass(cat)}`}
+                      >
+                        <span className="font-semibold">{cat}</span>
                         {cat !== "Genel" && (
                           <button
-                            onClick={() => handleDeleteCategory(cat)}
-                            className="rounded-lg border border-rose-400/40 px-3 py-1 text-xs text-rose-300 transition hover:border-rose-300 hover:text-rose-100"
+                            type="button"
+                            onClick={() => handleCategoryDeleteWithConfirm(cat)}
+                            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
+                              confirmCategoryTarget === cat
+                                ? "border-rose-300 bg-rose-500/20 text-rose-50"
+                                : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                            }`}
                           >
-                            Sil
+                            {confirmCategoryTarget === cat ? "Emin misin?" : "Sil"}
                           </button>
                         )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl shadow-black/20 backdrop-blur">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.24em] text-indigo-300/70">Şablonlar</p>
-                    <h3 className="text-lg font-semibold text-white">{selectedCategory || "Genel"}</h3>
-                  </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-                    {filteredTemplates.length} adet
-                  </span>
-                </div>
-
-                {showLoading ? (
-                  <div className="grid gap-3">
-                    {Array.from({ length: 4 }).map((_, idx) => (
-                      <SkeletonCard key={idx} />
+                      </span>
                     ))}
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {openCategories.includes(selectedCategory) && filteredTemplates.length === 0 && (
-                      <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
-                        Bu kategoride şablon yok.
-                      </p>
-                    )}
-                    {openCategories.includes(selectedCategory) &&
-                      filteredTemplates.map((tpl) => (
-                        <article
-                          key={tpl.id}
-                          className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/50 p-4"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-white">{tpl.label}</p>
-                            <p className="text-xs text-slate-400">Kategori: {tpl.category}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleCopyTemplate(tpl)}
-                              className="rounded-xl border border-rose-400/60 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/10"
-                            >
-                              Kopyala
-                            </button>
-                            <button
-                              onClick={() => {
-                                setTitle(tpl.label)
-                                setMessage(tpl.value)
-                                setSelectedCategory(tpl.category)
-                                setSelectedTemplate(tpl)
-                              }}
-                              className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-200 hover:border-cyan-300/60 hover:text-white"
-                            >
-                              Düzenle
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTemplate(tpl.id)}
-                              className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-200 hover:border-rose-300/60 hover:text-rose-100"
-                            >
-                              Sil
-                            </button>
-                          </div>
-                        </article>
-                      ))}
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/20 backdrop-blur">
-              <div className="flex flex-wrap items-center gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-blue-300/70">Problemli Müşteriler</p>
-                  <h2 className="text-2xl font-semibold text-white">Yeni Problem Ekle</h2>
                 </div>
-                <div className="ml-auto grid grid-cols-3 gap-2 text-center text-xs font-semibold">
-                  <div className="rounded-xl border border-blue-300/40 bg-blue-500/10 px-3 py-2 text-blue-100">
-                    Açık
-                    <div className="text-lg">{problemStats.open}</div>
-                  </div>
-                  <div className="rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-emerald-100">
-                    Çözüldü
-                    <div className="text-lg">{problemStats.resolved}</div>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-slate-200">
-                    Toplam
-                    <div className="text-lg">{problemStats.total}</div>
-                  </div>
-                </div>
-              </div>
 
-              <form onSubmit={handleAddProblem} className="mt-5 grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-1">
-                  <label className="mb-2 block text-sm text-slate-300">Kullanıcı Adı</label>
-                  <input
-                    value={problemUsername}
-                    onChange={(e) => setProblemUsername(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-3 text-sm text-white outline-none ring-blue-400/30 focus:ring-2"
-                    placeholder="örn: musteri_123"
-                  />
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Åablon ekle</p>
+                      <p className="text-sm text-slate-400">BaÅŸlÄ±k, kategori ve mesajÄ± ekleyip kaydet.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">HÄ±zlÄ± ekle</span>
+                  </div>
+
+                  <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="title-mini">
+                        BaÅŸlÄ±k
+                      </label>
+                      <input
+                        id="title-mini"
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Ã–rn: KarÅŸÄ±lama notu"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="category-mini">
+                        Kategori
+                      </label>
+                      <select
+                        id="category-mini"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
+                        <label htmlFor="message-mini">Mesaj</label>
+                        <span className="text-[11px] text-slate-400">AnlÄ±k karakter: {messageLength}</span>
+                      </div>
+                      <textarea
+                        id="message-mini"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        rows={4}
+                        placeholder="Mesaj iÃ§eriÄŸi..."
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={handleAdd}
+                        className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                      >
+                        Kaydet
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMessage("")}
+                        className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                      >
+                        Temizle
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="md:col-span-1">
-                  <label className="mb-2 block text-sm text-slate-300">Sorun</label>
-                  <textarea
-                    value={problemIssue}
-                    onChange={(e) => setProblemIssue(e.target.value)}
-                    rows={3}
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-3 text-sm text-white outline-none ring-blue-400/30 focus:ring-2"
-                    placeholder="Sorunu yazın..."
-                  />
+
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">HÄ±zlÄ± ipuÃ§larÄ±</p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                    <li>- BaÅŸlÄ±k boÅŸ kalÄ±rsa otomatik bir isimle kaydedilir.</li>
+                    <li>- Åablona tÄ±klamak metni panoya kopyalar.</li>
+                    <li>- Kategori silince ÅŸablonlar â€œGenelâ€e taÅŸÄ±nÄ±r.</li>
+                  </ul>
                 </div>
-                <div className="md:col-span-2 flex justify-end">
-                  <button
-                    type="submit"
-                    className="rounded-xl bg-blue-500 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-blue-400"
-                  >
-                    Kaydet
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
+          </>
+        )}
 
-            <div className="space-y-3">
-              {problems.map((pb) => (
-                <div
-                  key={pb.id}
-                  className="rounded-2xl border border-slate-700/70 bg-slate-900/70 p-4 shadow-lg shadow-black/20"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-100">
-                      {pb.username}
+        {activeTab === "problems" && (
+          <div className="space-y-6">
+            <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
+                    Problemli MÃ¼ÅŸteriler
+                  </span>
+                  <h1 className="font-display text-3xl font-semibold text-white">Problemli MÃ¼ÅŸteriler</h1>
+                  <p className="max-w-2xl text-sm text-slate-200/80">
+                    MÃ¼ÅŸteri kullanÄ±cÄ± adÄ± ve sorununu kaydet; Ã§Ã¶zÃ¼lÃ¼nce â€œProblem Ã§Ã¶zÃ¼ldÃ¼â€ ile kapat veya sil.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    AÃ§Ä±k problem: {openProblems.length}
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Ã‡Ã¶zÃ¼len: {resolvedProblems.length}
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Toplam: {problems.length}
+                  </span>
+                </div>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">AÃ§Ä±k problemler</p>
+                      <p className="text-sm text-slate-400">KullanÄ±cÄ± adÄ± ve sorun bilgisi listelenir.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {openProblems.length} kayÄ±t
                     </span>
-                    <button
-                      onClick={() => handleCopyUsername(pb.username)}
-                      className="rounded-lg border border-rose-400/60 px-3 py-1 text-xs font-semibold text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/10"
-                    >
-                      Kopyala
-                    </button>
                   </div>
-                  <div className="mt-3 rounded-xl border border-slate-700 bg-slate-950/70 p-3 text-sm text-slate-100">
-                    {pb.issue}
-                  </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <button
-                      onClick={() => handleResolveProblem(pb.id)}
-                      className="rounded-lg border border-emerald-300/60 px-3 py-2 text-[11px] font-semibold text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-500/10"
-                    >
-                      Çözüldü
-                    </button>
-                    <button
-                      onClick={() => handleDeleteProblem(pb.id)}
-                      className="rounded-lg border border-rose-400/60 px-3 py-2 text-[11px] font-semibold text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/10"
-                    >
-                      Sil
-                    </button>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {openProblems.length === 0 && (
+                      <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                        AÃ§Ä±k problem yok.
+                      </div>
+                    )}
+                    {openProblems.map((pb) => (
+                      <div
+                        key={pb.id}
+                        className="flex h-full flex-col gap-3 rounded-xl border border-white/10 bg-ink-900 p-4 shadow-inner"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <span className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-accent-200 break-all">
+                              {pb.username}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleProblemCopy(pb.username)}
+                            className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-50"
+                          >
+                            Kopyala
+                          </button>
+                        </div>
+                        <p className="rounded-lg border border-white/10 bg-ink-800/80 px-3 py-2 text-sm text-slate-200 shadow-inner">
+                          {pb.issue}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleProblemResolve(pb.id)}
+                            className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25"
+                          >
+                            Ã‡Ã¶zÃ¼ldÃ¼
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleProblemDeleteWithConfirm(pb.id)}
+                            className={`rounded-lg border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition ${
+                              confirmProblemTarget === pb.id
+                                ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                            }`}
+                          >
+                            {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-              {problems.length === 0 && (
-                <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
-                  Henüz problem eklenmedi.
-                </p>
-              )}
+
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Ã‡Ã¶zÃ¼len problemler</p>
+                      <p className="text-sm text-slate-400">Ã‡Ã¶zÃ¼lmÃ¼ÅŸ kayÄ±tlarÄ± sakla ya da sil.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {resolvedProblems.length} kayÄ±t
+                    </span>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {resolvedProblems.length === 0 && (
+                      <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                        Ã‡Ã¶zÃ¼len kayÄ±t yok.
+                      </div>
+                    )}
+                    {resolvedProblems.map((pb) => (
+                      <div
+                        key={pb.id}
+                        className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200/40 bg-emerald-950/50 p-4 shadow-inner"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-emerald-50 break-all">
+                              {pb.username}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleProblemCopy(pb.username)}
+                            className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-50"
+                          >
+                            Kopyala
+                          </button>
+                        </div>
+                        <p className="rounded-lg border border-emerald-200/20 bg-emerald-950/30 px-3 py-2 text-sm text-emerald-50/90 shadow-inner">
+                          {pb.issue}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleProblemDeleteWithConfirm(pb.id)}
+                          className={`w-fit rounded-lg border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition ${
+                            confirmProblemTarget === pb.id
+                              ? "border-rose-200 bg-rose-500/25 text-rose-50"
+                              : "border-rose-200/80 bg-rose-500/10 text-rose-50 hover:border-rose-100 hover:bg-rose-500/20"
+                          }`}
+                        >
+                          {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Problem ekle</p>
+                      <p className="text-sm text-slate-400">KullanÄ±cÄ± adÄ± ve sorunu yazÄ±p kaydet.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      Toplam: {problems.length}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="pb-username">
+                        KullanÄ±cÄ± adÄ±
+                      </label>
+                      <input
+                        id="pb-username"
+                        type="text"
+                        value={problemUsername}
+                        onChange={(e) => setProblemUsername(e.target.value)}
+                        placeholder="@kullanici"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="pb-issue">
+                        Sorun
+                      </label>
+                      <textarea
+                        id="pb-issue"
+                        value={problemIssue}
+                        onChange={(e) => setProblemIssue(e.target.value)}
+                        rows={4}
+                        placeholder="Sorunun kÄ±sa Ã¶zeti..."
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={handleProblemAdd}
+                        className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                      >
+                        Kaydet
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProblemUsername("")
+                          setProblemIssue("")
+                        }}
+                        className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                      >
+                        Temizle
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
       </div>
-
       <Toaster
+        position="top-right"
         toastOptions={{
-          style: { background: "#0b1220", color: "#f8fafc", border: "1px solid rgba(255,255,255,0.08)" },
+          style: {
+            background: "#0f1625",
+            color: "#e5ecff",
+            border: "1px solid #1d2534",
+          },
+          success: {
+            iconTheme: {
+              primary: "#3ac7ff",
+              secondary: "#0f1625",
+            },
+          },
         }}
       />
     </div>
   )
 }
+
+export default App
+
+
+
+
+
+
+

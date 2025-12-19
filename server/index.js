@@ -15,9 +15,14 @@ const port = Number(process.env.PORT ?? 3000)
 
 const initialTemplates = [
   { label: "Hoş geldin", value: "Hoş geldin! Burada herkese yer var.", category: "Karşılama" },
-  { label: "Bilgilendirme", value: "Son durum: Görev planlandığı gibi ilerliyor.", category: "Bilgilendirme" },
+  {
+    label: "Bilgilendirme",
+    value: "Son durum: Görev planlandığı gibi ilerliyor.",
+    category: "Bilgilendirme",
+  },
   { label: "Hatırlatma", value: "Unutma: Akşam 18:00 toplantısına hazır ol.", category: "Hatırlatma" },
 ]
+
 async function ensureDefaults() {
   await prisma.category.upsert({
     where: { name: "Genel" },
@@ -277,5 +282,3 @@ await ensureDefaults()
 app.listen(port, () => {
   console.log(`Server listening on :${port}`)
 })
-
-
