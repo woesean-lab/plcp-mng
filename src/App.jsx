@@ -1116,38 +1116,82 @@ function App() {
                         </button>
 
                         {openProducts[product.id] && (
-                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          <div className="mt-3 space-y-2">
                             {product.stocks.length === 0 && (
-                              <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-400">
+                              <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-400">
                                 Bu üründe stok yok.
                               </div>
                             )}
                             {product.stocks.map((stk) => (
                               <div
                                 key={stk.id}
-                                className="flex h-full flex-col gap-2 rounded-xl border border-white/10 bg-ink-800/70 p-3"
+                                className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-800/70 px-3 py-2"
                               >
-                                <button
-                                  type="button"
-                                  onClick={() => handleStockCopy(stk.code)}
-                                  className="self-end rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-50"
-                                >
-                                  Kopyala
-                                </button>
-                                <p className="rounded-lg border border-white/10 bg-ink-900 px-3 py-2 font-mono text-sm text-slate-100">
-                                  {stk.code}
-                                </p>
-                                <div className="flex flex-wrap gap-2">
+                                <p className="flex-1 font-mono text-sm text-slate-100 break-all">{stk.code}</p>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStockCopy(stk.code)}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-50"
+                                    aria-label="Stoku kopyala"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      className="h-4 w-4"
+                                    >
+                                      <rect x="9" y="9" width="11" height="11" rx="2" ry="2" />
+                                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleStockCopy(stk.code)
+                                      handleStockDeleteWithConfirm(product.id, stk.id)
+                                    }}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-500/15 hover:text-amber-50"
+                                    aria-label="Kopyala ve sil"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      className="h-4 w-4"
+                                    >
+                                      <rect x="9" y="9" width="11" height="11" rx="2" ry="2" />
+                                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                      <path d="M19 6l-1 14H6L5 6" />
+                                    </svg>
+                                  </button>
                                   <button
                                     type="button"
                                     onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
-                                    className={`rounded-lg border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition ${
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-slate-200 transition ${
                                       confirmStockTarget === `${product.id}-${stk.id}`
                                         ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                        : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                                        : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
                                     }`}
+                                    aria-label="Stoku sil"
                                   >
-                                    {confirmStockTarget === `${product.id}-${stk.id}` ? "Emin misin?" : "Sil"}
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      className="h-4 w-4"
+                                    >
+                                      <path d="M3 6h18" />
+                                      <path d="M8 6V4h8v2" />
+                                      <path d="M19 6l-1 14H6L5 6" />
+                                      <path d="M10 11v6M14 11v6" />
+                                    </svg>
                                   </button>
                                 </div>
                               </div>
