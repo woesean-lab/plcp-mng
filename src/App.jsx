@@ -999,10 +999,10 @@ function App() {
                         >
                           <div className="space-y-1">
                             <span className="inline-flex items-center gap-2">
-                              <span className="rounded-full border border-accent-300/50 bg-accent-500/10 px-3 py-1 text-[11px] font-semibold text-accent-100">
+                              <span className="rounded-full border border-accent-300/60 bg-gradient-to-r from-accent-500/20 via-amber-500/15 to-rose-500/15 px-3 py-1 text-[12px] font-semibold uppercase tracking-wide text-accent-50">
                                 {product.name}
                               </span>
-                              <span className="text-xs text-slate-400">{product.stocks.length} stok</span>
+                              <span className="text-xs text-slate-300">{product.stocks.length} stok</span>
                             </span>
                           </div>
                           <span
