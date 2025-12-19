@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
-import { HiOutlineChatBubbleLeftRight, HiOutlineChevronDown, HiOutlineTrash } from "react-icons/hi2"
 
 const fallbackTemplates = [
   { label: "Hoş geldin", value: "Hoş geldin! Burada herkese yer var.", category: "Karşılama" },
@@ -1064,10 +1063,21 @@ function App() {
                                 e.stopPropagation()
                                 handleProductCopyMessage(product.id)
                               }}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
                               aria-label="Teslimat mesajını kopyala"
                             >
-                              <HiOutlineChatBubbleLeftRight className="h-4 w-4" aria-hidden="true" />
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="h-4 w-4"
+                              >
+                                <path d="M21 12c0 4-3.5 7-9 7-.8 0-1.6-.1-2.4-.3L3 20l1.4-3.1C3.5 16 3 14.8 3 13c0-4 3.5-7 9-7s9 3 9 7Z" />
+                                <path d="M9 13h6" />
+                                <path d="M8 10h8" />
+                              </svg>
                             </button>
                             <button
                               type="button"
@@ -1075,21 +1085,33 @@ function App() {
                                 e.stopPropagation()
                                 handleProductDeleteWithConfirm(product.id)
                               }}
-                              className={`flex h-8 w-8 items-center justify-center rounded-full border text-slate-200 transition ${
+                              className={`flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold uppercase tracking-wide transition ${
                                 confirmProductTarget === product.id
                                   ? "border-rose-300 bg-rose-500/20 text-rose-50"
-                                  : "border-white/10 bg-white/5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50"
+                                  : "border-white/10 bg-white/5 text-slate-200 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50"
                               }`}
                               aria-label="Ürünü sil"
                             >
-                              <HiOutlineTrash className="h-4 w-4" aria-hidden="true" />
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="h-4 w-4"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6M14 11v6" />
+                              </svg>
                             </button>
                             <span
                               className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
                                 openProducts[product.id] ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
                               }`}
                             >
-                              <HiOutlineChevronDown className="h-4 w-4" aria-hidden="true" />
+                              &gt;
                             </span>
                           </div>
                         </button>
