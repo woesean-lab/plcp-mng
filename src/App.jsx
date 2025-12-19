@@ -1125,7 +1125,7 @@ function App() {
                             {product.stocks.map((stk, idx) => (
                               <div
                                 key={stk.id}
-                                className="group flex items-center gap-3 rounded-xl border border-white/10 bg-gradient-to-r from-ink-900 via-ink-800 to-ink-900 px-3 py-2 transition hover:border-accent-400/60 hover:shadow-glow"
+                                className="group flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 transition hover:border-accent-400/60 hover:bg-ink-800/80"
                               >
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-accent-300 group-hover:text-accent-100">
                                   #{idx + 1}
@@ -1135,7 +1135,7 @@ function App() {
                                   <button
                                     type="button"
                                     onClick={() => handleStockCopy(stk.code)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
                                     aria-label="Stoku kopyala"
                                   >
                                     <svg
@@ -1156,7 +1156,7 @@ function App() {
                                       handleStockCopy(stk.code)
                                       handleStockDeleteWithConfirm(product.id, stk.id)
                                     }}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-500/15 hover:text-amber-50"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-500/15 hover:text-amber-50"
                                     aria-label="Kopyala ve sil"
                                   >
                                     <svg
@@ -1175,7 +1175,7 @@ function App() {
                                   <button
                                     type="button"
                                     onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
-                                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-slate-200 transition hover:-translate-y-0.5 ${
+                                    className={`flex h-8 w-8 items-center justify-center rounded-lg border text-slate-200 transition hover:-translate-y-0.5 ${
                                       confirmStockTarget === `${product.id}-${stk.id}`
                                         ? "border-rose-300 bg-rose-500/25 text-rose-50"
                                         : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
