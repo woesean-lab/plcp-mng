@@ -415,6 +415,10 @@ function App() {
       toast.error("Ürün ismi boş olamaz.")
       return
     }
+    if (!note) {
+      toast.error("Not boş olamaz.")
+      return
+    }
     const newProduct = {
       id: `prd-${Date.now().toString(36)}`,
       name,
@@ -1085,7 +1089,7 @@ function App() {
 
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-slate-200" htmlFor="prd-note">
-                        Not (opsiyonel)
+                        Not
                       </label>
                       <textarea
                         id="prd-note"
