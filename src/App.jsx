@@ -519,9 +519,10 @@ function App() {
   }
 
   const handleEditStart = (product) => {
+    const matchedTemplate = templates.find((tpl) => tpl.value === product.deliveryMessage)?.label || ""
     setEditingProduct((prev) => ({
       ...prev,
-      [product.id]: { name: product.name, note: product.note },
+      [product.id]: { name: product.name, note: product.note, deliveryTemplate: matchedTemplate },
     }))
   }
 
@@ -543,13 +544,23 @@ function App() {
   const handleEditSave = (productId) => {
     const draft = editingProduct[productId]
     const name = draft?.name?.trim()
-    const note = draft?.note?.trim()
-    if (!name || !note) {
-      toast.error("İsim ve not boş olamaz.")
+    const selectedTemplate = draft?.deliveryTemplate?.trim()
+    if (!name) {
+      toast.error("İsim boş olamaz.")
       return
     }
+    if (!selectedTemplate) {
+      toast.error("Teslimat mesajı seçin.")
+      return
+    }
+    const templateValue = templates.find((tpl) => tpl.label === selectedTemplate)?.value
+    if (!templateValue) {
+      toast.error("Geçerli teslimat mesajı bulunamadı.")
+      return
+    }
+    const note = selectedTemplate
     setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, name, note } : p)),
+      prev.map((p) => (p.id === productId ? { ...p, name, note, deliveryMessage: templateValue } : p)),
     )
     handleEditCancel(productId)
     toast.success("Ürün güncellendi")
@@ -1273,15 +1284,21 @@ function App() {
                                   </div>
                                   <div className="space-y-1">
                                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-300" htmlFor={`edit-note-${product.id}`}>
-                                      Teslimat notu
+                                      Teslimat mesajı
                                     </label>
-                                    <input
+                                    <select
                                       id={`edit-note-${product.id}`}
-                                      type="text"
-                                      value={editingProduct[product.id]?.note || ""}
-                                      onChange={(e) => handleEditChange(product.id, "note", e.target.value)}
+                                      value={editingProduct[product.id]?.deliveryTemplate || ""}
+                                      onChange={(e) => handleEditChange(product.id, "deliveryTemplate", e.target.value)}
                                       className="w-full rounded-md border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
-                                    />
+                                    >
+                                      <option value="">Seçin</option>
+                                      {templates.map((tpl) => (
+                                        <option key={tpl.label} value={tpl.label}>
+                                          {tpl.label}
+                                        </option>
+                                      ))}
+                                    </select>
                                   </div>
                                 </div>
                               </div>
