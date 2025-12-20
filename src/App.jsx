@@ -1327,7 +1327,7 @@ function App() {
                         {openProducts[product.id] && (
                           <div className="mt-3 space-y-2">
                             <div className="flex flex-wrap gap-3 rounded-2xl border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-200">
-                              {product.deliveryTemplate?.trim() && product.deliveryMessage?.trim() && (
+                              {product.deliveryTemplate?.trim() &&\n                                templates.some((tpl) => tpl.label === product.deliveryTemplate) &&\n                                product.deliveryMessage?.trim() && (
                                 <button
                                   type="button"
                                   onClick={() => handleProductCopyMessage(product.id)}
