@@ -1216,13 +1216,15 @@ function App() {
                         {openProducts[product.id] && (
                           <div className="mt-3 space-y-2">
                             <div className="flex flex-wrap gap-3 rounded-2xl border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-200">
-                              <button
-                                type="button"
-                                onClick={() => handleProductCopyMessage(product.id)}
-                                className="rounded-md border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
-                              >
-                                Teslimat mesajını kopyala
-                              </button>
+                              {product.deliveryMessage?.trim() && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleProductCopyMessage(product.id)}
+                                  className="rounded-md border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
+                                >
+                                  Teslimat mesajını kopyala
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleProductDeleteWithConfirm(product.id)}
