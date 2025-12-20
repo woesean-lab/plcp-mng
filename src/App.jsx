@@ -1327,13 +1327,15 @@ function App() {
                         {openProducts[product.id] && (
                           <div className="mt-3 space-y-2">
                             <div className="flex flex-wrap gap-3 rounded-2xl border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-200">
-                              {product.deliveryTemplate?.trim() &&\n                                templates.some((tpl) => tpl.label === product.deliveryTemplate) &&\n                                product.deliveryMessage?.trim() && (
+                              {product.deliveryTemplate?.trim() &&
+                                templates.some((tpl) => tpl.label === product.deliveryTemplate) &&
+                                product.deliveryMessage?.trim() && (
                                 <button
                                   type="button"
                                   onClick={() => handleProductCopyMessage(product.id)}
                                   className="rounded-md border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
                                 >
-                                  Teslimat mesajını kopyala
+                                  {"Teslimat mesaj\u0131n\u0131 kopyala"}
                                 </button>
                               )}
                               <button
@@ -1345,16 +1347,14 @@ function App() {
                                     : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
                                 }`}
                               >
-                                {confirmProductTarget === product.id ? "Silmek için tekrar tıkla" : "Ürünü sil"}
+                                {confirmProductTarget === product.id ? "Silmek i\u00e7in tekrar t\u0131kla" : "\u00dcr\u00fcn\u00fc sil"}
                               </button>
                             </div>
                             {editingProduct[product.id] && (
                               <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 space-y-2">
                                 <div className="grid gap-2 sm:grid-cols-2">
                                   <div className="space-y-1">
-                                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-300" htmlFor={`edit-name-${product.id}`}>
-                                      Ürün adı
-                                    </label>
+                                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-300" htmlFor={`edit-name-${product.id}`}>{"\u00dcr\u00fcn ad\u0131"}</label>
                                     <input
                                       id={`edit-name-${product.id}`}
                                       type="text"
