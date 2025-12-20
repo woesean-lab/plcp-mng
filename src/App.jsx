@@ -1292,7 +1292,7 @@ function App() {
                     {filteredProducts.map((product) => (
                       <div
                         key={product.id}
-                        className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner"
+                        className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner transition hover:-translate-y-0.5 hover:border-accent-400/60 hover:bg-ink-800/80 hover:shadow-card"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <button
