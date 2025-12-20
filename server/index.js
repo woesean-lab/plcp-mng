@@ -39,36 +39,7 @@ async function ensureDefaults() {
 const app = express()
 app.disable("x-powered-by")
 
-const basicAuthPassword = process.env.BASIC_AUTH_PASSWORD ?? "159654"
-
-const requireBasicAuth = (req, res, next) => {
-  if (!basicAuthPassword) return next()
-  const auth = req.headers.authorization || ""
-  if (!auth.startsWith("Basic ")) {
-    res.setHeader("WWW-Authenticate", 'Basic realm="Pulcip Manage"')
-    res.status(401).end("Authentication required")
-    return
-  }
-  const encoded = auth.slice("Basic ".length)
-  let decoded = ""
-  try {
-    decoded = Buffer.from(encoded, "base64").toString("utf8")
-  } catch {
-    res.status(401).end("Invalid credentials")
-    return
-  }
-  const parts = decoded.split(":")
-  const password = parts.slice(1).join(":")
-  if (password !== basicAuthPassword) {
-    res.setHeader("WWW-Authenticate", 'Basic realm="Pulcip Manage"')
-    res.status(401).end("Invalid credentials")
-    return
-  }
-  next()
-}
-
 app.use(express.json({ limit: "64kb" }))
-app.use(requireBasicAuth)
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true })
