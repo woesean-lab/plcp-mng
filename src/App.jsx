@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react"
+﻿import { useEffect, useMemo, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
 
 const fallbackTemplates = [
@@ -91,10 +91,8 @@ function App() {
   const [openProducts, setOpenProducts] = useState({})
   const [confirmProductTarget, setConfirmProductTarget] = useState(null)
   const [bulkCount, setBulkCount] = useState({})
-  const [undoQueue, setUndoQueue] = useState([])
-  const [undoClock, setUndoClock] = useState(Date.now())
+  const [lastDeleted, setLastDeleted] = useState(null)
   const [editingProduct, setEditingProduct] = useState({})
-  const undoTimeoutsRef = useRef(new Map())
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -133,14 +131,6 @@ function App() {
       : products
     return [...list].sort((a, b) => a.name.localeCompare(b.name, "tr", { sensitivity: "base" }))
   }, [productSearch, products])
-
-  const undoByProduct = useMemo(() => {
-    const map = new Map()
-    undoQueue.forEach((entry) => {
-      if (!map.has(entry.productId)) map.set(entry.productId, entry)
-    })
-    return map
-  }, [undoQueue])
 
   const toggleProductOpen = (productId) => {
     setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ?? false) }))
@@ -274,19 +264,6 @@ function App() {
       return next
     })
   }, [activeTab])
-
-  useEffect(() => {
-    if (undoQueue.length === 0) return
-    const intervalId = window.setInterval(() => setUndoClock(Date.now()), 1000)
-    return () => window.clearInterval(intervalId)
-  }, [undoQueue.length])
-
-  useEffect(() => {
-    return () => {
-      undoTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId))
-      undoTimeoutsRef.current.clear()
-    }
-  }, [])
 
   const handleTemplateChange = async (nextTemplate, options = {}) => {
     setSelectedTemplate(nextTemplate)
@@ -544,29 +521,6 @@ function App() {
       toast.error("Stok eklenemedi (API/DB kontrol edin).")
     }
   }
-  const enqueueUndo = (productId, stocks) => {
-    const undoId = `${productId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const expiresAt = Date.now() + 15000
-    setUndoQueue((prev) => {
-      const next = [{ id: undoId, productId, stocks, expiresAt }, ...prev]
-      const trimmed = next.slice(0, 5)
-      const removed = next.slice(5)
-      removed.forEach((item) => {
-        const timeoutId = undoTimeoutsRef.current.get(item.id)
-        if (timeoutId) {
-          window.clearTimeout(timeoutId)
-          undoTimeoutsRef.current.delete(item.id)
-        }
-      })
-      return trimmed
-    })
-    const timeoutId = window.setTimeout(() => {
-      setUndoQueue((prev) => prev.filter((item) => item.id !== undoId))
-      undoTimeoutsRef.current.delete(undoId)
-    }, 15000)
-    undoTimeoutsRef.current.set(undoId, timeoutId)
-    return { undoId, expiresAt }
-  }
   const handleBulkCopyAndDelete = async (productId) => {
     const product = products.find((p) => p.id === productId)
     if (!product) return
@@ -595,6 +549,7 @@ function App() {
       })
       if (!res.ok) throw new Error("stock_bulk_delete_failed")
 
+      setLastDeleted({ productId, stocks: removed })
       setProducts((prev) =>
         prev.map((p) =>
           p.id === productId
@@ -602,12 +557,7 @@ function App() {
             : p,
         ),
       )
-      const undoInfo = enqueueUndo(productId, removed)
-      const secondsLeft = Math.max(0, Math.ceil((undoInfo.expiresAt - Date.now()) / 1000))
-      toast.success(
-        `${codes.length} stok kopyalandı ve silindi. ${secondsLeft} sn içinde geri alınabilir.`,
-        { duration: 2200, position: "top-right" },
-      )
+      toast.success(`${codes.length} stok kopyalandı ve silindi`, { duration: 1800, position: "top-right" })
     } catch (error) {
       console.error(error)
       toast.error("Stoklar silinemedi (API/DB kontrol edin).")
@@ -710,23 +660,12 @@ function App() {
       toast.error("Ürün güncellenemedi (API/DB kontrol edin).")
     }
   }
-  const handleUndoDelete = async (undoId) => {
-    const target = undoQueue.find((item) => item.id === undoId)
-    if (!target) {
+  const handleUndoDelete = async () => {
+    if (!lastDeleted) {
       toast.error("Geri alınacak kayıt yok.")
       return
     }
-    if (Date.now() > target.expiresAt) {
-      setUndoQueue((prev) => prev.filter((item) => item.id !== undoId))
-      const timeoutId = undoTimeoutsRef.current.get(undoId)
-      if (timeoutId) {
-        window.clearTimeout(timeoutId)
-        undoTimeoutsRef.current.delete(undoId)
-      }
-      toast.error("Geri alma süresi doldu.")
-      return
-    }
-    const { productId, stocks } = target
+    const { productId, stocks } = lastDeleted
     const codes = stocks.map((stk) => stk.code).filter(Boolean)
     if (codes.length === 0) {
       toast.error("Geri alınacak stok bulunamadı.")
@@ -744,12 +683,7 @@ function App() {
       setProducts((prev) =>
         prev.map((p) => (p.id === productId ? { ...p, stocks: updatedStocks } : p)),
       )
-      setUndoQueue((prev) => prev.filter((item) => item.id !== undoId))
-      const timeoutId = undoTimeoutsRef.current.get(undoId)
-      if (timeoutId) {
-        window.clearTimeout(timeoutId)
-        undoTimeoutsRef.current.delete(undoId)
-      }
+      setLastDeleted(null)
       toast.success("Silinen kayıt geri alındı", { duration: 1400, position: "top-right" })
     } catch (error) {
       console.error(error)
@@ -1349,66 +1283,17 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="mt-4 space-y-4">
-                    {undoQueue.length > 0 && (
-                      <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 px-4 py-3">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-100">
-                              Geri alma penceresi
-                            </p>
-                            <p className="text-xs text-amber-100/80">
-                              Silinen stoklar süre dolmadan geri alınabilir.
-                            </p>
-                          </div>
-                          <span className="rounded-full border border-amber-200/40 bg-amber-500/20 px-3 py-1 text-[11px] font-semibold text-amber-50">
-                            {undoQueue.length} işlem
-                          </span>
-                        </div>
-                        <div className="mt-3 space-y-2">
-                          {undoQueue.map((entry) => {
-                            const product = products.find((p) => p.id === entry.productId)
-                            const secondsLeft = Math.max(
-                              0,
-                              Math.ceil((entry.expiresAt - undoClock) / 1000),
-                            )
-                            return (
-                              <div
-                                key={entry.id}
-                                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200/20 bg-amber-500/10 px-3 py-2"
-                              >
-                                <div>
-                                  <p className="text-sm font-semibold text-amber-50">
-                                    {product?.name ?? "Ürün"}
-                                  </p>
-                                  <p className="text-xs text-amber-100/80">
-                                    {entry.stocks.length} stok silindi
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUndoDelete(entry.id)}
-                                  className="rounded-md border border-amber-200/40 bg-amber-500/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-100 hover:bg-amber-500/30"
-                                >
-                                  {`Geri al (${secondsLeft}s)`}
-                                </button>
-                              </div>
-                            )
-                          })}
-                        </div>
+                  <div className="mt-4 grid gap-4">
+                    {filteredProducts.length === 0 && (
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                        Henüz ürün yok.
                       </div>
                     )}
-                    <div className="grid gap-4">
-                      {filteredProducts.length === 0 && (
-                        <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                          Henüz ürün yok.
-                        </div>
-                      )}
-                      {filteredProducts.map((product) => (
-                        <div
-                          key={product.id}
-                          className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner transition hover:border-accent-400/60 hover:bg-ink-800/80 hover:shadow-card"
-                        >
+                    {filteredProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner transition hover:border-accent-400/60 hover:bg-ink-800/80 hover:shadow-card"
+                      >
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <button
                             type="button"
@@ -1463,23 +1348,15 @@ function App() {
                                 Düzenle
                               </button>
                             )}
-                            {(() => {
-                              const productUndo = undoByProduct.get(product.id)
-                              if (!productUndo) return null
-                              const secondsLeft = Math.max(
-                                0,
-                                Math.ceil((productUndo.expiresAt - undoClock) / 1000),
-                              )
-                              return (
-                                <button
-                                  type="button"
-                                  onClick={() => handleUndoDelete(productUndo.id)}
-                                  className="flex h-8 items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-100 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/15"
-                                >
-                                  {`Geri al (${secondsLeft}s)`}
-                                </button>
-                              )
-                            })()}
+                            {lastDeleted?.productId === product.id && (
+                              <button
+                                type="button"
+                                onClick={handleUndoDelete}
+                                className="flex h-8 items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-100 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/15"
+                              >
+                                Geri al
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => toggleProductOpen(product.id)}
@@ -1641,9 +1518,8 @@ function App() {
                             )}
                           </div>
                         )}
-                        </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -2030,9 +1906,6 @@ function App() {
 }
 
 export default App
-
-
-
 
 
 
