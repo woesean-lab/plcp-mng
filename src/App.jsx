@@ -67,7 +67,6 @@ function LoadingIndicator({ label = "Yükleniyor..." }) {
 
 function App() {
   const [activeTab, setActiveTab] = useState("messages")
-  const [theme, setTheme] = useState("dark")
   const [title, setTitle] = useState("Pulcip Manage")
   const [message, setMessage] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Genel")
@@ -98,26 +97,6 @@ function App() {
   const [productOrder, setProductOrder] = useState([])
   const [dragState, setDragState] = useState({ activeId: null, overId: null })
   const [editingProduct, setEditingProduct] = useState({})
-
-  useEffect(() => {
-    try {
-      const storedTheme = localStorage.getItem("pulcipTheme")
-      if (storedTheme === "light" || storedTheme === "dark") {
-        setTheme(storedTheme)
-      }
-    } catch (error) {
-      console.warn("Could not load theme", error)
-    }
-  }, [])
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    try {
-      localStorage.setItem("pulcipTheme", theme)
-    } catch (error) {
-      console.warn("Could not save theme", error)
-    }
-  }, [theme])
 
   useEffect(() => {
     try {
@@ -999,15 +978,6 @@ function App() {
           >
             Stok
           </button>
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-400/50 hover:text-accent-100"
-            >
-              {theme === "dark" ? "Aydınlık" : "Koyu"}
-            </button>
-          </div>
         </div>
 
         {activeTab === "messages" && (
