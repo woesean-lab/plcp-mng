@@ -1148,6 +1148,43 @@ function App() {
   const openProblems = problems.filter((p) => p.status !== "resolved")
   const resolvedProblems = problems.filter((p) => p.status === "resolved")
 
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
+        <div className="mx-auto flex w-full max-w-lg flex-col gap-6">
+          <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-ink-900/80 px-4 py-3 shadow-card backdrop-blur">
+            <div className="space-y-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-accent-200">
+                Pulcip Manage
+              </span>
+              <h1 className="font-display text-2xl font-semibold text-white">Giris kontrolu</h1>
+            </div>
+            {themeToggleButton}
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-ink-900/70 p-6 shadow-card">
+            <p className="text-sm text-slate-200/80">Oturum dogrulaniyor...</p>
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-1/3 animate-pulse rounded-full bg-accent-400/60" />
+            </div>
+          </div>
+        </div>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: toastStyle,
+            success: {
+              iconTheme: {
+                primary: toastIconTheme.primary,
+                secondary: toastIconTheme.secondary,
+              },
+            },
+          }}
+        />
+      </div>
+    )
+  }
+
   if (!isAuthed) {
     return (
       <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
