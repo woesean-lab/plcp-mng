@@ -89,6 +89,29 @@
     color: var(--text-soft) !important;
   }
 
+  :root[data-theme='light'] .text-slate-500 {
+    color: var(--text-quiet) !important;
+  }
+
+  :root[data-theme='light'] .text-accent-50,
+  :root[data-theme='light'] .text-accent-100,
+  :root[data-theme='light'] .text-accent-200 {
+    color: #1e40af !important;
+  }
+
+  :root[data-theme='light'] .from-ink-900 {
+    --tw-gradient-from: #f8fafc !important;
+    --tw-gradient-to: rgba(248, 250, 252, 0) !important;
+  }
+
+  :root[data-theme='light'] .via-ink-800 {
+    --tw-gradient-stops: var(--tw-gradient-from), #eef2f7, var(--tw-gradient-to) !important;
+  }
+
+  :root[data-theme='light'] .to-ink-700 {
+    --tw-gradient-to: #e2e8f0 !important;
+  }
+
   :root[data-theme='light'] .placeholder\:text-slate-500::placeholder {
     color: var(--text-quiet) !important;
   }
