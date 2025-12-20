@@ -187,6 +187,149 @@ app.delete("/api/categories/:name", async (req, res) => {
   res.status(204).end()
 })
 
+app.get("/api/products", async (_req, res) => {
+  const products = await prisma.product.findMany({
+    orderBy: { createdAt: "asc" },
+    include: { stocks: { orderBy: { createdAt: "asc" } } },
+  })
+  res.json(products)
+})
+
+app.post("/api/products", async (req, res) => {
+  const name = String(req.body?.name ?? "").trim()
+  if (!name) {
+    res.status(400).json({ error: "name is required" })
+    return
+  }
+  const deliveryTemplate = req.body?.deliveryTemplate === undefined ? undefined : String(req.body.deliveryTemplate).trim()
+  const deliveryMessage = req.body?.deliveryMessage === undefined ? undefined : String(req.body.deliveryMessage).trim()
+  const product = await prisma.product.create({
+    data: {
+      name,
+      deliveryTemplate: deliveryTemplate || null,
+      deliveryMessage: deliveryMessage || null,
+      note: deliveryTemplate || null,
+    },
+  })
+  res.status(201).json(product)
+})
+
+app.put("/api/products/:id", async (req, res) => {
+  const productId = String(req.params.id ?? "").trim()
+  if (!productId) {
+    res.status(400).json({ error: "invalid product id" })
+    return
+  }
+  const name =
+    req.body?.name === undefined ? undefined : String(req.body.name ?? "").trim()
+  if (name !== undefined && !name) {
+    res.status(400).json({ error: "name cannot be empty" })
+    return
+  }
+  const deliveryTemplate =
+    req.body?.deliveryTemplate === undefined ? undefined : String(req.body.deliveryTemplate ?? "").trim()
+  const deliveryMessage =
+    req.body?.deliveryMessage === undefined ? undefined : String(req.body.deliveryMessage ?? "").trim()
+
+  try {
+    const updated = await prisma.product.update({
+      where: { id: productId },
+      data: {
+        ...(name === undefined ? {} : { name }),
+        ...(deliveryTemplate === undefined ? {} : { deliveryTemplate: deliveryTemplate || null }),
+        ...(deliveryMessage === undefined ? {} : { deliveryMessage: deliveryMessage || null }),
+        ...(deliveryTemplate === undefined ? {} : { note: deliveryTemplate || null }),
+      },
+      include: { stocks: { orderBy: { createdAt: "asc" } } },
+    })
+    res.json(updated)
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Product not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/products/:id", async (req, res) => {
+  const productId = String(req.params.id ?? "").trim()
+  if (!productId) {
+    res.status(400).json({ error: "invalid product id" })
+    return
+  }
+  try {
+    await prisma.product.delete({ where: { id: productId } })
+    res.status(204).end()
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Product not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.post("/api/products/:productId/stocks", async (req, res) => {
+  const productId = String(req.params.productId ?? "").trim()
+  if (!productId) {
+    res.status(400).json({ error: "invalid product id" })
+    return
+  }
+  const codes = Array.isArray(req.body?.codes) ? req.body.codes : []
+  const normalized = codes
+    .map((code) => String(code ?? "").trim())
+    .filter((code) => code.length > 0)
+  if (normalized.length === 0) {
+    res.status(400).json({ error: "codes are required" })
+    return
+  }
+  const existing = await prisma.product.findUnique({ where: { id: productId } })
+  if (!existing) {
+    res.status(404).json({ error: "Product not found" })
+    return
+  }
+  const created = []
+  for (const code of normalized) {
+    created.push(await prisma.stock.create({ data: { code, productId } }))
+  }
+  res.status(201).json(created)
+})
+
+app.delete("/api/stocks/:id", async (req, res) => {
+  const stockId = String(req.params.id ?? "").trim()
+  if (!stockId) {
+    res.status(400).json({ error: "invalid stock id" })
+    return
+  }
+  try {
+    const deleted = await prisma.stock.delete({ where: { id: stockId } })
+    res.json(deleted)
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Stock not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.post("/api/stocks/bulk-delete", async (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids : []
+  const normalized = ids.map((id) => String(id ?? "").trim()).filter(Boolean)
+  if (normalized.length === 0) {
+    res.status(400).json({ error: "ids are required" })
+    return
+  }
+  const stocks = await prisma.stock.findMany({
+    where: { id: { in: normalized } },
+  })
+  await prisma.stock.deleteMany({
+    where: { id: { in: normalized } },
+  })
+  res.json(stocks)
+})
+
 const allowedProblemStatus = new Set(["open", "resolved"])
 
 app.get("/api/problems", async (_req, res) => {

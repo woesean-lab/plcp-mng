@@ -30,3 +30,22 @@ model Problem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Product {
+  id               String   @id @default(cuid())
+  name             String
+  deliveryTemplate String?
+  deliveryMessage  String?
+  note             String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  stocks           Stock[]
+}
+
+model Stock {
+  id        String   @id @default(cuid())
+  code      String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
