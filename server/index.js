@@ -14,9 +14,9 @@ const distDir = path.resolve(__dirname, "..", "dist")
 const port = Number(process.env.PORT ?? 3000)
 
 const initialTemplates = [
-  { label: "HoÅŸ geldin", value: "HoÅŸ geldin! Burada herkese yer var.", category: "KarÅŸÄ±lama" },
-  { label: "Bilgilendirme", value: "Son durum: GÃ¶rev planlandÄ±ÄŸÄ± gibi ilerliyor.", category: "Bilgilendirme" },
-  { label: "HatÄ±rlatma", value: "Unutma: AkÅŸam 18:00 toplantÄ±sÄ±na hazÄ±r ol.", category: "HatÄ±rlatma" },
+  { label: "Hoş geldin", value: "Hoş geldin! Burada herkese yer var.", category: "Karşılama" },
+  { label: "Bilgilendirme", value: "Son durum: Görev planlandığı gibi ilerliyor.", category: "Bilgilendirme" },
+  { label: "Hatırlatma", value: "Unutma: Akşam 18:00 toplantısına hazır ol.", category: "Hatırlatma" },
 ]
 async function ensureDefaults() {
   await prisma.category.upsert({
