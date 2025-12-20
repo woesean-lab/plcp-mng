@@ -14,6 +14,7 @@ const fallbackTemplates = [
 const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map((tpl) => tpl.category || "Genel")]))
 
 const PRODUCT_ORDER_STORAGE_KEY = "pulcipProductOrder"
+const THEME_STORAGE_KEY = "pulcipTheme"
 
 const initialProblems = [
   { id: 1, username: "@ornek1", issue: "Ödeme ekranda takıldı, 2 kez kart denemiş.", status: "open" },
@@ -56,6 +57,18 @@ const categoryPalette = [
   "border-indigo-300/50 bg-indigo-500/15 text-indigo-50",
 ]
 
+const getInitialTheme = () => {
+  if (typeof window === "undefined") return "dark"
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY)
+    if (stored === "light" || stored === "dark") return stored
+  } catch (error) {
+    console.warn("Could not read theme preference", error)
+  }
+  if (window.matchMedia?.("(prefers-color-scheme: light)").matches) return "light"
+  return "dark"
+}
+
 function LoadingIndicator({ label = "Yükleniyor..." }) {
   return (
     <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-200">
@@ -67,6 +80,7 @@ function LoadingIndicator({ label = "Yükleniyor..." }) {
 
 function App() {
   const [activeTab, setActiveTab] = useState("messages")
+  const [theme, setTheme] = useState(() => getInitialTheme())
   const [title, setTitle] = useState("Pulcip Manage")
   const [message, setMessage] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Genel")
@@ -97,6 +111,19 @@ function App() {
   const [productOrder, setProductOrder] = useState([])
   const [dragState, setDragState] = useState({ activeId: null, overId: null })
   const [editingProduct, setEditingProduct] = useState({})
+
+  const isLight = theme === "light"
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (!root) return
+    root.setAttribute("data-theme", theme)
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme)
+    } catch (error) {
+      console.warn("Could not persist theme preference", error)
+    }
+  }, [theme])
 
   useEffect(() => {
     try {
@@ -197,6 +224,10 @@ function App() {
 
   const toggleProductOpen = (productId) => {
     setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ?? false) }))
+  }
+
+  const handleThemeToggle = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"))
   }
 
   const handleDragStart = (event, productId) => {
@@ -539,6 +570,14 @@ function App() {
   }
 
   const showLoading = isLoading || !delayDone
+
+  const toastStyle = isLight
+    ? { background: "#ffffff", color: "#0f172a", border: "1px solid #e2e8f0" }
+    : { background: "#0f1625", color: "#e5ecff", border: "1px solid #1d2534" }
+
+  const toastIconTheme = isLight
+    ? { primary: "#2563eb", secondary: "#ffffff" }
+    : { primary: "#3ac7ff", secondary: "#0f1625" }
   const templateCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : templates.length
   const categoryCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : categories.length
   const selectedCategoryText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : selectedCategory.trim() || "Genel"
@@ -944,7 +983,7 @@ function App() {
   return (
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <div className="sticky top-4 z-30 flex items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
+        <div className="sticky top-4 z-30 flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
           <button
             type="button"
             onClick={() => setActiveTab("messages")}
@@ -977,6 +1016,14 @@ function App() {
             }`}
           >
             Stok
+          </button>
+          <button
+            type="button"
+            onClick={handleThemeToggle}
+            className="ml-auto inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-400/60 hover:text-accent-100"
+            aria-label="Tema degistir"
+          >
+            Tema: {isLight ? "Aydinlik" : "Koyu"}
           </button>
         </div>
 
@@ -1995,15 +2042,11 @@ function App() {
       <Toaster
         position="top-right"
         toastOptions={{
-          style: {
-            background: "#0f1625",
-            color: "#e5ecff",
-            border: "1px solid #1d2534",
-          },
+          style: toastStyle,
           success: {
             iconTheme: {
-              primary: "#3ac7ff",
-              secondary: "#0f1625",
+              primary: toastIconTheme.primary,
+              secondary: toastIconTheme.secondary,
             },
           },
         }}
