@@ -1020,7 +1020,7 @@ function App() {
           <button
             type="button"
             onClick={handleThemeToggle}
-            className="ml-auto inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-400/60 hover:text-accent-100"
+            className="ml-auto inline-flex items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
             aria-label="Tema degistir"
           >
             <span className="sr-only">Tema degistir</span>
