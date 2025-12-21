@@ -107,6 +107,7 @@ function App() {
   const [openCategories, setOpenCategories] = useState({})
   const [confirmTarget, setConfirmTarget] = useState(null)
   const [confirmCategoryTarget, setConfirmCategoryTarget] = useState(null)
+  const [editingTemplateId, setEditingTemplateId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [delayDone, setDelayDone] = useState(false)
 
@@ -568,6 +569,23 @@ function App() {
     }
   }
 
+  const handleEditTemplate = () => {
+    if (!activeTemplate?.id) {
+      toast.error("Şablon düzenlenemiyor (API/DB kontrol edin).")
+      return
+    }
+    setEditingTemplateId(activeTemplate.id)
+    setTitle(activeTemplate.label || "")
+    setMessage(activeTemplate.value || "")
+    setSelectedCategory(activeTemplate.category || "Genel")
+  }
+
+  const handleEditCancel = () => {
+    setEditingTemplateId(null)
+    setTitle("")
+    setMessage("")
+  }
+
   const handleAdd = async () => {
     const safeTitleInput = title.trim()
     const safeMessage = message.trim()
@@ -578,10 +596,48 @@ function App() {
       return
     }
 
-    const safeTitle = safeTitleInput || `Mesaj ${templates.length + 1}`
-    const safeCategory = safeCategoryInput || "Genel"
+    const editingTemplate = templates.find((tpl) => tpl.id === editingTemplateId)
+    const fallbackTitle = editingTemplate?.label || `Mesaj ${templates.length + 1}`
+    const safeTitle = safeTitleInput || fallbackTitle
+    const safeCategory = safeCategoryInput || editingTemplate?.category || "Genel"
 
     try {
+      if (editingTemplateId) {
+        if (!editingTemplate) {
+          toast.error("Düzenlenecek şablon bulunamadı.")
+          setEditingTemplateId(null)
+          return
+        }
+
+        const res = await apiFetch(`/api/templates/${editingTemplateId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ label: safeTitle, value: safeMessage, category: safeCategory }),
+        })
+
+        if (res.status === 409) {
+          toast.error("Bu başlık zaten mevcut.")
+          return
+        }
+        if (res.status === 404) {
+          toast.error("Şablon bulunamadı.")
+          setEditingTemplateId(null)
+          return
+        }
+        if (!res.ok) throw new Error("update_failed")
+
+        const updated = await res.json()
+        setTemplates((prev) => prev.map((tpl) => (tpl.id === updated.id ? updated : tpl)))
+        if (!categories.includes(updated.category || safeCategory)) {
+          setCategories((prev) => [...prev, updated.category || safeCategory])
+        }
+        setSelectedTemplate(updated.label)
+        setSelectedCategory(updated.category || safeCategory)
+        setEditingTemplateId(null)
+        toast.success("Şablon güncellendi")
+        return
+      }
+
       const res = await apiFetch("/api/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -637,6 +693,11 @@ function App() {
         if (nextTpl) {
           setSelectedCategory(nextTpl.category || "Genel")
         }
+      }
+      if (editingTemplateId === targetId) {
+        setEditingTemplateId(null)
+        setTitle("")
+        setMessage("")
       }
       toast.success("Şablon silindi")
     } catch (error) {
@@ -733,6 +794,8 @@ function App() {
   const selectedCategoryText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : selectedCategory.trim() || "Genel"
 
   const isAuthBusy = isAuthChecking || isAuthLoading
+  const isEditingTemplate = Boolean(editingTemplateId)
+  const isEditingActiveTemplate = editingTemplateId !== null && activeTemplate?.id === editingTemplateId
 
   const themeToggleButton = (
     <button
@@ -1349,18 +1412,32 @@ function App() {
                           </span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteWithConfirm(selectedTemplate)}
-                        className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
-                          confirmTarget === selectedTemplate
-                            ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                            : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
-                        }`}
-                        disabled={!selectedTemplate}
-                      >
-                        {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleEditTemplate}
+                          className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                            isEditingActiveTemplate
+                              ? "border-accent-300 bg-accent-500/25 text-accent-50"
+                              : "border-accent-400/60 bg-accent-500/15 text-accent-100 hover:border-accent-300 hover:bg-accent-500/25"
+                          }`}
+                          disabled={!activeTemplate?.id || showLoading}
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteWithConfirm(selectedTemplate)}
+                          className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                            confirmTarget === selectedTemplate
+                              ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                              : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
+                          }`}
+                          disabled={!selectedTemplate}
+                        >
+                          {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
+                        </button>
+                      </div>
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
                       {activeTemplate?.value ||
@@ -1528,10 +1605,18 @@ function App() {
                 <div className={`${panelClass} bg-ink-900/60`}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon ekle</p>
-                      <p className="text-sm text-slate-400">Başlık, kategori ve mesajı ekleyip kaydet.</p>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                        {isEditingTemplate ? "Şablon düzenle" : "Şablon ekle"}
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        {isEditingTemplate
+                          ? "Seçili şablonun başlık, kategori ve mesajını güncelle."
+                          : "Başlık, kategori ve mesajı ekleyip kaydet."}
+                      </p>
                     </div>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">Hızlı ekle</span>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {isEditingTemplate ? "Düzenleme" : "Hızlı ekle"}
+                    </span>
                   </div>
 
                   <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
@@ -1588,14 +1673,14 @@ function App() {
                         onClick={handleAdd}
                         className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                       >
-                        Kaydet
+                        {isEditingTemplate ? "Güncelle" : "Kaydet"}
                       </button>
                       <button
                         type="button"
-                        onClick={() => setMessage("")}
+                        onClick={isEditingTemplate ? handleEditCancel : () => setMessage("")}
                         className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
                       >
-                        Temizle
+                        {isEditingTemplate ? "Vazgeç" : "Temizle"}
                       </button>
                     </div>
                   </div>
