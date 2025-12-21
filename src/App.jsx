@@ -17,6 +17,9 @@ const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map
 const PRODUCT_ORDER_STORAGE_KEY = "pulcipProductOrder"
 const THEME_STORAGE_KEY = "pulcipTheme"
 const AUTH_TOKEN_STORAGE_KEY = "pulcipAuthToken"
+const LISTS_STORAGE_KEY = "pulcipLists"
+const DEFAULT_LIST_ROWS = 8
+const DEFAULT_LIST_COLS = 5
 
 const initialProblems = [
   { id: 1, username: "@ornek1", issue: "Ödeme ekranda takıldı, 2 kez kart denemiş.", status: "open" },
@@ -71,6 +74,20 @@ const getInitialTheme = () => {
   return "dark"
 }
 
+const toColumnLabel = (index) => {
+  let label = ""
+  let current = index
+  while (current >= 0) {
+    label = String.fromCharCode(65 + (current % 26)) + label
+    current = Math.floor(current / 26) - 1
+  }
+  return label
+}
+
+const createEmptySheet = (rows, cols) => {
+  return Array.from({ length: rows }, () => Array.from({ length: cols }, () => ""))
+}
+
 function LoadingIndicator({ label = "Yükleniyor..." }) {
   return (
     <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-200">
@@ -104,6 +121,9 @@ function App() {
   const [categories, setCategories] = useState([])
   const [templates, setTemplates] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [lists, setLists] = useState([])
+  const [activeListId, setActiveListId] = useState("")
+  const [listName, setListName] = useState("")
   const [isEditingActiveTemplate, setIsEditingActiveTemplate] = useState(false)
   const [activeTemplateDraft, setActiveTemplateDraft] = useState("")
   const [isTemplateSaving, setIsTemplateSaving] = useState(false)
@@ -223,10 +243,41 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LISTS_STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) setLists(parsed)
+      }
+    } catch (error) {
+      console.warn("Could not load lists", error)
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LISTS_STORAGE_KEY, JSON.stringify(lists))
+    } catch (error) {
+      console.warn("Could not save lists", error)
+    }
+  }, [lists])
+
+  useEffect(() => {
+    if (lists.length === 0) {
+      if (activeListId) setActiveListId("")
+      return
+    }
+    if (!lists.some((list) => list.id === activeListId)) {
+      setActiveListId(lists[0].id)
+    }
+  }, [lists, activeListId])
+
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
     [selectedTemplate, templates],
   )
+  const activeList = useMemo(() => lists.find((list) => list.id === activeListId), [lists, activeListId])
 
   useEffect(() => {
     if (!activeTemplate) {
@@ -242,6 +293,20 @@ function App() {
   const activeTemplateLength = isEditingActiveTemplate
     ? activeTemplateDraft.trim().length
     : (activeTemplate?.value?.trim().length ?? 0)
+  const activeListRows = activeList?.rows ?? []
+  const activeListColumnCount = useMemo(() => {
+    if (!activeList) return 0
+    const max = activeListRows.reduce((acc, row) => Math.max(acc, row.length), 0)
+    return max || DEFAULT_LIST_COLS
+  }, [activeList, activeListRows])
+  const activeListColumns = useMemo(
+    () => Array.from({ length: activeListColumnCount }, (_, index) => index),
+    [activeListColumnCount],
+  )
+  const activeListColumnLabels = useMemo(
+    () => activeListColumns.map((index) => toColumnLabel(index)),
+    [activeListColumns],
+  )
 
   const groupedTemplates = useMemo(() => {
     return templates.reduce((acc, tpl) => {
@@ -783,6 +848,76 @@ function App() {
     }
     setConfirmCategoryTarget(cat)
     toast("Silmek için tekrar tıkla", { position: "top-right" })
+  }
+
+  const handleListCreate = () => {
+    const name = listName.trim()
+    if (!name) {
+      toast.error("Liste adı girin.")
+      return
+    }
+    const id =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `list-${Date.now()}-${Math.random().toString(16).slice(2)}`
+    const newList = { id, name, rows: createEmptySheet(DEFAULT_LIST_ROWS, DEFAULT_LIST_COLS) }
+    setLists((prev) => [newList, ...prev])
+    setActiveListId(id)
+    setListName("")
+    toast.success("Liste oluşturuldu")
+  }
+
+  const handleListSelect = (id) => {
+    setActiveListId(id)
+  }
+
+  const handleListCellChange = (rowIndex, colIndex, value) => {
+    if (!activeList) return
+    setLists((prev) =>
+      prev.map((list) => {
+        if (list.id !== activeList.id) return list
+        const rows = list.rows.map((row, rIndex) => {
+          if (rIndex !== rowIndex) return row
+          const nextRow = [...row]
+          while (nextRow.length <= colIndex) nextRow.push("")
+          nextRow[colIndex] = value
+          return nextRow
+        })
+        return { ...list, rows }
+      }),
+    )
+  }
+
+  const handleListAddRow = () => {
+    if (!activeList) return
+    setLists((prev) =>
+      prev.map((list) => {
+        if (list.id !== activeList.id) return list
+        const colCount = list.rows.reduce((acc, row) => Math.max(acc, row.length), 0) || DEFAULT_LIST_COLS
+        const nextRow = Array.from({ length: colCount }, () => "")
+        return { ...list, rows: [...list.rows, nextRow] }
+      }),
+    )
+  }
+
+  const handleListAddColumn = () => {
+    if (!activeList) return
+    setLists((prev) =>
+      prev.map((list) => {
+        if (list.id !== activeList.id) return list
+        const colCount = list.rows.reduce((acc, row) => Math.max(acc, row.length), 0) || DEFAULT_LIST_COLS
+        const rows =
+          list.rows.length === 0
+            ? [Array.from({ length: colCount + 1 }, () => "")]
+            : list.rows.map((row) => {
+                const nextRow = [...row]
+                while (nextRow.length < colCount) nextRow.push("")
+                nextRow.push("")
+                return nextRow
+              })
+        return { ...list, rows }
+      }),
+    )
   }
 
   const showLoading = isLoading || !delayDone
@@ -1347,6 +1482,17 @@ function App() {
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab("lists")}
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "lists"
+                ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                : "bg-white/5 text-slate-200 hover:bg-white/10"
+            }`}
+          >
+            Listeler
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("stock")}
             className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
               activeTab === "stock"
@@ -1727,6 +1873,205 @@ function App() {
               </div>
             </div>
           </>
+        )}
+
+        {activeTab === "lists" && (
+          <div className="space-y-6">
+            <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
+                    Listeler
+                  </span>
+                  <h1 className="font-display text-3xl font-semibold text-white">Liste Yönetimi</h1>
+                  <p className="max-w-2xl text-sm text-slate-200/80">
+                    Yeni liste oluştur, listeleri görüntüle ve hücreleri Excel benzeri biçimde düzenle.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Toplam liste: {lists.length}
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Aktif: {activeList?.name || "Seçilmedi"}
+                  </span>
+                </div>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Listeler</p>
+                      <p className="text-sm text-slate-400">Listeye tıkla ve tabloyu aç.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {lists.length} liste
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {lists.length === 0 && (
+                      <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                        Henüz liste yok.
+                      </div>
+                    )}
+                    {lists.map((list) => {
+                      const rowCount = list.rows?.length ?? 0
+                      const colCount =
+                        list.rows?.reduce((acc, row) => Math.max(acc, row.length), 0) || DEFAULT_LIST_COLS
+                      const isActive = list.id === activeListId
+                      return (
+                        <button
+                          key={list.id}
+                          type="button"
+                          onClick={() => handleListSelect(list.id)}
+                          className={`rounded-xl border px-4 py-3 text-left transition ${
+                            isActive
+                              ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                              : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold">{list.name}</p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            {rowCount} satır · {colCount} sütun
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Liste içeriği</p>
+                      <p className="text-sm text-slate-400">Hücreleri seçip düzenleyebilirsin.</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleListAddRow}
+                        disabled={!activeList}
+                        className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/15 hover:text-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        Satır ekle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleListAddColumn}
+                        disabled={!activeList}
+                        className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        Sütun ekle
+                      </button>
+                    </div>
+                  </div>
+
+                  {!activeList ? (
+                    <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                      Bir liste seçin veya yeni liste oluşturun.
+                    </div>
+                  ) : (
+                    <div className="mt-4 overflow-auto rounded-xl border border-white/10 bg-ink-900/80">
+                      <table className="min-w-[640px] w-full border-collapse text-xs text-slate-200">
+                        <thead className="bg-white/5 text-slate-300">
+                          <tr>
+                            <th className="w-10 border border-white/10 px-2 py-1 text-center text-[11px] font-semibold text-slate-400">
+                              #
+                            </th>
+                            {activeListColumnLabels.map((label) => (
+                              <th
+                                key={label}
+                                className="border border-white/10 px-2 py-1 text-center text-[11px] font-semibold"
+                              >
+                                {label}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {activeListRows.map((row, rowIndex) => (
+                            <tr key={`${activeList.id}-${rowIndex}`}>
+                              <td className="border border-white/10 px-2 py-1 text-center text-[11px] text-slate-400">
+                                {rowIndex + 1}
+                              </td>
+                              {activeListColumns.map((colIndex) => (
+                                <td key={`${rowIndex}-${colIndex}`} className="border border-white/10 p-0">
+                                  <input
+                                    value={row?.[colIndex] ?? ""}
+                                    onChange={(e) =>
+                                      handleListCellChange(rowIndex, colIndex, e.target.value)
+                                    }
+                                    spellCheck={false}
+                                    className="h-8 w-full bg-transparent px-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-accent-400/60"
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Yeni liste</p>
+                      <p className="text-sm text-slate-400">Liste adını girip oluştur.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {lists.length} liste
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="list-name">
+                        Liste adı
+                      </label>
+                      <input
+                        id="list-name"
+                        type="text"
+                        value={listName}
+                        onChange={(e) => setListName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault()
+                            handleListCreate()
+                          }
+                        }}
+                        placeholder="Örn: Haftalık rapor"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleListCreate}
+                      className="w-full rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                    >
+                      Liste oluştur
+                    </button>
+                  </div>
+                </div>
+
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">İpuçları</p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                    <li>- Yeni liste varsayılan bir tabloyla başlar.</li>
+                    <li>- Satır/sütun ekleyerek tabloyu genişlet.</li>
+                    <li>- Veriler tarayıcıda saklanır (DB yok).</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === "stock" && (
