@@ -510,6 +510,8 @@ function App() {
     [activeListColumns],
   )
   const listFormulaCache = useMemo(() => new Map(), [activeListId, activeListRows])
+  const canDeleteListRow = Boolean(activeList && activeListRows.length > 1)
+  const canDeleteListColumn = Boolean(activeList && activeListColumnCount > 1)
 
   const toNumber = (value) => {
     if (isErrorValue(value)) return value
@@ -1277,6 +1279,41 @@ function App() {
         return { ...list, rows }
       }),
     )
+  }
+
+  const handleListDeleteRow = () => {
+    if (!activeList || activeList.rows.length === 0) return
+    const targetRow =
+      editingListCell.row !== null ? editingListCell.row : activeList.rows.length - 1
+    if (activeList.rows.length <= 1 || targetRow < 0) return
+    setLists((prev) =>
+      prev.map((list) => {
+        if (list.id !== activeList.id) return list
+        const rows = list.rows.filter((_, index) => index !== targetRow)
+        return { ...list, rows }
+      }),
+    )
+    setEditingListCell({ row: null, col: null })
+  }
+
+  const handleListDeleteColumn = () => {
+    if (!activeList) return
+    const colCount =
+      activeList.rows.reduce((acc, row) => Math.max(acc, row.length), 0) || DEFAULT_LIST_COLS
+    const targetCol = editingListCell.col !== null ? editingListCell.col : colCount - 1
+    if (colCount <= 1 || targetCol < 0) return
+    setLists((prev) =>
+      prev.map((list) => {
+        if (list.id !== activeList.id) return list
+        const rows = list.rows.map((row) => {
+          if (row.length === 0) return row
+          const nextRow = row.filter((_, index) => index !== targetCol)
+          return nextRow.length ? nextRow : [""]
+        })
+        return { ...list, rows }
+      }),
+    )
+    setEditingListCell({ row: null, col: null })
   }
 
   const showLoading = isLoading || !delayDone
@@ -2320,11 +2357,27 @@ function App() {
                       </button>
                       <button
                         type="button"
+                        onClick={handleListDeleteRow}
+                        disabled={!canDeleteListRow}
+                        className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        Satır sil
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleListAddColumn}
                         disabled={!activeList}
                         className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         Sütun ekle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleListDeleteColumn}
+                        disabled={!canDeleteListColumn}
+                        className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        Sütun sil
                       </button>
                     </div>
                   </div>
@@ -2443,6 +2496,7 @@ function App() {
                     <li>- Satır/sütun ekleyerek tabloyu genişlet.</li>
                     <li>- Formül için "=" ile başla (örn: =SUM(A1:A5)).</li>
                     <li>- Desteklenenler: SUM, AVERAGE, MIN, MAX, COUNT.</li>
+                    <li>- Seçili hücre yoksa satır/sütun silme en sondan çalışır.</li>
                     <li>- Veriler tarayıcıda saklanır (DB yok).</li>
                   </ul>
                 </div>
