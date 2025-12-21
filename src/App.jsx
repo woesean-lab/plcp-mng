@@ -327,8 +327,6 @@ function App() {
   const [listName, setListName] = useState("")
   const [editingListCell, setEditingListCell] = useState({ row: null, col: null })
   const [selectedListCell, setSelectedListCell] = useState({ row: null, col: null })
-  const [hoveredListRow, setHoveredListRow] = useState(null)
-  const [hoveredListColumn, setHoveredListColumn] = useState(null)
   const [listContextMenu, setListContextMenu] = useState({
     open: false,
     type: null,
@@ -488,8 +486,6 @@ function App() {
   useEffect(() => {
     setEditingListCell({ row: null, col: null })
     setSelectedListCell({ row: null, col: null })
-    setHoveredListRow(null)
-    setHoveredListColumn(null)
     setListContextMenu((prev) => (prev.open ? { ...prev, open: false } : prev))
   }, [activeListId])
 
@@ -2432,9 +2428,6 @@ function App() {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                       <span>Başlıklara sağ tıkla: ekle/sil</span>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-300">
-                        Sil: başlıktaki ×
-                      </span>
                     </div>
                   </div>
 
@@ -2455,10 +2448,6 @@ function App() {
                               return (
                                 <th
                                   key={label}
-                                  onMouseEnter={() => setHoveredListColumn(colIndex)}
-                                  onMouseLeave={() =>
-                                    setHoveredListColumn((prev) => (prev === colIndex ? null : prev))
-                                  }
                                   onClick={() => setSelectedListCell((prev) => ({ ...prev, col: colIndex }))}
                                   onContextMenu={(event) =>
                                     handleListContextMenu(event, "column", colIndex)
@@ -2467,22 +2456,7 @@ function App() {
                                     isSelected ? "bg-white/10 text-white" : ""
                                   }`}
                                 >
-                                  <div className="relative flex items-center justify-center">
-                                    <span>{label}</span>
-                                    {hoveredListColumn === colIndex && canDeleteListColumn && (
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.stopPropagation()
-                                          handleListDeleteColumn(colIndex)
-                                        }}
-                                        className="absolute right-0 top-0 rounded-full border border-rose-300/60 bg-rose-500/20 px-1 text-[10px] font-semibold text-rose-50 shadow transition hover:bg-rose-500/40"
-                                        aria-label="Sütun sil"
-                                      >
-                                        ×
-                                      </button>
-                                    )}
-                                  </div>
+                                  {label}
                                 </th>
                               )
                             })}
@@ -2492,32 +2466,13 @@ function App() {
                           {activeListRows.map((row, rowIndex) => (
                             <tr key={`${activeList.id}-${rowIndex}`}>
                               <td
-                                onMouseEnter={() => setHoveredListRow(rowIndex)}
-                                onMouseLeave={() =>
-                                  setHoveredListRow((prev) => (prev === rowIndex ? null : prev))
-                                }
                                 onClick={() => setSelectedListCell((prev) => ({ ...prev, row: rowIndex }))}
                                 onContextMenu={(event) => handleListContextMenu(event, "row", rowIndex)}
                                 className={`cursor-pointer border border-white/10 px-2 py-1 text-center text-[11px] ${
                                   selectedListCell.row === rowIndex ? "bg-white/10 text-white" : "text-slate-400"
                                 }`}
                               >
-                                <div className="relative flex items-center justify-center">
-                                  <span>{rowIndex + 1}</span>
-                                  {hoveredListRow === rowIndex && canDeleteListRow && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation()
-                                        handleListDeleteRow(rowIndex)
-                                      }}
-                                      className="absolute right-0 top-0 rounded-full border border-rose-300/60 bg-rose-500/20 px-1 text-[10px] font-semibold text-rose-50 shadow transition hover:bg-rose-500/40"
-                                      aria-label="Satır sil"
-                                    >
-                                      ×
-                                    </button>
-                                  )}
-                                </div>
+                                {rowIndex + 1}
                               </td>
                               {activeListColumns.map((colIndex) => {
                                 const rawValue = row?.[colIndex] ?? ""
@@ -2608,7 +2563,7 @@ function App() {
                     <li>- Satır/sütun ekleyerek tabloyu genişlet.</li>
                     <li>- Formül için "=" ile başla (örn: =SUM(A1:A5)).</li>
                     <li>- Desteklenenler: SUM, AVERAGE, MIN, MAX, COUNT.</li>
-                    <li>- Satır/sütun başlığına sağ tıkla ya da × ile sil.</li>
+                    <li>- Satır/sütun başlığına sağ tıkla: ekle/sil.</li>
                     <li>- Veriler tarayıcıda saklanır (DB yok).</li>
                   </ul>
                 </div>
