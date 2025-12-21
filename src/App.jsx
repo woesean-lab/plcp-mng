@@ -1,5 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react"
-import { useCallback } from "react"
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
 
 const fallbackTemplates = [
@@ -17,7 +16,6 @@ const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map
 const PRODUCT_ORDER_STORAGE_KEY = "pulcipProductOrder"
 const THEME_STORAGE_KEY = "pulcipTheme"
 const AUTH_TOKEN_STORAGE_KEY = "pulcipAuthToken"
-const LISTS_STORAGE_KEY = "pulcipLists"
 const DEFAULT_LIST_ROWS = 8
 const DEFAULT_LIST_COLS = 5
 const FORMULA_ERRORS = {
@@ -325,6 +323,7 @@ function App() {
   const [lists, setLists] = useState([])
   const [activeListId, setActiveListId] = useState("")
   const [listName, setListName] = useState("")
+  const [isListsLoading, setIsListsLoading] = useState(true)
   const [editingListCell, setEditingListCell] = useState({ row: null, col: null })
   const [selectedListCell, setSelectedListCell] = useState({ row: null, col: null })
   const [listContextMenu, setListContextMenu] = useState({
@@ -334,6 +333,10 @@ function App() {
     x: 0,
     y: 0,
   })
+  const listSaveTimers = useRef(new Map())
+  const listSaveQueue = useRef(new Map())
+  const listLoadErrorRef = useRef(false)
+  const listSaveErrorRef = useRef(false)
   const [isEditingActiveTemplate, setIsEditingActiveTemplate] = useState(false)
   const [activeTemplateDraft, setActiveTemplateDraft] = useState("")
   const [isTemplateSaving, setIsTemplateSaving] = useState(false)
@@ -454,24 +457,30 @@ function App() {
   }, [])
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(LISTS_STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed)) setLists(parsed)
+    if (!isAuthed) return
+    const controller = new AbortController()
+    setIsListsLoading(true)
+    ;(async () => {
+      try {
+        const res = await apiFetch("/api/lists", { signal: controller.signal })
+        if (!res.ok) throw new Error("api_error")
+        const data = await res.json()
+        setLists(Array.isArray(data) ? data : [])
+        listLoadErrorRef.current = false
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        setLists([])
+        if (!listLoadErrorRef.current) {
+          listLoadErrorRef.current = true
+          toast.error("Liste verileri alınamadı (API/DB kontrol edin).")
+        }
+      } finally {
+        setIsListsLoading(false)
       }
-    } catch (error) {
-      console.warn("Could not load lists", error)
-    }
-  }, [])
+    })()
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(LISTS_STORAGE_KEY, JSON.stringify(lists))
-    } catch (error) {
-      console.warn("Could not save lists", error)
-    }
-  }, [lists])
+    return () => controller.abort()
+  }, [apiFetch, isAuthed])
 
   useEffect(() => {
     if (lists.length === 0) {
@@ -509,6 +518,14 @@ function App() {
     }
   }, [listContextMenu.open])
 
+  useEffect(() => {
+    return () => {
+      listSaveTimers.current.forEach((timerId) => window.clearTimeout(timerId))
+      listSaveTimers.current.clear()
+      listSaveQueue.current.clear()
+    }
+  }, [])
+
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
     [selectedTemplate, templates],
@@ -529,7 +546,7 @@ function App() {
   const activeTemplateLength = isEditingActiveTemplate
     ? activeTemplateDraft.trim().length
     : (activeTemplate?.value?.trim().length ?? 0)
-  const activeListRows = activeList?.rows ?? []
+  const activeListRows = Array.isArray(activeList?.rows) ? activeList.rows : []
   const activeListColumnCount = useMemo(() => {
     if (!activeList) return 0
     const max = activeListRows.reduce((acc, row) => Math.max(acc, row.length), 0)
@@ -1245,21 +1262,77 @@ function App() {
     toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
-  const handleListCreate = () => {
+  const queueListSave = useCallback(
+    (list) => {
+      if (!isAuthed || !list?.id) return
+      listSaveQueue.current.set(list.id, { name: list.name, rows: list.rows })
+      const timers = listSaveTimers.current
+      const existing = timers.get(list.id)
+      if (existing) {
+        window.clearTimeout(existing)
+      }
+      const timeoutId = window.setTimeout(async () => {
+        timers.delete(list.id)
+        const payload = listSaveQueue.current.get(list.id)
+        listSaveQueue.current.delete(list.id)
+        if (!payload) return
+        try {
+          const res = await apiFetch(`/api/lists/${list.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+          if (!res.ok) throw new Error("list_save_failed")
+          listSaveErrorRef.current = false
+        } catch (error) {
+          if (!listSaveErrorRef.current) {
+            listSaveErrorRef.current = true
+            toast.error("Liste kaydedilemedi (API/DB kontrol edin).")
+          }
+        }
+      }, 600)
+      timers.set(list.id, timeoutId)
+    },
+    [apiFetch, isAuthed],
+  )
+
+  const updateListById = (listId, updater) => {
+    if (!listId) return
+    let nextList = null
+    setLists((prev) =>
+      prev.map((list) => {
+        if (list.id !== listId) return list
+        const updated = updater(list)
+        nextList = updated
+        return updated
+      }),
+    )
+    if (nextList) queueListSave(nextList)
+  }
+
+  const handleListCreate = async () => {
     const name = listName.trim()
     if (!name) {
       toast.error("Liste adı girin.")
       return
     }
-    const id =
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `list-${Date.now()}-${Math.random().toString(16).slice(2)}`
-    const newList = { id, name, rows: createEmptySheet(DEFAULT_LIST_ROWS, DEFAULT_LIST_COLS) }
-    setLists((prev) => [newList, ...prev])
-    setActiveListId(id)
-    setListName("")
-    toast.success("Liste oluşturuldu")
+    const rows = createEmptySheet(DEFAULT_LIST_ROWS, DEFAULT_LIST_COLS)
+    try {
+      const res = await apiFetch("/api/lists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, rows }),
+      })
+      if (!res.ok) throw new Error("list_create_failed")
+      const created = await res.json()
+      setLists((prev) => [created, ...prev])
+      setActiveListId(created.id)
+      setListName("")
+      toast.success("Liste oluşturuldu")
+    } catch (error) {
+      console.error(error)
+      toast.error("Liste oluşturulamadı (API/DB kontrol edin).")
+    }
   }
 
   const handleListSelect = (id) => {
@@ -1268,71 +1341,54 @@ function App() {
 
   const handleListCellChange = (rowIndex, colIndex, value) => {
     if (!activeList) return
-    setLists((prev) =>
-      prev.map((list) => {
-        if (list.id !== activeList.id) return list
-        const rows = list.rows.map((row, rIndex) => {
-          if (rIndex !== rowIndex) return row
-          const nextRow = [...row]
-          while (nextRow.length <= colIndex) nextRow.push("")
-          nextRow[colIndex] = value
-          return nextRow
-        })
-        return { ...list, rows }
-      }),
-    )
+    updateListById(activeList.id, (list) => {
+      const rows = list.rows.map((row, rIndex) => {
+        if (rIndex !== rowIndex) return row
+        const nextRow = [...row]
+        while (nextRow.length <= colIndex) nextRow.push("")
+        nextRow[colIndex] = value
+        return nextRow
+      })
+      return { ...list, rows }
+    })
   }
 
   const getListColumnCount = (rows) =>
     rows.reduce((acc, row) => Math.max(acc, row.length), 0) || DEFAULT_LIST_COLS
 
-  const handleListAddRow = () => {
-    handleListInsertRow()
-  }
-
-  const handleListAddColumn = () => {
-    handleListInsertColumn()
-  }
-
   const handleListInsertRow = (afterIndex = null) => {
     if (!activeList) return
-    setLists((prev) =>
-      prev.map((list) => {
-        if (list.id !== activeList.id) return list
-        const colCount = getListColumnCount(list.rows)
-        const nextRow = Array.from({ length: colCount }, () => "")
-        const rows = [...list.rows]
-        const insertIndex = Number.isFinite(afterIndex)
-          ? Math.min(Math.max(afterIndex + 1, 0), rows.length)
-          : rows.length
-        rows.splice(insertIndex, 0, nextRow)
-        return { ...list, rows }
-      }),
-    )
+    updateListById(activeList.id, (list) => {
+      const colCount = getListColumnCount(list.rows)
+      const nextRow = Array.from({ length: colCount }, () => "")
+      const rows = [...list.rows]
+      const insertIndex = Number.isFinite(afterIndex)
+        ? Math.min(Math.max(afterIndex + 1, 0), rows.length)
+        : rows.length
+      rows.splice(insertIndex, 0, nextRow)
+      return { ...list, rows }
+    })
   }
 
   const handleListInsertColumn = (afterIndex = null) => {
     if (!activeList) return
-    setLists((prev) =>
-      prev.map((list) => {
-        if (list.id !== activeList.id) return list
-        const colCount = getListColumnCount(list.rows)
-        const insertIndex = Number.isFinite(afterIndex)
-          ? Math.min(Math.max(afterIndex + 1, 0), colCount)
-          : colCount
-        if (list.rows.length === 0) {
-          const row = Array.from({ length: colCount + 1 }, () => "")
-          return { ...list, rows: [row] }
-        }
-        const rows = list.rows.map((row) => {
-          const nextRow = [...row]
-          while (nextRow.length < colCount) nextRow.push("")
-          nextRow.splice(insertIndex, 0, "")
-          return nextRow
-        })
-        return { ...list, rows }
-      }),
-    )
+    updateListById(activeList.id, (list) => {
+      const colCount = getListColumnCount(list.rows)
+      const insertIndex = Number.isFinite(afterIndex)
+        ? Math.min(Math.max(afterIndex + 1, 0), colCount)
+        : colCount
+      if (list.rows.length === 0) {
+        const row = Array.from({ length: colCount + 1 }, () => "")
+        return { ...list, rows: [row] }
+      }
+      const rows = list.rows.map((row) => {
+        const nextRow = [...row]
+        while (nextRow.length < colCount) nextRow.push("")
+        nextRow.splice(insertIndex, 0, "")
+        return nextRow
+      })
+      return { ...list, rows }
+    })
   }
 
   const handleListDeleteRow = (rowIndex = null) => {
@@ -1342,13 +1398,10 @@ function App() {
       ? rowIndex
       : selectedListCell.row ?? fallbackIndex
     if (activeList.rows.length <= 1 || targetRow < 0) return
-    setLists((prev) =>
-      prev.map((list) => {
-        if (list.id !== activeList.id) return list
-        const rows = list.rows.filter((_, index) => index !== targetRow)
-        return { ...list, rows }
-      }),
-    )
+    updateListById(activeList.id, (list) => {
+      const rows = list.rows.filter((_, index) => index !== targetRow)
+      return { ...list, rows }
+    })
     setEditingListCell({ row: null, col: null })
     setSelectedListCell({ row: null, col: null })
   }
@@ -1359,17 +1412,14 @@ function App() {
     const fallbackIndex = colCount - 1
     const targetCol = Number.isFinite(colIndex) ? colIndex : selectedListCell.col ?? fallbackIndex
     if (colCount <= 1 || targetCol < 0) return
-    setLists((prev) =>
-      prev.map((list) => {
-        if (list.id !== activeList.id) return list
-        const rows = list.rows.map((row) => {
-          if (row.length === 0) return row
-          const nextRow = row.filter((_, index) => index !== targetCol)
-          return nextRow.length ? nextRow : [""]
-        })
-        return { ...list, rows }
-      }),
-    )
+    updateListById(activeList.id, (list) => {
+      const rows = list.rows.map((row) => {
+        if (row.length === 0) return row
+        const nextRow = row.filter((_, index) => index !== targetCol)
+        return nextRow.length ? nextRow : [""]
+      })
+      return { ...list, rows }
+    })
     setEditingListCell({ row: null, col: null })
     setSelectedListCell({ row: null, col: null })
   }
@@ -1408,6 +1458,7 @@ function App() {
   const templateCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : templates.length
   const categoryCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : categories.length
   const selectedCategoryText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : selectedCategory.trim() || "Genel"
+  const listCountText = isListsLoading ? <LoadingIndicator label="Yükleniyor" /> : lists.length
 
   const isAuthBusy = isAuthChecking || isAuthLoading
 
@@ -2366,7 +2417,7 @@ function App() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-                    Toplam liste: {lists.length}
+                    Toplam liste: {listCountText}
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
                     Aktif: {activeList?.name || "Seçilmedi"}
@@ -2384,14 +2435,19 @@ function App() {
                       <p className="text-sm text-slate-400">Listeye tıkla ve tabloyu aç.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      {lists.length} liste
+                      {listCountText} liste
                     </span>
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {lists.length === 0 && (
+                    {!isListsLoading && lists.length === 0 && (
                       <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
                         Henüz liste yok.
+                      </div>
+                    )}
+                    {isListsLoading && (
+                      <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                        <LoadingIndicator label="Listeler yükleniyor..." />
                       </div>
                     )}
                     {lists.map((list) => {
@@ -2522,7 +2578,7 @@ function App() {
                       <p className="text-sm text-slate-400">Liste adını girip oluştur.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      {lists.length} liste
+                      {listCountText} liste
                     </span>
                   </div>
 
@@ -2564,7 +2620,7 @@ function App() {
                     <li>- Formül için "=" ile başla (örn: =SUM(A1:A5)).</li>
                     <li>- Desteklenenler: SUM, AVERAGE, MIN, MAX, COUNT.</li>
                     <li>- Satır/sütun başlığına sağ tıkla: ekle/sil.</li>
-                    <li>- Veriler tarayıcıda saklanır (DB yok).</li>
+                    <li>- Veriler veritabanında saklanır.</li>
                   </ul>
                 </div>
               </div>

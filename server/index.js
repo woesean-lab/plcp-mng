@@ -511,6 +511,95 @@ app.post("/api/stocks/bulk-delete", async (req, res) => {
   res.json({ deleted: result.count })
 })
 
+const normalizeListRows = (rows) => {
+  if (!Array.isArray(rows)) return null
+  return rows.map((row) => {
+    if (!Array.isArray(row)) return []
+    return row.map((cell) => String(cell ?? ""))
+  })
+}
+
+app.get("/api/lists", async (_req, res) => {
+  const lists = await prisma.list.findMany({ orderBy: { createdAt: "desc" } })
+  res.json(lists)
+})
+
+app.post("/api/lists", async (req, res) => {
+  const name = String(req.body?.name ?? "").trim()
+  if (!name) {
+    res.status(400).json({ error: "name is required" })
+    return
+  }
+  const rowsRaw = req.body?.rows
+  const rows = rowsRaw === undefined ? undefined : normalizeListRows(rowsRaw)
+  if (rowsRaw !== undefined && rows === null) {
+    res.status(400).json({ error: "rows must be an array of arrays" })
+    return
+  }
+
+  const created = await prisma.list.create({
+    data: { name, rows: rows ?? [] },
+  })
+  res.status(201).json(created)
+})
+
+app.put("/api/lists/:id", async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const nameRaw = req.body?.name
+  const rowsRaw = req.body?.rows
+  const name = nameRaw === undefined ? undefined : String(nameRaw).trim()
+  const rows = rowsRaw === undefined ? undefined : normalizeListRows(rowsRaw)
+
+  if (name !== undefined && !name) {
+    res.status(400).json({ error: "name cannot be empty" })
+    return
+  }
+  if (rowsRaw !== undefined && rows === null) {
+    res.status(400).json({ error: "rows must be an array of arrays" })
+    return
+  }
+
+  try {
+    const updated = await prisma.list.update({
+      where: { id },
+      data: {
+        ...(name === undefined ? {} : { name }),
+        ...(rows === undefined ? {} : { rows }),
+      },
+    })
+    res.json(updated)
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "List not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/lists/:id", async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+  try {
+    await prisma.list.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "List not found" })
+      return
+    }
+    throw error
+  }
+})
+
 app.use(express.static(distDir))
 app.get(/^\/(?!api\/).*/, (req, res) => {
   res.sendFile(path.join(distDir, "index.html"))
