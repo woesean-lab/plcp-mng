@@ -326,6 +326,7 @@ function App() {
   const [activeListId, setActiveListId] = useState("")
   const [listName, setListName] = useState("")
   const [editingListCell, setEditingListCell] = useState({ row: null, col: null })
+  const [selectedListCell, setSelectedListCell] = useState({ row: null, col: null })
   const [isEditingActiveTemplate, setIsEditingActiveTemplate] = useState(false)
   const [activeTemplateDraft, setActiveTemplateDraft] = useState("")
   const [isTemplateSaving, setIsTemplateSaving] = useState(false)
@@ -474,6 +475,11 @@ function App() {
       setActiveListId(lists[0].id)
     }
   }, [lists, activeListId])
+
+  useEffect(() => {
+    setEditingListCell({ row: null, col: null })
+    setSelectedListCell({ row: null, col: null })
+  }, [activeListId])
 
   const activeTemplate = useMemo(
     () => templates.find((tpl) => tpl.label === selectedTemplate),
@@ -1284,7 +1290,7 @@ function App() {
   const handleListDeleteRow = () => {
     if (!activeList || activeList.rows.length === 0) return
     const targetRow =
-      editingListCell.row !== null ? editingListCell.row : activeList.rows.length - 1
+      selectedListCell.row !== null ? selectedListCell.row : activeList.rows.length - 1
     if (activeList.rows.length <= 1 || targetRow < 0) return
     setLists((prev) =>
       prev.map((list) => {
@@ -1294,13 +1300,14 @@ function App() {
       }),
     )
     setEditingListCell({ row: null, col: null })
+    setSelectedListCell({ row: null, col: null })
   }
 
   const handleListDeleteColumn = () => {
     if (!activeList) return
     const colCount =
       activeList.rows.reduce((acc, row) => Math.max(acc, row.length), 0) || DEFAULT_LIST_COLS
-    const targetCol = editingListCell.col !== null ? editingListCell.col : colCount - 1
+    const targetCol = selectedListCell.col !== null ? selectedListCell.col : colCount - 1
     if (colCount <= 1 || targetCol < 0) return
     setLists((prev) =>
       prev.map((list) => {
@@ -1314,6 +1321,7 @@ function App() {
       }),
     )
     setEditingListCell({ row: null, col: null })
+    setSelectedListCell({ row: null, col: null })
   }
 
   const showLoading = isLoading || !delayDone
@@ -2421,7 +2429,10 @@ function App() {
                                   <td key={`${rowIndex}-${colIndex}`} className="border border-white/10 p-0">
                                     <input
                                       value={displayValue}
-                                      onFocus={() => setEditingListCell({ row: rowIndex, col: colIndex })}
+                                      onFocus={() => {
+                                        setEditingListCell({ row: rowIndex, col: colIndex })
+                                        setSelectedListCell({ row: rowIndex, col: colIndex })
+                                      }}
                                       onBlur={() =>
                                         setEditingListCell((prev) =>
                                           prev.row === rowIndex && prev.col === colIndex
