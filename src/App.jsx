@@ -2588,7 +2588,7 @@ function App() {
                         type="button"
                         onClick={handleListSaveNow}
                         disabled={!activeList || isListSaving || isListsLoading}
-                        className="inline-flex items-center rounded-[0.5rem] border border-accent-300/70 bg-gradient-to-br from-accent-500/20 via-accent-400/10 to-accent-500/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center rounded-[0.5rem] border border-emerald-300/70 bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 shadow-glow transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isListSaving ? "Kaydediliyor" : "Kaydet"}
                       </button>
