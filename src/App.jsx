@@ -78,24 +78,26 @@ const initialTasks = [
     title: "Haftalik oncelik listesini guncelle",
     note: "Kritik musteriler + teslim sureleri",
     owner: "Burak",
+    dueType: "date",
+    dueDate: "2025-12-29",
     status: "todo",
-    due: "2025-12-29",
   },
   {
     id: "tsk-2",
     title: "Sablon kategorilerini toparla",
     note: "Genel, satis, destek",
     owner: "Ece",
+    dueType: "repeat",
+    repeatDay: "2",
     status: "doing",
-    due: "",
   },
   {
     id: "tsk-3",
     title: "Haftalik raporu paylas",
     note: "Cuma 17:00",
     owner: "Tuna",
+    dueType: "today",
     status: "done",
-    due: "2025-12-27",
   },
 ]
 
@@ -131,6 +133,22 @@ const taskStatusMeta = {
     badge: "border-emerald-300/60 bg-emerald-500/15 text-emerald-50",
   },
 }
+
+const taskDueTypeOptions = [
+  { value: "today", label: "Bugun" },
+  { value: "repeat", label: "Tekrarlanabilir gun" },
+  { value: "date", label: "Ozel tarih" },
+]
+
+const taskRepeatDays = [
+  { value: "1", label: "Pazartesi" },
+  { value: "2", label: "Sali" },
+  { value: "3", label: "Carsamba" },
+  { value: "4", label: "Persembe" },
+  { value: "5", label: "Cuma" },
+  { value: "6", label: "Cumartesi" },
+  { value: "0", label: "Pazar" },
+]
 
 
 const getInitialTheme = () => {
@@ -462,23 +480,37 @@ function App() {
   const [editingProduct, setEditingProduct] = useState({})
 
   const [tasks, setTasks] = useState(() => {
-    if (typeof window === "undefined") return initialTasks
+    const normalizeTask = (task) => {
+      const dueDate = task.dueDate || task.due || ""
+      const dueType = task.dueType || (dueDate ? "date" : "today")
+      const repeatDay = task.repeatDay ?? "1"
+      return {
+        ...task,
+        dueType,
+        dueDate: dueType === "date" ? dueDate : "",
+        repeatDay: dueType === "repeat" ? repeatDay : "",
+        repeatWakeAt: task.repeatWakeAt || "",
+      }
+    }
+    if (typeof window === "undefined") return initialTasks.map(normalizeTask)
     try {
       const stored = localStorage.getItem(TASKS_STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed)) return parsed
+        if (Array.isArray(parsed)) return parsed.map(normalizeTask)
       }
     } catch (error) {
       console.warn("Could not load tasks", error)
     }
-    return initialTasks
+    return initialTasks.map(normalizeTask)
   })
   const [taskForm, setTaskForm] = useState({
     title: "",
     note: "",
     owner: "",
-    due: "",
+    dueType: "today",
+    repeatDay: "1",
+    dueDate: "",
   })
   const [confirmTaskDelete, setConfirmTaskDelete] = useState(null)
   const [taskDragState, setTaskDragState] = useState({ activeId: null, overStatus: null })
@@ -1002,6 +1034,31 @@ function App() {
     }
   }, [tasks])
 
+  useEffect(() => {
+    const tick = () => {
+      const today = getLocalDateString(new Date())
+      setTasks((prev) => {
+        let changed = false
+        const next = prev.map((task) => {
+          if (
+            task.dueType === "repeat" &&
+            task.status === "done" &&
+            task.repeatWakeAt &&
+            task.repeatWakeAt <= today
+          ) {
+            changed = true
+            return { ...task, status: "todo", repeatWakeAt: "" }
+          }
+          return task
+        })
+        return changed ? next : prev
+      })
+    }
+    tick()
+    const intervalId = window.setInterval(tick, 60 * 60 * 1000)
+    return () => window.clearInterval(intervalId)
+  }, [])
+
   const toggleProductOpen = (productId) => {
     setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ?? false)}))
   }
@@ -1011,17 +1068,49 @@ function App() {
     return `tsk-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
   }
 
-  const formatTaskDue = (value) => {
+  const getLocalDateString = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+
+  const addDays = (date, days) => {
+    const next = new Date(date)
+    next.setDate(next.getDate() + days)
+    return next
+  }
+
+  const formatTaskDate = (value) => {
     if (!value) return ""
-    const dateValue = new Date(value)
+    const dateValue = new Date(`${value}T00:00:00`)
     if (!Number.isNaN(dateValue.getTime())) {
       return LIST_DATE_FORMATTER.format(dateValue)
     }
     return value
   }
 
+  const getTaskDueLabel = (task) => {
+    if (task.dueType === "today") return "Bugun"
+    if (task.dueType === "repeat") {
+      const day = taskRepeatDays.find((item) => item.value === String(task.repeatDay))
+      return day ? `Her ${day.label}` : "Tekrarlanabilir"
+    }
+    if (task.dueType === "date") {
+      return task.dueDate ? formatTaskDate(task.dueDate) : "Tarih secilmedi"
+    }
+    return ""
+  }
+
   const resetTaskForm = () => {
-    setTaskForm({ title: "", note: "", owner: "", due: "" })
+    setTaskForm({
+      title: "",
+      note: "",
+      owner: "",
+      dueType: "today",
+      repeatDay: "1",
+      dueDate: "",
+    })
   }
 
   const handleTaskAdd = () => {
@@ -1030,13 +1119,19 @@ function App() {
       toast.error("Gorev adi gerekli.")
       return
     }
+    if (taskForm.dueType === "date" && !taskForm.dueDate) {
+      toast.error("Ozel tarih secin.")
+      return
+    }
     const newTask = {
       id: createTaskId(),
       title: titleValue,
       note: taskForm.note.trim(),
       owner: taskForm.owner.trim(),
+      dueType: taskForm.dueType,
+      repeatDay: taskForm.dueType === "repeat" ? taskForm.repeatDay : "",
+      dueDate: taskForm.dueType === "date" ? taskForm.dueDate : "",
       status: "todo",
-      due: taskForm.due,
       createdAt: new Date().toISOString(),
     }
     setTasks((prev) => [newTask, ...prev])
@@ -1049,15 +1144,23 @@ function App() {
       prev.map((task) => {
         if (task.id !== taskId) return task
         if (task.status === "todo") return { ...task, status: "doing" }
-        if (task.status === "doing") return { ...task, status: "done" }
-        return { ...task, status: "done" }
+        if (task.status === "doing") {
+          if (task.dueType === "repeat") {
+            const tomorrow = getLocalDateString(addDays(new Date(), 1))
+            return { ...task, status: "done", repeatWakeAt: tomorrow }
+          }
+          return { ...task, status: "done", repeatWakeAt: "" }
+        }
+        return { ...task, status: "done", repeatWakeAt: "" }
       }),
     )
   }
 
   const handleTaskReopen = (taskId) => {
     setTasks((prev) =>
-      prev.map((task) => (task.id === taskId ? { ...task, status: "todo" } : task)),
+      prev.map((task) =>
+        task.id === taskId ? { ...task, status: "todo", repeatWakeAt: "" } : task,
+      ),
     )
   }
 
@@ -3036,11 +3139,9 @@ function App() {
                                     )}
                                   </div>
                                 </div>
-                                {task.due && (
-                                  <span className="w-fit rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-300">
-                                    Son tarih: {formatTaskDue(task.due)}
-                                  </span>
-                                )}
+                                <span className="w-fit rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-300">
+                                  Bitis: {getTaskDueLabel(task)}
+                                </span>
                                 <div className="flex flex-wrap gap-2">
                                   {status !== "done" && (
                                     <button
@@ -3138,17 +3239,62 @@ function App() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-200" htmlFor="task-due">
-                        Son tarih
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="task-due-type">
+                        Bitis tarihi
                       </label>
-                      <input
-                        id="task-due"
-                        type="date"
-                        value={taskForm.due}
-                        onChange={(e) => setTaskForm((prev) => ({ ...prev, due: e.target.value }))}
-                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                      />
+                      <select
+                        id="task-due-type"
+                        value={taskForm.dueType}
+                        onChange={(e) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            dueType: e.target.value,
+                          }))
+                        }
+                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      >
+                        {taskDueTypeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+
+                    {taskForm.dueType === "repeat" && (
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-200" htmlFor="task-repeat-day">
+                          Tekrarlanabilir gun
+                        </label>
+                        <select
+                          id="task-repeat-day"
+                          value={taskForm.repeatDay}
+                          onChange={(e) => setTaskForm((prev) => ({ ...prev, repeatDay: e.target.value }))}
+                          className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                        >
+                          {taskRepeatDays.map((day) => (
+                            <option key={day.value} value={day.value}>
+                              {day.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {taskForm.dueType === "date" && (
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-200" htmlFor="task-due-date">
+                          Ozel tarih
+                        </label>
+                        <input
+                          id="task-due-date"
+                          type="date"
+                          value={taskForm.dueDate}
+                          onChange={(e) => setTaskForm((prev) => ({ ...prev, dueDate: e.target.value }))}
+                          className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                        />
+                      </div>
+                    )}
 
                     <div className="flex flex-wrap gap-3">
                       <button
@@ -3182,7 +3328,7 @@ function App() {
                         <p className="mt-1 text-sm text-slate-100">{focusTask.title}</p>
                       </>
                     ) : (
-                      <p>Oncelikli gorev kalmadi. Yeni gorev ekleyebilirsin.</p>
+                      <p>Gorev kalmadi. Yeni gorev ekleyebilirsin.</p>
                     )}
                   </div>
                 </div>
