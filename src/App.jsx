@@ -66,6 +66,11 @@ const TASK_PRIORITY_STYLES = {
   medium: "border-amber-300/60 bg-amber-500/10 text-amber-50",
   high: "border-rose-300/60 bg-rose-500/10 text-rose-50",
 }
+const TASK_PRIORITY_BORDERS = {
+  low: "border-l-emerald-400/80",
+  medium: "border-l-amber-400/80",
+  high: "border-l-rose-400/80",
+}
 const TASK_STATUS_STYLES = {
   todo: "border-amber-300/50 bg-amber-500/10 text-amber-50",
   doing: "border-sky-300/50 bg-sky-500/10 text-sky-50",
@@ -495,6 +500,8 @@ function App() {
     details: "",
   })
   const [taskQuery, setTaskQuery] = useState("")
+  const [expandedTaskDetails, setExpandedTaskDetails] = useState(() => new Set())
+  const [isTaskDetailsExpanded, setIsTaskDetailsExpanded] = useState(false)
   const listSaveTimers = useRef(new Map())
   const listSaveQueue = useRef(new Map())
   const listSavedTimer = useRef(null)
@@ -1834,6 +1841,18 @@ function App() {
     })
   }
 
+  const toggleTaskDetailsExpanded = (taskId) => {
+    setExpandedTaskDetails((prev) => {
+      const next = new Set(prev)
+      if (next.has(taskId)) {
+        next.delete(taskId)
+      } else {
+        next.add(taskId)
+      }
+      return next
+    })
+  }
+
   const handleTaskAdd = () => {
     const title = taskDraft.title.trim()
     if (!title) {
@@ -1869,6 +1888,11 @@ function App() {
 
   const handleTaskDelete = (taskId) => {
     setTasks((prev) => prev.filter((task) => task.id !== taskId))
+    setExpandedTaskDetails((prev) => {
+      const next = new Set(prev)
+      next.delete(taskId)
+      return next
+    })
     toast.success("Gorev silindi")
   }
 
@@ -3546,17 +3570,28 @@ function App() {
                         </select>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-200" htmlFor="task-details">
-                        Gorev ayrintilari
-                      </label>
+                    <div className="space-y-2 rounded-xl border border-white/10 bg-ink-950/40 p-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-200" htmlFor="task-details">
+                          Gorev ayrintilari
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsTaskDetailsExpanded((prev) => !prev)}
+                          className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400/60 hover:text-accent-100"
+                        >
+                          {isTaskDetailsExpanded ? "Kucult" : "Buyut"}
+                        </button>
+                      </div>
                       <textarea
                         id="task-details"
                         value={taskDraft.details}
                         onChange={(e) => handleTaskDraftChange("details", e.target.value)}
-                        rows={4}
+                        rows={isTaskDetailsExpanded ? 10 : 6}
                         placeholder="Gorev ayrintilarini yaz"
-                        className="min-h-[96px] w-full resize-y rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                        className={`w-full resize-y rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 ${
+                          isTaskDetailsExpanded ? "min-h-[220px]" : "min-h-[140px]"
+                        }`}
                       />
                     </div>
                     <button
@@ -3586,7 +3621,7 @@ function App() {
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                         Gorev panosu
                       </p>
-                      <p className="text-sm text-slate-400">Gorevleri suruklemeden guncelle.</p>
+                      <p className="text-sm text-slate-400">Kartlari hizla guncelle, ayrintilari ac.</p>
                     </div>
                     <div className="flex items-center gap-2 rounded-full border border-white/10 bg-ink-900 px-3 py-1.5 shadow-inner">
                       <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
@@ -3630,18 +3665,35 @@ function App() {
                             {items.map((task) => {
                               const priorityClass =
                                 TASK_PRIORITY_STYLES[task.priority] || TASK_PRIORITY_STYLES.medium
+                              const priorityBorderClass =
+                                TASK_PRIORITY_BORDERS[task.priority] || TASK_PRIORITY_BORDERS.medium
                               const priorityLabel = getTaskPriorityLabel(task.priority)
                               const recurrenceLabel = formatTaskRecurrence(task)
                               const statusIndex = TASK_STATUS_ORDER.indexOf(task.status)
+                              const isExpanded = expandedTaskDetails.has(task.id)
                               return (
                                 <div
                                   key={task.id}
-                                  className="rounded-xl border border-white/10 bg-white/5 p-2.5"
+                                  className={`rounded-xl border border-white/10 bg-white/5 p-3 shadow-sm border-l-4 ${priorityBorderClass}`}
                                 >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <p className="text-sm font-semibold text-slate-100">
-                                      {task.title || "Basliksiz gorev"}
-                                    </p>
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-semibold text-slate-100">
+                                        {task.title || "Basliksiz gorev"}
+                                      </p>
+                                      <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+                                        {task.owner && (
+                                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
+                                            Sahip: {task.owner}
+                                          </span>
+                                        )}
+                                        {recurrenceLabel && (
+                                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
+                                            Tekrar: {recurrenceLabel}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
                                     <span
                                       className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${priorityClass}`}
                                     >
@@ -3649,22 +3701,23 @@ function App() {
                                     </span>
                                   </div>
                                   {task.details && (
-                                    <p className="mt-2 text-xs text-slate-300 whitespace-pre-wrap">
-                                      {task.details}
-                                    </p>
+                                    <div
+                                      className={`mt-2 rounded-lg border border-white/10 bg-ink-950/40 px-3 py-2 text-xs text-slate-200/90 ${
+                                        isExpanded ? "max-h-[240px] overflow-auto" : "max-h-[110px] overflow-hidden"
+                                      }`}
+                                    >
+                                      <p className="whitespace-pre-wrap leading-relaxed">{task.details}</p>
+                                    </div>
                                   )}
-                                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
-                                    {task.owner && (
-                                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
-                                        Sahip: {task.owner}
-                                      </span>
-                                    )}
-                                    {recurrenceLabel && (
-                                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
-                                        Tekrar: {recurrenceLabel}
-                                      </span>
-                                    )}
-                                  </div>
+                                  {task.details && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleTaskDetailsExpanded(task.id)}
+                                      className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-accent-200 transition hover:text-accent-100"
+                                    >
+                                      {isExpanded ? "Detayi kucult" : "Detayi ac"}
+                                    </button>
+                                  )}
                                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                                     <select
                                       value={task.status}
