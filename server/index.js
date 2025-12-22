@@ -710,6 +710,44 @@ app.post("/api/products/:id/stocks", async (req, res) => {
   res.status(201).json(stocks)
 })
 
+app.put("/api/stocks/:id", async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const usedAtRaw = req.body?.usedAt
+  if (usedAtRaw === undefined) {
+    res.status(400).json({ error: "usedAt is required" })
+    return
+  }
+
+  let usedAt = null
+  if (usedAtRaw !== null) {
+    const parsed = new Date(usedAtRaw)
+    if (Number.isNaN(parsed.getTime())) {
+      res.status(400).json({ error: "invalid usedAt" })
+      return
+    }
+    usedAt = parsed
+  }
+
+  try {
+    const updated = await prisma.stock.update({
+      where: { id },
+      data: { usedAt },
+    })
+    res.json(updated)
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Stock not found" })
+      return
+    }
+    throw error
+  }
+})
+
 app.delete("/api/stocks/:id", async (req, res) => {
   const id = String(req.params.id ?? "").trim()
   if (!id) {

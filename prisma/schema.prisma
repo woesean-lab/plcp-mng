@@ -47,6 +47,7 @@ model Stock {
   code      String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
+  usedAt    DateTime?
   createdAt DateTime @default(now())
 }
 

@@ -925,12 +925,15 @@ function App() {
 
   const stockSummary = useMemo(() => {
     let total = 0
+    let used = 0
     let empty = 0
     products.forEach((product) => {
-      total += product.stocks.length
-      if (product.stocks.length === 0) empty += 1
+      const activeCount = product.stocks.filter((stock) => !stock.usedAt).length
+      total += activeCount
+      used += product.stocks.length - activeCount
+      if (activeCount === 0) empty += 1
     })
-    return { total, empty }
+    return { total, used, empty }
   }, [products])
 
   const sortedProducts = useMemo(() => {
@@ -2432,13 +2435,19 @@ function App() {
     const product = products.find((p) => p.id === productId)
     if (!product) return
 
+    const activeStocks = product.stocks.filter((stk) => !stk.usedAt)
+    if (activeStocks.length === 0) {
+      toast.error("Bu üründe kopyalanacak aktif stok yok.")
+      return
+    }
+
     const rawCount = bulkCount[productId]
     const count = Math.max(
       1,
-      Number(rawCount ?? product.stocks.length) || product.stocks.length,
+      Number(rawCount ?? activeStocks.length) || activeStocks.length,
     )
-    const codes = product.stocks.slice(0, count).map((stk) => stk.code)
-    const removed = product.stocks.slice(0, count)
+    const codes = activeStocks.slice(0, count).map((stk) => stk.code)
+    const removed = activeStocks.slice(0, count)
     if (codes.length === 0) {
       toast.error("Bu üründe kopyalanacak stok yok.")
       return
@@ -2646,6 +2655,34 @@ function App() {
     }
     setConfirmStockTarget(key)
     toast("Silmek için tekrar tıkla", { position: "top-right" })
+  }
+
+  const handleStockMarkUsed = async (productId, stockId) => {
+    try {
+      const res = await apiFetch(`/api/stocks/${stockId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usedAt: new Date().toISOString() }),
+      })
+      if (!res.ok) throw new Error("stock_mark_used_failed")
+      const updated = await res.json()
+      setProducts((prev) =>
+        prev.map((product) =>
+          product.id === productId
+            ? {
+              ...product,
+              stocks: product.stocks.map((stk) =>
+                stk.id === stockId ? { ...stk, usedAt: updated.usedAt ?? new Date().toISOString() } : stk,
+              ),
+            }
+            : product,
+        ),
+      )
+      toast.success("Stok kullanıldı")
+    } catch (error) {
+      console.error(error)
+      toast.error("Stok güncellenemedi (API/DB kontrol edin).")
+    }
   }
   const handleStockCopy = async (code) => {
     try {
@@ -3160,7 +3197,7 @@ function App() {
                           </button>
                         )}
                       </span>
-                    ))}
+                    )})}
                   </div>
                 </div>
 
@@ -4075,10 +4112,13 @@ function App() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-                    Toplam stok: {stockSummary.total}
+                    Aktif stok: {stockSummary.total}
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
                     Ürün: {products.length}
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Kullanılan: {stockSummary.used}
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border border-rose-300/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-100">
                     Tükenen: {stockSummary.empty}
@@ -4099,9 +4139,9 @@ function App() {
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.12),transparent)]" />
                 <div className="relative">
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Toplam stok</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Aktif stok</p>
                   <p className="mt-2 text-3xl font-semibold text-white">{stockSummary.total}</p>
-                  <p className="mt-1 text-xs text-slate-400">Tüm ürünlerdeki anahtar</p>
+                  <p className="mt-1 text-xs text-slate-400">Kullanılabilir anahtar sayısı</p>
                 </div>
               </div>
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
@@ -4136,7 +4176,7 @@ function App() {
                         />
                       </div>
                       <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                        {products.length} ürün / {stockSummary.total} stok
+                        {products.length} ürün / {stockSummary.total} aktif stok
                       </span>
                       <span className="rounded-full border border-rose-300/40 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100">
                         Tükenen: {stockSummary.empty}
@@ -4150,7 +4190,12 @@ function App() {
                         Henüz ürün yok.
                       </div>
                     )}
-                    {filteredProducts.map((product) => (
+                    {filteredProducts.map((product) => {
+                      const activeStocks = product.stocks.filter((stock) => !stock.usedAt)
+                      const usedStocks = product.stocks.filter((stock) => stock.usedAt)
+                      const activeCount = activeStocks.length
+                      const usedCount = usedStocks.length
+                      return (
                       <div
                         key={product.id}
                         draggable
@@ -4174,13 +4219,18 @@ function App() {
                                 <span className="text-base font-semibold text-white">{product.name}</span>
                                 <span
                                   className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                    product.stocks.length === 0
+                                    activeCount === 0
                                       ? "border border-rose-300/60 bg-rose-500/15 text-rose-50"
                                       : "border border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
                                   }`}
                                 >
-                                  {product.stocks.length} stok
+                                  {activeCount} stok
                                 </span>
+                                {usedCount > 0 && (
+                                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-200">
+                                    {usedCount} kullanıldı
+                                  </span>
+                                )}
                                 {product.note?.trim() && product.note.trim().toLowerCase() !== "null" && (
                                   <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-200">
                                     {product.note}
@@ -4309,12 +4359,12 @@ function App() {
                                 </div>
                               </div>
                             )}
-                            {product.stocks.length === 0 && (
+                            {activeCount === 0 && (
                               <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-400">
-                                Bu üründe stok yok.
+                                Bu üründe aktif stok yok.
                               </div>
                             )}
-                            {product.stocks.length > 0 && (
+                            {activeCount > 0 && (
                               <div className="space-y-3 rounded-2xl border border-white/10 bg-ink-900/60 p-3">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                   <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
@@ -4325,7 +4375,7 @@ function App() {
                                       <input
                                         id={`bulk-${product.id}`}
                                         type="text"
-                                        value={bulkCount[product.id] ?? product.stocks.length}
+                                        value={bulkCount[product.id] ?? activeCount}
                                         onChange={(e) =>
                                           setBulkCount((prev) => ({
                                             ...prev,
@@ -4335,7 +4385,7 @@ function App() {
                                         inputMode="numeric"
                                         className="w-16 appearance-none bg-transparent text-xs text-slate-100 focus:outline-none"
                                       />
-                                      <span className="text-[11px] text-slate-500">/ {product.stocks.length}</span>
+                                      <span className="text-[11px] text-slate-500">/ {activeCount}</span>
                                     </div>
                                     <button
                                       type="button"
@@ -4347,7 +4397,7 @@ function App() {
                                   </div>
                                 </div>
                                 <div className="space-y-2">
-                                  {product.stocks.map((stk, idx) => (
+                                  {activeStocks.map((stk, idx) => (
                                     <div
                                       key={stk.id}
                                       className="group flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 transition hover:border-accent-400/60 hover:bg-ink-800/80"
@@ -4356,6 +4406,63 @@ function App() {
                                         #{idx + 1}
                                       </span>
                                       <p className="flex-1 break-all font-mono text-sm text-slate-100 group-hover:text-accent-50">
+                                        {stk.code}
+                                      </p>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleStockCopy(stk.code)}
+                                          className="flex h-7 items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
+                                          aria-label="Stoku kopyala"
+                                        >
+                                          Kopyala
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleStockMarkUsed(product.id, stk.id)}
+                                          className="flex h-7 items-center justify-center rounded-md border border-amber-300/60 bg-amber-500/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/20"
+                                          aria-label="Stoku kullanıldı olarak işaretle"
+                                        >
+                                          Kullanıldı
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
+                                          className={`flex h-7 items-center justify-center rounded-md border px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 ${
+                                            confirmStockTarget === `${product.id}-${stk.id}`
+                                              ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                              : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
+                                          }`}
+                                          aria-label="Stoku sil"
+                                        >
+                                          Sil
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {usedCount > 0 && (
+                              <div className="space-y-3 rounded-2xl border border-white/10 bg-ink-900/40 p-3">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                  <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                                    Kullanılan stoklar
+                                  </span>
+                                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-300">
+                                    {usedCount}
+                                  </span>
+                                </div>
+                                <div className="space-y-2">
+                                  {usedStocks.map((stk, idx) => (
+                                    <div
+                                      key={stk.id}
+                                      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/50 px-3 py-2 text-slate-300"
+                                    >
+                                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-400">
+                                        #{idx + 1}
+                                      </span>
+                                      <p className="flex-1 break-all font-mono text-sm text-slate-200">
                                         {stk.code}
                                       </p>
                                       <div className="flex items-center gap-2">
@@ -4470,7 +4577,7 @@ function App() {
                         <p className="text-sm text-slate-400">Seçilen ürüne anahtar ekle.</p>
                       </div>
                       <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                        {stockSummary.total} stok
+                        {stockSummary.total} aktif stok
                       </span>
                     </div>
 
