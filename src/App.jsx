@@ -4654,7 +4654,7 @@ function App() {
           onClick={closeTaskDetail}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl border border-white/10 bg-ink-900/95 p-6 shadow-card backdrop-blur"
+            className="w-full max-w-3xl rounded-2xl border border-white/10 bg-ink-900/95 p-6 shadow-card backdrop-blur"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -4692,7 +4692,7 @@ function App() {
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Notlar</p>
                 <span className="text-xs text-slate-400">{detailNoteText.length} karakter</span>
               </div>
-              <div className="flex max-h-[260px] overflow-hidden">
+              <div className="flex max-h-[420px] overflow-hidden">
                 <div
                   ref={detailNoteLineRef}
                   className="w-12 shrink-0 overflow-hidden border-r border-white/10 bg-ink-800 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
