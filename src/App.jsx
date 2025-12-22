@@ -2575,6 +2575,13 @@ function App() {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                       <span>Başlıklara sağ tıkla: ekle/sil</span>
+                      {listSavedAt ? (
+                        <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
+                          Kaydedildi
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-500">Otomatik kaydetme aktif</span>
+                      )}
                     </div>
                   </div>
 
@@ -2657,44 +2664,6 @@ function App() {
                             ))}
                           </tbody>
                         </table>
-                      </div>
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-ink-900/80 px-4 py-2 text-xs text-slate-300">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Durum</span>
-                          {listSavedAt ? (
-                            <span className="rounded-full border border-emerald-300/50 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
-                              Kaydedildi
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-slate-400">Otomatik kaydetme aktif</span>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleListSaveNow}
-                          disabled={!activeList || isListSaving || isListsLoading}
-                          className="inline-flex items-center gap-2 rounded-full border border-accent-300/70 bg-gradient-to-br from-accent-500/20 via-accent-400/10 to-accent-500/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {isListSaving ? (
-                            <span className="h-2 w-2 animate-pulse rounded-full bg-accent-200" />
-                          ) : (
-                            <svg
-                              viewBox="0 0 24 24"
-                              aria-hidden="true"
-                              className="h-3.5 w-3.5"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M19 21H5a2 2 0 0 1-2-2V7l5-5h8l5 5v12a2 2 0 0 1-2 2Z" />
-                              <path d="M7 21v-7h10v7" />
-                              <path d="M7 3v4h8" />
-                            </svg>
-                          )}
-                          {isListSaving ? "Kaydediliyor" : "Kaydet"}
-                        </button>
                       </div>
                     </>
                   )}
@@ -3357,6 +3326,39 @@ function App() {
                 </div>
               </div>
             </div>
+            {activeList && (
+              <div className="fixed bottom-6 right-6 z-40">
+                <button
+                  type="button"
+                  onClick={handleListSaveNow}
+                  disabled={!activeList || isListSaving || isListsLoading}
+                  className="group relative flex h-12 w-12 items-center justify-center rounded-full border border-accent-300/70 bg-ink-900/80 text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label="Kaydet"
+                >
+                  <span className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-full border border-white/10 bg-ink-900/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-100 opacity-0 transition group-hover:opacity-100">
+                    {isListSaving ? "Kaydediliyor" : "Kaydet"}
+                  </span>
+                  {isListSaving ? (
+                    <span className="h-3 w-3 animate-pulse rounded-full bg-accent-200" />
+                  ) : (
+                    <svg
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M19 21H5a2 2 0 0 1-2-2V7l5-5h8l5 5v12a2 2 0 0 1-2 2Z" />
+                      <path d="M7 21v-7h10v7" />
+                      <path d="M7 3v4h8" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
         {activeTab === "problems" && (
