@@ -1447,6 +1447,46 @@ function App() {
   const getListColumnCount = (rows) =>
     rows.reduce((acc, row) => Math.max(acc, row.length), 0) || DEFAULT_LIST_COLS
 
+  const parseClipboardGrid = (text) => {
+    const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+    const lines = normalized.split("\n")
+    if (lines.length > 1 && lines[lines.length - 1] === "") {
+      lines.pop()
+    }
+    return lines.map((line) => line.split("\t"))
+  }
+
+  const handleListPaste = (event, rowIndex, colIndex) => {
+    if (!activeList) return
+    const text = event.clipboardData?.getData("text")
+    if (!text) return
+    const grid = parseClipboardGrid(text)
+    if (grid.length === 1 && grid[0].length === 1) return
+    event.preventDefault()
+    updateListById(activeList.id, (list) => {
+      const baseRows = Array.isArray(list.rows) ? list.rows : []
+      const rows = baseRows.map((row) => [...row])
+      const requiredRows = rowIndex + grid.length
+      while (rows.length < requiredRows) {
+        rows.push([])
+      }
+      grid.forEach((gridRow, rowOffset) => {
+        const targetRowIndex = rowIndex + rowOffset
+        const row = rows[targetRowIndex] ?? []
+        const nextRow = [...row]
+        const requiredCols = colIndex + gridRow.length
+        while (nextRow.length < requiredCols) {
+          nextRow.push("")
+        }
+        gridRow.forEach((cellValue, colOffset) => {
+          nextRow[colIndex + colOffset] = cellValue
+        })
+        rows[targetRowIndex] = nextRow
+      })
+      return { ...list, rows }
+    })
+  }
+
   const handleListInsertRow = (afterIndex = null) => {
     if (!activeList) return
     updateListById(activeList.id, (list) => {
@@ -2654,19 +2694,20 @@ function App() {
                                           setEditingListCell({ row: rowIndex, col: colIndex })
                                           setSelectedListCell({ row: rowIndex, col: colIndex })
                                         }}
-                                        onBlur={() =>
-                                          setEditingListCell((prev) =>
-                                            prev.row === rowIndex && prev.col === colIndex
-                                              ? { row: null, col: null }
-                                              : prev,
-                                          )
-                                        }
-                                        onChange={(e) =>
-                                          handleListCellChange(rowIndex, colIndex, e.target.value)
-                                        }
-                                        spellCheck={false}
-                                        className="h-8 w-full bg-transparent px-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-accent-400/60"
-                                      />
+                                      onBlur={() =>
+                                        setEditingListCell((prev) =>
+                                          prev.row === rowIndex && prev.col === colIndex
+                                            ? { row: null, col: null }
+                                            : prev,
+                                        )
+                                      }
+                                      onChange={(e) =>
+                                        handleListCellChange(rowIndex, colIndex, e.target.value)
+                                      }
+                                      onPaste={(e) => handleListPaste(e, rowIndex, colIndex)}
+                                      spellCheck={false}
+                                      className="h-8 w-full bg-transparent px-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-accent-400/60"
+                                    />
                                     </td>
                                   )
                                 })}
@@ -2794,6 +2835,7 @@ function App() {
                   <ul className="mt-3 space-y-2 text-sm text-slate-300">
                     <li>- Yeni liste varsayılan bir tabloyla başlar.</li>
                     <li>- Satır/sütun ekleyerek tabloyu genişlet.</li>
+                    <li>- Bir hucreye cok satir yapistirinca asagiya yayilir.</li>
                     <li>- Formül için "=" ile başla (örn: =SUM(A1:A5)).</li>
                     <li>- Desteklenenler: SUM, AVERAGE, MIN, MAX, COUNT.</li>
                     <li>- Satır/sütun başlığına sağ tıkla: ekle/sil.</li>
