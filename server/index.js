@@ -511,11 +511,36 @@ app.post("/api/stocks/bulk-delete", async (req, res) => {
   res.json({ deleted: result.count })
 })
 
+const normalizeListCellFormat = (format) => {
+  if (!format || typeof format !== "object" || Array.isArray(format)) return null
+  const next = {}
+  if (format.bold) next.bold = true
+  if (format.italic) next.italic = true
+  if (format.underline) next.underline = true
+  if (["center", "right"].includes(format.align)) next.align = format.align
+  if (["amber", "sky", "emerald", "rose"].includes(format.tone)) next.tone = format.tone
+  return Object.keys(next).length > 0 ? next : null
+}
+
+const normalizeListCell = (cell) => {
+  if (cell === null || cell === undefined) return ""
+  if (typeof cell === "string" || typeof cell === "number" || typeof cell === "boolean") {
+    return String(cell)
+  }
+  if (typeof cell === "object" && !Array.isArray(cell)) {
+    const value = cell.value === null || cell.value === undefined ? "" : String(cell.value)
+    const format = normalizeListCellFormat(cell.format)
+    if (format) return { value, format }
+    return value
+  }
+  return String(cell)
+}
+
 const normalizeListRows = (rows) => {
   if (!Array.isArray(rows)) return null
   return rows.map((row) => {
     if (!Array.isArray(row)) return []
-    return row.map((cell) => String(cell ?? ""))
+    return row.map((cell) => normalizeListCell(cell))
   })
 }
 
