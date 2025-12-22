@@ -324,7 +324,6 @@ function App() {
   const [activeListId, setActiveListId] = useState("")
   const [listName, setListName] = useState("")
   const [isListsLoading, setIsListsLoading] = useState(true)
-  const [isListSaving, setIsListSaving] = useState(false)
   const [listSavedAt, setListSavedAt] = useState(null)
   const [listRenameDraft, setListRenameDraft] = useState("")
   const [confirmListDelete, setConfirmListDelete] = useState(null)
@@ -1298,6 +1297,13 @@ function App() {
           })
           if (!res.ok) throw new Error("list_save_failed")
           listSaveErrorRef.current = false
+          setListSavedAt(Date.now())
+          if (listSavedTimer.current) {
+            window.clearTimeout(listSavedTimer.current)
+          }
+          listSavedTimer.current = window.setTimeout(() => {
+            setListSavedAt(null)
+          }, 2200)
         } catch (error) {
           if (!listSaveErrorRef.current) {
             listSaveErrorRef.current = true
@@ -1322,48 +1328,6 @@ function App() {
       }),
     )
     if (nextList) queueListSave(nextList)
-  }
-
-  const handleListSaveNow = async () => {
-    if (!activeList || !isAuthed) return
-    const list = {
-      id: activeList.id,
-      name: activeList.name,
-      rows: Array.isArray(activeList.rows) ? activeList.rows : [],
-    }
-    const timers = listSaveTimers.current
-    const existing = timers.get(list.id)
-    if (existing) {
-      window.clearTimeout(existing)
-      timers.delete(list.id)
-    }
-    listSaveQueue.current.delete(list.id)
-
-    setIsListSaving(true)
-    try {
-      const res = await apiFetch(`/api/lists/${list.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: list.name, rows: list.rows }),
-      })
-      if (!res.ok) throw new Error("list_save_failed")
-      listSaveErrorRef.current = false
-      setListSavedAt(Date.now())
-      if (listSavedTimer.current) {
-        window.clearTimeout(listSavedTimer.current)
-      }
-      listSavedTimer.current = window.setTimeout(() => {
-        setListSavedAt(null)
-      }, 2200)
-    } catch (error) {
-      console.error(error)
-      if (!listSaveErrorRef.current) {
-        listSaveErrorRef.current = true
-        toast.error("Liste kaydedilemedi (API/DB kontrol edin).")
-      }
-    } finally {
-      setIsListSaving(false)
-    }
   }
 
   const handleListCreate = async () => {
@@ -2567,16 +2531,10 @@ function App() {
                       <p className="text-sm text-slate-400">Hücreleri seçip düzenleyebilirsin.</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={handleListSaveNow}
-                        disabled={!activeList || isListSaving || isListsLoading}
-                        className="rounded-lg border border-accent-300/70 bg-accent-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isListSaving ? "Kaydediliyor" : "Kaydet"}
-                      </button>
-                      {listSavedAt && (
+                      {listSavedAt ? (
                         <span className="text-[11px] font-semibold text-emerald-200">Kaydedildi</span>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">Otomatik kaydetme aktif</span>
                       )}
                       <span className="text-xs text-slate-400">Başlıklara sağ tıkla: ekle/sil</span>
                     </div>
