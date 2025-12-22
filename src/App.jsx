@@ -3114,7 +3114,7 @@ function App() {
                 <div className={`${panelClass} bg-ink-900/60`}>
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Gorev panosu</p>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Gorev tahtasi</p>
                       <p className="text-sm text-slate-400">Kartlari surukleyip yeni duruma birak.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
