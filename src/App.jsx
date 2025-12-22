@@ -519,6 +519,8 @@ function App() {
   const [taskDetailTarget, setTaskDetailTarget] = useState(null)
   const noteTextareaRef = useRef(null)
   const noteLineRef = useRef(null)
+  const detailNoteRef = useRef(null)
+  const detailNoteLineRef = useRef(null)
 
   const isLight = theme === "light"
 
@@ -1149,6 +1151,17 @@ function App() {
   const handleNoteScroll = (event) => {
     if (!noteLineRef.current) return
     noteLineRef.current.scrollTop = event.target.scrollTop
+  }
+
+  const detailNoteText = taskDetailTarget?.note || ""
+  const detailNoteLineCount = useMemo(() => {
+    const count = detailNoteText.split("\n").length
+    return Math.max(1, count)
+  }, [detailNoteText])
+
+  const handleDetailNoteScroll = (event) => {
+    if (!detailNoteLineRef.current) return
+    detailNoteLineRef.current.scrollTop = event.target.scrollTop
   }
 
   const openTaskDetail = (task) => {
@@ -4674,10 +4687,27 @@ function App() {
               </span>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-ink-900/70 p-4 text-sm text-slate-200 shadow-inner">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Notlar</p>
-              <div className="mt-2 max-h-[280px] overflow-auto whitespace-pre-wrap text-sm text-slate-100">
-                {taskDetailTarget.note || "Not eklenmedi."}
+            <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-inner">
+              <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Notlar</p>
+                <span className="text-xs text-slate-400">{detailNoteText.length} karakter</span>
+              </div>
+              <div className="flex max-h-[260px] overflow-hidden">
+                <div
+                  ref={detailNoteLineRef}
+                  className="w-12 shrink-0 overflow-hidden border-r border-white/10 bg-ink-800 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
+                >
+                  {Array.from({ length: detailNoteLineCount }, (_, index) => (
+                    <div key={index}>{index + 1}</div>
+                  ))}
+                </div>
+                <div
+                  ref={detailNoteRef}
+                  onScroll={handleDetailNoteScroll}
+                  className="flex-1 overflow-auto bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 whitespace-pre-wrap"
+                >
+                  {detailNoteText || "Not eklenmedi."}
+                </div>
               </div>
             </div>
           </div>
