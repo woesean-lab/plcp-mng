@@ -4561,59 +4561,49 @@ function App() {
           onClick={handleNoteModalClose}
         >
           <div
-            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur"
+            className="w-full max-w-2xl rounded-3xl border border-white/10 bg-ink-900/95 p-6 shadow-card backdrop-blur"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_120%_at_0%_0%,rgba(58,199,255,0.14),transparent)]" />
-            <div className="relative space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-                    Not editoru
-                  </p>
-                  <p className="text-xs text-slate-400">Uzun notlarini burada duzenle.</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200/80">
-                    {noteModalDraft.length} karakter
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleNoteModalClose}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-                  >
-                    Kapat
-                  </button>
-                </div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-300/80">
+                  Not editoru
+                </p>
+                <p className="text-sm text-slate-400">Uzun notunu burada duzenle.</p>
               </div>
+              <button
+                type="button"
+                onClick={handleNoteModalClose}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
+              >
+                Kapat
+              </button>
+            </div>
 
-              <div className="rounded-2xl border border-white/10 bg-ink-950/60 bg-[linear-gradient(180deg,rgba(148,163,184,0.16)_1px,transparent_1px)] bg-[length:100%_28px] shadow-inner">
-                <textarea
-                  id="task-note-modal"
-                  rows={12}
-                  value={noteModalDraft}
-                  onChange={(e) => setNoteModalDraft(e.target.value)}
-                  placeholder="Detayli notunu buraya yaz..."
-                  className="min-h-[260px] w-full resize-none bg-transparent px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                />
-              </div>
+            <textarea
+              id="task-note-modal"
+              rows={12}
+              value={noteModalDraft}
+              onChange={(e) => setNoteModalDraft(e.target.value)}
+              placeholder="Detayli notunu buraya yaz..."
+              className="mt-4 w-full rounded-2xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+            />
 
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleNoteModalSave}
-                  className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                >
-                  Kaydet
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNoteModalClose}
-                  className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                >
-                  Iptal
-                </button>
-              </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleNoteModalSave}
+                className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+              >
+                Kaydet
+              </button>
+              <button
+                type="button"
+                onClick={handleNoteModalClose}
+                className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+              >
+                Iptal
+              </button>
             </div>
           </div>
         </div>
