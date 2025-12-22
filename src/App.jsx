@@ -24,6 +24,20 @@ const FORMULA_ERRORS = {
   DIV0: "#DIV/0",
   VALUE: "#ERR",
 }
+const LIST_CELL_TONE_CLASSES = {
+  none: "",
+  amber: "bg-amber-500/10",
+  sky: "bg-sky-500/10",
+  emerald: "bg-emerald-500/10",
+  rose: "bg-rose-500/10",
+}
+const LIST_CELL_TONE_OPTIONS = [
+  { id: "none", label: "Yok", swatchClass: "bg-transparent" },
+  { id: "amber", label: "Sari", swatchClass: "bg-amber-400/70" },
+  { id: "sky", label: "Mavi", swatchClass: "bg-sky-400/70" },
+  { id: "emerald", label: "Yesil", swatchClass: "bg-emerald-400/70" },
+  { id: "rose", label: "Pembe", swatchClass: "bg-rose-400/70" },
+]
 
 const initialProblems = [
   { id: 1, username: "@ornek1", issue: "Ödeme ekranda takıldı, 2 kez kart denemiş.", status: "open" },
@@ -330,6 +344,10 @@ function App() {
   const [confirmListDelete, setConfirmListDelete] = useState(null)
   const [editingListCell, setEditingListCell] = useState({ row: null, col: null })
   const [selectedListCell, setSelectedListCell] = useState({ row: null, col: null })
+  const [selectedListRows, setSelectedListRows] = useState(() => new Set())
+  const [selectedListCols, setSelectedListCols] = useState(() => new Set())
+  const [lastListRowSelect, setLastListRowSelect] = useState(null)
+  const [lastListColSelect, setLastListColSelect] = useState(null)
   const [listContextMenu, setListContextMenu] = useState({
     open: false,
     type: null,
@@ -500,6 +518,10 @@ function App() {
   useEffect(() => {
     setEditingListCell({ row: null, col: null })
     setSelectedListCell({ row: null, col: null })
+    setSelectedListRows(new Set())
+    setSelectedListCols(new Set())
+    setLastListRowSelect(null)
+    setLastListColSelect(null)
     setListContextMenu((prev) => (prev.open ? { ...prev, open: false } : prev))
     setConfirmListDelete(null)
     setListRenameDraft("")
@@ -602,8 +624,56 @@ function App() {
     return false
   }
 
+  const isListCellObject = (value) =>
+    Boolean(
+      value &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        ("value" in value || "format" in value),
+    )
+
+  const normalizeListCellFormat = (format) => {
+    const next = { ...(format || {}) }
+    if (!next.bold) delete next.bold
+    if (!next.italic) delete next.italic
+    if (!next.underline) delete next.underline
+    if (!next.align || next.align === "left") delete next.align
+    if (!next.tone || next.tone === "none") delete next.tone
+    return next
+  }
+
+  const buildListCell = (value, format) => {
+    const cleaned = normalizeListCellFormat(format)
+    if (!cleaned || Object.keys(cleaned).length === 0) return value
+    return { value, format: cleaned }
+  }
+
+  const getListCellData = (rowIndex, colIndex) => {
+    const cell = activeListRows[rowIndex]?.[colIndex]
+    if (isListCellObject(cell)) {
+      return { value: cell.value ?? "", format: normalizeListCellFormat(cell.format) }
+    }
+    return { value: cell ?? "", format: {} }
+  }
+
+  const updateListCellValue = (cell, value) => {
+    if (isListCellObject(cell)) {
+      return buildListCell(value, cell.format)
+    }
+    return value
+  }
+
+  const updateListCellFormat = (cell, formatPatch) => {
+    const baseValue = isListCellObject(cell) ? cell.value ?? "" : cell ?? ""
+    const merged = {
+      ...(isListCellObject(cell) ? cell.format || {} : {}),
+      ...(formatPatch || {}),
+    }
+    return buildListCell(baseValue, merged)
+  }
+
   const getListCellRawValue = (rowIndex, colIndex) => {
-    return activeListRows[rowIndex]?.[colIndex] ?? ""
+    return getListCellData(rowIndex, colIndex).value ?? ""
   }
 
   const getListCellValue = (rowIndex, colIndex, stack) => {
@@ -733,6 +803,14 @@ function App() {
     const value = getListCellValue(rowIndex, colIndex, new Set())
     return formatCellValue(value)
   }
+
+  const hasActiveListCell =
+    Number.isFinite(selectedListCell.row) && Number.isFinite(selectedListCell.col)
+  const selectedListCellData = hasActiveListCell
+    ? getListCellData(selectedListCell.row, selectedListCell.col)
+    : null
+  const selectedListCellFormat = selectedListCellData?.format || {}
+  const selectedListCellTone = selectedListCellFormat.tone || "none"
 
   const groupedTemplates = useMemo(() => {
     return templates.reduce((acc, tpl) => {
@@ -1437,7 +1515,7 @@ function App() {
         if (rIndex !== rowIndex) return row
         const nextRow = [...row]
         while (nextRow.length <= colIndex) nextRow.push("")
-        nextRow[colIndex] = value
+        nextRow[colIndex] = updateListCellValue(nextRow[colIndex], value)
         return nextRow
       })
       return { ...list, rows }
@@ -1479,12 +1557,124 @@ function App() {
           nextRow.push("")
         }
         gridRow.forEach((cellValue, colOffset) => {
-          nextRow[colIndex + colOffset] = cellValue
+          const targetColIndex = colIndex + colOffset
+          nextRow[targetColIndex] = updateListCellValue(nextRow[targetColIndex], cellValue)
         })
         rows[targetRowIndex] = nextRow
       })
       return { ...list, rows }
     })
+  }
+
+  const buildListSelectionRange = (start, end) => {
+    const min = Math.min(start, end)
+    const max = Math.max(start, end)
+    const next = new Set()
+    for (let index = min; index <= max; index += 1) {
+      next.add(index)
+    }
+    return next
+  }
+
+  const handleListRowSelect = (event, rowIndex) => {
+    setSelectedListCell((prev) => ({ ...prev, row: rowIndex }))
+    setSelectedListRows((prev) => {
+      if (event.shiftKey && lastListRowSelect !== null) {
+        return buildListSelectionRange(lastListRowSelect, rowIndex)
+      }
+      if (event.metaKey || event.ctrlKey) {
+        const next = new Set(prev)
+        if (next.has(rowIndex)) {
+          next.delete(rowIndex)
+        } else {
+          next.add(rowIndex)
+        }
+        return next
+      }
+      return new Set([rowIndex])
+    })
+    setLastListRowSelect(rowIndex)
+  }
+
+  const handleListColumnSelect = (event, colIndex) => {
+    setSelectedListCell((prev) => ({ ...prev, col: colIndex }))
+    setSelectedListCols((prev) => {
+      if (event.shiftKey && lastListColSelect !== null) {
+        return buildListSelectionRange(lastListColSelect, colIndex)
+      }
+      if (event.metaKey || event.ctrlKey) {
+        const next = new Set(prev)
+        if (next.has(colIndex)) {
+          next.delete(colIndex)
+        } else {
+          next.add(colIndex)
+        }
+        return next
+      }
+      return new Set([colIndex])
+    })
+    setLastListColSelect(colIndex)
+  }
+
+  const applyListCellFormat = (formatPatch) => {
+    if (!activeList) return
+    const { row, col } = selectedListCell
+    if (!Number.isFinite(row) || !Number.isFinite(col)) return
+    updateListById(activeList.id, (list) => {
+      const rows = list.rows.map((rowData, rowIndex) => {
+        if (rowIndex !== row) return rowData
+        const nextRow = [...rowData]
+        while (nextRow.length <= col) nextRow.push("")
+        nextRow[col] = updateListCellFormat(nextRow[col], formatPatch)
+        return nextRow
+      })
+      return { ...list, rows }
+    })
+  }
+
+  const handleListDeleteSelectedRows = () => {
+    if (!activeList) return
+    const selected = Array.from(selectedListRows).filter(
+      (index) => index >= 0 && index < activeListRows.length,
+    )
+    if (selected.length === 0) return
+    if (selected.length >= activeListRows.length) {
+      toast.error("En az bir satir kalmali.")
+      return
+    }
+    const selectedSet = new Set(selected)
+    updateListById(activeList.id, (list) => {
+      const rows = list.rows.filter((_, index) => !selectedSet.has(index))
+      return { ...list, rows }
+    })
+    setSelectedListRows(new Set())
+    setEditingListCell({ row: null, col: null })
+    setSelectedListCell({ row: null, col: null })
+    setLastListRowSelect(null)
+  }
+
+  const handleListDeleteSelectedColumns = () => {
+    if (!activeList) return
+    const colCount = getListColumnCount(activeList.rows)
+    const selected = Array.from(selectedListCols).filter((index) => index >= 0 && index < colCount)
+    if (selected.length === 0) return
+    if (selected.length >= colCount) {
+      toast.error("En az bir sutun kalmali.")
+      return
+    }
+    const selectedSet = new Set(selected)
+    updateListById(activeList.id, (list) => {
+      const rows = list.rows.map((row) => {
+        if (row.length === 0) return row
+        const nextRow = row.filter((_, index) => !selectedSet.has(index))
+        return nextRow.length ? nextRow : [""]
+      })
+      return { ...list, rows }
+    })
+    setSelectedListCols(new Set())
+    setEditingListCell({ row: null, col: null })
+    setSelectedListCell({ row: null, col: null })
+    setLastListColSelect(null)
   }
 
   const handleListInsertRow = (afterIndex = null) => {
@@ -1535,6 +1725,8 @@ function App() {
     })
     setEditingListCell({ row: null, col: null })
     setSelectedListCell({ row: null, col: null })
+    setSelectedListRows(new Set())
+    setLastListRowSelect(null)
   }
 
   const handleListDeleteColumn = (colIndex = null) => {
@@ -1553,6 +1745,8 @@ function App() {
     })
     setEditingListCell({ row: null, col: null })
     setSelectedListCell({ row: null, col: null })
+    setSelectedListCols(new Set())
+    setLastListColSelect(null)
   }
 
   const handleListContextMenu = (event, type, index) => {
@@ -1567,9 +1761,17 @@ function App() {
     })
     if (type === "row") {
       setSelectedListCell((prev) => ({ ...prev, row: index }))
+      setSelectedListRows((prev) =>
+        prev.has(index) && prev.size > 1 ? prev : new Set([index]),
+      )
+      setLastListRowSelect(index)
     }
     if (type === "column") {
       setSelectedListCell((prev) => ({ ...prev, col: index }))
+      setSelectedListCols((prev) =>
+        prev.has(index) && prev.size > 1 ? prev : new Set([index]),
+      )
+      setLastListColSelect(index)
     }
   }
 
@@ -2624,6 +2826,28 @@ function App() {
                           <span className="text-[11px] text-slate-500">Otomatik kaydetme aktif</span>
                         )}
                       </div>
+                      {activeList && (selectedListRows.size > 0 || selectedListCols.size > 0) && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          {selectedListRows.size > 0 && (
+                            <button
+                              type="button"
+                              onClick={handleListDeleteSelectedRows}
+                              className="rounded-lg border border-rose-300/70 bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/20"
+                            >
+                              Satirlari sil ({selectedListRows.size})
+                            </button>
+                          )}
+                          {selectedListCols.size > 0 && (
+                            <button
+                              type="button"
+                              onClick={handleListDeleteSelectedColumns}
+                              className="rounded-lg border border-rose-300/70 bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/20"
+                            >
+                              Sutunlari sil ({selectedListCols.size})
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={handleListSaveNow}
@@ -2635,6 +2859,104 @@ function App() {
                     </div>
                   </div>
 
+                  
+                  {activeList && hasActiveListCell && (
+                    <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        Hucre bicimi
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => applyListCellFormat({ bold: !selectedListCellFormat.bold })}
+                        className={`h-7 w-7 rounded-lg border text-[11px] font-semibold transition ${
+                          selectedListCellFormat.bold
+                            ? "border-accent-300/70 bg-accent-500/20 text-accent-100"
+                            : "border-white/10 text-slate-200 hover:border-accent-400/60 hover:text-accent-100"
+                        }`}
+                      >
+                        B
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyListCellFormat({ italic: !selectedListCellFormat.italic })}
+                        className={`h-7 w-7 rounded-lg border text-[11px] font-semibold transition ${
+                          selectedListCellFormat.italic
+                            ? "border-accent-300/70 bg-accent-500/20 text-accent-100"
+                            : "border-white/10 text-slate-200 hover:border-accent-400/60 hover:text-accent-100"
+                        }`}
+                      >
+                        I
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyListCellFormat({ underline: !selectedListCellFormat.underline })}
+                        className={`h-7 w-7 rounded-lg border text-[11px] font-semibold transition ${
+                          selectedListCellFormat.underline
+                            ? "border-accent-300/70 bg-accent-500/20 text-accent-100"
+                            : "border-white/10 text-slate-200 hover:border-accent-400/60 hover:text-accent-100"
+                        }`}
+                      >
+                        U
+                      </button>
+                      <div className="mx-1 h-5 w-px bg-white/10" />
+                      {[
+                        { id: "left", label: "Sola" },
+                        { id: "center", label: "Ortala" },
+                        { id: "right", label: "Saga" },
+                      ].map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => applyListCellFormat({ align: option.id })}
+                          className={`h-7 w-7 rounded-lg border text-[11px] font-semibold transition ${
+                            (selectedListCellFormat.align || "left") === option.id
+                              ? "border-accent-300/70 bg-accent-500/20 text-accent-100"
+                              : "border-white/10 text-slate-200 hover:border-accent-400/60 hover:text-accent-100"
+                          }`}
+                          title={option.label}
+                        >
+                          {option.id === "left" ? "L" : option.id === "center" ? "C" : "R"}
+                        </button>
+                      ))}
+                      <div className="mx-1 h-5 w-px bg-white/10" />
+                      <div className="flex items-center gap-1.5">
+                        {LIST_CELL_TONE_OPTIONS.map((tone) => (
+                          <button
+                            key={tone.id}
+                            type="button"
+                            onClick={() => applyListCellFormat({ tone: tone.id })}
+                            className={`flex h-6 w-6 items-center justify-center rounded-full border transition ${
+                              selectedListCellTone === tone.id
+                                ? "border-accent-300/80 ring-2 ring-accent-400/40"
+                                : "border-white/10 hover:border-accent-400/60"
+                            }`}
+                            title={tone.label}
+                          >
+                            <span
+                              className={`h-3 w-3 rounded-full ${tone.swatchClass} ${
+                                tone.id === "none" ? "border border-white/20" : ""
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          applyListCellFormat({
+                            bold: false,
+                            italic: false,
+                            underline: false,
+                            align: "left",
+                            tone: "none",
+                          })
+                        }
+                        className="ml-auto rounded-lg border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400/60 hover:text-accent-100"
+                      >
+                        Temizle
+                      </button>
+                    </div>
+                  )}
                   {!activeList ? (
                     <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
                       Bir liste seçin veya yeni liste oluşturun.
@@ -2649,11 +2971,12 @@ function App() {
                                 #
                               </th>
                               {activeListColumnLabels.map((label, colIndex) => {
-                                const isSelected = selectedListCell.col === colIndex
+                                const isSelected =
+                                  selectedListCols.has(colIndex) || selectedListCell.col === colIndex
                                 return (
                                   <th
                                     key={label}
-                                    onClick={() => setSelectedListCell((prev) => ({ ...prev, col: colIndex }))}
+                                    onClick={(event) => handleListColumnSelect(event, colIndex)}
                                     onContextMenu={(event) =>
                                       handleListContextMenu(event, "column", colIndex)
                                     }
@@ -2671,23 +2994,45 @@ function App() {
                             {activeListRows.map((row, rowIndex) => (
                               <tr key={`${activeList.id}-${rowIndex}`}>
                                 <td
-                                  onClick={() => setSelectedListCell((prev) => ({ ...prev, row: rowIndex }))}
+                                  onClick={(event) => handleListRowSelect(event, rowIndex)}
                                   onContextMenu={(event) => handleListContextMenu(event, "row", rowIndex)}
                                   className={`cursor-pointer border border-white/10 px-2 py-1 text-center text-[11px] ${
-                                    selectedListCell.row === rowIndex ? "bg-white/10 text-white" : "text-slate-400"
+                                    selectedListRows.has(rowIndex) || selectedListCell.row === rowIndex
+                                      ? "bg-white/10 text-white"
+                                      : "text-slate-400"
                                   }`}
                                 >
                                   {rowIndex + 1}
                                 </td>
                                 {activeListColumns.map((colIndex) => {
-                                  const rawValue = row?.[colIndex] ?? ""
+                                  const cellData = getListCellData(rowIndex, colIndex)
+                                  const rawValue = cellData.value ?? ""
                                   const isEditingCell =
                                     editingListCell.row === rowIndex && editingListCell.col === colIndex
                                   const displayValue = isEditingCell
                                     ? rawValue
                                     : getListCellDisplayValue(rowIndex, colIndex)
+                                  const alignClass =
+                                    cellData.format?.align === "center"
+                                      ? "text-center"
+                                      : cellData.format?.align === "right"
+                                        ? "text-right"
+                                        : "text-left"
+                                  const cellToneClass =
+                                    LIST_CELL_TONE_CLASSES[cellData.format?.tone || "none"] || ""
+                                  const cellTextClass = [
+                                    alignClass,
+                                    cellData.format?.bold ? "font-semibold" : "",
+                                    cellData.format?.italic ? "italic" : "",
+                                    cellData.format?.underline ? "underline" : "",
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" ")
                                   return (
-                                    <td key={`${rowIndex}-${colIndex}`} className="border border-white/10 p-0">
+                                    <td
+                                      key={`${rowIndex}-${colIndex}`}
+                                      className={`border border-white/10 p-0 ${cellToneClass}`}
+                                    >
                                       <input
                                         value={displayValue}
                                         onFocus={() => {
@@ -2706,7 +3051,7 @@ function App() {
                                       }
                                       onPaste={(e) => handleListPaste(e, rowIndex, colIndex)}
                                       spellCheck={false}
-                                      className="h-8 w-full bg-transparent px-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-accent-400/60"
+                                      className={`h-8 w-full bg-transparent px-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-accent-400/60 ${cellTextClass}`}
                                     />
                                     </td>
                                   )
@@ -2839,6 +3184,7 @@ function App() {
                     <li>- Formül için "=" ile başla (örn: =SUM(A1:A5)).</li>
                     <li>- Desteklenenler: SUM, AVERAGE, MIN, MAX, COUNT.</li>
                     <li>- Satır/sütun başlığına sağ tıkla: ekle/sil.</li>
+                    <li>- Satir/sutun secmek icin basliga tikla; Shift aralik, Ctrl tek tek.</li>
                     <li>- Veriler veritabanında saklanır.</li>
                   </ul>
                 </div>
