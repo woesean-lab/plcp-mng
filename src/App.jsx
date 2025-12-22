@@ -16,6 +16,7 @@ const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map
 const PRODUCT_ORDER_STORAGE_KEY = "pulcipProductOrder"
 const THEME_STORAGE_KEY = "pulcipTheme"
 const AUTH_TOKEN_STORAGE_KEY = "pulcipAuthToken"
+const TASKS_STORAGE_KEY = "pulcipTasks"
 const DEFAULT_LIST_ROWS = 8
 const DEFAULT_LIST_COLS = 5
 const FORMULA_ERRORS = {
@@ -71,6 +72,33 @@ const initialProducts = [
   },
 ]
 
+const initialTasks = [
+  {
+    id: "tsk-1",
+    title: "Haftalik oncelik listesini guncelle",
+    note: "Kritik musteriler + teslim sureleri",
+    status: "todo",
+    priority: "high",
+    due: "2025-12-29",
+  },
+  {
+    id: "tsk-2",
+    title: "Sablon kategorilerini toparla",
+    note: "Genel, satis, destek",
+    status: "doing",
+    priority: "normal",
+    due: "",
+  },
+  {
+    id: "tsk-3",
+    title: "Haftalik raporu paylas",
+    note: "Cuma 17:00",
+    status: "done",
+    priority: "low",
+    due: "2025-12-27",
+  },
+]
+
 const panelClass =
   "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
 
@@ -82,6 +110,44 @@ const categoryPalette = [
   "border-rose-300/50 bg-rose-500/15 text-rose-50",
   "border-indigo-300/50 bg-indigo-500/15 text-indigo-50",
 ]
+
+const taskStatusMeta = {
+  todo: {
+    label: "Yapilacak",
+    helper: "Planla",
+    accent: "text-amber-200",
+    badge: "border-amber-300/60 bg-amber-500/15 text-amber-50",
+  },
+  doing: {
+    label: "Devam",
+    helper: "Odak",
+    accent: "text-sky-200",
+    badge: "border-sky-300/60 bg-sky-500/15 text-sky-50",
+  },
+  done: {
+    label: "Tamamlandi",
+    helper: "Bitenler",
+    accent: "text-emerald-200",
+    badge: "border-emerald-300/60 bg-emerald-500/15 text-emerald-50",
+  },
+}
+
+const taskPriorityMeta = {
+  high: {
+    label: "Yuksek",
+    badge: "border-rose-300/70 bg-rose-500/15 text-rose-50",
+  },
+  normal: {
+    label: "Normal",
+    badge: "border-sky-300/70 bg-sky-500/15 text-sky-50",
+  },
+  low: {
+    label: "Dusuk",
+    badge: "border-emerald-300/70 bg-emerald-500/15 text-emerald-50",
+  },
+}
+
+const taskPriorityOrder = { high: 0, normal: 1, low: 2 }
 
 const getInitialTheme = () => {
   if (typeof window === "undefined") return "dark"
@@ -410,6 +476,29 @@ function App() {
   const [productOrder, setProductOrder] = useState([])
   const [dragState, setDragState] = useState({ activeId: null, overId: null })
   const [editingProduct, setEditingProduct] = useState({})
+
+  const [tasks, setTasks] = useState(() => {
+    if (typeof window === "undefined") return initialTasks
+    try {
+      const stored = localStorage.getItem(TASKS_STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) return parsed
+      }
+    } catch (error) {
+      console.warn("Could not load tasks", error)
+    }
+    return initialTasks
+  })
+  const [taskForm, setTaskForm] = useState({
+    title: "",
+    note: "",
+    priority: "normal",
+    due: "",
+  })
+  const [taskSearch, setTaskSearch] = useState("")
+  const [taskPriorityFilter, setTaskPriorityFilter] = useState("all")
+  const [confirmTaskDelete, setConfirmTaskDelete] = useState(null)
 
   const isLight = theme === "light"
 
@@ -873,6 +962,71 @@ function App() {
     return list
   }, [productSearch, orderedProducts])
 
+  const taskStats = useMemo(() => {
+    const total = tasks.length
+    const done = tasks.filter((task) => task.status === "done").length
+    const doing = tasks.filter((task) => task.status === "doing").length
+    const todo = tasks.filter((task) => task.status === "todo").length
+    const high = tasks.filter((task) => task.priority === "high" && task.status !== "done").length
+    return { total, done, doing, todo, high }
+  }, [tasks])
+
+  const filteredTasks = useMemo(() => {
+    const text = taskSearch.trim().toLowerCase()
+    return tasks.filter((task) => {
+      if (taskPriorityFilter !== "all" && task.priority !== taskPriorityFilter) return false
+      if (!text) return true
+      const haystack = `${task.title ?? ""} ${task.note ?? ""}`.toLowerCase()
+      return haystack.includes(text)
+    })
+  }, [tasks, taskPriorityFilter, taskSearch])
+
+  const taskGroups = useMemo(() => {
+    const groups = { todo: [], doing: [], done: [] }
+    const parseDue = (value) => {
+      if (!value) return Number.POSITIVE_INFINITY
+      const timestamp = Date.parse(value)
+      return Number.isFinite(timestamp) ? timestamp : Number.POSITIVE_INFINITY
+    }
+    filteredTasks.forEach((task) => {
+      const status = task?.status && task.status in groups ? task.status : "todo"
+      groups[status].push(task)
+    })
+    Object.values(groups).forEach((group) => {
+      group.sort((a, b) => {
+        const priorityDiff =
+          (taskPriorityOrder[a.priority] ?? 99) - (taskPriorityOrder[b.priority] ?? 99)
+        if (priorityDiff !== 0) return priorityDiff
+        const dueDiff = parseDue(a.due) - parseDue(b.due)
+        if (dueDiff !== 0) return dueDiff
+        return String(a.title ?? "").localeCompare(String(b.title ?? ""), "tr", {
+          sensitivity: "base",
+        })
+      })
+    })
+    return groups
+  }, [filteredTasks])
+
+  const focusTask = useMemo(() => {
+    const openTasks = tasks.filter((task) => task.status !== "done")
+    if (openTasks.length === 0) return null
+    const parseDue = (value) => {
+      if (!value) return Number.POSITIVE_INFINITY
+      const timestamp = Date.parse(value)
+      return Number.isFinite(timestamp) ? timestamp : Number.POSITIVE_INFINITY
+    }
+    return [...openTasks].sort((a, b) => {
+      const priorityDiff =
+        (taskPriorityOrder[a.priority] ?? 99) - (taskPriorityOrder[b.priority] ?? 99)
+      if (priorityDiff !== 0) return priorityDiff
+      const dueDiff = parseDue(a.due) - parseDue(b.due)
+      if (dueDiff !== 0) return dueDiff
+      return String(a.title ?? "").localeCompare(String(b.title ?? ""), "tr", {
+        sensitivity: "base",
+      })
+    })[0]
+  }, [tasks])
+
 
   useEffect(() => {
     if (products.length === 0) return
@@ -899,8 +1053,82 @@ function App() {
     }
   }, [productOrder])
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
+    } catch (error) {
+      console.warn("Could not save tasks", error)
+    }
+  }, [tasks])
+
   const toggleProductOpen = (productId) => {
     setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ?? false)}))
+  }
+
+  const createTaskId = () => {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID()
+    return `tsk-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
+  }
+
+  const formatTaskDue = (value) => {
+    if (!value) return ""
+    const dateValue = new Date(value)
+    if (!Number.isNaN(dateValue.getTime())) {
+      return LIST_DATE_FORMATTER.format(dateValue)
+    }
+    return value
+  }
+
+  const resetTaskForm = () => {
+    setTaskForm({ title: "", note: "", priority: "normal", due: "" })
+  }
+
+  const handleTaskAdd = () => {
+    const titleValue = taskForm.title.trim()
+    if (!titleValue) {
+      toast.error("Gorev adi gerekli.")
+      return
+    }
+    const newTask = {
+      id: createTaskId(),
+      title: titleValue,
+      note: taskForm.note.trim(),
+      priority: taskForm.priority,
+      status: "todo",
+      due: taskForm.due,
+      createdAt: new Date().toISOString(),
+    }
+    setTasks((prev) => [newTask, ...prev])
+    resetTaskForm()
+    toast.success("Gorev eklendi")
+  }
+
+  const handleTaskAdvance = (taskId) => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id !== taskId) return task
+        if (task.status === "todo") return { ...task, status: "doing" }
+        if (task.status === "doing") return { ...task, status: "done" }
+        return { ...task, status: "done" }
+      }),
+    )
+  }
+
+  const handleTaskReopen = (taskId) => {
+    setTasks((prev) =>
+      prev.map((task) => (task.id === taskId ? { ...task, status: "todo" } : task)),
+    )
+  }
+
+  const handleTaskDeleteWithConfirm = (taskId) => {
+    if (confirmTaskDelete === taskId) {
+      setTasks((prev) => prev.filter((task) => task.id !== taskId))
+      setConfirmTaskDelete(null)
+      toast.success("Gorev silindi")
+      return
+    }
+    setConfirmTaskDelete(taskId)
+    toast("Silmek icin tekrar tikla", { position: "top-right" })
   }
 
   const handleAuthSubmit = async (event) => {
@@ -2324,6 +2552,17 @@ function App() {
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab("tasks")}
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "tasks"
+                ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                : "bg-white/5 text-slate-200 hover:bg-white/10"
+            }`}
+          >
+            Gorev
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("problems")}
             className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
               activeTab === "problems"
@@ -2726,6 +2965,285 @@ function App() {
               </div>
             </div>
           </>
+        )}
+
+        {activeTab === "tasks" && (
+          <div className="space-y-6">
+            <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
+                    Gorevler
+                  </span>
+                  <h1 className="font-display text-3xl font-semibold text-white">Gorevler</h1>
+                  <p className="max-w-2xl text-sm text-slate-200/80">
+                    Oncelik, not ve tarih ile gorevlerini takipe al. Hepsi lokal tutulur.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Toplam: {taskStats.total}
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Acik: {taskStats.todo + taskStats.doing}
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                    Yuksek oncelik: {taskStats.high}
+                  </span>
+                </div>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Gorev tahtasi</p>
+                      <p className="text-sm text-slate-400">Duruma gore gorevleri hizlica guncelle.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
+                        Tamamlanan: {taskStats.done}
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
+                        Devam: {taskStats.doing}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="task-search">
+                        Ara
+                      </label>
+                      <input
+                        id="task-search"
+                        type="text"
+                        value={taskSearch}
+                        onChange={(e) => setTaskSearch(e.target.value)}
+                        placeholder="Baslik veya not"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="task-priority-filter">
+                        Oncelik filtresi
+                      </label>
+                      <select
+                        id="task-priority-filter"
+                        value={taskPriorityFilter}
+                        onChange={(e) => setTaskPriorityFilter(e.target.value)}
+                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      >
+                        <option value="all">Hepsi</option>
+                        {Object.entries(taskPriorityMeta).map(([value, meta]) => (
+                          <option key={value} value={value}>
+                            {meta.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid gap-4 md:grid-cols-3">
+                    {Object.entries(taskStatusMeta).map(([status, meta]) => (
+                      <div
+                        key={status}
+                        className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${meta.accent}`}>{meta.label}</p>
+                            <p className="text-xs text-slate-400">{meta.helper}</p>
+                          </div>
+                          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${meta.badge}`}>
+                            {taskGroups[status].length}
+                          </span>
+                        </div>
+                        <div className="space-y-3">
+                          {taskGroups[status].length === 0 && (
+                            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                              Bu kolon bos.
+                            </div>
+                          )}
+                          {taskGroups[status].map((task) => {
+                            const priority = taskPriorityMeta[task.priority] || taskPriorityMeta.normal
+                            return (
+                              <div
+                                key={task.id}
+                                className="flex flex-col gap-3 rounded-xl border border-white/10 bg-ink-800/70 p-3 shadow-inner"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="space-y-1">
+                                    <p className="text-sm font-semibold text-slate-100">{task.title}</p>
+                                    {task.note && (
+                                      <p className="text-xs text-slate-400">{task.note}</p>
+                                    )}
+                                  </div>
+                                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${priority.badge}`}>
+                                    {priority.label}
+                                  </span>
+                                </div>
+                                {task.due && (
+                                  <span className="w-fit rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-300">
+                                    Son tarih: {formatTaskDue(task.due)}
+                                  </span>
+                                )}
+                                <div className="flex flex-wrap gap-2">
+                                  {status !== "done" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTaskAdvance(task.id)}
+                                      className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
+                                    >
+                                      {status === "todo" ? "Baslat" : "Tamamla"}
+                                    </button>
+                                  )}
+                                  {status === "done" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTaskReopen(task.id)}
+                                      className="rounded-lg border border-amber-300/70 bg-amber-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25"
+                                    >
+                                      Geri al
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTaskDeleteWithConfirm(task.id)}
+                                    className={`rounded-lg border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                                      confirmTaskDelete === task.id
+                                        ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                        : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                                    }`}
+                                  >
+                                    {confirmTaskDelete === task.id ? "Emin misin?" : "Sil"}
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className={`${panelClass} bg-ink-900/70`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Gorev ekle</p>
+                      <p className="text-sm text-slate-400">Yeni isleri listeye ekle.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {taskStats.total} gorev
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="task-title">
+                        Gorev adi
+                      </label>
+                      <input
+                        id="task-title"
+                        type="text"
+                        value={taskForm.title}
+                        onChange={(e) => setTaskForm((prev) => ({ ...prev, title: e.target.value }))}
+                        placeholder="Orn: Stok raporunu gonder"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-200" htmlFor="task-note">
+                        Not
+                      </label>
+                      <textarea
+                        id="task-note"
+                        rows={3}
+                        value={taskForm.note}
+                        onChange={(e) => setTaskForm((prev) => ({ ...prev, note: e.target.value }))}
+                        placeholder="Kisa not veya kontrol listesi"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      />
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-200" htmlFor="task-priority">
+                          Oncelik
+                        </label>
+                        <select
+                          id="task-priority"
+                          value={taskForm.priority}
+                          onChange={(e) => setTaskForm((prev) => ({ ...prev, priority: e.target.value }))}
+                          className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                        >
+                          {Object.entries(taskPriorityMeta).map(([value, meta]) => (
+                            <option key={value} value={value}>
+                              {meta.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-200" htmlFor="task-due">
+                          Son tarih
+                        </label>
+                        <input
+                          id="task-due"
+                          type="date"
+                          value={taskForm.due}
+                          onChange={(e) => setTaskForm((prev) => ({ ...prev, due: e.target.value }))}
+                          className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={handleTaskAdd}
+                        className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                      >
+                        Gorev ekle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetTaskForm}
+                        className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                      >
+                        Temizle
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`${panelClass} bg-ink-800/60`}>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Odak notu</p>
+                  <div className="mt-3 space-y-2 text-sm text-slate-300">
+                    <p>- Acik gorev: {taskStats.todo + taskStats.doing}</p>
+                    <p>- Tamamlanan: {taskStats.done}</p>
+                    <p>- Yuksek oncelik: {taskStats.high}</p>
+                  </div>
+                  <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 text-sm text-slate-200 shadow-inner">
+                    {focusTask ? (
+                      <>
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Siradaki odak</p>
+                        <p className="mt-1 text-sm text-slate-100">{focusTask.title}</p>
+                      </>
+                    ) : (
+                      <p>Oncelikli gorev kalmadi. Yeni gorev ekleyebilirsin.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === "lists" && (
