@@ -2573,15 +2573,43 @@ function App() {
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Liste içeriği</p>
                       <p className="text-sm text-slate-400">Hücreleri seçip düzenleyebilirsin.</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                      <span>Başlıklara sağ tıkla: ekle/sil</span>
-                      {listSavedAt ? (
-                        <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
-                          Kaydedildi
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-slate-500">Otomatik kaydetme aktif</span>
-                      )}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                        <span>Başlıklara sağ tıkla: ekle/sil</span>
+                        {listSavedAt ? (
+                          <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
+                            Kaydedildi
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-500">Otomatik kaydetme aktif</span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleListSaveNow}
+                        disabled={!activeList || isListSaving || isListsLoading}
+                        className="inline-flex items-center gap-2 rounded-full border border-accent-300/70 bg-gradient-to-br from-accent-500/20 via-accent-400/10 to-accent-500/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isListSaving ? (
+                          <span className="h-2 w-2 animate-pulse rounded-full bg-accent-200" />
+                        ) : (
+                          <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M19 21H5a2 2 0 0 1-2-2V7l5-5h8l5 5v12a2 2 0 0 1-2 2Z" />
+                            <path d="M7 21v-7h10v7" />
+                            <path d="M7 3v4h8" />
+                          </svg>
+                        )}
+                        {isListSaving ? "Kaydediliyor" : "Kaydet"}
+                      </button>
                     </div>
                   </div>
 
@@ -3552,39 +3580,6 @@ function App() {
           </div>
         )}
       </div>
-      {activeTab === "lists" && activeList && (
-        <div className="fixed bottom-5 left-5 z-50 pointer-events-auto sm:bottom-6 sm:left-6">
-          <button
-            type="button"
-            onClick={handleListSaveNow}
-            disabled={!activeList || isListSaving || isListsLoading}
-            className="group relative flex h-12 w-12 items-center justify-center rounded-full border border-accent-300/70 bg-ink-900/90 text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-            aria-label="Kaydet"
-          >
-            <span className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-full border border-white/10 bg-ink-900/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-100 opacity-0 transition group-hover:opacity-100">
-              {isListSaving ? "Kaydediliyor" : "Kaydet"}
-            </span>
-            {isListSaving ? (
-              <span className="h-3 w-3 animate-pulse rounded-full bg-accent-200" />
-            ) : (
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 3v12" />
-                <path d="M8 11l4 4 4-4" />
-                <path d="M5 21h14" />
-              </svg>
-            )}
-          </button>
-        </div>
-      )}
       <Toaster
         position="top-right"
         toastOptions={{
