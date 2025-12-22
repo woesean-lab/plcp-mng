@@ -3165,7 +3165,18 @@ function App() {
                                   <div className="space-y-1">
                                     <p className="text-sm font-semibold text-slate-100">{task.title}</p>
                                     {task.note && (
-                                      <p className="text-xs text-slate-400">{task.note}</p>
+                                      <p
+                                        className="text-xs text-slate-400"
+                                        style={{
+                                          display: "-webkit-box",
+                                          WebkitLineClamp: 2,
+                                          WebkitBoxOrient: "vertical",
+                                          overflow: "hidden",
+                                        }}
+                                        title={task.note}
+                                      >
+                                        {task.note}
+                                      </p>
                                     )}
                                     {task.owner && (
                                       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
