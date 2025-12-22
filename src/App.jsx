@@ -3176,12 +3176,14 @@ function App() {
                                     <p className="text-sm font-semibold text-slate-100">{task.title}</p>
                                     {task.note && (
                                       <p
-                                        className="text-xs text-slate-400"
+                                        className="text-xs text-slate-400 break-words"
                                         style={{
                                           display: "-webkit-box",
                                           WebkitLineClamp: 2,
                                           WebkitBoxOrient: "vertical",
                                           overflow: "hidden",
+                                          overflowWrap: "anywhere",
+                                          wordBreak: "break-word",
                                         }}
                                         title={task.note}
                                       >
