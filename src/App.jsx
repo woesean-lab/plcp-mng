@@ -16,7 +16,6 @@ const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map
 const PRODUCT_ORDER_STORAGE_KEY = "pulcipProductOrder"
 const THEME_STORAGE_KEY = "pulcipTheme"
 const AUTH_TOKEN_STORAGE_KEY = "pulcipAuthToken"
-const TASKS_STORAGE_KEY = "pulcipTasks"
 const DEFAULT_LIST_ROWS = 8
 const DEFAULT_LIST_COLS = 5
 const FORMULA_ERRORS = {
@@ -479,31 +478,7 @@ function App() {
   const [dragState, setDragState] = useState({ activeId: null, overId: null })
   const [editingProduct, setEditingProduct] = useState({})
 
-  const [tasks, setTasks] = useState(() => {
-    const normalizeTask = (task) => {
-      const dueDate = task.dueDate || task.due || ""
-      const dueType = task.dueType || (dueDate ? "date" : "today")
-      const repeatDay = task.repeatDay ?? "1"
-      return {
-        ...task,
-        dueType,
-        dueDate: dueType === "date" ? dueDate : "",
-        repeatDay: dueType === "repeat" ? repeatDay : "",
-        repeatWakeAt: task.repeatWakeAt || "",
-      }
-    }
-    if (typeof window === "undefined") return initialTasks.map(normalizeTask)
-    try {
-      const stored = localStorage.getItem(TASKS_STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed)) return parsed.map(normalizeTask)
-      }
-    } catch (error) {
-      console.warn("Could not load tasks", error)
-    }
-    return initialTasks.map(normalizeTask)
-  })
+  const [tasks, setTasks] = useState([])
   const [taskForm, setTaskForm] = useState({
     title: "",
     note: "",
@@ -521,6 +496,8 @@ function App() {
   const noteLineRef = useRef(null)
   const detailNoteRef = useRef(null)
   const detailNoteLineRef = useRef(null)
+  const [isTasksLoading, setIsTasksLoading] = useState(true)
+  const taskLoadErrorRef = useRef(false)
 
   const isLight = theme === "light"
 
@@ -991,6 +968,7 @@ function App() {
     const todo = tasks.filter((task) => task.status === "todo").length
     return { total, done, doing, todo }
   }, [tasks])
+  const taskCountText = isTasksLoading ? <LoadingIndicator label="Yükleniyor" /> : taskStats.total
 
   const taskGroups = useMemo(() => {
     const groups = { todo: [], doing: [], done: [] }
@@ -1034,18 +1012,50 @@ function App() {
   }, [productOrder])
 
   useEffect(() => {
-    try {
-      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
-    } catch (error) {
-      console.warn("Could not save tasks", error)
-    }
-  }, [tasks])
+    if (!isAuthed) return
+    const controller = new AbortController()
+    setIsTasksLoading(true)
+    ;(async () => {
+      try {
+        const res = await apiFetch("/api/tasks", { signal: controller.signal })
+        if (!res.ok) throw new Error("api_error")
+        const data = await res.json()
+        const normalizeTask = (task) => {
+          const dueDate = task?.dueDate || ""
+          const dueType = task?.dueType || (dueDate ? "date" : "today")
+          const repeatDay = task?.repeatDay ?? "1"
+          return {
+            ...task,
+            note: task?.note ?? "",
+            owner: task?.owner ?? "",
+            dueType,
+            dueDate: dueType === "date" ? dueDate : "",
+            repeatDay: dueType === "repeat" ? String(repeatDay) : "",
+            repeatWakeAt: task?.repeatWakeAt ?? "",
+          }
+        }
+        setTasks(Array.isArray(data) ? data.map(normalizeTask) : [])
+        taskLoadErrorRef.current = false
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        if (!taskLoadErrorRef.current) {
+          taskLoadErrorRef.current = true
+          toast.error("Görevler alınamadı (API/DB kontrol edin).")
+        }
+        setTasks(initialTasks)
+      } finally {
+        setIsTasksLoading(false)
+      }
+    })()
+    return () => controller.abort()
+  }, [apiFetch, isAuthed])
 
   useEffect(() => {
+    if (!isAuthed) return
     const tick = () => {
       const today = getLocalDateString(new Date())
+      let changedIds = []
       setTasks((prev) => {
-        let changed = false
         const next = prev.map((task) => {
           if (
             task.dueType === "repeat" &&
@@ -1053,18 +1063,26 @@ function App() {
             task.repeatWakeAt &&
             task.repeatWakeAt <= today
           ) {
-            changed = true
+            changedIds.push(task.id)
             return { ...task, status: "todo", repeatWakeAt: "" }
           }
           return task
         })
-        return changed ? next : prev
+        return changedIds.length > 0 ? next : prev
+      })
+      if (changedIds.length === 0) return
+      changedIds.forEach((taskId) => {
+        apiFetch(`/api/tasks/${taskId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "todo", repeatWakeAt: null }),
+        }).catch(() => {})
       })
     }
     tick()
     const intervalId = window.setInterval(tick, 60 * 60 * 1000)
     return () => window.clearInterval(intervalId)
-  }, [])
+  }, [apiFetch, isAuthed])
 
   useEffect(() => {
     if (!isNoteModalOpen && !taskDetailTarget) return
@@ -1080,11 +1098,6 @@ function App() {
 
   const toggleProductOpen = (productId) => {
     setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ?? false)}))
-  }
-
-  const createTaskId = () => {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID()
-    return `tsk-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
   }
 
   const getLocalDateString = (date) => {
@@ -1183,7 +1196,37 @@ function App() {
     })
   }
 
-  const handleTaskAdd = () => {
+  const saveTaskUpdate = async (taskId, updates) => {
+    if (!isAuthed) return null
+    try {
+      const res = await apiFetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+      if (!res.ok) throw new Error("task_update_failed")
+      const updated = await res.json()
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId
+            ? {
+              ...updated,
+              note: updated?.note ?? "",
+              owner: updated?.owner ?? "",
+              repeatWakeAt: updated?.repeatWakeAt ?? "",
+            }
+            : task,
+        ),
+      )
+      return updated
+    } catch (error) {
+      console.error(error)
+      toast.error("Görev güncellenemedi (API/DB kontrol edin).")
+      return null
+    }
+  }
+
+  const handleTaskAdd = async () => {
     const titleValue = taskForm.title.trim()
     if (!titleValue) {
       toast.error("Görev adı gerekli.")
@@ -1193,58 +1236,78 @@ function App() {
       toast.error("Özel tarih seçin.")
       return
     }
-    const newTask = {
-      id: createTaskId(),
-      title: titleValue,
-      note: taskForm.note.trim(),
-      owner: taskForm.owner.trim(),
-      dueType: taskForm.dueType,
-      repeatDay: taskForm.dueType === "repeat" ? taskForm.repeatDay : "",
-      dueDate: taskForm.dueType === "date" ? taskForm.dueDate : "",
-      status: "todo",
-      createdAt: new Date().toISOString(),
+    try {
+      const res = await apiFetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: titleValue,
+          note: taskForm.note.trim(),
+          owner: taskForm.owner.trim(),
+          dueType: taskForm.dueType,
+          repeatDay: taskForm.dueType === "repeat" ? taskForm.repeatDay : "",
+          dueDate: taskForm.dueType === "date" ? taskForm.dueDate : "",
+        }),
+      })
+      if (!res.ok) throw new Error("task_create_failed")
+      const created = await res.json()
+      setTasks((prev) => [
+        {
+          ...created,
+          note: created?.note ?? "",
+          owner: created?.owner ?? "",
+          repeatWakeAt: created?.repeatWakeAt ?? "",
+        },
+        ...prev,
+      ])
+      resetTaskForm()
+      toast.success("Görev eklendi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Görev eklenemedi (API/DB kontrol edin).")
     }
-    setTasks((prev) => [newTask, ...prev])
-    resetTaskForm()
-    toast.success("Görev eklendi")
   }
 
-  const handleTaskAdvance = (taskId) => {
-    setTasks((prev) =>
-      prev.map((task) => {
-        if (task.id !== taskId) return task
-        if (task.status === "todo") return { ...task, status: "doing" }
-        if (task.status === "doing") {
-          if (task.dueType === "repeat") {
-            const tomorrow = getLocalDateString(addDays(new Date(), 1))
-            return { ...task, status: "done", repeatWakeAt: tomorrow }
-          }
-          return { ...task, status: "done", repeatWakeAt: "" }
-        }
-        return { ...task, status: "done", repeatWakeAt: "" }
-      }),
-    )
-  }
-
-  const handleTaskReopen = (taskId) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId ? { ...task, status: "todo", repeatWakeAt: "" } : task,
-      ),
-    )
-  }
-
-  const handleTaskDeleteWithConfirm = (taskId) => {
-    if (confirmTaskDelete === taskId) {
-      setTasks((prev) => prev.filter((task) => task.id !== taskId))
-      setConfirmTaskDelete(null)
-      toast.success("Görev silindi")
+  const handleTaskAdvance = async (taskId) => {
+    const task = tasks.find((item) => item.id === taskId)
+    if (!task) return
+    if (task.status === "todo") {
+      await saveTaskUpdate(taskId, { status: "doing" })
       return
     }
-    setConfirmTaskDelete(taskId)
-    toast("Silmek icin tekrar tikla", { position: "top-right" })
+    if (task.status === "doing") {
+      if (task.dueType === "repeat") {
+        const tomorrow = getLocalDateString(addDays(new Date(), 1))
+        await saveTaskUpdate(taskId, { status: "done", repeatWakeAt: tomorrow })
+        return
+      }
+      await saveTaskUpdate(taskId, { status: "done", repeatWakeAt: null })
+    }
   }
 
+  const handleTaskReopen = async (taskId) => {
+    await saveTaskUpdate(taskId, { status: "todo", repeatWakeAt: null })
+  }
+
+  const handleTaskDeleteWithConfirm = async (taskId) => {
+    if (confirmTaskDelete === taskId) {
+      try {
+        const res = await apiFetch(`/api/tasks/${taskId}`, { method: "DELETE" })
+        if (!res.ok && res.status !== 404) throw new Error("task_delete_failed")
+        setTasks((prev) => prev.filter((task) => task.id !== taskId))
+        setConfirmTaskDelete(null)
+        toast.success("Görev silindi")
+        return
+      } catch (error) {
+        console.error(error)
+        toast.error("Görev silinemedi (API/DB kontrol edin).")
+        setConfirmTaskDelete(null)
+        return
+      }
+    }
+    setConfirmTaskDelete(taskId)
+    toast("Silmek için tekrar tıkla", { position: "top-right" })
+  }
   const handleTaskDragStart = (event, taskId) => {
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("text/plain", taskId)
@@ -1257,19 +1320,16 @@ function App() {
     setTaskDragState((prev) => ({ ...prev, overStatus: status }))
   }
 
-  const handleTaskDrop = (event, status) => {
+  const handleTaskDrop = async (event, status) => {
     event.preventDefault()
     const taskId = taskDragState.activeId || event.dataTransfer.getData("text/plain")
     if (!taskId) {
       setTaskDragState({ activeId: null, overStatus: null })
       return
     }
-    setTasks((prev) =>
-      prev.map((task) => (task.id === taskId ? { ...task, status } : task)),
-    )
+    await saveTaskUpdate(taskId, { status })
     setTaskDragState({ activeId: null, overStatus: null })
   }
-
   const handleTaskDragEnd = () => {
     setTaskDragState({ activeId: null, overStatus: null })
   }
@@ -3125,7 +3185,7 @@ function App() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-                    Toplam: {taskStats.total}
+                    Toplam: {taskCountText}
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
                     Acik: {taskStats.todo + taskStats.doing}
@@ -3284,7 +3344,7 @@ function App() {
                       <p className="text-sm text-slate-400">Yeni isleri listeye ekle.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      {taskStats.total} gorev
+                      {taskCountText}
                     </span>
                   </div>
 

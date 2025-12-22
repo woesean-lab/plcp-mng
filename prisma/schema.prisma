@@ -57,3 +57,17 @@ model List {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Task {
+  id            String   @id @default(cuid())
+  title         String
+  note          String?
+  owner         String?
+  status        String   @default("todo")
+  dueType       String   @default("today")
+  dueDate       String?
+  repeatDay     String?
+  repeatWakeAt  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

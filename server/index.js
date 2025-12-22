@@ -264,6 +264,9 @@ app.delete("/api/categories/:name", async (req, res) => {
 })
 
 const allowedProblemStatus = new Set(["open", "resolved"])
+const allowedTaskStatus = new Set(["todo", "doing", "done"])
+const allowedTaskDueTypes = new Set(["today", "repeat", "date"])
+const allowedTaskRepeatDays = new Set(["0", "1", "2", "3", "4", "5", "6"])
 
 app.get("/api/problems", async (_req, res) => {
   const problems = await prisma.problem.findMany({ orderBy: { createdAt: "desc" } })
@@ -337,6 +340,221 @@ app.delete("/api/problems/:id", async (req, res) => {
   } catch (error) {
     if (error?.code === "P2025") {
       res.status(404).json({ error: "Problem not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.get("/api/tasks", async (_req, res) => {
+  const tasks = await prisma.task.findMany({ orderBy: { createdAt: "desc" } })
+  res.json(tasks)
+})
+
+app.post("/api/tasks", async (req, res) => {
+  const title = String(req.body?.title ?? "").trim()
+  const noteRaw = req.body?.note
+  const ownerRaw = req.body?.owner
+  const dueTypeRaw = req.body?.dueType
+  const repeatDayRaw = req.body?.repeatDay
+  const dueDateRaw = req.body?.dueDate
+
+  if (!title) {
+    res.status(400).json({ error: "title is required" })
+    return
+  }
+
+  const dueType = String(dueTypeRaw ?? "today").trim() || "today"
+  if (!allowedTaskDueTypes.has(dueType)) {
+    res.status(400).json({ error: "invalid dueType" })
+    return
+  }
+
+  const repeatDay = String(repeatDayRaw ?? "").trim()
+  const dueDate = String(dueDateRaw ?? "").trim()
+
+  if (dueType === "repeat") {
+    if (!repeatDay || !allowedTaskRepeatDays.has(repeatDay)) {
+      res.status(400).json({ error: "invalid repeatDay" })
+      return
+    }
+  }
+
+  if (dueType === "date") {
+    if (!dueDate) {
+      res.status(400).json({ error: "dueDate is required" })
+      return
+    }
+  }
+
+  const note =
+    noteRaw === undefined ? undefined : noteRaw === null ? null : String(noteRaw).trim() || null
+  const owner =
+    ownerRaw === undefined ? undefined : ownerRaw === null ? null : String(ownerRaw).trim() || null
+
+  const created = await prisma.task.create({
+    data: {
+      title,
+      status: "todo",
+      dueType,
+      ...(note === undefined ? {} : { note }),
+      ...(owner === undefined ? {} : { owner }),
+      ...(dueType === "repeat" ? { repeatDay } : { repeatDay: null }),
+      ...(dueType === "date" ? { dueDate } : { dueDate: null }),
+      repeatWakeAt: null,
+    },
+  })
+
+  res.status(201).json(created)
+})
+
+app.put("/api/tasks/:id", async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const titleRaw = req.body?.title
+  const noteRaw = req.body?.note
+  const ownerRaw = req.body?.owner
+  const statusRaw = req.body?.status
+  const dueTypeRaw = req.body?.dueType
+  const repeatDayRaw = req.body?.repeatDay
+  const dueDateRaw = req.body?.dueDate
+  const repeatWakeAtRaw = req.body?.repeatWakeAt
+
+  const data = {}
+
+  if (titleRaw !== undefined) {
+    const title = String(titleRaw).trim()
+    if (!title) {
+      res.status(400).json({ error: "title cannot be empty" })
+      return
+    }
+    data.title = title
+  }
+
+  if (noteRaw !== undefined) {
+    if (noteRaw === null) {
+      data.note = null
+    } else {
+      const note = String(noteRaw).trim()
+      data.note = note ? note : null
+    }
+  }
+
+  if (ownerRaw !== undefined) {
+    if (ownerRaw === null) {
+      data.owner = null
+    } else {
+      const owner = String(ownerRaw).trim()
+      data.owner = owner ? owner : null
+    }
+  }
+
+  if (statusRaw !== undefined) {
+    const status = String(statusRaw).trim()
+    if (!allowedTaskStatus.has(status)) {
+      res.status(400).json({ error: "invalid status" })
+      return
+    }
+    data.status = status
+  }
+
+  let dueType = undefined
+  if (dueTypeRaw !== undefined) {
+    dueType = String(dueTypeRaw).trim()
+    if (!allowedTaskDueTypes.has(dueType)) {
+      res.status(400).json({ error: "invalid dueType" })
+      return
+    }
+    data.dueType = dueType
+  }
+
+  if (repeatDayRaw !== undefined) {
+    if (repeatDayRaw === null) {
+      data.repeatDay = null
+    } else {
+      const repeatDay = String(repeatDayRaw).trim()
+      if (repeatDay && !allowedTaskRepeatDays.has(repeatDay)) {
+        res.status(400).json({ error: "invalid repeatDay" })
+        return
+      }
+      data.repeatDay = repeatDay || null
+    }
+  }
+
+  if (dueDateRaw !== undefined) {
+    if (dueDateRaw === null) {
+      data.dueDate = null
+    } else {
+      const dueDate = String(dueDateRaw).trim()
+      data.dueDate = dueDate || null
+    }
+  }
+
+  if (repeatWakeAtRaw !== undefined) {
+    if (repeatWakeAtRaw === null) {
+      data.repeatWakeAt = null
+    } else {
+      const repeatWakeAt = String(repeatWakeAtRaw).trim()
+      data.repeatWakeAt = repeatWakeAt || null
+    }
+  }
+
+  if (dueType !== undefined) {
+    if (dueType === "repeat") {
+      const repeatDay = repeatDayRaw === undefined ? "" : String(repeatDayRaw).trim()
+      if (!repeatDay || !allowedTaskRepeatDays.has(repeatDay)) {
+        res.status(400).json({ error: "invalid repeatDay" })
+        return
+      }
+      data.repeatDay = repeatDay
+      data.dueDate = null
+    }
+    if (dueType === "date") {
+      const dueDate = dueDateRaw === undefined ? "" : String(dueDateRaw).trim()
+      if (!dueDate) {
+        res.status(400).json({ error: "dueDate is required" })
+        return
+      }
+      data.dueDate = dueDate
+      data.repeatDay = null
+    }
+    if (dueType === "today") {
+      data.repeatDay = null
+      data.dueDate = null
+    }
+  }
+
+  try {
+    const updated = await prisma.task.update({
+      where: { id },
+      data,
+    })
+    res.json(updated)
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Task not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/tasks/:id", async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+  try {
+    await prisma.task.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Task not found" })
       return
     }
     throw error
