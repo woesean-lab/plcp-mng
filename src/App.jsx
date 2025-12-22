@@ -2588,26 +2588,8 @@ function App() {
                         type="button"
                         onClick={handleListSaveNow}
                         disabled={!activeList || isListSaving || isListsLoading}
-                        className="inline-flex items-center gap-2 rounded-full border border-accent-300/70 bg-gradient-to-br from-accent-500/20 via-accent-400/10 to-accent-500/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center rounded-[0.5rem] border border-accent-300/70 bg-gradient-to-br from-accent-500/20 via-accent-400/10 to-accent-500/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {isListSaving ? (
-                          <span className="h-2 w-2 animate-pulse rounded-full bg-accent-200" />
-                        ) : (
-                          <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                            className="h-3.5 w-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M19 21H5a2 2 0 0 1-2-2V7l5-5h8l5 5v12a2 2 0 0 1-2 2Z" />
-                            <path d="M7 21v-7h10v7" />
-                            <path d="M7 3v4h8" />
-                          </svg>
-                        )}
                         {isListSaving ? "Kaydediliyor" : "Kaydet"}
                       </button>
                     </div>
