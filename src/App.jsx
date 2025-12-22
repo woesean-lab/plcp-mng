@@ -38,6 +38,24 @@ const LIST_CELL_TONE_OPTIONS = [
   { id: "emerald", label: "Yesil", swatchClass: "bg-emerald-400/70" },
   { id: "rose", label: "Pembe", swatchClass: "bg-rose-400/70" },
 ]
+const LIST_FORMAT_TYPE_OPTIONS = [
+  { id: "auto", label: "Genel" },
+  { id: "number", label: "Sayi" },
+  { id: "percent", label: "Yuzde" },
+  { id: "currency", label: "Para (TRY)" },
+  { id: "date", label: "Tarih" },
+]
+const LIST_NUMBER_FORMATTER = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 })
+const LIST_PERCENT_FORMATTER = new Intl.NumberFormat("tr-TR", {
+  style: "percent",
+  maximumFractionDigits: 2,
+})
+const LIST_CURRENCY_FORMATTER = new Intl.NumberFormat("tr-TR", {
+  style: "currency",
+  currency: "TRY",
+  maximumFractionDigits: 2,
+})
+const LIST_DATE_FORMATTER = new Intl.DateTimeFormat("tr-TR")
 
 const initialProblems = [
   { id: 1, username: "@ornek1", issue: "Ödeme ekranda takıldı, 2 kez kart denemiş.", status: "open" },
@@ -202,7 +220,7 @@ const parseFormula = (input) => {
       const token = peek()
       if (token?.type === "operator" && (token.value === "+" || token.value === "-")) {
         consume()
-        node = { type: "binary", op: token.value, left: node, right: parseTerm() }
+        node = { type: "binary", op: token.value, left: node, right: parseTerm()}
         continue
       }
       break
@@ -216,7 +234,7 @@ const parseFormula = (input) => {
       const token = peek()
       if (token?.type === "operator" && (token.value === "*" || token.value === "/")) {
         consume()
-        node = { type: "binary", op: token.value, left: node, right: parseFactor() }
+        node = { type: "binary", op: token.value, left: node, right: parseFactor()}
         continue
       }
       break
@@ -229,7 +247,7 @@ const parseFormula = (input) => {
     if (!token) throw new Error("unexpected")
     if (token.type === "operator" && token.value === "-") {
       consume()
-      return { type: "unary", op: "-", value: parseFactor() }
+      return { type: "unary", op: "-", value: parseFactor()}
     }
     if (token.type === "number") {
       consume()
@@ -301,6 +319,27 @@ const formatCellValue = (value) => {
   return String(value)
 }
 
+const formatListCellValue = (value, format = {}) => {
+  if (!format || !format.type || format.type === "auto") return formatCellValue(value)
+  if (isErrorValue(value) || Array.isArray(value)) return formatCellValue(value)
+  if (value === null || value === undefined) return ""
+  if (format.type === "date") {
+    const dateValue =
+      typeof value === "number" ? new Date(value) : new Date(String(value).trim())
+    if (!Number.isNaN(dateValue.getTime())) {
+      return LIST_DATE_FORMATTER.format(dateValue)
+    }
+    return formatCellValue(value)
+  }
+  const numericValue =
+    typeof value === "number" ? value : Number(String(value).trim().replace(",", "."))
+  if (!Number.isFinite(numericValue)) return formatCellValue(value)
+  if (format.type === "percent") return LIST_PERCENT_FORMATTER.format(numericValue)
+  if (format.type === "currency") return LIST_CURRENCY_FORMATTER.format(numericValue)
+  if (format.type === "number") return LIST_NUMBER_FORMATTER.format(numericValue)
+  return formatCellValue(value)
+}
+
 function LoadingIndicator({ label = "Yükleniyor..." }) {
   return (
     <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-200">
@@ -348,6 +387,7 @@ function App() {
   const [selectedListCols, setSelectedListCols] = useState(() => new Set())
   const [lastListRowSelect, setLastListRowSelect] = useState(null)
   const [lastListColSelect, setLastListColSelect] = useState(null)
+  const [listFormatClipboard, setListFormatClipboard] = useState(null)
   const [listContextMenu, setListContextMenu] = useState({
     open: false,
     type: null,
@@ -633,12 +673,14 @@ function App() {
     )
 
   const normalizeListCellFormat = (format) => {
-    const next = { ...(format || {}) }
+    const next = { ...(format || {})}
     if (!next.bold) delete next.bold
     if (!next.italic) delete next.italic
     if (!next.underline) delete next.underline
     if (!next.align || next.align === "left") delete next.align
     if (!next.tone || next.tone === "none") delete next.tone
+    if (!next.type || next.type === "auto") delete next.type
+    if (next.type !== "currency") delete next.currency
     return next
   }
 
@@ -651,7 +693,7 @@ function App() {
   const getListCellData = (rowIndex, colIndex) => {
     const cell = activeListRows[rowIndex]?.[colIndex]
     if (isListCellObject(cell)) {
-      return { value: cell.value ?? "", format: normalizeListCellFormat(cell.format) }
+      return { value: cell.value ?? "", format: normalizeListCellFormat(cell.format)}
     }
     return { value: cell ?? "", format: {} }
   }
@@ -801,7 +843,8 @@ function App() {
 
   const getListCellDisplayValue = (rowIndex, colIndex) => {
     const value = getListCellValue(rowIndex, colIndex, new Set())
-    return formatCellValue(value)
+    const format = getListCellData(rowIndex, colIndex).format
+    return formatListCellValue(value, format)
   }
 
   const hasActiveListCell =
@@ -811,6 +854,9 @@ function App() {
     : null
   const selectedListCellFormat = selectedListCellData?.format || {}
   const selectedListCellTone = selectedListCellFormat.tone || "none"
+  const selectedListCellFormatType = selectedListCellFormat.type || "auto"
+  const hasListFormatClipboard =
+    listFormatClipboard && Object.keys(listFormatClipboard).length > 0
 
   const groupedTemplates = useMemo(() => {
     return templates.reduce((acc, tpl) => {
@@ -891,7 +937,7 @@ function App() {
   }, [productOrder])
 
   const toggleProductOpen = (productId) => {
-    setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ?? false) }))
+    setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ?? false)}))
   }
 
   const handleAuthSubmit = async (event) => {
@@ -1632,6 +1678,27 @@ function App() {
     })
   }
 
+  const handleListFormatTypeChange = (event) => {
+    const nextType = event.target.value
+    const patch = { type: nextType }
+    if (nextType === "currency") {
+      patch.currency = "TRY"
+    }
+    applyListCellFormat(patch)
+  }
+
+  const handleCopyListFormat = () => {
+    if (!hasActiveListCell) return
+    setListFormatClipboard({ ...(selectedListCellFormat || {})})
+    toast.success("Hucre bicimi kopyalandi")
+  }
+
+  const handlePasteListFormat = () => {
+    if (!hasActiveListCell || !listFormatClipboard) return
+    applyListCellFormat({ ...listFormatClipboard })
+    toast.success("Hucre bicimi uygulandi")
+  }
+
   const handleListDeleteSelectedRows = () => {
     if (!activeList) return
     const selected = Array.from(selectedListRows).filter(
@@ -1945,7 +2012,7 @@ function App() {
       const res = await apiFetch("/api/stocks/bulk-delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: removed.map((stk) => stk.id) }),
+        body: JSON.stringify({ ids: removed.map((stk) => stk.id)}),
       })
       if (!res.ok) throw new Error("stock_bulk_delete_failed")
 
@@ -1953,7 +2020,7 @@ function App() {
       setProducts((prev) =>
         prev.map((p) =>
           p.id === productId
-            ? { ...p, stocks: p.stocks.filter((stk) => !removedIds.has(stk.id)) }
+            ? { ...p, stocks: p.stocks.filter((stk) => !removedIds.has(stk.id))}
             : p,
         ),
       )
@@ -2119,7 +2186,7 @@ function App() {
         setProducts((prev) =>
           prev.map((product) =>
             product.id === productId
-              ? { ...product, stocks: product.stocks.filter((stk) => stk.id !== stockId) }
+              ? { ...product, stocks: product.stocks.filter((stk) => stk.id !== stockId)}
               : product,
           ),
         )
@@ -2539,7 +2606,7 @@ function App() {
                           <div key={cat} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
                             <button
                               type="button"
-                              onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true) }))}
+                              onClick={() => setOpenCategories((prev) => ({ ...prev, [cat]: !(prev[cat] ?? true)}))}
                               className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
                             >
                               <span className="inline-flex items-center gap-2">
@@ -2865,6 +2932,17 @@ function App() {
                       <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
                         Hucre bicimi
                       </span>
+                      <select
+                        value={selectedListCellFormatType}
+                        onChange={handleListFormatTypeChange}
+                        className="h-7 rounded-lg border border-white/10 bg-ink-900 px-2 text-[11px] text-slate-100 focus:border-accent-400 focus:outline-none"
+                      >
+                        {LIST_FORMAT_TYPE_OPTIONS.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                       <button
                         type="button"
                         onClick={() => applyListCellFormat({ bold: !selectedListCellFormat.bold })}
@@ -2942,6 +3020,21 @@ function App() {
                       </div>
                       <button
                         type="button"
+                        onClick={handleCopyListFormat}
+                        className="rounded-lg border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400/60 hover:text-accent-100"
+                      >
+                        Kopyala
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePasteListFormat}
+                        disabled={!hasListFormatClipboard}
+                        className="rounded-lg border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400/60 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Yapistir
+                      </button>
+                      <button
+                        type="button"
                         onClick={() =>
                           applyListCellFormat({
                             bold: false,
@@ -2949,6 +3042,7 @@ function App() {
                             underline: false,
                             align: "left",
                             tone: "none",
+                            type: "auto",
                           })
                         }
                         className="ml-auto rounded-lg border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400/60 hover:text-accent-100"
@@ -3221,6 +3315,19 @@ function App() {
                         Satır sil
                         <span className="text-[10px] text-rose-200/70">Seçili</span>
                       </button>
+                      {selectedListRows.size > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleListDeleteSelectedRows()
+                            handleListContextMenuClose()
+                          }}
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-rose-100 transition hover:bg-rose-500/10"
+                        >
+                          Secili satirlari sil
+                          <span className="text-[10px] text-rose-200/70">{selectedListRows.size}</span>
+                        </button>
+                      )}
                     </>
                   )}
                   {listContextMenu.type === "column" && (
@@ -3248,6 +3355,19 @@ function App() {
                         Sütun sil
                         <span className="text-[10px] text-rose-200/70">Seçili</span>
                       </button>
+                      {selectedListCols.size > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleListDeleteSelectedColumns()
+                            handleListContextMenuClose()
+                          }}
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-rose-100 transition hover:bg-rose-500/10"
+                        >
+                          Secili sutunlari sil
+                          <span className="text-[10px] text-rose-200/70">{selectedListCols.size}</span>
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

@@ -519,6 +519,11 @@ const normalizeListCellFormat = (format) => {
   if (format.underline) next.underline = true
   if (["center", "right"].includes(format.align)) next.align = format.align
   if (["amber", "sky", "emerald", "rose"].includes(format.tone)) next.tone = format.tone
+  if (["number", "percent", "currency", "date"].includes(format.type)) next.type = format.type
+  if (next.type === "currency") {
+    const currency = String(format.currency ?? "").trim().toUpperCase()
+    if (currency) next.currency = currency
+  }
   return Object.keys(next).length > 0 ? next : null
 }
 
