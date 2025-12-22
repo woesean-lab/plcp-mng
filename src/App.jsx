@@ -1150,7 +1150,8 @@ function App() {
     if (task.dueType === "today") return "Bugün"
     if (task.dueType === "repeat") {
       const labels = getRepeatDayLabels(task.repeatDays)
-      return labels.length > 0 ? `Her ${labels.join(", ")}` : "Tekrarlanabilir"
+      const todayTag = isTaskDueToday(task) ? " (Bugün)" : ""
+      return labels.length > 0 ? `Her ${labels.join(", ")}${todayTag}` : `Tekrarlanabilir${todayTag}`
     }
     if (task.dueType === "date") {
       return task.dueDate ? formatTaskDate(task.dueDate) : "Tarih seçilmedi"
