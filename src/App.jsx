@@ -3553,7 +3553,7 @@ function App() {
         )}
       </div>
       {activeTab === "lists" && activeList && (
-        <div className="fixed bottom-5 right-5 z-50 pointer-events-auto sm:bottom-6 sm:right-6">
+        <div className="fixed bottom-5 left-5 z-50 pointer-events-auto sm:bottom-6 sm:left-6">
           <button
             type="button"
             onClick={handleListSaveNow}
@@ -3577,9 +3577,9 @@ function App() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M19 21H5a2 2 0 0 1-2-2V7l5-5h8l5 5v12a2 2 0 0 1-2 2Z" />
-                <path d="M7 21v-7h10v7" />
-                <path d="M7 3v4h8" />
+                <path d="M12 3v12" />
+                <path d="M8 11l4 4 4-4" />
+                <path d="M5 21h14" />
               </svg>
             )}
           </button>
