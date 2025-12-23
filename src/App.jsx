@@ -4490,11 +4490,13 @@ function App() {
                                     <div
                                       key={stk.id}
                                       className="group flex flex-col items-start gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 transition hover:border-accent-400/60 hover:bg-ink-800/80 sm:flex-row sm:items-center"
+                                      onDragStart={(event) => event.preventDefault()}
+                                      onMouseDown={(event) => event.stopPropagation()}
                                     >
                                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-accent-300 group-hover:text-accent-100">
                                         #{idx + 1}
                                       </span>
-                                      <p className="w-full flex-1 break-all font-mono text-sm text-slate-100 group-hover:text-accent-50">
+                                      <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100 group-hover:text-accent-50">
                                         {stk.code}
                                       </p>
                                       <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
@@ -4549,11 +4551,13 @@ function App() {
                                     <div
                                       key={stk.id}
                                       className="group flex flex-col items-start gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 transition hover:border-amber-300/60 hover:bg-ink-800/80 sm:flex-row sm:items-center"
+                                      onDragStart={(event) => event.preventDefault()}
+                                      onMouseDown={(event) => event.stopPropagation()}
                                     >
                                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-amber-300 group-hover:text-amber-100">
                                         #{idx + 1}
                                       </span>
-                                      <p className="w-full flex-1 break-all font-mono text-sm text-slate-100 group-hover:text-amber-50">
+                                      <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100 group-hover:text-amber-50">
                                         {stk.code}
                                       </p>
                                       <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
