@@ -26,18 +26,18 @@
 
   :root[data-theme='light'] {
     color-scheme: light;
-    background-color: #d8e6f8;
-    --app-bg: radial-gradient(circle at 12% 16%, rgba(37, 99, 235, 0.24), transparent 34%),
-      radial-gradient(circle at 82% 22%, rgba(14, 165, 233, 0.22), transparent 38%),
-      linear-gradient(180deg, #e6f0ff 0%, #cfe1f7 55%, #e6f0ff 100%);
-    --panel-bg: rgba(223, 235, 252, 0.96);
-    --panel-bg-strong: rgba(233, 242, 255, 0.98);
-    --panel-bg-soft: rgba(30, 58, 138, 0.12);
-    --panel-border: rgba(30, 58, 138, 0.24);
-    --text-strong: #071020;
-    --text-muted: #1b2a44;
-    --text-soft: #405776;
-    --text-quiet: #657da0;
+    background-color: #f6f7fb;
+    --app-bg: radial-gradient(circle at 12% 16%, rgba(14, 165, 233, 0.18), transparent 34%),
+      radial-gradient(circle at 82% 22%, rgba(16, 185, 129, 0.16), transparent 40%),
+      linear-gradient(180deg, #f8fafc 0%, #edf2f9 55%, #f8fafc 100%);
+    --panel-bg: rgba(255, 255, 255, 0.92);
+    --panel-bg-strong: rgba(255, 255, 255, 0.96);
+    --panel-bg-soft: rgba(15, 23, 42, 0.06);
+    --panel-border: rgba(15, 23, 42, 0.12);
+    --text-strong: #0f172a;
+    --text-muted: #1e293b;
+    --text-soft: #475569;
+    --text-quiet: #64748b;
   }
 
   body {
@@ -103,39 +103,39 @@
 
 @layer utilities {
   [data-theme='light'] .bg-ink-900 {
-    background-color: #dfeafc;
+    background-color: #f8fafc;
   }
 
   [data-theme='light'] .bg-ink-900\/60 {
-    background-color: rgba(223, 234, 252, 0.62);
+    background-color: rgba(248, 250, 252, 0.7);
   }
 
   [data-theme='light'] .bg-ink-900\/70 {
-    background-color: rgba(223, 234, 252, 0.72);
+    background-color: rgba(248, 250, 252, 0.82);
   }
 
   [data-theme='light'] .bg-ink-900\/80 {
-    background-color: rgba(223, 234, 252, 0.82);
+    background-color: rgba(248, 250, 252, 0.9);
   }
 
   [data-theme='light'] .bg-ink-800\/60 {
-    background-color: rgba(207, 225, 247, 0.7);
+    background-color: rgba(241, 245, 249, 0.9);
   }
 
   [data-theme='light'] .bg-ink-800\/80 {
-    background-color: rgba(207, 225, 247, 0.88);
+    background-color: rgba(241, 245, 249, 0.96);
   }
 
   [data-theme='light'] .bg-white\/5 {
-    background-color: rgba(30, 58, 138, 0.08);
+    background-color: rgba(15, 23, 42, 0.04);
   }
 
   [data-theme='light'] .bg-white\/10 {
-    background-color: rgba(30, 58, 138, 0.14);
+    background-color: rgba(15, 23, 42, 0.08);
   }
 
   [data-theme='light'] .bg-white\/15 {
-    background-color: rgba(30, 58, 138, 0.2);
+    background-color: rgba(15, 23, 42, 0.12);
   }
 
   [data-theme='light'] .bg-emerald-950\/30 {
@@ -147,11 +147,142 @@
   }
 
   [data-theme='light'] .border-white\/10 {
-    border-color: rgba(30, 58, 138, 0.24);
+    border-color: rgba(15, 23, 42, 0.12);
   }
 
   [data-theme='light'] .border-white\/15 {
-    border-color: rgba(30, 58, 138, 0.28);
+    border-color: rgba(15, 23, 42, 0.16);
+  }
+
+  [data-theme='light'] .bg-accent-400\/30 {
+    background-color: rgba(37, 99, 235, 0.18);
+  }
+
+  [data-theme='light'] .bg-accent-500\/10 {
+    background-color: rgba(37, 99, 235, 0.12);
+  }
+
+  [data-theme='light'] .bg-accent-500\/15 {
+    background-color: rgba(37, 99, 235, 0.16);
+  }
+
+  [data-theme='light'] .bg-accent-500\/20 {
+    background-color: rgba(37, 99, 235, 0.2);
+  }
+
+  [data-theme='light'] .bg-accent-500\/25 {
+    background-color: rgba(37, 99, 235, 0.26);
+  }
+
+  [data-theme='light'] .bg-emerald-500\/10 {
+    background-color: rgba(16, 185, 129, 0.12);
+  }
+
+  [data-theme='light'] .bg-emerald-500\/15 {
+    background-color: rgba(16, 185, 129, 0.16);
+  }
+
+  [data-theme='light'] .bg-emerald-500\/20 {
+    background-color: rgba(16, 185, 129, 0.2);
+  }
+
+  [data-theme='light'] .bg-emerald-500\/25 {
+    background-color: rgba(16, 185, 129, 0.26);
+  }
+
+  [data-theme='light'] .bg-amber-500\/10 {
+    background-color: rgba(245, 158, 11, 0.12);
+  }
+
+  [data-theme='light'] .bg-amber-500\/15 {
+    background-color: rgba(245, 158, 11, 0.16);
+  }
+
+  [data-theme='light'] .bg-amber-500\/20 {
+    background-color: rgba(245, 158, 11, 0.2);
+  }
+
+  [data-theme='light'] .bg-amber-500\/25 {
+    background-color: rgba(245, 158, 11, 0.26);
+  }
+
+  [data-theme='light'] .bg-rose-500\/10 {
+    background-color: rgba(244, 63, 94, 0.12);
+  }
+
+  [data-theme='light'] .bg-rose-500\/15 {
+    background-color: rgba(244, 63, 94, 0.16);
+  }
+
+  [data-theme='light'] .bg-rose-500\/20 {
+    background-color: rgba(244, 63, 94, 0.2);
+  }
+
+  [data-theme='light'] .bg-rose-500\/25 {
+    background-color: rgba(244, 63, 94, 0.26);
+  }
+
+  [data-theme='light'] .bg-indigo-500\/10 {
+    background-color: rgba(79, 70, 229, 0.12);
+  }
+
+  [data-theme='light'] .bg-indigo-500\/15 {
+    background-color: rgba(79, 70, 229, 0.16);
+  }
+
+  [data-theme='light'] .bg-sky-500\/10 {
+    background-color: rgba(14, 165, 233, 0.12);
+  }
+
+  [data-theme='light'] .bg-sky-500\/15 {
+    background-color: rgba(14, 165, 233, 0.16);
+  }
+
+  [data-theme='light'] .bg-fuchsia-500\/15 {
+    background-color: rgba(217, 70, 239, 0.16);
+  }
+
+  [data-theme='light'] .border-emerald-300\/40 {
+    border-color: rgba(16, 185, 129, 0.35);
+  }
+
+  [data-theme='light'] .border-emerald-300\/60,
+  [data-theme='light'] .border-emerald-300\/70 {
+    border-color: rgba(16, 185, 129, 0.45);
+  }
+
+  [data-theme='light'] .border-amber-300\/40 {
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+
+  [data-theme='light'] .border-amber-300\/60,
+  [data-theme='light'] .border-amber-300\/70 {
+    border-color: rgba(245, 158, 11, 0.45);
+  }
+
+  [data-theme='light'] .border-rose-300\/40 {
+    border-color: rgba(244, 63, 94, 0.35);
+  }
+
+  [data-theme='light'] .border-rose-300\/60,
+  [data-theme='light'] .border-rose-300\/70 {
+    border-color: rgba(244, 63, 94, 0.45);
+  }
+
+  [data-theme='light'] .border-rose-400\/60 {
+    border-color: rgba(251, 113, 133, 0.5);
+  }
+
+  [data-theme='light'] .border-indigo-300\/50 {
+    border-color: rgba(129, 140, 248, 0.45);
+  }
+
+  [data-theme='light'] .border-sky-300\/60 {
+    border-color: rgba(56, 189, 248, 0.45);
+  }
+
+  [data-theme='light'] .border-fuchsia-300\/50 {
+    border-color: rgba(232, 121, 249, 0.45);
   }
 
   [data-theme='light'] .text-white {
