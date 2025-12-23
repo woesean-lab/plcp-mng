@@ -501,6 +501,7 @@ function App() {
   const [dragState, setDragState] = useState({ activeId: null, overId: null })
   const [editingProduct, setEditingProduct] = useState({})
   const [deletingStocks, setDeletingStocks] = useState({})
+  const [usingStocks, setUsingStocks] = useState({})
 
   const [tasks, setTasks] = useState([])
   const [taskForm, setTaskForm] = useState({
@@ -2702,6 +2703,10 @@ function App() {
   const handleStockStatusUpdate = async (productId, stockId, nextStatus) => {
     const status =
       nextStatus === STOCK_STATUS.used ? STOCK_STATUS.used : STOCK_STATUS.available
+    const shouldAnimate = status === STOCK_STATUS.used
+    if (shouldAnimate) {
+      setUsingStocks((prev) => ({ ...prev, [stockId]: true }))
+    }
     try {
       const res = await apiFetch(`/api/stocks/${stockId}`, {
         method: "PUT",
@@ -2722,12 +2727,28 @@ function App() {
             : product,
         ),
       )
+      if (shouldAnimate) {
+        window.setTimeout(() => {
+          setUsingStocks((prev) => {
+            const next = { ...prev }
+            delete next[stockId]
+            return next
+          })
+        }, 320)
+      }
       toast.success(status === STOCK_STATUS.used ? "Stok kullanıldı" : "Stok geri alındı", {
         duration: 1400,
         position: "top-right",
       })
     } catch (error) {
       console.error(error)
+      if (shouldAnimate) {
+        setUsingStocks((prev) => {
+          const next = { ...prev }
+          delete next[stockId]
+          return next
+        })
+      }
       toast.error("Stok güncellenemedi (API/DB kontrol edin).")
     }
   }
@@ -4497,8 +4518,10 @@ function App() {
                                   {availableStocks.map((stk, idx) => (
                                     <div
                                       key={stk.id}
-                                      className={`group flex flex-col items-start gap-3 rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 transition hover:border-emerald-200/70 hover:bg-emerald-500/15 cursor-default sm:flex-row sm:items-center ${
+                                      className={`group flex flex-col items-start gap-3 rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 transition-all duration-300 hover:border-emerald-200/70 hover:bg-emerald-500/15 cursor-default sm:flex-row sm:items-center ${
                                         deletingStocks[stk.id] ? "opacity-50 scale-[0.98]" : ""
+                                      } ${
+                                        usingStocks[stk.id] ? "opacity-60 -translate-y-0.5 scale-[0.97]" : ""
                                       }`}
                                       onDragStart={(event) => event.preventDefault()}
                                       onMouseDown={(event) => event.stopPropagation()}
