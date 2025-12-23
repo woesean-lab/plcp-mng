@@ -26,17 +26,17 @@
 
   :root[data-theme='light'] {
     color-scheme: light;
-    background-color: #f6f6f1;
-    --app-bg: radial-gradient(circle at 14% 18%, rgba(16, 185, 129, 0.16), transparent 36%),
-      radial-gradient(circle at 82% 24%, rgba(245, 158, 11, 0.14), transparent 40%),
-      linear-gradient(180deg, #fafaf7 0%, #f1f3ea 55%, #fafaf7 100%);
+    background-color: #e6eef9;
+    --app-bg: radial-gradient(circle at 12% 16%, rgba(59, 130, 246, 0.22), transparent 36%),
+      radial-gradient(circle at 82% 24%, rgba(99, 102, 241, 0.18), transparent 40%),
+      linear-gradient(180deg, #eff4fc 0%, #dfe9f8 55%, #eff4fc 100%);
     --panel-bg: rgba(255, 255, 255, 0.92);
     --panel-bg-strong: rgba(255, 255, 255, 0.96);
-    --panel-bg-soft: rgba(24, 24, 27, 0.06);
-    --panel-border: rgba(24, 24, 27, 0.12);
-    --text-strong: #121212;
-    --text-muted: #27272a;
-    --text-soft: #3f3f46;
+    --panel-bg-soft: rgba(30, 58, 138, 0.08);
+    --panel-border: rgba(30, 58, 138, 0.18);
+    --text-strong: #0b1326;
+    --text-muted: #1b2a44;
+    --text-soft: #3a4a66;
     --text-quiet: #64748b;
   }
 
@@ -103,31 +103,31 @@
 
 @layer utilities {
   [data-theme='light'] .bg-ink-900 {
-    background-color: #fcfcf9;
+    background-color: #eef4fd;
   }
 
   [data-theme='light'] .bg-ink-900\/60 {
-    background-color: rgba(252, 252, 249, 0.72);
+    background-color: rgba(238, 244, 253, 0.72);
   }
 
   [data-theme='light'] .bg-ink-900\/70 {
-    background-color: rgba(252, 252, 249, 0.84);
+    background-color: rgba(238, 244, 253, 0.82);
   }
 
   [data-theme='light'] .bg-ink-900\/80 {
-    background-color: rgba(252, 252, 249, 0.92);
+    background-color: rgba(238, 244, 253, 0.9);
   }
 
   [data-theme='light'] .bg-ink-800\/60 {
-    background-color: rgba(245, 245, 240, 0.92);
+    background-color: rgba(224, 235, 251, 0.9);
   }
 
   [data-theme='light'] .bg-ink-800\/70 {
-    background-color: rgba(245, 245, 240, 0.94);
+    background-color: rgba(224, 235, 251, 0.94);
   }
 
   [data-theme='light'] .bg-ink-800\/80 {
-    background-color: rgba(245, 245, 240, 0.97);
+    background-color: rgba(224, 235, 251, 0.98);
   }
 
   [data-theme='light'] .bg-white\/5 {
@@ -151,31 +151,31 @@
   }
 
   [data-theme='light'] .border-white\/10 {
-    border-color: rgba(15, 23, 42, 0.12);
+    border-color: rgba(30, 58, 138, 0.2);
   }
 
   [data-theme='light'] .border-white\/15 {
-    border-color: rgba(15, 23, 42, 0.16);
+    border-color: rgba(30, 58, 138, 0.26);
   }
 
   [data-theme='light'] .bg-accent-400\/30 {
-    background-color: rgba(22, 163, 74, 0.22);
+    background-color: rgba(59, 130, 246, 0.22);
   }
 
   [data-theme='light'] .bg-accent-500\/10 {
-    background-color: rgba(22, 163, 74, 0.12);
+    background-color: rgba(59, 130, 246, 0.12);
   }
 
   [data-theme='light'] .bg-accent-500\/15 {
-    background-color: rgba(22, 163, 74, 0.18);
+    background-color: rgba(59, 130, 246, 0.18);
   }
 
   [data-theme='light'] .bg-accent-500\/20 {
-    background-color: rgba(22, 163, 74, 0.24);
+    background-color: rgba(59, 130, 246, 0.24);
   }
 
   [data-theme='light'] .bg-accent-500\/25 {
-    background-color: rgba(22, 163, 74, 0.3);
+    background-color: rgba(59, 130, 246, 0.3);
   }
 
   [data-theme='light'] .bg-emerald-500\/10 {
@@ -338,15 +338,15 @@
   }
 
   [data-theme='light'] .text-accent-50 {
-    color: #166534;
+    color: #1d4ed8;
   }
 
   [data-theme='light'] .text-accent-100 {
-    color: #15803d;
+    color: #1e40af;
   }
 
   [data-theme='light'] .text-accent-200 {
-    color: #16a34a;
+    color: #2563eb;
   }
 
   [data-theme='light'] .text-amber-50 {
@@ -378,17 +378,17 @@
   }
 
   [data-theme='light'] .from-ink-900 {
-    --tw-gradient-from: #fafaf7 var(--tw-gradient-from-position);
-    --tw-gradient-to: rgb(250 250 247 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-from: #eff4fc var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(239 244 252 / 0) var(--tw-gradient-to-position);
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   }
 
   [data-theme='light'] .via-ink-800 {
-    --tw-gradient-to: rgb(241 243 234 / 0) var(--tw-gradient-to-position);
-    --tw-gradient-stops: var(--tw-gradient-from), #f1f3ea var(--tw-gradient-via-position), var(--tw-gradient-to);
+    --tw-gradient-to: rgb(223 233 248 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), #dfe9f8 var(--tw-gradient-via-position), var(--tw-gradient-to);
   }
 
   [data-theme='light'] .to-ink-700 {
-    --tw-gradient-to: #eceee3 var(--tw-gradient-to-position);
+    --tw-gradient-to: #d6e3f6 var(--tw-gradient-to-position);
   }
 }
