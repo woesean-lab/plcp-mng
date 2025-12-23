@@ -26,14 +26,14 @@
 
   :root[data-theme='light'] {
     color-scheme: light;
-    background-color: #d4def0;
-    --app-bg: radial-gradient(circle at 12% 16%, rgba(59, 130, 246, 0.28), transparent 36%),
-      radial-gradient(circle at 82% 24%, rgba(99, 102, 241, 0.22), transparent 40%),
-      linear-gradient(180deg, #e3ebf7 0%, #cbd8ee 55%, #e3ebf7 100%);
-    --panel-bg: rgba(233, 240, 250, 0.96);
-    --panel-bg-strong: rgba(240, 246, 252, 0.98);
-    --panel-bg-soft: rgba(30, 58, 138, 0.12);
-    --panel-border: rgba(30, 58, 138, 0.24);
+    background-color: #c8d4ea;
+    --app-bg: radial-gradient(circle at 12% 16%, rgba(59, 130, 246, 0.32), transparent 36%),
+      radial-gradient(circle at 82% 24%, rgba(99, 102, 241, 0.26), transparent 40%),
+      linear-gradient(180deg, #d8e3f3 0%, #bccbe6 55%, #d8e3f3 100%);
+    --panel-bg: rgba(224, 233, 247, 0.98);
+    --panel-bg-strong: rgba(230, 238, 248, 0.98);
+    --panel-bg-soft: rgba(30, 58, 138, 0.16);
+    --panel-border: rgba(30, 58, 138, 0.28);
     --text-strong: #0b1326;
     --text-muted: #1b2a44;
     --text-soft: #3a4a66;
@@ -103,39 +103,39 @@
 
 @layer utilities {
   [data-theme='light'] .bg-ink-900 {
-    background-color: #dde7f6;
+    background-color: #cfdaf0;
   }
 
   [data-theme='light'] .bg-ink-900\/95 {
-    background-color: rgba(221, 231, 246, 0.96);
+    background-color: rgba(207, 218, 240, 0.96);
   }
 
   [data-theme='light'] .bg-ink-900\/60 {
-    background-color: rgba(221, 231, 246, 0.74);
+    background-color: rgba(207, 218, 240, 0.78);
   }
 
   [data-theme='light'] .bg-ink-900\/70 {
-    background-color: rgba(221, 231, 246, 0.86);
+    background-color: rgba(207, 218, 240, 0.88);
   }
 
   [data-theme='light'] .bg-ink-900\/80 {
-    background-color: rgba(221, 231, 246, 0.92);
+    background-color: rgba(207, 218, 240, 0.93);
   }
 
   [data-theme='light'] .bg-ink-800 {
-    background-color: #d4e0f2;
+    background-color: #c6d3ec;
   }
 
   [data-theme='light'] .bg-ink-800\/60 {
-    background-color: rgba(213, 223, 242, 0.92);
+    background-color: rgba(198, 211, 236, 0.94);
   }
 
   [data-theme='light'] .bg-ink-800\/70 {
-    background-color: rgba(213, 223, 242, 0.94);
+    background-color: rgba(198, 211, 236, 0.95);
   }
 
   [data-theme='light'] .bg-ink-800\/80 {
-    background-color: rgba(213, 223, 242, 0.98);
+    background-color: rgba(198, 211, 236, 0.98);
   }
 
   [data-theme='light'] .bg-white\/5 {
@@ -159,11 +159,11 @@
   }
 
   [data-theme='light'] .border-white\/10 {
-    border-color: rgba(30, 58, 138, 0.24);
+    border-color: rgba(30, 58, 138, 0.34);
   }
 
   [data-theme='light'] .border-white\/15 {
-    border-color: rgba(30, 58, 138, 0.3);
+    border-color: rgba(30, 58, 138, 0.34);
   }
 
   [data-theme='light'] .bg-accent-400\/30 {
@@ -390,17 +390,17 @@
   }
 
   [data-theme='light'] .from-ink-900 {
-    --tw-gradient-from: #e3ebf7 var(--tw-gradient-from-position);
-    --tw-gradient-to: rgb(227 235 247 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-from: #d8e3f3 var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(216 227 243 / 0) var(--tw-gradient-to-position);
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   }
 
   [data-theme='light'] .via-ink-800 {
-    --tw-gradient-to: rgb(203 216 238 / 0) var(--tw-gradient-to-position);
-    --tw-gradient-stops: var(--tw-gradient-from), #cbd8ee var(--tw-gradient-via-position), var(--tw-gradient-to);
+    --tw-gradient-to: rgb(188 203 230 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), #bccbe6 var(--tw-gradient-via-position), var(--tw-gradient-to);
   }
 
   [data-theme='light'] .to-ink-700 {
-    --tw-gradient-to: #bccbe6 var(--tw-gradient-to-position);
+    --tw-gradient-to: #b3c3e1 var(--tw-gradient-to-position);
   }
 }
