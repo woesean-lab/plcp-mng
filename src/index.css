@@ -166,6 +166,39 @@
     border-color: rgba(30, 58, 138, 0.28);
   }
 
+  [data-theme='light'] .border-accent-200 {
+    border-color: rgba(37, 99, 235, 0.45);
+  }
+
+  [data-theme='light'] .border-accent-300 {
+    border-color: rgba(37, 99, 235, 0.55);
+  }
+
+  [data-theme='light'] .border-accent-300\/40 {
+    border-color: rgba(37, 99, 235, 0.4);
+  }
+
+  [data-theme='light'] .border-accent-300\/60 {
+    border-color: rgba(37, 99, 235, 0.6);
+  }
+
+  [data-theme='light'] .border-accent-300\/70 {
+    border-color: rgba(37, 99, 235, 0.7);
+  }
+
+  [data-theme='light'] .border-accent-400,
+  [data-theme='light'] .border-accent-400\/60 {
+    border-color: rgba(37, 99, 235, 0.6);
+  }
+
+  [data-theme='light'] .border-accent-400\/70 {
+    border-color: rgba(37, 99, 235, 0.7);
+  }
+
+  [data-theme='light'] .border-accent-500\/60 {
+    border-color: rgba(37, 99, 235, 0.65);
+  }
+
   [data-theme='light'] .bg-accent-400\/30 {
     background-color: rgba(59, 130, 246, 0.22);
   }
@@ -258,8 +291,40 @@
     border-color: rgba(37, 99, 235, 0.4);
   }
 
+  [data-theme='light'] .border-emerald-200 {
+    border-color: rgba(37, 99, 235, 0.45);
+  }
+
+  [data-theme='light'] .border-emerald-200\/20 {
+    border-color: rgba(37, 99, 235, 0.3);
+  }
+
+  [data-theme='light'] .border-emerald-200\/40 {
+    border-color: rgba(37, 99, 235, 0.4);
+  }
+
+  [data-theme='light'] .border-emerald-200\/70 {
+    border-color: rgba(37, 99, 235, 0.7);
+  }
+
+  [data-theme='light'] .border-emerald-300 {
+    border-color: rgba(37, 99, 235, 0.55);
+  }
+
+  [data-theme='light'] .border-emerald-300\/50 {
+    border-color: rgba(37, 99, 235, 0.5);
+  }
+
   [data-theme='light'] .border-emerald-300\/60,
   [data-theme='light'] .border-emerald-300\/70 {
+    border-color: rgba(37, 99, 235, 0.55);
+  }
+
+  [data-theme='light'] .border-amber-200 {
+    border-color: rgba(37, 99, 235, 0.45);
+  }
+
+  [data-theme='light'] .border-amber-300 {
     border-color: rgba(37, 99, 235, 0.55);
   }
 
@@ -267,13 +332,45 @@
     border-color: rgba(37, 99, 235, 0.4);
   }
 
+  [data-theme='light'] .border-amber-300\/50 {
+    border-color: rgba(37, 99, 235, 0.5);
+  }
+
   [data-theme='light'] .border-amber-300\/60,
   [data-theme='light'] .border-amber-300\/70 {
     border-color: rgba(37, 99, 235, 0.55);
   }
 
+  [data-theme='light'] .border-rose-100 {
+    border-color: rgba(37, 99, 235, 0.35);
+  }
+
+  [data-theme='light'] .border-rose-200 {
+    border-color: rgba(37, 99, 235, 0.45);
+  }
+
+  [data-theme='light'] .border-rose-200\/60 {
+    border-color: rgba(37, 99, 235, 0.6);
+  }
+
+  [data-theme='light'] .border-rose-200\/70 {
+    border-color: rgba(37, 99, 235, 0.7);
+  }
+
+  [data-theme='light'] .border-rose-200\/80 {
+    border-color: rgba(37, 99, 235, 0.8);
+  }
+
+  [data-theme='light'] .border-rose-300 {
+    border-color: rgba(37, 99, 235, 0.55);
+  }
+
   [data-theme='light'] .border-rose-300\/40 {
     border-color: rgba(37, 99, 235, 0.4);
+  }
+
+  [data-theme='light'] .border-rose-300\/50 {
+    border-color: rgba(37, 99, 235, 0.5);
   }
 
   [data-theme='light'] .border-rose-300\/60,
@@ -285,7 +382,19 @@
     border-color: rgba(59, 130, 246, 0.55);
   }
 
+  [data-theme='light'] .border-rose-500\/60 {
+    border-color: rgba(59, 130, 246, 0.6);
+  }
+
+  [data-theme='light'] .border-indigo-300 {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+
   [data-theme='light'] .border-indigo-300\/50 {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+
+  [data-theme='light'] .border-sky-300\/50 {
     border-color: rgba(59, 130, 246, 0.5);
   }
 
