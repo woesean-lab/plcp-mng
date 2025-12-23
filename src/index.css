@@ -122,6 +122,10 @@
     background-color: rgba(245, 245, 240, 0.92);
   }
 
+  [data-theme='light'] .bg-ink-800\/70 {
+    background-color: rgba(245, 245, 240, 0.94);
+  }
+
   [data-theme='light'] .bg-ink-800\/80 {
     background-color: rgba(245, 245, 240, 0.97);
   }
