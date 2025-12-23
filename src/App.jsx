@@ -502,6 +502,7 @@ function App() {
   const [editingProduct, setEditingProduct] = useState({})
   const [deletingStocks, setDeletingStocks] = useState({})
   const [usingStocks, setUsingStocks] = useState({})
+  const [highlightStocks, setHighlightStocks] = useState({})
 
   const [tasks, setTasks] = useState([])
   const [taskForm, setTaskForm] = useState({
@@ -2758,11 +2759,29 @@ function App() {
     if (confirmStockTarget === key) {
       const targetProduct = products.find((p) => p.id === productId)
       const removed = targetProduct?.stocks.find((stk) => stk.id === stockId)
+      const nextHighlightId = (() => {
+        if (!targetProduct || !removed) return ""
+        const { available, used } = splitStocks(targetProduct.stocks)
+        const list = getStockStatus(removed) === STOCK_STATUS.used ? used : available
+        const index = list.findIndex((stk) => stk.id === removed.id)
+        if (index === -1) return ""
+        return list[index + 1]?.id || list[index - 1]?.id || ""
+      })()
 
       try {
         const res = await apiFetch(`/api/stocks/${stockId}`, { method: "DELETE" })
         if (!res.ok && res.status !== 404) throw new Error("stock_delete_failed")
 
+        if (nextHighlightId) {
+          setHighlightStocks((prev) => ({ ...prev, [nextHighlightId]: true }))
+          window.setTimeout(() => {
+            setHighlightStocks((prev) => {
+              const next = { ...prev }
+              delete next[nextHighlightId]
+              return next
+            })
+          }, 700)
+        }
         setDeletingStocks((prev) => ({ ...prev, [stockId]: true }))
         window.setTimeout(() => {
           setProducts((prev) =>
@@ -4522,6 +4541,10 @@ function App() {
                                         deletingStocks[stk.id] ? "opacity-50 scale-[0.98]" : ""
                                       } ${
                                         usingStocks[stk.id] ? "opacity-60 -translate-y-0.5 scale-[0.97]" : ""
+                                      } ${
+                                        highlightStocks[stk.id]
+                                          ? "ring-2 ring-emerald-200/70 shadow-glow"
+                                          : ""
                                       }`}
                                       onDragStart={(event) => event.preventDefault()}
                                       onMouseDown={(event) => event.stopPropagation()}
@@ -4583,8 +4606,12 @@ function App() {
                                   {usedStocks.map((stk, idx) => (
                                     <div
                                       key={stk.id}
-                                      className={`group flex flex-col items-start gap-3 rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 transition hover:border-rose-200/70 hover:bg-rose-500/15 cursor-default sm:flex-row sm:items-center ${
+                                      className={`group flex flex-col items-start gap-3 rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 transition-all duration-300 hover:border-rose-200/70 hover:bg-rose-500/15 cursor-default sm:flex-row sm:items-center ${
                                         deletingStocks[stk.id] ? "opacity-50 scale-[0.98]" : ""
+                                      } ${
+                                        highlightStocks[stk.id]
+                                          ? "ring-2 ring-rose-200/70 shadow-glow"
+                                          : ""
                                       }`}
                                       onDragStart={(event) => event.preventDefault()}
                                       onMouseDown={(event) => event.stopPropagation()}
