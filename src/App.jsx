@@ -2638,6 +2638,66 @@ function App() {
     }
   }
 
+  const handleBulkCopyAndMarkUsed = async (productId) => {
+    const product = products.find((p) => p.id === productId)
+    if (!product) return
+
+    const availableStocks = splitStocks(product.stocks).available
+    const rawCount = bulkCount[productId]
+    const count = Math.max(
+      1,
+      Number(rawCount ?? availableStocks.length) || availableStocks.length,
+    )
+    const selected = availableStocks.slice(0, count)
+    const codes = selected.map((stk) => stk.code)
+    if (codes.length === 0) {
+      toast.error("Bu üründe kullanılacak stok yok.")
+      return
+    }
+
+    const joined = codes.join("\n")
+    try {
+      await navigator.clipboard.writeText(joined)
+      const responses = await Promise.all(
+        selected.map((stk) =>
+          apiFetch(`/api/stocks/${stk.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: STOCK_STATUS.used }),
+          }),
+        ),
+      )
+      const succeededIds = new Set()
+      responses.forEach((res, index) => {
+        if (res.ok) succeededIds.add(selected[index].id)
+      })
+      if (succeededIds.size === 0) throw new Error("stock_bulk_use_failed")
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === productId
+            ? {
+              ...p,
+              stocks: p.stocks.map((stk) =>
+                succeededIds.has(stk.id) ? { ...stk, status: STOCK_STATUS.used } : stk,
+              ),
+            }
+            : p,
+        ),
+      )
+      const failedCount = selected.length - succeededIds.size
+      if (failedCount > 0) {
+        toast.error(`${failedCount} stok güncellenemedi`, { duration: 1800, position: "top-right" })
+      }
+      toast.success(`${succeededIds.size} stok kopyalandı ve kullanıldı`, {
+        duration: 1800,
+        position: "top-right",
+      })
+    } catch (error) {
+      console.error(error)
+      toast.error("Stoklar güncellenemedi (API/DB kontrol edin).")
+    }
+  }
+
   const handleStockStatusUpdate = async (productId, stockId, nextStatus) => {
     const status =
       nextStatus === STOCK_STATUS.used ? STOCK_STATUS.used : STOCK_STATUS.available
@@ -4409,6 +4469,13 @@ function App() {
                                       />
                                       <span className="text-[11px] text-slate-500">/ {availableCount}</span>
                                     </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleBulkCopyAndMarkUsed(product.id)}
+                                      className="rounded-md border border-amber-300/60 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/20"
+                                    >
+                                      Kopyala & kullanıldı
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() => handleBulkCopyAndDelete(product.id)}
