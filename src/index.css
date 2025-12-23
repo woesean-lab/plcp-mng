@@ -494,6 +494,14 @@
     color: #1e3a8a;
   }
 
+  [data-theme='light'] .text-sky-50 {
+    color: #1e3a8a;
+  }
+
+  [data-theme='light'] .text-fuchsia-50 {
+    color: #1e3a8a;
+  }
+
   [data-theme='light'] .text-rose-100 {
     color: rgba(30, 58, 138, 0.9);
   }
