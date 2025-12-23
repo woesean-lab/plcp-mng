@@ -4489,7 +4489,7 @@ function App() {
                                   {availableStocks.map((stk, idx) => (
                                     <div
                                       key={stk.id}
-                                      className="group flex flex-col items-start gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 transition hover:border-accent-400/60 hover:bg-ink-800/80 sm:flex-row sm:items-center"
+                                      className="group flex flex-col items-start gap-3 rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 transition hover:border-emerald-200/70 hover:bg-emerald-500/15 sm:flex-row sm:items-center"
                                       onDragStart={(event) => event.preventDefault()}
                                       onMouseDown={(event) => event.stopPropagation()}
                                     >
@@ -4550,7 +4550,7 @@ function App() {
                                   {usedStocks.map((stk, idx) => (
                                     <div
                                       key={stk.id}
-                                      className="group flex flex-col items-start gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 transition hover:border-amber-300/60 hover:bg-ink-800/80 sm:flex-row sm:items-center"
+                                      className="group flex flex-col items-start gap-3 rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 transition hover:border-rose-200/70 hover:bg-rose-500/15 sm:flex-row sm:items-center"
                                       onDragStart={(event) => event.preventDefault()}
                                       onMouseDown={(event) => event.stopPropagation()}
                                     >
