@@ -4301,7 +4301,7 @@ function App() {
                       </p>
                       <p className="text-sm text-slate-400">Stokları satır bazında yönet, toplu işlem yap.</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex w-full flex-col gap-2">
                       <div className="flex h-11 w-full items-center gap-3 rounded-[6px] border border-white/10 bg-ink-900 px-4 shadow-inner">
                         <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
                         <div className="flex flex-1 items-center gap-2">
@@ -4327,12 +4327,14 @@ function App() {
                           />
                         </div>
                       </div>
-                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                        {products.length} ürün / {stockSummary.total} stok
-                      </span>
-                      <span className="rounded-full border border-rose-300/40 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100">
-                        Tükenen: {stockSummary.empty}
-                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                          {products.length} ürün / {stockSummary.total} stok
+                        </span>
+                        <span className="rounded-full border border-rose-300/40 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100">
+                          Tükenen: {stockSummary.empty}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -5428,7 +5430,6 @@ function App() {
 }
 
 export default App
-
 
 
 
