@@ -453,8 +453,6 @@ function App() {
   const [listName, setListName] = useState("")
   const [isListsLoading, setIsListsLoading] = useState(true)
   const [isListSaving, setIsListSaving] = useState(false)
-  const [isListAutosaving, setIsListAutosaving] = useState(false)
-  const [listAutosavePulse, setListAutosavePulse] = useState(false)
   const [listSavedAt, setListSavedAt] = useState(null)
   const [listRenameDraft, setListRenameDraft] = useState("")
   const [confirmListDelete, setConfirmListDelete] = useState(null)
@@ -471,13 +469,7 @@ function App() {
     x: 0,
     y: 0,
   })
-  const listSaveTimers = useRef(new Map())
-  const listSaveQueue = useRef(new Map())
   const listSavedTimer = useRef(null)
-  const listSaveInFlight = useRef(0)
-  const listAutosaveStartedAt = useRef(null)
-  const listAutosaveTimer = useRef(null)
-  const listAutosavePulseTimer = useRef(null)
   const listLoadErrorRef = useRef(false)
   const listSaveErrorRef = useRef(false)
   const [isEditingActiveTemplate, setIsEditingActiveTemplate] = useState(false)
@@ -697,17 +689,8 @@ function App() {
 
   useEffect(() => {
     return () => {
-      listSaveTimers.current.forEach((timerId) => window.clearTimeout(timerId))
-      listSaveTimers.current.clear()
-      listSaveQueue.current.clear()
       if (listSavedTimer.current) {
         window.clearTimeout(listSavedTimer.current)
-      }
-      if (listAutosaveTimer.current) {
-        window.clearTimeout(listAutosaveTimer.current)
-      }
-      if (listAutosavePulseTimer.current) {
-        window.clearTimeout(listAutosavePulseTimer.current)
       }
     }
   }, [])
@@ -1917,155 +1900,6 @@ function App() {
     toast("Silmek için tekrar tıkla", { position: "top-right" })
   }
 
-  const syncListAutosaveState = useCallback(() => {
-    const hasPending =
-      listSaveInFlight.current > 0 ||
-      listSaveTimers.current.size > 0 ||
-      listSaveQueue.current.size > 0
-    if (hasPending) {
-      if (!listAutosaveStartedAt.current) {
-        listAutosaveStartedAt.current = Date.now()
-      }
-      if (listAutosaveTimer.current) {
-        window.clearTimeout(listAutosaveTimer.current)
-        listAutosaveTimer.current = null
-      }
-      setIsListAutosaving(true)
-      return
-    }
-
-    const startedAt = listAutosaveStartedAt.current
-    if (!startedAt) {
-      setIsListAutosaving(false)
-      return
-    }
-
-    const minVisibleMs = 700
-    const elapsed = Date.now() - startedAt
-    if (elapsed >= minVisibleMs) {
-      listAutosaveStartedAt.current = null
-      setIsListAutosaving(false)
-      return
-    }
-    if (listAutosaveTimer.current) {
-      window.clearTimeout(listAutosaveTimer.current)
-    }
-    listAutosaveTimer.current = window.setTimeout(() => {
-      listAutosaveStartedAt.current = null
-      listAutosaveTimer.current = null
-      setIsListAutosaving(false)
-    }, minVisibleMs - elapsed)
-  }, [])
-
-  const triggerListAutosavePulse = useCallback(() => {
-    setListAutosavePulse(true)
-    if (listAutosavePulseTimer.current) {
-      window.clearTimeout(listAutosavePulseTimer.current)
-    }
-    listAutosavePulseTimer.current = window.setTimeout(() => {
-      listAutosavePulseTimer.current = null
-      setListAutosavePulse(false)
-    }, 900)
-  }, [])
-
-  const flushListSave = useCallback(
-    async (listId) => {
-      if (!isAuthed || !listId) return
-      const timers = listSaveTimers.current
-      const existing = timers.get(listId)
-      if (existing) {
-        window.clearTimeout(existing)
-        timers.delete(listId)
-      }
-      const payload = listSaveQueue.current.get(listId)
-      if (!payload) {
-        syncListAutosaveState()
-        return
-      }
-      listSaveQueue.current.delete(listId)
-      listSaveInFlight.current += 1
-      syncListAutosaveState()
-      try {
-        const res = await apiFetch(`/api/lists/${listId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        })
-        if (!res.ok) throw new Error("list_save_failed")
-        listSaveErrorRef.current = false
-        setListSavedAt(Date.now())
-        if (listSavedTimer.current) {
-          window.clearTimeout(listSavedTimer.current)
-        }
-        listSavedTimer.current = window.setTimeout(() => {
-          setListSavedAt(null)
-        }, 2200)
-      } catch (error) {
-        if (!listSaveErrorRef.current) {
-          listSaveErrorRef.current = true
-          toast.error("Liste kaydedilemedi (API/DB kontrol edin).")
-        }
-      } finally {
-        listSaveInFlight.current = Math.max(0, listSaveInFlight.current - 1)
-        syncListAutosaveState()
-      }
-    },
-    [apiFetch, isAuthed, syncListAutosaveState],
-  )
-
-  const queueListSave = useCallback(
-    (list) => {
-      if (!isAuthed || !list?.id) return
-      if (!listAutosaveStartedAt.current) {
-        setListSavedAt(null)
-      }
-      listSaveQueue.current.set(list.id, { name: list.name, rows: list.rows })
-      const timers = listSaveTimers.current
-      const existing = timers.get(list.id)
-      if (existing) {
-        window.clearTimeout(existing)
-      }
-      const timeoutId = window.setTimeout(async () => {
-        timers.delete(list.id)
-        const payload = listSaveQueue.current.get(list.id)
-        listSaveQueue.current.delete(list.id)
-        if (!payload) {
-          syncListAutosaveState()
-          return
-        }
-        listSaveInFlight.current += 1
-        syncListAutosaveState()
-        try {
-          const res = await apiFetch(`/api/lists/${list.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          })
-          if (!res.ok) throw new Error("list_save_failed")
-          listSaveErrorRef.current = false
-          setListSavedAt(Date.now())
-          if (listSavedTimer.current) {
-            window.clearTimeout(listSavedTimer.current)
-          }
-          listSavedTimer.current = window.setTimeout(() => {
-            setListSavedAt(null)
-          }, 2200)
-        } catch (error) {
-          if (!listSaveErrorRef.current) {
-            listSaveErrorRef.current = true
-            toast.error("Liste kaydedilemedi (API/DB kontrol edin).")
-          }
-        } finally {
-          listSaveInFlight.current = Math.max(0, listSaveInFlight.current - 1)
-          syncListAutosaveState()
-        }
-      }, 600)
-      timers.set(list.id, timeoutId)
-      syncListAutosaveState()
-    },
-    [apiFetch, isAuthed, syncListAutosaveState],
-  )
-
   const updateListById = (listId, updater) => {
     if (!listId) return
     let nextList = null
@@ -2077,7 +1911,6 @@ function App() {
         return updated
       }),
     )
-    if (nextList) queueListSave(nextList)
   }
 
   const handleListSaveNow = async () => {
@@ -2087,16 +1920,7 @@ function App() {
       name: activeList.name,
       rows: Array.isArray(activeList.rows) ? activeList.rows : [],
     }
-    const timers = listSaveTimers.current
-    const existing = timers.get(list.id)
-    if (existing) {
-      window.clearTimeout(existing)
-      timers.delete(list.id)
-    }
-    listSaveQueue.current.delete(list.id)
-
     setIsListSaving(true)
-    setIsListAutosaving(false)
     try {
       const res = await apiFetch(`/api/lists/${list.id}`, {
         method: "PUT",
@@ -2182,7 +2006,6 @@ function App() {
 
   const handleListCellChange = (rowIndex, colIndex, value) => {
     if (!activeList) return
-    triggerListAutosavePulse()
     updateListById(activeList.id, (list) => {
       const rows = list.rows.map((row, rIndex) => {
         if (rIndex !== rowIndex) return row
@@ -4023,16 +3846,12 @@ function App() {
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                         <span>Başlıklara sağ tıkla: ekle/sil</span>
-                        {isListAutosaving || listAutosavePulse ? (
-                          <span className="rounded-full border border-sky-300/40 bg-sky-500/10 px-2 py-0.5 text-[11px] font-semibold text-sky-100">
-                            Otomatik kaydediliyor
-                          </span>
-                        ) : listSavedAt ? (
+                        {listSavedAt ? (
                           <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
                             Kaydedildi
                           </span>
                         ) : (
-                          <span className="text-[11px] text-slate-500">Otomatik kaydetme aktif</span>
+                          <span className="text-[11px] text-slate-500">Kaydet ile kaydedilir</span>
                         )}
                       </div>
                       {activeList && (selectedListRows.size > 0 || selectedListCols.size > 0) && (
@@ -4157,9 +3976,6 @@ function App() {
                                             ? { row: null, col: null }
                                             : prev,
                                         )
-                                        if (activeList?.id) {
-                                          flushListSave(activeList.id)
-                                        }
                                       }}
                                       onChange={(e) =>
                                         handleListCellChange(rowIndex, colIndex, e.target.value)
