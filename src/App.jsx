@@ -1955,6 +1955,9 @@ function App() {
   const queueListSave = useCallback(
     (list) => {
       if (!isAuthed || !list?.id) return
+      if (!listAutosaveStartedAt.current) {
+        setListSavedAt(null)
+      }
       listSaveQueue.current.set(list.id, { name: list.name, rows: list.rows })
       const timers = listSaveTimers.current
       const existing = timers.get(list.id)
@@ -3958,13 +3961,13 @@ function App() {
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                         <span>Başlıklara sağ tıkla: ekle/sil</span>
-                        {listSavedAt ? (
-                          <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
-                            Kaydedildi
-                          </span>
-                        ) : isListAutosaving ? (
+                        {isListAutosaving ? (
                           <span className="rounded-full border border-sky-300/40 bg-sky-500/10 px-2 py-0.5 text-[11px] font-semibold text-sky-100">
                             Otomatik kaydediliyor
+                          </span>
+                        ) : listSavedAt ? (
+                          <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
+                            Kaydedildi
                           </span>
                         ) : (
                           <span className="text-[11px] text-slate-500">Otomatik kaydetme aktif</span>
