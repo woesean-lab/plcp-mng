@@ -4386,24 +4386,6 @@ function App() {
                             </div>
                           </button>
                           <div className="flex items-center gap-1.5">
-                            {editingProduct[product.id] ? (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => handleEditSave(product.id)}
-                                  className="flex h-8 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5"
-                                >
-                                  Kaydet
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleEditCancel(product.id)}
-                                  className="flex h-8 items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50"
-                                >
-                                  İptal
-                                </button>
-                              </>
-                            ) : null}
                             {lastDeleted?.productId === product.id && (
                               <button
                                 type="button"
@@ -4502,6 +4484,22 @@ function App() {
                                       ))}
                                     </select>
                                   </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditSave(product.id)}
+                                    className="flex h-8 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-3 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5"
+                                  >
+                                    Kaydet
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditCancel(product.id)}
+                                    className="flex h-8 items-center justify-center rounded-md border border-white/10 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50"
+                                  >
+                                    İptal
+                                  </button>
                                 </div>
                               </div>
                             )}
@@ -5423,8 +5421,6 @@ function App() {
 }
 
 export default App
-
-
 
 
 
