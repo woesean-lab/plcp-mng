@@ -501,7 +501,6 @@ function App() {
   const [productOrder, setProductOrder] = useState([])
   const [dragState, setDragState] = useState({ activeId: null, overId: null })
   const [editingProduct, setEditingProduct] = useState({})
-  const productSearchRef = useRef(null)
   const [deletingStocks, setDeletingStocks] = useState({})
   const [usingStocks, setUsingStocks] = useState({})
   const [highlightStocks, setHighlightStocks] = useState({})
@@ -4303,7 +4302,7 @@ function App() {
                       <p className="text-sm text-slate-400">Stokları satır bazında yönet, toplu işlem yap.</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex h-11 w-full items-center gap-3 rounded-full border border-white/10 bg-ink-900 px-4 shadow-inner sm:w-auto">
+                      <div className="flex h-11 w-full items-center gap-3 rounded-[6px] border border-white/10 bg-ink-900 px-4 shadow-inner">
                         <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
                         <div className="flex flex-1 items-center gap-2">
                           <svg
@@ -4320,34 +4319,13 @@ function App() {
                             <line x1="16.5" y1="16.5" x2="21" y2="21" />
                           </svg>
                           <input
-                            ref={productSearchRef}
                             type="text"
                             value={productSearch}
                             onChange={(e) => setProductSearch(e.target.value)}
                             placeholder="Ürün ya da kod"
-                            className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none sm:w-72 md:w-80"
+                            className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                           />
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => productSearchRef.current?.focus()}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-white/30 hover:bg-white/10"
-                          aria-label="Ara"
-                        >
-                          <svg
-                            aria-hidden="true"
-                            viewBox="0 0 24 24"
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="11" cy="11" r="7" />
-                            <line x1="16.5" y1="16.5" x2="21" y2="21" />
-                          </svg>
-                        </button>
                       </div>
                       <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                         {products.length} ürün / {stockSummary.total} stok
@@ -5450,8 +5428,6 @@ function App() {
 }
 
 export default App
-
-
 
 
 
