@@ -18,6 +18,7 @@ const THEME_STORAGE_KEY = "pulcipTheme"
 const AUTH_TOKEN_STORAGE_KEY = "pulcipAuthToken"
 const DEFAULT_LIST_ROWS = 8
 const DEFAULT_LIST_COLS = 5
+const LIST_AUTO_SAVE_DELAY_MS = 900
 const FORMULA_ERRORS = {
   CYCLE: "#CYCLE",
   REF: "#REF",
@@ -470,6 +471,7 @@ function App() {
     y: 0,
   })
   const listSavedTimer = useRef(null)
+  const listAutoSaveTimer = useRef(null)
   const listLoadErrorRef = useRef(false)
   const listSaveErrorRef = useRef(false)
   const [isEditingActiveTemplate, setIsEditingActiveTemplate] = useState(false)
@@ -691,6 +693,9 @@ function App() {
     return () => {
       if (listSavedTimer.current) {
         window.clearTimeout(listSavedTimer.current)
+      }
+      if (listAutoSaveTimer.current) {
+        window.clearTimeout(listAutoSaveTimer.current)
       }
     }
   }, [])
@@ -1911,21 +1916,22 @@ function App() {
         return updated
       }),
     )
+    return nextList
   }
 
-  const handleListSaveNow = async () => {
-    if (!activeList || !isAuthed || isListSaving) return
-    const list = {
-      id: activeList.id,
-      name: activeList.name,
-      rows: Array.isArray(activeList.rows) ? activeList.rows : [],
+  const handleListSave = async (targetList) => {
+    if (!targetList || !isAuthed || isListSaving) return
+    const listPayload = {
+      id: targetList.id,
+      name: targetList.name,
+      rows: Array.isArray(targetList.rows) ? targetList.rows : [],
     }
     setIsListSaving(true)
     try {
-      const res = await apiFetch(`/api/lists/${list.id}`, {
+      const res = await apiFetch(`/api/lists/${listPayload.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: list.name, rows: list.rows }),
+        body: JSON.stringify({ name: listPayload.name, rows: listPayload.rows }),
       })
       if (!res.ok) throw new Error("list_save_failed")
       listSaveErrorRef.current = false
@@ -1946,6 +1952,24 @@ function App() {
       setIsListSaving(false)
     }
   }
+
+  const handleListSaveNow = async () => {
+    if (!activeList) return
+    await handleListSave(activeList)
+  }
+
+  const scheduleListAutoSave = useCallback(
+    (list) => {
+      if (!list || !isAuthed) return
+      if (listAutoSaveTimer.current) {
+        window.clearTimeout(listAutoSaveTimer.current)
+      }
+      listAutoSaveTimer.current = window.setTimeout(() => {
+        handleListSave(list)
+      }, LIST_AUTO_SAVE_DELAY_MS)
+    },
+    [handleListSave, isAuthed],
+  )
 
   const handleListCreate = async () => {
     const name = listName.trim()
@@ -2006,7 +2030,7 @@ function App() {
 
   const handleListCellChange = (rowIndex, colIndex, value) => {
     if (!activeList) return
-    updateListById(activeList.id, (list) => {
+    const nextList = updateListById(activeList.id, (list) => {
       const rows = list.rows.map((row, rIndex) => {
         if (rIndex !== rowIndex) return row
         const nextRow = [...row]
@@ -2016,6 +2040,7 @@ function App() {
       })
       return { ...list, rows }
     })
+    scheduleListAutoSave(nextList)
   }
 
   const getListColumnCount = (rows) =>
@@ -2037,7 +2062,7 @@ function App() {
     const grid = parseClipboardGrid(text)
     if (grid.length === 1 && grid[0].length === 1) return
     event.preventDefault()
-    updateListById(activeList.id, (list) => {
+    const nextList = updateListById(activeList.id, (list) => {
       const baseRows = Array.isArray(list.rows) ? list.rows : []
       const rows = baseRows.map((row) => [...row])
       const requiredRows = rowIndex + grid.length
@@ -2060,6 +2085,7 @@ function App() {
       })
       return { ...list, rows }
     })
+    scheduleListAutoSave(nextList)
   }
 
   const buildListSelectionRange = (start, end) => {
@@ -3851,7 +3877,7 @@ function App() {
                             Kaydedildi
                           </span>
                         ) : (
-                          <span className="text-[11px] text-slate-500">Kaydet ile kaydedilir</span>
+                          <span className="text-[11px] text-slate-500">Otomatik kaydedilir</span>
                         )}
                       </div>
                       {activeList && (selectedListRows.size > 0 || selectedListCols.size > 0) && (
