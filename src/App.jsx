@@ -4403,15 +4403,7 @@ function App() {
                                   İptal
                                 </button>
                               </>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleEditStart(product)}
-                                className="flex h-8 items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
-                              >
-                                Düzenle
-                              </button>
-                            )}
+                            ) : null}
                             {lastDeleted?.productId === product.id && (
                               <button
                                 type="button"
@@ -4450,6 +4442,15 @@ function App() {
                                     Teslimat mesajını kopyala
                                   </button>
                                 )}
+                              {!editingProduct[product.id] && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditStart(product)}
+                                  className="rounded-md border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
+                                >
+                                  Düzenle
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleProductDeleteWithConfirm(product.id)}
@@ -5422,7 +5423,6 @@ function App() {
 }
 
 export default App
-
 
 
 
