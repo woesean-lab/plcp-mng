@@ -474,6 +474,8 @@ function App() {
   const listSaveQueue = useRef(new Map())
   const listSavedTimer = useRef(null)
   const listSaveInFlight = useRef(0)
+  const listAutosaveStartedAt = useRef(null)
+  const listAutosaveTimer = useRef(null)
   const listLoadErrorRef = useRef(false)
   const listSaveErrorRef = useRef(false)
   const [isEditingActiveTemplate, setIsEditingActiveTemplate] = useState(false)
@@ -698,6 +700,9 @@ function App() {
       listSaveQueue.current.clear()
       if (listSavedTimer.current) {
         window.clearTimeout(listSavedTimer.current)
+      }
+      if (listAutosaveTimer.current) {
+        window.clearTimeout(listAutosaveTimer.current)
       }
     }
   }, [])
@@ -1912,7 +1917,39 @@ function App() {
       listSaveInFlight.current > 0 ||
       listSaveTimers.current.size > 0 ||
       listSaveQueue.current.size > 0
-    setIsListAutosaving(hasPending)
+    if (hasPending) {
+      if (!listAutosaveStartedAt.current) {
+        listAutosaveStartedAt.current = Date.now()
+      }
+      if (listAutosaveTimer.current) {
+        window.clearTimeout(listAutosaveTimer.current)
+        listAutosaveTimer.current = null
+      }
+      setIsListAutosaving(true)
+      return
+    }
+
+    const startedAt = listAutosaveStartedAt.current
+    if (!startedAt) {
+      setIsListAutosaving(false)
+      return
+    }
+
+    const minVisibleMs = 700
+    const elapsed = Date.now() - startedAt
+    if (elapsed >= minVisibleMs) {
+      listAutosaveStartedAt.current = null
+      setIsListAutosaving(false)
+      return
+    }
+    if (listAutosaveTimer.current) {
+      window.clearTimeout(listAutosaveTimer.current)
+    }
+    listAutosaveTimer.current = window.setTimeout(() => {
+      listAutosaveStartedAt.current = null
+      listAutosaveTimer.current = null
+      setIsListAutosaving(false)
+    }, minVisibleMs - elapsed)
   }, [])
 
   const queueListSave = useCallback(
