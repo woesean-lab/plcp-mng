@@ -407,9 +407,18 @@ function App() {
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="sticky top-4 z-30 flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
           <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-1.5">
-            <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-accent-500/25 via-white/5 to-transparent px-4 py-2">
-              <span className="h-2 w-2 rounded-full bg-accent-400 shadow-glow" />
-              <span className="font-display text-sm font-semibold text-white">Pulcip Manage</span>
+            <div className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-2 shadow-inner">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_0%_0%,rgba(59,130,246,0.18),transparent)]" />
+              <div className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-accent-500/20 blur-2xl" />
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-accent-400/40 bg-accent-500/15 text-[10px] font-semibold uppercase tracking-[0.25em] text-accent-50">
+                PM
+              </div>
+              <div className="relative flex flex-col leading-none">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.34em] text-accent-200/80">
+                  Pulcip
+                </span>
+                <span className="font-display text-sm font-semibold text-white">Manage</span>
+              </div>
             </div>
             <span className="hidden h-7 w-px bg-white/10 sm:block" />
             {canViewMessages && (
