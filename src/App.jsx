@@ -427,6 +427,8 @@ function LoadingIndicator({ label = "Yükleniyor..." }) {
 
 function App() {
   const [activeTab, setActiveTab] = useState("messages")
+  const [isTabLoading, setIsTabLoading] = useState(false)
+  const tabLoadingTimerRef = useRef(null)
   const [theme, setTheme] = useState(() => getInitialTheme())
   const [authToken, setAuthToken] = useState(() => {
     if (typeof window === "undefined") return ""
@@ -595,6 +597,21 @@ function App() {
     }, 220)
     return () => window.clearTimeout(timer)
   }, [isAuthChecking])
+
+  useEffect(() => {
+    setIsTabLoading(true)
+    if (tabLoadingTimerRef.current) {
+      window.clearTimeout(tabLoadingTimerRef.current)
+    }
+    tabLoadingTimerRef.current = window.setTimeout(() => {
+      setIsTabLoading(false)
+    }, 350)
+    return () => {
+      if (tabLoadingTimerRef.current) {
+        window.clearTimeout(tabLoadingTimerRef.current)
+      }
+    }
+  }, [activeTab])
 
   const apiFetch = useCallback(
     async (input, init = {}) => {
@@ -1009,7 +1026,6 @@ function App() {
     const todo = tasks.filter((task) => task.status === "todo").length
     return { total, done, doing, todo }
   }, [tasks])
-  const taskCountText = isTasksLoading ? <LoadingIndicator label="Yükleniyor" /> : taskStats.total
 
   const taskGroups = useMemo(() => {
     const groups = { todo: [], doing: [], done: [] }
@@ -2315,7 +2331,11 @@ function App() {
     setListContextMenu((prev) => (prev.open ? { ...prev, open: false } : prev))
   }
 
-  const showLoading = isLoading || !delayDone
+  const showLoading = isLoading || !delayDone || (activeTab === "messages" && isTabLoading)
+  const isTasksTabLoading = isTasksLoading || (activeTab === "tasks" && isTabLoading)
+  const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
+  const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
+  const isProblemsTabLoading = isProblemsLoading || (activeTab === "problems" && isTabLoading)
 
   const toastStyle = isLight
     ? { background: "#ffffff", color: "#0f172a", border: "1px solid #e2e8f0" }
@@ -2327,7 +2347,8 @@ function App() {
   const templateCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : templates.length
   const categoryCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : categories.length
   const selectedCategoryText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : selectedCategory.trim() || "Genel"
-  const listCountText = isListsLoading ? <LoadingIndicator label="Yükleniyor" /> : lists.length
+  const listCountText = isListsTabLoading ? <LoadingIndicator label="Yükleniyor" /> : lists.length
+  const taskCountText = isTasksTabLoading ? <LoadingIndicator label="Y�kleniyor" /> : taskStats.total
 
   const isAuthBusy = isAuthChecking || isAuthLoading
 
@@ -3549,7 +3570,7 @@ function App() {
                   </div>
 
                   <div className="mt-6 grid gap-4 md:grid-cols-3">
-                    {isTasksLoading
+                    {isTasksTabLoading
                       ? Array.from({ length: 3 }).map((_, idx) => (
                         <div
                           key={`task-skeleton-${idx}`}
@@ -3929,7 +3950,7 @@ function App() {
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {isListsLoading ? (
+                    {isListsTabLoading ? (
                       <div className="col-span-full grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {Array.from({ length: 6 }).map((_, idx) => (
                           <div
@@ -4018,7 +4039,7 @@ function App() {
                       <button
                         type="button"
                         onClick={handleListSaveNow}
-                        disabled={!activeList || isListSaving || isListsLoading}
+                        disabled={!activeList || isListSaving || isListsTabLoading}
                         className="inline-flex items-center rounded-[0.5rem] border border-emerald-300/70 bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 shadow-glow transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isListSaving ? "Kaydediliyor" : "Kaydet"}
@@ -4027,7 +4048,7 @@ function App() {
                   </div>
 
                   
-                  {isListsLoading ? (
+                  {isListsTabLoading ? (
                     <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-ink-900/80">
                       <div className="p-4">
                         <div className="h-3 w-32 animate-pulse rounded-full bg-white/10" />
@@ -4463,7 +4484,7 @@ function App() {
                   </div>
 
                   <div className="mt-4 grid gap-4">
-                    {isProductsLoading ? (
+                    {isStockTabLoading ? (
                       <>
                         {Array.from({ length: 4 }).map((_, idx) => (
                           <div
@@ -5064,7 +5085,7 @@ function App() {
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {isProblemsLoading ? (
+                    {isProblemsTabLoading ? (
                       <div className="col-span-full grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {Array.from({ length: 6 }).map((_, idx) => (
                           <div
@@ -5144,7 +5165,7 @@ function App() {
                     </span>
                   </div>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {isProblemsLoading ? (
+                    {isProblemsTabLoading ? (
                       <div className="col-span-full grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {Array.from({ length: 3 }).map((_, idx) => (
                           <div
@@ -5704,6 +5725,10 @@ function App() {
 }
 
 export default App
+
+
+
+
 
 
 
