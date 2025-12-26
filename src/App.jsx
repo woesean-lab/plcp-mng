@@ -1,434 +1,50 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
-import MessagesTab from "./components/tabs/MessagesTab"
-import TasksTab from "./components/tabs/TasksTab"
+import LoadingIndicator from "./components/LoadingIndicator"
+import NoteModal from "./components/modals/NoteModal"
+import StockModal from "./components/modals/StockModal"
+import TaskDetailModal from "./components/modals/TaskDetailModal"
+import TaskEditModal from "./components/modals/TaskEditModal"
 import ListsTab from "./components/tabs/ListsTab"
-import StockTab from "./components/tabs/StockTab"
+import MessagesTab from "./components/tabs/MessagesTab"
 import ProblemsTab from "./components/tabs/ProblemsTab"
-
-const fallbackTemplates = [
-  { label: "Hoş geldin", value: "Hoş geldin! Burada herkese yer var.", category: "Karşılama" },
-  {
-    label: "Bilgilendirme",
-    value: "Son durum: Görev planlandığı gibi ilerliyor.",
-    category: "Bilgilendirme",
-  },
-  { label: "Hatırlatma", value: "Unutma: Akşam 18:00 toplantısına hazır ol.", category: "Hatırlatma" },
-]
-
-const fallbackCategories = Array.from(new Set(["Genel", ...fallbackTemplates.map((tpl) => tpl.category || "Genel")]))
-
-const PRODUCT_ORDER_STORAGE_KEY = "pulcipProductOrder"
-const THEME_STORAGE_KEY = "pulcipTheme"
-const AUTH_TOKEN_STORAGE_KEY = "pulcipAuthToken"
-const DEFAULT_LIST_ROWS = 8
-const DEFAULT_LIST_COLS = 5
-const LIST_AUTO_SAVE_DELAY_MS = 900
-const FORMULA_ERRORS = {
-  CYCLE: "#CYCLE",
-  REF: "#REF",
-  DIV0: "#DIV/0",
-  VALUE: "#ERR",
-}
-const LIST_CELL_TONE_CLASSES = {
-  none: "",
-  amber: "bg-amber-500/10",
-  sky: "bg-sky-500/10",
-  emerald: "bg-emerald-500/10",
-  rose: "bg-rose-500/10",
-}
-const LIST_NUMBER_FORMATTER = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 })
-const LIST_PERCENT_FORMATTER = new Intl.NumberFormat("tr-TR", {
-  style: "percent",
-  maximumFractionDigits: 2,
-})
-const LIST_CURRENCY_FORMATTER = new Intl.NumberFormat("tr-TR", {
-  style: "currency",
-  currency: "TRY",
-  maximumFractionDigits: 2,
-})
-const LIST_DATE_FORMATTER = new Intl.DateTimeFormat("tr-TR")
-const initialProblems = [
-  { id: 1, username: "@ornek1", issue: "Ödeme ekranda takıldı, 2 kez kart denemiş.", status: "open" },
-  { id: 2, username: "@ornek2", issue: "Teslimat gecikmesi şikayeti.", status: "open" },
-]
-
-const initialProducts = [
-  {
-    id: "prd-1",
-    name: "Cyber Drift DLC",
-    note: "Yeni promosyon, hemen teslim",
-    stocks: [
-      { id: "stk-1", code: "CYDR-FT67-PLCP-2025" },
-      { id: "stk-2", code: "CYDR-FT67-PLCP-2026" },
-    ],
-  },
-  {
-    id: "prd-2",
-    name: "Galaxy Pass",
-    note: "Deneme sürümü için",
-    stocks: [{ id: "stk-3", code: "XBGP-3M-TRIAL-KEY" }],
-  },
-  {
-    id: "prd-3",
-    name: "Indie Bundle",
-    note: "Hediye kuponu",
-    stocks: [{ id: "stk-4", code: "INDI-BNDL-PLCP-4432" }],
-  },
-]
-
-const initialTasks = [
-  {
-    id: "tsk-1",
-    title: "Haftalık öncelik listesini güncelle",
-    note: "Kritik müşteriler + teslim süreleri",
-    owner: "Burak",
-    dueType: "date",
-    dueDate: "2025-12-29",
-    status: "todo",
-  },
-  {
-    id: "tsk-2",
-    title: "Şablon kategorilerini toparla",
-    note: "Genel, satış, destek",
-    owner: "Ece",
-    dueType: "repeat",
-    repeatDays: ["2"],
-    status: "doing",
-  },
-  {
-    id: "tsk-3",
-    title: "Haftalık raporu paylaş",
-    note: "Cuma 17:00",
-    owner: "Tuna",
-    dueType: "today",
-    status: "done",
-  },
-]
-
-const panelClass =
-  "rounded-2xl border border-white/10 bg-white/5 px-6 py-6 shadow-card backdrop-blur-sm"
-
-const categoryPalette = [
-  "border-emerald-300/50 bg-emerald-500/15 text-emerald-50",
-  "border-amber-300/50 bg-amber-500/15 text-amber-50",
-  "border-sky-300/50 bg-sky-500/15 text-sky-50",
-  "border-fuchsia-300/50 bg-fuchsia-500/15 text-fuchsia-50",
-  "border-rose-300/50 bg-rose-500/15 text-rose-50",
-  "border-indigo-300/50 bg-indigo-500/15 text-indigo-50",
-]
-
-const taskStatusMeta = {
-  todo: {
-    label: "Yapılacak",
-    helper: "Planla",
-    accent: "text-amber-200",
-    badge: "border-amber-300/60 bg-amber-500/15 text-amber-50",
-  },
-  doing: {
-    label: "Devam",
-    helper: "Odak",
-    accent: "text-sky-200",
-    badge: "border-sky-300/60 bg-sky-500/15 text-sky-50",
-  },
-  done: {
-    label: "Tamamlandı",
-    helper: "Bitenler",
-    accent: "text-emerald-200",
-    badge: "border-emerald-300/60 bg-emerald-500/15 text-emerald-50",
-  },
-}
-
-const taskDueTypeOptions = [
-  { value: "today", label: "Bugün" },
-  { value: "repeat", label: "Tekrarlanabilir gün" },
-  { value: "date", label: "Özel tarih" },
-]
-
-const taskRepeatDays = [
-  { value: "1", label: "Pazartesi" },
-  { value: "2", label: "Salı" },
-  { value: "3", label: "Çarşamba" },
-  { value: "4", label: "Perşembe" },
-  { value: "5", label: "Cuma" },
-  { value: "6", label: "Cumartesi" },
-  { value: "0", label: "Pazar" },
-]
-
-const taskRepeatDayValues = new Set(taskRepeatDays.map((day) => day.value))
-const STOCK_STATUS = {
-  available: "available",
-  used: "used",
-}
-
-const getStockStatus = (stock) =>
-  stock?.status === STOCK_STATUS.used ? STOCK_STATUS.used : STOCK_STATUS.available
-
-const splitStocks = (stocks) => {
-  const list = Array.isArray(stocks) ? stocks : []
-  const available = []
-  const used = []
-  list.forEach((stock) => {
-    if (getStockStatus(stock) === STOCK_STATUS.used) {
-      used.push(stock)
-    } else {
-      available.push(stock)
-    }
-  })
-  return { available, used }
-}
-
-
-const getInitialTheme = () => {
-  if (typeof window === "undefined") return "dark"
-  try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY)
-    if (stored === "light" || stored === "dark") return stored
-  } catch (error) {
-    console.warn("Could not read theme preference", error)
-  }
-  if (window.matchMedia?.("(prefers-color-scheme: light)").matches) return "light"
-  return "dark"
-}
-
-const toColumnLabel = (index) => {
-  let label = ""
-  let current = index
-  while (current >= 0) {
-    label = String.fromCharCode(65 + (current % 26)) + label
-    current = Math.floor(current / 26) - 1
-  }
-  return label
-}
-
-const createEmptySheet = (rows, cols) => {
-  return Array.from({ length: rows }, () => Array.from({ length: cols }, () => ""))
-}
-
-const errorValue = (code) => ({ error: code })
-const isErrorValue = (value) => Boolean(value && typeof value === "object" && "error" in value)
-
-const tokenizeFormula = (input) => {
-  const tokens = []
-  let index = 0
-  while (index < input.length) {
-    const char = input[index]
-    if (/\s/.test(char)) {
-      index += 1
-      continue
-    }
-    if (/[0-9.]/.test(char)) {
-      let start = index
-      let hasDot = false
-      while (index < input.length) {
-        const current = input[index]
-        if (current === ".") {
-          if (hasDot) break
-          hasDot = true
-          index += 1
-          continue
-        }
-        if (/[0-9]/.test(current)) {
-          index += 1
-          continue
-        }
-        break
-      }
-      const raw = input.slice(start, index)
-      const numberValue = Number(raw)
-      if (!Number.isFinite(numberValue)) {
-        return { error: "number" }
-      }
-      tokens.push({ type: "number", value: numberValue })
-      continue
-    }
-    if (/[A-Za-z]/.test(char)) {
-      let start = index
-      while (index < input.length && /[A-Za-z]/.test(input[index])) {
-        index += 1
-      }
-      const letters = input.slice(start, index)
-      let digitStart = index
-      while (index < input.length && /[0-9]/.test(input[index])) {
-        index += 1
-      }
-      const digits = input.slice(digitStart, index)
-      if (digits) {
-        tokens.push({ type: "cell", value: `${letters}${digits}` })
-      } else {
-        tokens.push({ type: "identifier", value: letters })
-      }
-      continue
-    }
-    if ("+-*/".includes(char)) {
-      tokens.push({ type: "operator", value: char })
-      index += 1
-      continue
-    }
-    if ("(),:".includes(char)) {
-      tokens.push({ type: "punct", value: char })
-      index += 1
-      continue
-    }
-    return { error: "invalid" }
-  }
-  return { tokens }
-}
-
-const parseFormula = (input) => {
-  const tokenResult = tokenizeFormula(input)
-  if (tokenResult.error) return { error: tokenResult.error }
-  const tokens = tokenResult.tokens
-  let position = 0
-
-  const peek = () => tokens[position]
-  const consume = () => tokens[position++]
-  const matchPunct = (value) => {
-    const token = peek()
-    if (token?.type === "punct" && token.value === value) {
-      position += 1
-      return true
-    }
-    return false
-  }
-  const expectPunct = (value) => {
-    if (!matchPunct(value)) throw new Error("expected")
-  }
-
-  const parseExpression = () => {
-    let node = parseTerm()
-    while (true) {
-      const token = peek()
-      if (token?.type === "operator" && (token.value === "+" || token.value === "-")) {
-        consume()
-        node = { type: "binary", op: token.value, left: node, right: parseTerm()}
-        continue
-      }
-      break
-    }
-    return node
-  }
-
-  const parseTerm = () => {
-    let node = parseFactor()
-    while (true) {
-      const token = peek()
-      if (token?.type === "operator" && (token.value === "*" || token.value === "/")) {
-        consume()
-        node = { type: "binary", op: token.value, left: node, right: parseFactor()}
-        continue
-      }
-      break
-    }
-    return node
-  }
-
-  const parseFactor = () => {
-    const token = peek()
-    if (!token) throw new Error("unexpected")
-    if (token.type === "operator" && token.value === "-") {
-      consume()
-      return { type: "unary", op: "-", value: parseFactor()}
-    }
-    if (token.type === "number") {
-      consume()
-      return { type: "number", value: token.value }
-    }
-    if (token.type === "cell") {
-      consume()
-      if (matchPunct(":")) {
-        const endToken = peek()
-        if (!endToken || endToken.type !== "cell") throw new Error("range")
-        consume()
-        return { type: "range", start: token.value, end: endToken.value }
-      }
-      return { type: "cell", value: token.value }
-    }
-    if (token.type === "identifier") {
-      consume()
-      if (matchPunct("(")) {
-        const args = []
-        if (!matchPunct(")")) {
-          while (true) {
-            args.push(parseExpression())
-            if (matchPunct(",")) continue
-            expectPunct(")")
-            break
-          }
-        }
-        return { type: "function", name: token.value, args }
-      }
-      throw new Error("identifier")
-    }
-    if (matchPunct("(")) {
-      const node = parseExpression()
-      expectPunct(")")
-      return node
-    }
-    throw new Error("token")
-  }
-
-  try {
-    const node = parseExpression()
-    if (position !== tokens.length) throw new Error("trailing")
-    return { node }
-  } catch {
-    return { error: "parse" }
-  }
-}
-
-const parseCellRef = (ref) => {
-  const match = /^([A-Za-z]+)(\d+)$/.exec(ref)
-  if (!match) return null
-  const letters = match[1].toUpperCase()
-  const row = Number.parseInt(match[2], 10) - 1
-  if (!Number.isFinite(row) || row < 0) return null
-  let col = 0
-  for (let i = 0; i < letters.length; i += 1) {
-    col = col * 26 + (letters.charCodeAt(i) - 64)
-  }
-  col -= 1
-  if (col < 0) return null
-  return { row, col }
-}
-
-const formatCellValue = (value) => {
-  if (isErrorValue(value)) return value.error
-  if (Array.isArray(value)) return FORMULA_ERRORS.VALUE
-  if (value === null || value === undefined) return ""
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : FORMULA_ERRORS.VALUE
-  return String(value)
-}
-
-const formatListCellValue = (value, format = {}) => {
-  if (!format || !format.type || format.type === "auto") return formatCellValue(value)
-  if (isErrorValue(value) || Array.isArray(value)) return formatCellValue(value)
-  if (value === null || value === undefined) return ""
-  if (format.type === "date") {
-    const dateValue =
-      typeof value === "number" ? new Date(value) : new Date(String(value).trim())
-    if (!Number.isNaN(dateValue.getTime())) {
-      return LIST_DATE_FORMATTER.format(dateValue)
-    }
-    return formatCellValue(value)
-  }
-  const numericValue =
-    typeof value === "number" ? value : Number(String(value).trim().replace(",", "."))
-  if (!Number.isFinite(numericValue)) return formatCellValue(value)
-  if (format.type === "percent") return LIST_PERCENT_FORMATTER.format(numericValue)
-  if (format.type === "currency") return LIST_CURRENCY_FORMATTER.format(numericValue)
-  if (format.type === "number") return LIST_NUMBER_FORMATTER.format(numericValue)
-  return formatCellValue(value)
-}
-
-function LoadingIndicator({ label = "Yükleniyor..." }) {
-  return (
-    <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-200">
-      <span className="h-2 w-2 animate-pulse rounded-full bg-accent-400" />
-      {label}
-    </span>
-  )
-}
+import StockTab from "./components/tabs/StockTab"
+import TasksTab from "./components/tabs/TasksTab"
+import {
+  AUTH_TOKEN_STORAGE_KEY,
+  DEFAULT_LIST_COLS,
+  DEFAULT_LIST_ROWS,
+  FORMULA_ERRORS,
+  LIST_AUTO_SAVE_DELAY_MS,
+  LIST_CELL_TONE_CLASSES,
+  PRODUCT_ORDER_STORAGE_KEY,
+  STOCK_STATUS,
+  THEME_STORAGE_KEY,
+  categoryPalette,
+  panelClass,
+  taskDueTypeOptions,
+  taskRepeatDayValues,
+  taskRepeatDays,
+  taskStatusMeta,
+} from "./constants/appConstants"
+import {
+  fallbackCategories,
+  fallbackTemplates,
+  initialProblems,
+  initialProducts,
+  initialTasks,
+} from "./constants/appData"
+import {
+  createEmptySheet,
+  errorValue,
+  formatListCellValue,
+  isErrorValue,
+  parseCellRef,
+  parseFormula,
+  toColumnLabel,
+} from "./utils/listUtils"
+import { getStockStatus, splitStocks } from "./utils/stockUtils"
+import { getInitialTheme } from "./utils/theme"
 
 function App() {
   const [activeTab, setActiveTab] = useState("messages")
@@ -3527,412 +3143,54 @@ function App() {
           />
         )}
 
-      {isTaskEditOpen && taskEditDraft && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-          onClick={closeTaskEdit}
-        >
-          <div
-            className="w-full max-w-3xl overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-card"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-                  Görev düzenle
-                </p>
-                <p className="text-xs text-slate-400">{taskEditDraft.title.length} karakter</p>
-              </div>
-              <button
-                type="button"
-                onClick={closeTaskEdit}
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-              >
-                Kapat
-              </button>
-            </div>
-
-            <div className="space-y-4 p-4">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200" htmlFor="task-edit-title">
-                  Görev adı
-                </label>
-                <input
-                  id="task-edit-title"
-                  type="text"
-                  value={taskEditDraft.title}
-                  onChange={(e) =>
-                    setTaskEditDraft((prev) => (prev ? { ...prev, title: e.target.value } : prev))
-                  }
-                  placeholder="Örn: Stok raporunu güncelle"
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
-                  <label htmlFor="task-edit-note">Not</label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      openNoteModal(taskEditDraft.note, (value) =>
-                        setTaskEditDraft((prev) => (prev ? { ...prev, note: value } : prev)),
-                      )
-                    }
-                    className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-                  >
-                    Genişlet
-                  </button>
-                </div>
-                <textarea
-                  id="task-edit-note"
-                  rows={3}
-                  value={taskEditDraft.note}
-                  onChange={(e) =>
-                    setTaskEditDraft((prev) => (prev ? { ...prev, note: e.target.value } : prev))
-                  }
-                  placeholder="Kısa not veya kontrol listesi"
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200" htmlFor="task-edit-owner">
-                  Sorumlu
-                </label>
-                <input
-                  id="task-edit-owner"
-                  type="text"
-                  value={taskEditDraft.owner}
-                  onChange={(e) =>
-                    setTaskEditDraft((prev) => (prev ? { ...prev, owner: e.target.value } : prev))
-                  }
-                  placeholder="Örn: Ayşe"
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200" htmlFor="task-edit-due-type">
-                  Bitiş tarihi
-                </label>
-                <select
-                  id="task-edit-due-type"
-                  value={taskEditDraft.dueType}
-                  onChange={(e) => {
-                    const nextType = e.target.value
-                    setTaskEditDraft((prev) => {
-                      if (!prev) return prev
-                      return {
-                        ...prev,
-                        dueType: nextType,
-                        repeatDays:
-                          nextType === "repeat" && (!prev.repeatDays || prev.repeatDays.length === 0)
-                            ? ["1"]
-                            : prev.repeatDays ?? [],
-                      }
-                    })
-                  }}
-                  className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                >
-                  {taskDueTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {taskEditDraft.dueType === "repeat" && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
-                    <span>Tekrarlanabilir gün</span>
-                    <span className="text-[11px] text-slate-400">
-                      {taskEditRepeatLabels.length} gün seçili
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {taskRepeatDays.map((day) => {
-                      const isActive = normalizeRepeatDays(taskEditDraft.repeatDays).includes(day.value)
-                      return (
-                        <button
-                          key={day.value}
-                          type="button"
-                          onClick={() => toggleRepeatDay(day.value, setTaskEditDraft)}
-                          className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
-                            isActive
-                              ? "border-accent-300 bg-accent-500/20 text-accent-50 shadow-glow"
-                              : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60 hover:text-accent-100"
-                          }`}
-                        >
-                          {day.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <p className="text-xs text-slate-400">
-                    {taskEditRepeatLabels.length > 0
-                      ? `Seçilen günler: ${taskEditRepeatLabels.join(", ")}`
-                      : "Gün seçilmedi."}
-                  </p>
-                </div>
-              )}
-
-              {taskEditDraft.dueType === "date" && (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-200" htmlFor="task-edit-due-date">
-                    Özel tarih
-                  </label>
-                  <input
-                    id="task-edit-due-date"
-                    type="date"
-                    value={taskEditDraft.dueDate}
-                    onChange={(e) =>
-                      setTaskEditDraft((prev) => (prev ? { ...prev, dueDate: e.target.value } : prev))
-                    }
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Esc ile kapat</p>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleTaskEditSave}
-                  className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                >
-                  Kaydet
-                </button>
-                <button
-                  type="button"
-                  onClick={closeTaskEdit}
-                  className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                >
-                  İptal
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {isNoteModalOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4"
-          onClick={handleNoteModalClose}
-        >
-          <div
-            className="w-full max-w-3xl overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-card"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-                  Not editörü
-                </p>
-                <p className="text-xs text-slate-400">{noteModalDraft.length} karakter</p>
-              </div>
-              <button
-                type="button"
-                onClick={handleNoteModalClose}
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-              >
-                Kapat
-              </button>
-            </div>
-
-            <div className="flex max-h-[420px] overflow-hidden">
-              <div
-                ref={noteLineRef}
-                className="w-12 shrink-0 overflow-hidden border-r border-white/10 bg-ink-800 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
-              >
-                {Array.from({ length: noteModalLineCount }, (_, index) => (
-                  <div key={index}>{index + 1}</div>
-                ))}
-              </div>
-              <textarea
-                ref={noteTextareaRef}
-                id="task-note-modal"
-                rows={12}
-                value={noteModalDraft}
-                onChange={(e) => setNoteModalDraft(e.target.value)}
-                onScroll={handleNoteScroll}
-                placeholder="Detaylı notunu buraya yaz..."
-                className="flex-1 resize-none overflow-auto bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Esc ile kapat</p>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleNoteModalSave}
-                  className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                >
-                  Kaydet
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNoteModalClose}
-                  className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                >
-                  İptal
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {isStockModalOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4"
-          onClick={handleStockModalClose}
-        >
-          <div
-            className="w-full max-w-3xl overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-card"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-                  Stok ekle
-                </p>
-                <p className="text-xs text-slate-400">
-                  {stockModalTarget?.name || "Ürün"} · {stockModalDraft.length} karakter
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleStockModalClose}
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-              >
-                Kapat
-              </button>
-            </div>
-
-            <div className="flex max-h-[420px] overflow-hidden">
-              <div
-                ref={stockModalLineRef}
-                className="w-12 shrink-0 overflow-hidden border-r border-white/10 bg-ink-800 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
-              >
-                {Array.from({ length: stockModalLineCount }, (_, index) => (
-                  <div key={index}>{index + 1}</div>
-                ))}
-              </div>
-              <textarea
-                ref={stockModalTextareaRef}
-                id="product-stock-modal"
-                rows={12}
-                value={stockModalDraft}
-                onChange={(e) => setStockModalDraft(e.target.value)}
-                onScroll={handleStockModalScroll}
-                placeholder="Her satır bir anahtar / kod"
-                className="flex-1 resize-none overflow-auto bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Esc ile kapat</p>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleStockModalSave}
-                  className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                >
-                  Kaydet
-                </button>
-                <button
-                  type="button"
-                  onClick={handleStockModalClose}
-                  className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                >
-                  İptal
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {taskDetailTarget && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-          onClick={closeTaskDetail}
-        >
-          <div
-            className="w-full max-w-3xl rounded-2xl border border-white/10 bg-ink-900/95 p-6 shadow-card backdrop-blur"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-                  Görev detayı
-                </p>
-                <p className="text-lg font-semibold text-slate-100">{taskDetailTarget.title}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    openTaskEdit(taskDetailTarget)
-                    closeTaskDetail()
-                  }}
-                  className="rounded-lg border border-accent-300/70 bg-accent-500/15 px-3 py-1 text-xs font-semibold text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/25"
-                >
-                  Düzenle
-                </button>
-                <button
-                  type="button"
-                  onClick={closeTaskDetail}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-                >
-                  Kapat
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {taskDetailTarget.owner && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
-                  Sorumlu: {taskDetailTarget.owner}
-                </span>
-              )}
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
-                Durum: {taskStatusMeta[taskDetailTarget.status]?.label || "Yapılacak"}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
-                Bitiş: {getTaskDueLabel(taskDetailTarget)}
-              </span>
-            </div>
-
-            <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-inner">
-              <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-2">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Notlar</p>
-                <span className="text-xs text-slate-400">{detailNoteText.length} karakter</span>
-              </div>
-              <div className="flex max-h-[420px] overflow-hidden">
-                <div
-                  ref={detailNoteLineRef}
-                  className="w-12 shrink-0 overflow-hidden border-r border-white/10 bg-ink-800 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
-                >
-                  {Array.from({ length: detailNoteLineCount }, (_, index) => (
-                    <div key={index}>{index + 1}</div>
-                  ))}
-                </div>
-                <div
-                  ref={detailNoteRef}
-                  onScroll={handleDetailNoteScroll}
-                  className="flex-1 overflow-auto bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 whitespace-pre-wrap"
-                >
-                  {detailNoteText || "Not eklenmedi."}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        <TaskEditModal
+          isOpen={isTaskEditOpen}
+          draft={taskEditDraft}
+          onClose={closeTaskEdit}
+          onSave={handleTaskEditSave}
+          openNoteModal={openNoteModal}
+          setDraft={setTaskEditDraft}
+          taskDueTypeOptions={taskDueTypeOptions}
+          taskRepeatDays={taskRepeatDays}
+          normalizeRepeatDays={normalizeRepeatDays}
+          toggleRepeatDay={toggleRepeatDay}
+          taskEditRepeatLabels={taskEditRepeatLabels}
+        />
+        <NoteModal
+          isOpen={isNoteModalOpen}
+          onClose={handleNoteModalClose}
+          draft={noteModalDraft}
+          lineRef={noteLineRef}
+          lineCount={noteModalLineCount}
+          textareaRef={noteTextareaRef}
+          onScroll={handleNoteScroll}
+          setDraft={setNoteModalDraft}
+          onSave={handleNoteModalSave}
+        />
+        <StockModal
+          isOpen={isStockModalOpen}
+          onClose={handleStockModalClose}
+          draft={stockModalDraft}
+          setDraft={setStockModalDraft}
+          targetName={stockModalTarget?.name}
+          lineRef={stockModalLineRef}
+          lineCount={stockModalLineCount}
+          textareaRef={stockModalTextareaRef}
+          onScroll={handleStockModalScroll}
+          onSave={handleStockModalSave}
+        />
+        <TaskDetailModal
+          target={taskDetailTarget}
+          onClose={closeTaskDetail}
+          onEdit={openTaskEdit}
+          taskStatusMeta={taskStatusMeta}
+          getTaskDueLabel={getTaskDueLabel}
+          detailNoteText={detailNoteText}
+          detailNoteLineCount={detailNoteLineCount}
+          detailNoteLineRef={detailNoteLineRef}
+          detailNoteRef={detailNoteRef}
+          handleDetailNoteScroll={handleDetailNoteScroll}
+        />
       </div>
       <Toaster
         position="top-right"
