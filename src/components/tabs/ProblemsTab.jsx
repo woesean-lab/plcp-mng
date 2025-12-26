@@ -39,6 +39,7 @@ function ProblemsSkeleton({ panelClass }) {
             <SkeletonBlock className="mt-4 h-10 w-full rounded-xl" />
             <SkeletonBlock className="mt-3 h-20 w-full rounded-xl" />
           </div>
+          )}
         </div>
       </div>
     </div>
@@ -48,6 +49,7 @@ function ProblemsSkeleton({ panelClass }) {
 export default function ProblemsTab({
   isLoading,
   panelClass,
+  canManage,
   openProblems,
   resolvedProblems,
   problems,
@@ -152,6 +154,8 @@ export default function ProblemsTab({
                         {pb.issue}
                       </p>
                       <div className="flex flex-wrap gap-2">
+                        {canManage && (
+                          <>
                         <button
                           type="button"
                           onClick={() => handleProblemResolve(pb.id)}
@@ -170,6 +174,8 @@ export default function ProblemsTab({
                         >
                           {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
                         </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -232,6 +238,8 @@ export default function ProblemsTab({
                         {pb.issue}
                       </p>
                       <div className="flex flex-wrap gap-2">
+                        {canManage && (
+                          <>
                         <button
                           type="button"
                           onClick={() => handleProblemReopen(pb.id)}
@@ -250,6 +258,8 @@ export default function ProblemsTab({
                         >
                           {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
                         </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -260,6 +270,7 @@ export default function ProblemsTab({
         </div>
 
         <div className="space-y-6">
+          {canManage && (
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between">
               <div>
@@ -321,6 +332,7 @@ export default function ProblemsTab({
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

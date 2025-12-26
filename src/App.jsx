@@ -8,13 +8,18 @@ import MessagesTab from "./components/tabs/MessagesTab"
 import ProblemsTab from "./components/tabs/ProblemsTab"
 import StockTab from "./components/tabs/StockTab"
 import TasksTab from "./components/tabs/TasksTab"
+import AdminTab from "./components/tabs/AdminTab"
 import useAppData from "./hooks/useAppData"
+import { PERMISSIONS } from "./constants/appConstants"
 
 function App() {
   const {
     isAuthChecking,
     isAuthed,
     isAuthBusy,
+    activeUser,
+    authUsername,
+    setAuthUsername,
     authPassword,
     setAuthPassword,
     authError,
@@ -22,6 +27,7 @@ function App() {
     handleAuthSubmit,
     logoutButton,
     themeToggleButton,
+    hasPermission,
     toastStyle,
     toastIconTheme,
     activeTab,
@@ -207,6 +213,24 @@ function App() {
     problemIssue,
     setProblemIssue,
     handleProblemAdd,
+    roles,
+    users,
+    isAdminLoading,
+    roleDraft,
+    setRoleDraft,
+    userDraft,
+    setUserDraft,
+    confirmRoleDelete,
+    confirmUserDelete,
+    handleRoleEditStart,
+    handleRoleEditCancel,
+    toggleRolePermission,
+    handleRoleSave,
+    handleRoleDeleteWithConfirm,
+    handleUserEditStart,
+    handleUserEditCancel,
+    handleUserSave,
+    handleUserDeleteWithConfirm,
     isTaskEditOpen,
     taskEditDraft,
     setTaskEditDraft,
@@ -240,6 +264,18 @@ function App() {
     detailNoteRef,
     handleDetailNoteScroll
   } = useAppData()
+
+  const canViewMessages = hasPermission(PERMISSIONS.messagesView)
+  const canEditMessages = hasPermission(PERMISSIONS.messagesEdit)
+  const canViewTasks = hasPermission(PERMISSIONS.tasksView)
+  const canEditTasks = hasPermission(PERMISSIONS.tasksEdit)
+  const canViewProblems = hasPermission(PERMISSIONS.problemsView)
+  const canManageProblems = hasPermission(PERMISSIONS.problemsManage)
+  const canViewLists = hasPermission(PERMISSIONS.listsView)
+  const canEditLists = hasPermission(PERMISSIONS.listsEdit)
+  const canViewStock = hasPermission(PERMISSIONS.stockView)
+  const canManageStock = hasPermission(PERMISSIONS.stockManage)
+  const canViewAdmin = hasPermission(PERMISSIONS.adminManage)
   if (isAuthChecking) {
     return null
   }
@@ -259,9 +295,26 @@ function App() {
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-ink-900/70 p-6 shadow-card">
-            <p className="text-sm text-slate-200/80">Paneli acmak icin sifre gir.</p>
+            <p className="text-sm text-slate-200/80">Paneli acmak icin kullanici adi ve sifre gir.</p>
 
             <form className="mt-4 space-y-4" onSubmit={handleAuthSubmit}>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-200" htmlFor="auth-username">
+                  Kullanici adi
+                </label>
+                <input
+                  id="auth-username"
+                  type="text"
+                  value={authUsername}
+                  onChange={(e) => {
+                    setAuthUsername(e.target.value)
+                    if (authError) setAuthError("")
+                  }}
+                  autoComplete="username"
+                  disabled={isAuthBusy}
+                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-70"
+                />
+              </div>
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-200" htmlFor="auth-password">
                   Sifre
@@ -293,7 +346,7 @@ function App() {
               </button>
             </form>
 
-            <p className="mt-4 text-xs text-slate-400">Sifren yoksa yoneticine sor.</p>
+            <p className="mt-4 text-xs text-slate-400">Hesabin yoksa yoneticine sor.</p>
           </div>
         </div>
         <Toaster
@@ -316,71 +369,95 @@ function App() {
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="sticky top-4 z-30 flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
-          <button
-            type="button"
-            onClick={() => setActiveTab("messages")}
-            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-              activeTab === "messages"
-                ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                : "bg-white/5 text-slate-200 hover:bg-white/10"
-            }`}
-          >
-            Mesajlar
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("tasks")}
-            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-              activeTab === "tasks"
-                ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                : "bg-white/5 text-slate-200 hover:bg-white/10"
-            }`}
-          >
-            {"G\u00f6rev"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("problems")}
-            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-              activeTab === "problems"
-                ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                : "bg-white/5 text-slate-200 hover:bg-white/10"
-            }`}
-          >
-            {"Problemli M\u00fc\u015fteriler"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("lists")}
-            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-              activeTab === "lists"
-                ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                : "bg-white/5 text-slate-200 hover:bg-white/10"
-            }`}
-          >
-            Listeler
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("stock")}
-            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-              activeTab === "stock"
-                ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                : "bg-white/5 text-slate-200 hover:bg-white/10"
-            }`}
-          >
-            Stok
-          </button>
+          {canViewMessages && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("messages")}
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === "messages"
+                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                  : "bg-white/5 text-slate-200 hover:bg-white/10"
+              }`}
+            >
+              Mesajlar
+            </button>
+          )}
+          {canViewTasks && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("tasks")}
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === "tasks"
+                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                  : "bg-white/5 text-slate-200 hover:bg-white/10"
+              }`}
+            >
+              {"G\u00f6rev"}
+            </button>
+          )}
+          {canViewProblems && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("problems")}
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === "problems"
+                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                  : "bg-white/5 text-slate-200 hover:bg-white/10"
+              }`}
+            >
+              {"Problemli M\u00fc\u015fteriler"}
+            </button>
+          )}
+          {canViewLists && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("lists")}
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === "lists"
+                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                  : "bg-white/5 text-slate-200 hover:bg-white/10"
+              }`}
+            >
+              Listeler
+            </button>
+          )}
+          {canViewStock && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("stock")}
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === "stock"
+                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                  : "bg-white/5 text-slate-200 hover:bg-white/10"
+              }`}
+            >
+              Stok
+            </button>
+          )}
+          {canViewAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("admin")}
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === "admin"
+                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                  : "bg-white/5 text-slate-200 hover:bg-white/10"
+              }`}
+            >
+              Admin
+            </button>
+          )}
           <div className="ml-auto flex items-center gap-2">
             {logoutButton}
             {themeToggleButton}
           </div>
         </div>
 
-        {activeTab === "messages" && (
+        {activeTab === "messages" && canViewMessages && (
           <MessagesTab
             isLoading={showLoading}
             panelClass={panelClass}
+            canEdit={canEditMessages}
             templateCountText={templateCountText}
             categoryCountText={categoryCountText}
             selectedCategoryText={selectedCategoryText}
@@ -418,10 +495,11 @@ function App() {
           />
         )}
 
-        {activeTab === "tasks" && (
+        {activeTab === "tasks" && canViewTasks && (
           <TasksTab
             isLoading={isTasksTabLoading}
             panelClass={panelClass}
+            canEdit={canEditTasks}
             taskCountText={taskCountText}
             taskStats={taskStats}
             taskStatusMeta={taskStatusMeta}
@@ -454,10 +532,11 @@ function App() {
           />
         )}
 
-        {activeTab === "lists" && (
+        {activeTab === "lists" && canViewLists && (
           <ListsTab
             isLoading={isListsTabLoading}
             panelClass={panelClass}
+            canEdit={canEditLists}
             listCountText={listCountText}
             activeList={activeList}
             activeListId={activeListId}
@@ -506,10 +585,11 @@ function App() {
           />
         )}
 
-        {activeTab === "stock" && (
+        {activeTab === "stock" && canViewStock && (
           <StockTab
             isLoading={isStockTabLoading}
             panelClass={panelClass}
+            canManage={canManageStock}
             stockSummary={stockSummary}
             products={products}
             productSearch={productSearch}
@@ -567,10 +647,11 @@ function App() {
           />
         )}
 
-        {activeTab === "problems" && (
+        {activeTab === "problems" && canViewProblems && (
           <ProblemsTab
             isLoading={isProblemsTabLoading}
             panelClass={panelClass}
+            canManage={canManageProblems}
             openProblems={openProblems}
             resolvedProblems={resolvedProblems}
             problems={problems}
@@ -584,6 +665,31 @@ function App() {
             problemIssue={problemIssue}
             setProblemIssue={setProblemIssue}
             handleProblemAdd={handleProblemAdd}
+          />
+        )}
+
+        {activeTab === "admin" && canViewAdmin && (
+          <AdminTab
+            isLoading={isAdminLoading}
+            panelClass={panelClass}
+            activeUser={activeUser}
+            roles={roles}
+            users={users}
+            roleDraft={roleDraft}
+            setRoleDraft={setRoleDraft}
+            userDraft={userDraft}
+            setUserDraft={setUserDraft}
+            confirmRoleDelete={confirmRoleDelete}
+            confirmUserDelete={confirmUserDelete}
+            handleRoleEditStart={handleRoleEditStart}
+            handleRoleEditCancel={handleRoleEditCancel}
+            toggleRolePermission={toggleRolePermission}
+            handleRoleSave={handleRoleSave}
+            handleRoleDeleteWithConfirm={handleRoleDeleteWithConfirm}
+            handleUserEditStart={handleUserEditStart}
+            handleUserEditCancel={handleUserEditCancel}
+            handleUserSave={handleUserSave}
+            handleUserDeleteWithConfirm={handleUserDeleteWithConfirm}
           />
         )}
 

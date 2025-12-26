@@ -76,3 +76,59 @@ export const STOCK_STATUS = {
   available: "available",
   used: "used",
 }
+
+export const PERMISSIONS = {
+  messagesView: "messages.view",
+  messagesEdit: "messages.edit",
+  tasksView: "tasks.view",
+  tasksEdit: "tasks.edit",
+  problemsView: "problems.view",
+  problemsManage: "problems.manage",
+  listsView: "lists.view",
+  listsEdit: "lists.edit",
+  stockView: "stock.view",
+  stockManage: "stock.manage",
+  adminManage: "admin.manage",
+}
+
+export const PERMISSION_GROUPS = [
+  {
+    title: "Mesajlar",
+    items: [
+      { id: PERMISSIONS.messagesView, label: "Goruntule" },
+      { id: PERMISSIONS.messagesEdit, label: "Duzenle" },
+    ],
+  },
+  {
+    title: "Gorevler",
+    items: [
+      { id: PERMISSIONS.tasksView, label: "Goruntule" },
+      { id: PERMISSIONS.tasksEdit, label: "Duzenle" },
+    ],
+  },
+  {
+    title: "Problemli Musteriler",
+    items: [
+      { id: PERMISSIONS.problemsView, label: "Goruntule" },
+      { id: PERMISSIONS.problemsManage, label: "Yonet" },
+    ],
+  },
+  {
+    title: "Listeler",
+    items: [
+      { id: PERMISSIONS.listsView, label: "Goruntule" },
+      { id: PERMISSIONS.listsEdit, label: "Duzenle" },
+    ],
+  },
+  {
+    title: "Stok",
+    items: [
+      { id: PERMISSIONS.stockView, label: "Goruntule" },
+      { id: PERMISSIONS.stockManage, label: "Yonet" },
+    ],
+  },
+  {
+    title: "Admin",
+    items: [{ id: PERMISSIONS.adminManage, label: "Kullanici ve rol yonetimi" }],
+  },
+]

@@ -8,6 +8,7 @@ import {
   FORMULA_ERRORS,
   LIST_AUTO_SAVE_DELAY_MS,
   LIST_CELL_TONE_CLASSES,
+  PERMISSIONS,
   PRODUCT_ORDER_STORAGE_KEY,
   STOCK_STATUS,
   THEME_STORAGE_KEY,
@@ -54,6 +55,8 @@ export default function useAppData() {
   })
   const [isAuthed, setIsAuthed] = useState(false)
   const [isAuthChecking, setIsAuthChecking] = useState(true)
+  const [activeUser, setActiveUser] = useState(null)
+  const [authUsername, setAuthUsername] = useState("")
   const [authPassword, setAuthPassword] = useState("")
   const [authError, setAuthError] = useState("")
   const [isAuthLoading, setIsAuthLoading] = useState(false)
@@ -104,6 +107,14 @@ export default function useAppData() {
   const [problemUsername, setProblemUsername] = useState("")
   const [problemIssue, setProblemIssue] = useState("")
   const [confirmProblemTarget, setConfirmProblemTarget] = useState(null)
+
+  const [roles, setRoles] = useState([])
+  const [users, setUsers] = useState([])
+  const [isAdminLoading, setIsAdminLoading] = useState(false)
+  const [roleDraft, setRoleDraft] = useState({ id: null, name: "", permissions: [] })
+  const [userDraft, setUserDraft] = useState({ id: null, username: "", password: "", roleId: "" })
+  const [confirmRoleDelete, setConfirmRoleDelete] = useState(null)
+  const [confirmUserDelete, setConfirmUserDelete] = useState(null)
 
   const [products, setProducts] = useState([])
   const [isProductsLoading, setIsProductsLoading] = useState(true)
@@ -156,6 +167,19 @@ export default function useAppData() {
   const taskLoadErrorRef = useRef(false)
 
   const isLight = theme === "light"
+  const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
+  const hasPermission = useCallback((permission) => permissions.includes(permission), [permissions])
+  const availableTabs = useMemo(() => {
+    const tabs = []
+    if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
+    if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
+    if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
+    if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
+    if (permissions.includes(PERMISSIONS.stockView)) tabs.push("stock")
+    if (permissions.includes(PERMISSIONS.adminManage)) tabs.push("admin")
+    return tabs
+  }, [permissions])
+  const canManageAdmin = permissions.includes(PERMISSIONS.adminManage)
 
   useEffect(() => {
     const root = document.documentElement
@@ -174,15 +198,24 @@ export default function useAppData() {
     const verifyAuth = async () => {
       setIsAuthChecking(true)
       try {
+        if (!authToken) {
+          if (isMounted) {
+            setIsAuthed(false)
+            setActiveUser(null)
+          }
+          return
+        }
         const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {}
         const res = await fetch("/api/auth/verify", { headers })
         if (!res.ok) throw new Error("unauthorized")
         const data = await res.json()
         if (!isMounted) return
         setIsAuthed(true)
+        setActiveUser(data?.user ?? null)
       } catch (error) {
         if (!isMounted) return
         setIsAuthed(false)
+        setActiveUser(null)
         if (authToken) {
           try {
             localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
@@ -229,6 +262,13 @@ export default function useAppData() {
     }
   }, [activeTab])
 
+  useEffect(() => {
+    if (!isAuthed || availableTabs.length === 0) return
+    if (!availableTabs.includes(activeTab)) {
+      setActiveTab(availableTabs[0])
+    }
+  }, [activeTab, availableTabs, isAuthed])
+
   const apiFetch = useCallback(
     async (input, init = {}) => {
       const headers = new Headers(init.headers || {})
@@ -239,6 +279,7 @@ export default function useAppData() {
       if (res.status === 401) {
         setIsAuthed(false)
         setAuthToken("")
+        setActiveUser(null)
         try {
           localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
         } catch (removeError) {
@@ -298,6 +339,42 @@ export default function useAppData() {
     loadLists(controller.signal)
     return () => controller.abort()
   }, [activeTab, isAuthed, loadLists])
+
+  const loadAdminData = useCallback(
+    async (signal) => {
+      setIsAdminLoading(true)
+      try {
+        const [rolesRes, usersRes] = await Promise.all([
+          apiFetch("/api/roles", { signal }),
+          apiFetch("/api/users", { signal }),
+        ])
+        if (!rolesRes.ok || !usersRes.ok) throw new Error("admin_load_failed")
+        const [rolesData, usersData] = await Promise.all([rolesRes.json(), usersRes.json()])
+        setRoles(Array.isArray(rolesData) ? rolesData : [])
+        setUsers(Array.isArray(usersData) ? usersData : [])
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        setRoles([])
+        setUsers([])
+        toast.error("Yonetim verileri alinamadi (API/DB kontrol edin).")
+      } finally {
+        setIsAdminLoading(false)
+      }
+    },
+    [apiFetch],
+  )
+
+  useEffect(() => {
+    if (!isAuthed || !canManageAdmin) {
+      setRoles([])
+      setUsers([])
+      setIsAdminLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    loadAdminData(controller.signal)
+    return () => controller.abort()
+  }, [canManageAdmin, isAuthed, loadAdminData])
 
   useEffect(() => {
     if (lists.length === 0) {
@@ -1121,9 +1198,10 @@ export default function useAppData() {
   const handleAuthSubmit = async (event) => {
     event.preventDefault()
     if (isAuthChecking || isAuthLoading) return
+    const username = authUsername.trim()
     const password = authPassword.trim()
-    if (!password) {
-      setAuthError("Sifre gerekli")
+    if (!username || !password) {
+      setAuthError("Kullanici adi ve sifre gerekli")
       return
     }
 
@@ -1133,21 +1211,15 @@ export default function useAppData() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       })
 
       if (!res.ok) {
-        setAuthError("Sifre hatali")
+        setAuthError("Bilgiler hatali")
         return
       }
 
       const data = await res.json()
-      if (data?.enabled === false) {
-        setIsAuthed(true)
-        setAuthPassword("")
-        return
-      }
-
       const token = String(data?.token ?? "").trim()
       if (!token) {
         setAuthError("Oturum acilamadi")
@@ -1161,6 +1233,8 @@ export default function useAppData() {
       }
       setAuthToken(token)
       setIsAuthed(true)
+      setActiveUser(data?.user ?? null)
+      setAuthUsername("")
       setAuthPassword("")
     } catch (error) {
       console.error("Login failed", error)
@@ -1173,6 +1247,8 @@ export default function useAppData() {
   const handleLogout = () => {
     setIsAuthed(false)
     setAuthToken("")
+    setActiveUser(null)
+    setAuthUsername("")
     setAuthPassword("")
     setAuthError("")
     try {
@@ -1180,6 +1256,157 @@ export default function useAppData() {
     } catch (error) {
       console.warn("Could not clear auth token", error)
     }
+  }
+
+  const resetRoleDraft = () => setRoleDraft({ id: null, name: "", permissions: [] })
+  const resetUserDraft = () => setUserDraft({ id: null, username: "", password: "", roleId: "" })
+
+  const handleRoleEditStart = (role) => {
+    setRoleDraft({
+      id: role?.id ?? null,
+      name: role?.name ?? "",
+      permissions: Array.isArray(role?.permissions) ? role.permissions : [],
+    })
+  }
+
+  const handleRoleEditCancel = () => {
+    resetRoleDraft()
+    setConfirmRoleDelete(null)
+  }
+
+  const toggleRolePermission = (permission) => {
+    setRoleDraft((prev) => {
+      const next = new Set(prev.permissions || [])
+      if (next.has(permission)) next.delete(permission)
+      else next.add(permission)
+      return { ...prev, permissions: Array.from(next) }
+    })
+  }
+
+  const handleRoleSave = async () => {
+    const name = roleDraft.name.trim()
+    if (!name) {
+      toast.error("Rol adi gerekli.")
+      return
+    }
+    try {
+      const res = await apiFetch(roleDraft.id ? `/api/roles/${roleDraft.id}` : "/api/roles", {
+        method: roleDraft.id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, permissions: roleDraft.permissions }),
+      })
+      if (!res.ok) throw new Error("role_save_failed")
+      const saved = await res.json()
+      setRoles((prev) =>
+        roleDraft.id
+          ? prev.map((role) => (role.id === saved.id ? saved : role))
+          : [...prev, saved].sort((a, b) => a.name.localeCompare(b.name)),
+      )
+      resetRoleDraft()
+      toast.success(roleDraft.id ? "Rol guncellendi" : "Rol eklendi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Rol kaydedilemedi (API/DB kontrol edin).")
+    }
+  }
+
+  const handleRoleDeleteWithConfirm = async (roleId) => {
+    if (confirmRoleDelete === roleId) {
+      try {
+        const res = await apiFetch(`/api/roles/${roleId}`, { method: "DELETE" })
+        if (!res.ok && res.status !== 204) throw new Error("role_delete_failed")
+        setRoles((prev) => prev.filter((role) => role.id !== roleId))
+        setConfirmRoleDelete(null)
+        toast.success("Rol silindi")
+        return
+      } catch (error) {
+        console.error(error)
+        toast.error("Rol silinemedi (API/DB kontrol edin).")
+        setConfirmRoleDelete(null)
+        return
+      }
+    }
+    setConfirmRoleDelete(roleId)
+    toast("Silmek icin tekrar tikla", { position: "top-right" })
+  }
+
+  const handleUserEditStart = (user) => {
+    setUserDraft({
+      id: user?.id ?? null,
+      username: user?.username ?? "",
+      password: "",
+      roleId: user?.role?.id ? String(user.role.id) : "",
+    })
+  }
+
+  const handleUserEditCancel = () => {
+    resetUserDraft()
+    setConfirmUserDelete(null)
+  }
+
+  const handleUserSave = async () => {
+    const username = userDraft.username.trim()
+    if (!username) {
+      toast.error("Kullanici adi gerekli.")
+      return
+    }
+    if (!userDraft.id && !userDraft.password.trim()) {
+      toast.error("Sifre gerekli.")
+      return
+    }
+
+    const roleId = userDraft.roleId ? Number(userDraft.roleId) : null
+    if (userDraft.roleId && !Number.isFinite(roleId)) {
+      toast.error("Rol secimi hatali.")
+      return
+    }
+
+    const payload = {
+      username,
+      ...(roleId === null ? { roleId: null } : { roleId }),
+      ...(userDraft.password.trim() ? { password: userDraft.password.trim() } : {}),
+    }
+
+    try {
+      const res = await apiFetch(userDraft.id ? `/api/users/${userDraft.id}` : "/api/users", {
+        method: userDraft.id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error("user_save_failed")
+      const saved = await res.json()
+      setUsers((prev) =>
+        userDraft.id ? prev.map((user) => (user.id === saved.id ? saved : user)) : [...prev, saved],
+      )
+      if (activeUser?.id === saved.id) {
+        setActiveUser(saved)
+      }
+      resetUserDraft()
+      toast.success(userDraft.id ? "Kullanici guncellendi" : "Kullanici eklendi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Kullanici kaydedilemedi (API/DB kontrol edin).")
+    }
+  }
+
+  const handleUserDeleteWithConfirm = async (userId) => {
+    if (confirmUserDelete === userId) {
+      try {
+        const res = await apiFetch(`/api/users/${userId}`, { method: "DELETE" })
+        if (!res.ok && res.status !== 204) throw new Error("user_delete_failed")
+        setUsers((prev) => prev.filter((user) => user.id !== userId))
+        setConfirmUserDelete(null)
+        toast.success("Kullanici silindi")
+        return
+      } catch (error) {
+        console.error(error)
+        toast.error("Kullanici silinemedi (API/DB kontrol edin).")
+        setConfirmUserDelete(null)
+        return
+      }
+    }
+    setConfirmUserDelete(userId)
+    toast("Silmek icin tekrar tikla", { position: "top-right" })
   }
 
   const handleThemeToggle = () => {
@@ -2793,6 +3020,9 @@ export default function useAppData() {
     isAuthChecking,
     isAuthed,
     isAuthBusy,
+    activeUser,
+    authUsername,
+    setAuthUsername,
     authPassword,
     setAuthPassword,
     authError,
@@ -2800,6 +3030,9 @@ export default function useAppData() {
     handleAuthSubmit,
     logoutButton,
     themeToggleButton,
+    permissions,
+    hasPermission,
+    canManageAdmin,
     toastStyle,
     toastIconTheme,
     activeTab,
@@ -2985,6 +3218,24 @@ export default function useAppData() {
     problemIssue,
     setProblemIssue,
     handleProblemAdd,
+    roles,
+    users,
+    isAdminLoading,
+    roleDraft,
+    setRoleDraft,
+    userDraft,
+    setUserDraft,
+    confirmRoleDelete,
+    confirmUserDelete,
+    handleRoleEditStart,
+    handleRoleEditCancel,
+    toggleRolePermission,
+    handleRoleSave,
+    handleRoleDeleteWithConfirm,
+    handleUserEditStart,
+    handleUserEditCancel,
+    handleUserSave,
+    handleUserDeleteWithConfirm,
     isTaskEditOpen,
     taskEditDraft,
     setTaskEditDraft,

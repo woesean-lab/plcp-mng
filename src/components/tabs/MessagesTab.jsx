@@ -53,6 +53,7 @@ function MessagesSkeleton({ panelClass }) {
 export default function MessagesTab({
   isLoading,
   panelClass,
+  canEdit,
   templateCountText,
   categoryCountText,
   selectedCategoryText,
@@ -89,6 +90,7 @@ export default function MessagesTab({
   setSelectedCategory,
 }) {
   const showLoading = isLoading
+  const showEditMode = Boolean(canEdit && isEditingActiveTemplate)
 
   if (showLoading) {
     return <MessagesSkeleton panelClass={panelClass} />
@@ -147,6 +149,7 @@ export default function MessagesTab({
                     </span>
                   </div>
                 </div>
+                {canEdit && (
                 <div className="flex shrink-0 items-center gap-2">
                   <button
                     type="button"
@@ -175,8 +178,9 @@ export default function MessagesTab({
                     {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
                   </button>
                 </div>
+                )}
               </div>
-              {isEditingActiveTemplate ? (
+              {showEditMode ? (
                 <textarea
                   value={activeTemplateDraft}
                   onChange={(e) => setActiveTemplateDraft(e.target.value)}
@@ -194,7 +198,7 @@ export default function MessagesTab({
               )}
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300/80">
                 <span>{activeTemplateLength} karakter</span>
-                {isEditingActiveTemplate ? (
+                {showEditMode ? (
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -319,10 +323,12 @@ export default function MessagesTab({
         </div>
 
         <div className="space-y-6">
-          <div className={`${panelClass} bg-ink-800/60`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
+          {canEdit && (
+            <>
+              <div className={`${panelClass} bg-ink-800/60`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
                 <p className="text-sm text-slate-400">Yeni kategori ekle, ardından mesaj alanından seç.</p>
               </div>
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
@@ -447,6 +453,8 @@ export default function MessagesTab({
               </div>
             </div>
           </div>
+            </>
+          )}
 
           <div className={`${panelClass} bg-ink-800/60`}>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Hızlı ipuçları</p>

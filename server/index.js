@@ -13,30 +13,51 @@ const __dirname = path.dirname(__filename)
 const distDir = path.resolve(__dirname, "..", "dist")
 
 const port = Number(process.env.PORT ?? 3000)
-const authPassword = String(process.env.APP_PASSWORD ?? "").trim()
-const authEnabled = authPassword.length > 0
+const adminUsername = String(process.env.ADMIN_USERNAME ?? "admin").trim() || "admin"
+const adminPassword = String(process.env.ADMIN_PASSWORD ?? "admin123").trim()
 const authTokenTtlMsRaw = Number(process.env.AUTH_TOKEN_TTL_MS ?? 1000 * 60 * 60 * 12)
 const authTokenTtlMs =
   Number.isFinite(authTokenTtlMsRaw) && authTokenTtlMsRaw > 0
     ? authTokenTtlMsRaw
     : 1000 * 60 * 60 * 12
 const authTokens = new Map()
+const DEFAULT_ADMIN_PERMISSIONS = [
+  "messages.view",
+  "messages.edit",
+  "tasks.view",
+  "tasks.edit",
+  "problems.view",
+  "problems.manage",
+  "lists.view",
+  "lists.edit",
+  "stock.view",
+  "stock.manage",
+  "admin.manage",
+]
+const allowedPermissions = new Set(DEFAULT_ADMIN_PERMISSIONS)
 
-const issueAuthToken = () => {
+const normalizePermissions = (value) => {
+  const rawList = Array.isArray(value) ? value : []
+  return rawList
+    .map((perm) => String(perm ?? "").trim())
+    .filter((perm) => perm && allowedPermissions.has(perm))
+}
+
+const issueAuthToken = (userId) => {
   const token = crypto.randomBytes(32).toString("hex")
-  authTokens.set(token, Date.now() + authTokenTtlMs)
+  authTokens.set(token, { userId, expiresAt: Date.now() + authTokenTtlMs })
   return token
 }
 
-const isAuthTokenValid = (token) => {
+const getAuthTokenEntry = (token) => {
   if (!token) return false
-  const expiresAt = authTokens.get(token)
-  if (!expiresAt) return false
-  if (Date.now() > expiresAt) {
+  const entry = authTokens.get(token)
+  if (!entry) return false
+  if (Date.now() > entry.expiresAt) {
     authTokens.delete(token)
     return false
   }
-  return true
+  return entry
 }
 
 const readAuthToken = (req) => {
@@ -44,6 +65,49 @@ const readAuthToken = (req) => {
   const [type, token] = header.split(" ")
   if (type !== "Bearer") return ""
   return token?.trim() || ""
+}
+
+const hashPassword = (password) => {
+  const salt = crypto.randomBytes(16).toString("hex")
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex")
+  return `scrypt$${salt}$${hash}`
+}
+
+const verifyPassword = (password, stored) => {
+  if (!stored) return false
+  const [algo, salt, hash] = stored.split("$")
+  if (algo !== "scrypt" || !salt || !hash) return false
+  const derived = crypto.scryptSync(password, salt, 64).toString("hex")
+  return crypto.timingSafeEqual(Buffer.from(derived, "hex"), Buffer.from(hash, "hex"))
+}
+
+const serializeUser = (user) => {
+  if (!user) return null
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role
+      ? {
+        id: user.role.id,
+        name: user.role.name,
+        permissions: user.role.permissions || [],
+      }
+      : null,
+  }
+}
+
+const loadUserForToken = async (token) => {
+  const entry = getAuthTokenEntry(token)
+  if (!entry) return null
+  const user = await prisma.user.findUnique({
+    where: { id: entry.userId },
+    include: { role: true },
+  })
+  if (!user) {
+    authTokens.delete(token)
+    return null
+  }
+  return user
 }
 
 const initialTemplates = [
@@ -61,14 +125,36 @@ async function ensureDefaults() {
   })
 
   const templateCount = await prisma.template.count()
-  if (templateCount > 0) return
+  if (templateCount === 0) {
+    const uniqueCategories = Array.from(new Set(initialTemplates.map((tpl) => tpl.category))).filter(Boolean)
+    await prisma.category.createMany({
+      data: uniqueCategories.map((name) => ({ name })),
+      skipDuplicates: true,
+    })
+    await prisma.template.createMany({ data: initialTemplates })
+  }
 
-  const uniqueCategories = Array.from(new Set(initialTemplates.map((tpl) => tpl.category))).filter(Boolean)
-  await prisma.category.createMany({
-    data: uniqueCategories.map((name) => ({ name })),
-    skipDuplicates: true,
-  })
-  await prisma.template.createMany({ data: initialTemplates })
+  const adminRole =
+    (await prisma.role.findUnique({ where: { name: "Admin" } })) ||
+    (await prisma.role.create({
+      data: { name: "Admin", permissions: DEFAULT_ADMIN_PERMISSIONS },
+    }))
+
+  const userCount = await prisma.user.count()
+  if (userCount === 0) {
+    if (!adminPassword) {
+      console.warn("ADMIN_PASSWORD not set; no default admin user created.")
+      return
+    }
+    await prisma.user.create({
+      data: {
+        username: adminUsername,
+        passwordHash: hashPassword(adminPassword),
+        roleId: adminRole.id,
+      },
+    })
+    console.log(`Default admin user created: ${adminUsername}`)
+  }
 }
 
 const app = express()
@@ -76,11 +162,25 @@ app.disable("x-powered-by")
 
 app.use(express.json({ limit: "64kb" }))
 
-const requireAuth = (req, res, next) => {
-  if (!authEnabled) return next()
-  const token = readAuthToken(req)
-  if (!isAuthTokenValid(token)) {
-    res.status(401).json({ error: "unauthorized" })
+const requireAuth = async (req, res, next) => {
+  try {
+    const token = readAuthToken(req)
+    const user = await loadUserForToken(token)
+    if (!user) {
+      res.status(401).json({ error: "unauthorized" })
+      return
+    }
+    req.user = user
+    next()
+  } catch (error) {
+    next(error)
+  }
+}
+
+const requirePermission = (permission) => (req, res, next) => {
+  const permissions = req.user?.role?.permissions || []
+  if (!permissions.includes(permission)) {
+    res.status(403).json({ error: "forbidden" })
     return
   }
   next()
@@ -90,35 +190,36 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true })
 })
 
-app.post("/api/auth/login", (req, res) => {
-  if (!authEnabled) {
-    res.json({ ok: true, enabled: false })
-    return
-  }
-
+app.post("/api/auth/login", async (req, res) => {
+  const username = String(req.body?.username ?? "").trim()
   const password = String(req.body?.password ?? "")
-  if (!password || password !== authPassword) {
-    res.status(401).json({ ok: false, enabled: true })
+  if (!username || !password) {
+    res.status(400).json({ ok: false, error: "username and password required" })
     return
   }
 
-  const token = issueAuthToken()
-  res.json({ ok: true, enabled: true, token, expiresInMs: authTokenTtlMs })
+  const user = await prisma.user.findUnique({
+    where: { username },
+    include: { role: true },
+  })
+  if (!user || !verifyPassword(password, user.passwordHash)) {
+    res.status(401).json({ ok: false, error: "invalid_credentials" })
+    return
+  }
+
+  const token = issueAuthToken(user.id)
+  res.json({ ok: true, token, expiresInMs: authTokenTtlMs, user: serializeUser(user) })
 })
 
-app.get("/api/auth/verify", (req, res) => {
-  if (!authEnabled) {
-    res.json({ ok: true, enabled: false })
-    return
-  }
-
+app.get("/api/auth/verify", async (req, res) => {
   const token = readAuthToken(req)
-  if (!isAuthTokenValid(token)) {
-    res.status(401).json({ ok: false, enabled: true })
+  const user = await loadUserForToken(token)
+  if (!user) {
+    res.status(401).json({ ok: false })
     return
   }
 
-  res.json({ ok: true, enabled: true })
+  res.json({ ok: true, user: serializeUser(user) })
 })
 
 app.use("/api", requireAuth)
@@ -263,6 +364,219 @@ app.delete("/api/categories/:name", async (req, res) => {
   })
 
   res.status(204).end()
+})
+
+app.get("/api/roles", requirePermission("admin.manage"), async (_req, res) => {
+  const roles = await prisma.role.findMany({ orderBy: { name: "asc" } })
+  res.json(roles)
+})
+
+app.post("/api/roles", requirePermission("admin.manage"), async (req, res) => {
+  const name = String(req.body?.name ?? "").trim()
+  if (!name) {
+    res.status(400).json({ error: "name is required" })
+    return
+  }
+
+  const permissions = normalizePermissions(req.body?.permissions)
+  try {
+    const created = await prisma.role.create({ data: { name, permissions } })
+    res.status(201).json(created)
+  } catch (error) {
+    if (error?.code === "P2002") {
+      res.status(409).json({ error: "Role name already exists" })
+      return
+    }
+    throw error
+  }
+})
+
+app.put("/api/roles/:id", requirePermission("admin.manage"), async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const nameRaw = req.body?.name
+  const name = nameRaw === undefined ? undefined : String(nameRaw).trim()
+  if (name !== undefined && !name) {
+    res.status(400).json({ error: "name cannot be empty" })
+    return
+  }
+  const permissions = req.body?.permissions === undefined ? undefined : normalizePermissions(req.body.permissions)
+
+  try {
+    const updated = await prisma.role.update({
+      where: { id },
+      data: {
+        ...(name === undefined ? {} : { name }),
+        ...(permissions === undefined ? {} : { permissions }),
+      },
+    })
+    res.json(updated)
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Role not found" })
+      return
+    }
+    if (error?.code === "P2002") {
+      res.status(409).json({ error: "Role name already exists" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/roles/:id", requirePermission("admin.manage"), async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const userCount = await prisma.user.count({ where: { roleId: id } })
+  if (userCount > 0) {
+    res.status(409).json({ error: "Role has assigned users" })
+    return
+  }
+
+  try {
+    await prisma.role.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Role not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.get("/api/users", requirePermission("admin.manage"), async (_req, res) => {
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: "asc" },
+    include: { role: true },
+  })
+  res.json(users.map((user) => serializeUser(user)))
+})
+
+app.post("/api/users", requirePermission("admin.manage"), async (req, res) => {
+  const username = String(req.body?.username ?? "").trim()
+  const password = String(req.body?.password ?? "")
+  const roleIdRaw = req.body?.roleId
+
+  if (!username || !password) {
+    res.status(400).json({ error: "username and password are required" })
+    return
+  }
+
+  const roleId = roleIdRaw === null || roleIdRaw === undefined ? null : Number(roleIdRaw)
+  if (roleId !== null && !Number.isFinite(roleId)) {
+    res.status(400).json({ error: "invalid roleId" })
+    return
+  }
+
+  try {
+    const created = await prisma.user.create({
+      data: {
+        username,
+        passwordHash: hashPassword(password),
+        ...(roleId === null ? {} : { roleId }),
+      },
+      include: { role: true },
+    })
+    res.status(201).json(serializeUser(created))
+  } catch (error) {
+    if (error?.code === "P2002") {
+      res.status(409).json({ error: "Username already exists" })
+      return
+    }
+    throw error
+  }
+})
+
+app.put("/api/users/:id", requirePermission("admin.manage"), async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const usernameRaw = req.body?.username
+  const passwordRaw = req.body?.password
+  const roleIdRaw = req.body?.roleId
+
+  const data = {}
+  if (usernameRaw !== undefined) {
+    const username = String(usernameRaw).trim()
+    if (!username) {
+      res.status(400).json({ error: "username cannot be empty" })
+      return
+    }
+    data.username = username
+  }
+  if (passwordRaw !== undefined) {
+    const password = String(passwordRaw)
+    if (!password) {
+      res.status(400).json({ error: "password cannot be empty" })
+      return
+    }
+    data.passwordHash = hashPassword(password)
+  }
+  if (roleIdRaw !== undefined) {
+    if (roleIdRaw === null) {
+      data.roleId = null
+    } else {
+      const roleId = Number(roleIdRaw)
+      if (!Number.isFinite(roleId)) {
+        res.status(400).json({ error: "invalid roleId" })
+        return
+      }
+      data.roleId = roleId
+    }
+  }
+
+  try {
+    const updated = await prisma.user.update({
+      where: { id },
+      data,
+      include: { role: true },
+    })
+    res.json(serializeUser(updated))
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "User not found" })
+      return
+    }
+    if (error?.code === "P2002") {
+      res.status(409).json({ error: "Username already exists" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/users/:id", requirePermission("admin.manage"), async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+  if (req.user?.id === id) {
+    res.status(400).json({ error: "cannot delete current user" })
+    return
+  }
+  try {
+    await prisma.user.delete({ where: { id } })
+    res.status(204).end()
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "User not found" })
+      return
+    }
+    throw error
+  }
 })
 
 const allowedProblemStatus = new Set(["open", "resolved"])

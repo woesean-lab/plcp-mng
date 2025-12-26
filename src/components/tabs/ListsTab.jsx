@@ -144,6 +144,8 @@ export default function ListsTab({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+
+
           <div className={`${panelClass} bg-ink-800/60`}>
             <div className="flex items-center justify-between">
               <div>

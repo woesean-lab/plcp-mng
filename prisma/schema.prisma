@@ -72,3 +72,22 @@ model Task {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  permissions String[] @default([])
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  roleId       Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

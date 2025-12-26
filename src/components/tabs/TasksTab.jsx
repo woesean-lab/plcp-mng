@@ -36,7 +36,9 @@ function TasksSkeleton({ panelClass }) {
           </div>
         </div>
         <div className="space-y-6">
-          <div className={`${panelClass} bg-ink-800/60`}>
+          )}
+
+                    <div className={`${panelClass} bg-ink-800/60`}>
             <SkeletonBlock className="h-4 w-32" />
             <SkeletonBlock className="mt-3 h-20 w-full rounded-xl" />
           </div>
@@ -53,6 +55,7 @@ function TasksSkeleton({ panelClass }) {
 export default function TasksTab({
   isLoading,
   panelClass,
+  canEdit,
   taskCountText,
   taskStats,
   taskStatusMeta,
@@ -162,12 +165,15 @@ export default function TasksTab({
                 : Object.entries(taskStatusMeta).map(([status, meta]) => (
                 <div
                   key={status}
-                  onDragOver={(event) => handleTaskDragOver(event, status)}
-                  onDrop={(event) => handleTaskDrop(event, status)}
-                  onDragLeave={() =>
-                    setTaskDragState((prev) =>
-                      prev.overStatus === status ? { ...prev, overStatus: null } : prev,
-                    )
+                  onDragOver={canEdit ? (event) => handleTaskDragOver(event, status) : undefined}
+                  onDrop={canEdit ? (event) => handleTaskDrop(event, status) : undefined}
+                  onDragLeave={
+                    canEdit
+                      ? () =>
+                        setTaskDragState((prev) =>
+                          prev.overStatus === status ? { ...prev, overStatus: null } : prev,
+                        )
+                      : undefined
                   }
                   className={`flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner transition ${
                     taskDragState.overStatus === status
@@ -194,9 +200,9 @@ export default function TasksTab({
                       return (
                         <div
                           key={task.id}
-                          draggable
-                          onDragStart={(event) => handleTaskDragStart(event, task.id)}
-                          onDragEnd={handleTaskDragEnd}
+                          draggable={canEdit}
+                          onDragStart={canEdit ? (event) => handleTaskDragStart(event, task.id) : undefined}
+                          onDragEnd={canEdit ? handleTaskDragEnd : undefined}
                           className="flex flex-col gap-3 rounded-xl border border-white/10 bg-ink-800/70 p-3 shadow-inner transition hover:border-accent-300/40 hover:bg-ink-800/80 hover:shadow-glow cursor-grab"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -235,7 +241,7 @@ export default function TasksTab({
                             Bitiş: {getTaskDueLabel(task)}
                           </span>
                           <div className="flex flex-wrap gap-2">
-                            {status !== "done" && (
+                            {canEdit && status !== "done" && (
                               <button
                                 type="button"
                                 onClick={() => handleTaskAdvance(task.id)}
@@ -251,6 +257,8 @@ export default function TasksTab({
                             >
                               Detay
                             </button>
+                            {canEdit && (
+                              <>
                             <button
                               type="button"
                               onClick={() => openTaskEdit(task)}
@@ -278,6 +286,8 @@ export default function TasksTab({
                             >
                               {confirmTaskDelete === task.id ? "Emin misin?" : "Sil"}
                             </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       )
@@ -290,6 +300,7 @@ export default function TasksTab({
         </div>
 
         <div className="space-y-6">
+          {canEdit && (
           <div className={`${panelClass} bg-ink-900/70`}>
             <div className="flex items-center justify-between">
               <div>
@@ -451,6 +462,8 @@ export default function TasksTab({
               </div>
             </div>
           </div>
+
+          )}
 
           <div className={`${panelClass} bg-ink-800/60`}>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Odak notu</p>
