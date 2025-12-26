@@ -167,7 +167,7 @@ export default function useAppData() {
   const taskLoadErrorRef = useRef(false)
 
   const isLight = theme === "light"
-  const permissions = useMemo(() => activeUser?.role?.permissions ? [], [activeUser])
+  const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
   const hasPermission = useCallback((permission) => permissions.includes(permission), [permissions])
   const availableTabs = useMemo(() => {
     const tabs = []
@@ -211,7 +211,7 @@ export default function useAppData() {
         const data = await res.json()
         if (!isMounted) return
         setIsAuthed(true)
-        setActiveUser(data?.user ? null)
+        setActiveUser(data?.user ?? null)
       } catch (error) {
         if (!isMounted) return
         setIsAuthed(false)
@@ -305,7 +305,7 @@ export default function useAppData() {
         setLists([])
         if (!listLoadErrorRef.current) {
           listLoadErrorRef.current = true
-          toast.error("Liste verileri alınamadı (API/DB kontrol edin).")
+          toast.error("Liste verileri al─▒namad─▒ (API/DB kontrol edin).")
         }
       } finally {
         setIsListsLoading(false)
@@ -356,7 +356,7 @@ export default function useAppData() {
         if (error?.name === "AbortError") return
         setRoles([])
         setUsers([])
-        toast.error("Yönetim verileri alınamadı (API/DB kontrol edin).")
+        toast.error("Yonetim verileri alinamadi (API/DB kontrol edin).")
       } finally {
         setIsAdminLoading(false)
       }
@@ -452,7 +452,7 @@ export default function useAppData() {
   const messageLength = message.trim().length
   const activeTemplateLength = isEditingActiveTemplate
     ? activeTemplateDraft.trim().length
-    : (activeTemplate?.value?.trim().length ? 0)
+    : (activeTemplate?.value?.trim().length ?? 0)
   const activeListRows = Array.isArray(activeList?.rows) ? activeList.rows : []
   const activeListColumnCount = useMemo(() => {
     if (!activeList) return 0
@@ -523,9 +523,9 @@ export default function useAppData() {
   const getListCellData = (rowIndex, colIndex) => {
     const cell = activeListRows[rowIndex]?.[colIndex]
     if (isListCellObject(cell)) {
-      return { value: cell.value ? "", format: normalizeListCellFormat(cell.format)}
+      return { value: cell.value ?? "", format: normalizeListCellFormat(cell.format)}
     }
-    return { value: cell ? "", format: {} }
+    return { value: cell ?? "", format: {} }
   }
 
   const updateListCellValue = (cell, value) => {
@@ -536,7 +536,7 @@ export default function useAppData() {
   }
 
   const getListCellRawValue = (rowIndex, colIndex) => {
-    return getListCellData(rowIndex, colIndex).value ? ""
+    return getListCellData(rowIndex, colIndex).value ?? ""
   }
 
   const getListCellValue = (rowIndex, colIndex, stack) => {
@@ -785,7 +785,7 @@ export default function useAppData() {
         if (error?.name === "AbortError") return
         if (!taskLoadErrorRef.current) {
           taskLoadErrorRef.current = true
-          toast.error("Görevler alınamadı (API/DB kontrol edin).")
+          toast.error("G├Ârevler al─▒namad─▒ (API/DB kontrol edin).")
         }
         setTasks(initialTasks.map(normalizeTask))
       } finally {
@@ -859,7 +859,7 @@ export default function useAppData() {
   }, [isNoteModalOpen, taskDetailTarget, isTaskEditOpen])
 
   const toggleProductOpen = (productId) => {
-    setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ? false)}))
+    setOpenProducts((prev) => ({ ...prev, [productId]: !(prev[productId] ?? false)}))
   }
 
   const getLocalDateString = (date) => {
@@ -902,27 +902,27 @@ export default function useAppData() {
   const normalizeTask = (task) => {
     const dueDate = task?.dueDate || ""
     const dueType = task?.dueType || (dueDate ? "date" : "today")
-    const repeatDays = normalizeRepeatDays(task?.repeatDays ? (task?.repeatDay ? [task.repeatDay] : []))
+    const repeatDays = normalizeRepeatDays(task?.repeatDays ?? (task?.repeatDay ? [task.repeatDay] : []))
     return {
       ...task,
-      note: task?.note ? "",
-      owner: task?.owner ? "",
+      note: task?.note ?? "",
+      owner: task?.owner ?? "",
       dueType,
       dueDate: dueType === "date" ? dueDate : "",
       repeatDays,
-      repeatWakeAt: task?.repeatWakeAt ? "",
+      repeatWakeAt: task?.repeatWakeAt ?? "",
     }
   }
 
   const getTaskDueLabel = (task) => {
-    if (task.dueType === "today") return "Bug?n"
+    if (task.dueType === "today") return "Bug├╝n"
     if (task.dueType === "repeat") {
       const labels = getRepeatDayLabels(task.repeatDays)
-      const todayTag = isTaskDueToday(task) ? " (Bug?n)" : ""
+      const todayTag = isTaskDueToday(task) ? " (Bug├╝n)" : ""
       return labels.length > 0 ? `Her ${labels.join(", ")}${todayTag}` : `Tekrarlanabilir${todayTag}`
     }
     if (task.dueType === "date") {
-      return task.dueDate ? formatTaskDate(task.dueDate) : "Tarih se?ilmedi"
+      return task.dueDate ? formatTaskDate(task.dueDate) : "Tarih se├ğilmedi"
     }
     return ""
   }
@@ -939,7 +939,7 @@ export default function useAppData() {
   }
 
   const openNoteModal = (value, onSave) => {
-    setNoteModalDraft(value ? "")
+    setNoteModalDraft(value ?? "")
     noteModalTargetRef.current = onSave
     setIsNoteModalOpen(true)
   }
@@ -1000,12 +1000,12 @@ export default function useAppData() {
     const normalized = normalizeTask(task)
     setTaskEditDraft({
       id: normalized.id,
-      title: normalized.title ? "",
-      note: normalized.note ? "",
-      owner: normalized.owner ? "",
-      dueType: normalized.dueType ? "today",
-      repeatDays: normalized.repeatDays ? [],
-      dueDate: normalized.dueDate ? "",
+      title: normalized.title ?? "",
+      note: normalized.note ?? "",
+      owner: normalized.owner ?? "",
+      dueType: normalized.dueType ?? "today",
+      repeatDays: normalized.repeatDays ?? [],
+      dueDate: normalized.dueDate ?? "",
     })
     setIsTaskEditOpen(true)
   }
@@ -1056,7 +1056,7 @@ export default function useAppData() {
       return updated
     } catch (error) {
       console.error(error)
-      toast.error("Görev güncellenemedi (API/DB kontrol edin).")
+      toast.error("G├Ârev g├╝ncellenemedi (API/DB kontrol edin).")
       return null
     }
   }
@@ -1064,16 +1064,16 @@ export default function useAppData() {
   const handleTaskAdd = async () => {
     const titleValue = taskForm.title.trim()
     if (!titleValue) {
-      toast.error("Görev adı gerekli.")
+      toast.error("G├Ârev ad─▒ gerekli.")
       return
     }
     const repeatDays = normalizeRepeatDays(taskForm.repeatDays)
     if (taskForm.dueType === "repeat" && repeatDays.length === 0) {
-      toast.error("Tekrarlanabilir gün seçin.")
+      toast.error("Tekrarlanabilir g├╝n se├ğin.")
       return
     }
     if (taskForm.dueType === "date" && !taskForm.dueDate) {
-      toast.error("Özel tarih seçin.")
+      toast.error("├ûzel tarih se├ğin.")
       return
     }
     try {
@@ -1093,10 +1093,10 @@ export default function useAppData() {
       const created = await res.json()
       setTasks((prev) => [normalizeTask(created), ...prev])
       resetTaskForm()
-      toast.success("Görev eklendi")
+      toast.success("G├Ârev eklendi")
     } catch (error) {
       console.error(error)
-      toast.error("Görev eklenemedi (API/DB kontrol edin).")
+      toast.error("G├Ârev eklenemedi (API/DB kontrol edin).")
     }
   }
 
@@ -1104,16 +1104,16 @@ export default function useAppData() {
     if (!taskEditDraft) return
     const titleValue = taskEditDraft.title.trim()
     if (!titleValue) {
-      toast.error("Görev adı gerekli.")
+      toast.error("G├Ârev ad─▒ gerekli.")
       return
     }
     const repeatDays = normalizeRepeatDays(taskEditDraft.repeatDays)
     if (taskEditDraft.dueType === "repeat" && repeatDays.length === 0) {
-      toast.error("Tekrarlanabilir gün seçin.")
+      toast.error("Tekrarlanabilir g├╝n se├ğin.")
       return
     }
     if (taskEditDraft.dueType === "date" && !taskEditDraft.dueDate) {
-      toast.error("Özel tarih seçin.")
+      toast.error("├ûzel tarih se├ğin.")
       return
     }
     const updated = await saveTaskUpdate(taskEditDraft.id, {
@@ -1126,7 +1126,7 @@ export default function useAppData() {
     })
     if (!updated) return
     closeTaskEdit()
-    toast.success("Görev güncellendi")
+    toast.success("G├Ârev g├╝ncellendi")
   }
 
   const handleTaskAdvance = async (taskId) => {
@@ -1157,17 +1157,17 @@ export default function useAppData() {
         if (!res.ok && res.status !== 404) throw new Error("task_delete_failed")
         setTasks((prev) => prev.filter((task) => task.id !== taskId))
         setConfirmTaskDelete(null)
-        toast.success("Görev silindi")
+        toast.success("G├Ârev silindi")
         return
       } catch (error) {
         console.error(error)
-        toast.error("Görev silinemedi (API/DB kontrol edin).")
+        toast.error("G├Ârev silinemedi (API/DB kontrol edin).")
         setConfirmTaskDelete(null)
         return
       }
     }
     setConfirmTaskDelete(taskId)
-    toast("Silmek için tekrar tıkla", { position: "top-right" })
+    toast("Silmek i├ğin tekrar t─▒kla", { position: "top-right" })
   }
   const handleTaskDragStart = (event, taskId) => {
     event.dataTransfer.effectAllowed = "move"
@@ -1220,7 +1220,7 @@ export default function useAppData() {
       }
 
       const data = await res.json()
-      const token = String(data?.token ? "").trim()
+      const token = String(data?.token ?? "").trim()
       if (!token) {
         setAuthError("Oturum acilamadi")
         return
@@ -1233,7 +1233,7 @@ export default function useAppData() {
       }
       setAuthToken(token)
       setIsAuthed(true)
-      setActiveUser(data?.user ? null)
+      setActiveUser(data?.user ?? null)
       setAuthUsername("")
       setAuthPassword("")
     } catch (error) {
@@ -1263,8 +1263,8 @@ export default function useAppData() {
 
   const handleRoleEditStart = (role) => {
     setRoleDraft({
-      id: role?.id ? null,
-      name: role?.name ? "",
+      id: role?.id ?? null,
+      name: role?.name ?? "",
       permissions: Array.isArray(role?.permissions) ? role.permissions : [],
     })
   }
@@ -1286,7 +1286,7 @@ export default function useAppData() {
   const handleRoleSave = async () => {
     const name = roleDraft.name.trim()
     if (!name) {
-      toast.error("Rol adı gerekli.")
+      toast.error("Rol adi gerekli.")
       return
     }
     try {
@@ -1332,8 +1332,8 @@ export default function useAppData() {
 
   const handleUserEditStart = (user) => {
     setUserDraft({
-      id: user?.id ? null,
-      username: user?.username ? "",
+      id: user?.id ?? null,
+      username: user?.username ?? "",
       password: "",
       roleId: user?.role?.id ? String(user.role.id) : "",
     })
@@ -1347,17 +1347,17 @@ export default function useAppData() {
   const handleUserSave = async () => {
     const username = userDraft.username.trim()
     if (!username) {
-      toast.error("Kullanıcı adı gerekli.")
+      toast.error("Kullanici adi gerekli.")
       return
     }
     if (!userDraft.id && !userDraft.password.trim()) {
-      toast.error("Şifre gerekli.")
+      toast.error("Sifre gerekli.")
       return
     }
 
     const roleId = userDraft.roleId ? Number(userDraft.roleId) : null
     if (userDraft.roleId && !Number.isFinite(roleId)) {
-      toast.error("Rol seçimi hatalı.")
+      toast.error("Rol secimi hatali.")
       return
     }
 
@@ -1385,7 +1385,7 @@ export default function useAppData() {
       toast.success(userDraft.id ? "Kullanici guncellendi" : "Kullanici eklendi")
     } catch (error) {
       console.error(error)
-      toast.error("Kullanıcı kaydedilemedi (API/DB kontrol edin).")
+      toast.error("Kullanici kaydedilemedi (API/DB kontrol edin).")
     }
   }
 
@@ -1396,11 +1396,11 @@ export default function useAppData() {
         if (!res.ok && res.status !== 204) throw new Error("user_delete_failed")
         setUsers((prev) => prev.filter((user) => user.id !== userId))
         setConfirmUserDelete(null)
-        toast.success("Kullanıcı silindi")
+        toast.success("Kullanici silindi")
         return
       } catch (error) {
         console.error(error)
-        toast.error("Kullanıcı silinemedi (API/DB kontrol edin).")
+        toast.error("Kullanici silinemedi (API/DB kontrol edin).")
         setConfirmUserDelete(null)
         return
       }
@@ -1478,11 +1478,11 @@ export default function useAppData() {
         const res = await apiFetch("/api/problems", { signal })
         if (!res.ok) throw new Error("api_error")
         const data = await res.json()
-        setProblems(data ? [])
+        setProblems(data ?? [])
       } catch (error) {
         if (error?.name === "AbortError") return
         setProblems(initialProblems)
-        toast.error("Problem listesi alınamadı (API/DB kontrol edin)")
+        toast.error("Problem listesi al─▒namad─▒ (API/DB kontrol edin)")
       } finally {
         setIsProblemsLoading(false)
       }
@@ -1511,11 +1511,11 @@ export default function useAppData() {
         const res = await apiFetch("/api/products", { signal })
         if (!res.ok) throw new Error("api_error")
         const data = await res.json()
-        setProducts(data ? [])
+        setProducts(data ?? [])
       } catch (error) {
         if (error?.name === "AbortError") return
         setProducts(initialProducts)
-        toast.error("Stok listesi alınamadı (API/DB kontrol edin)")
+        toast.error("Stok listesi al─▒namad─▒ (API/DB kontrol edin)")
       } finally {
         setIsProductsLoading(false)
       }
@@ -1563,13 +1563,13 @@ export default function useAppData() {
         const serverCategories = await catsRes.json()
         const serverTemplates = await templatesRes.json()
 
-        const safeCategories = Array.from(new Set(["Genel", ...(serverCategories ? [])]))
+        const safeCategories = Array.from(new Set(["Genel", ...(serverCategories ?? [])]))
         setCategories(safeCategories)
-        setTemplates(serverTemplates ? [])
+        setTemplates(serverTemplates ?? [])
 
         setSelectedTemplate((prev) => {
-          if (prev && (serverTemplates ? []).some((tpl) => tpl.label === prev)) return prev
-          return serverTemplates?.[0]?.label ? null
+          if (prev && (serverTemplates ?? []).some((tpl) => tpl.label === prev)) return prev
+          return serverTemplates?.[0]?.label ?? null
         })
         setSelectedCategory((prev) => {
           if (prev && safeCategories.includes(prev)) return prev
@@ -1579,9 +1579,9 @@ export default function useAppData() {
         if (error?.name === "AbortError") return
         setCategories(fallbackCategories)
         setTemplates(fallbackTemplates)
-        setSelectedTemplate(fallbackTemplates[0]?.label ? null)
-        setSelectedCategory(fallbackTemplates[0]?.category ? "Genel")
-        toast.error("Sunucuya bağlanılamadı. (API/DB kontrol edin)")
+        setSelectedTemplate(fallbackTemplates[0]?.label ?? null)
+        setSelectedCategory(fallbackTemplates[0]?.category ?? "Genel")
+        toast.error("Sunucuya ba─şlan─▒lamad─▒. (API/DB kontrol edin)")
       } finally {
         const elapsed = Date.now() - startedAt
         const delay = Math.max(0, 600 - elapsed)
@@ -1622,7 +1622,7 @@ export default function useAppData() {
       if (products.length === 0) return {}
       const next = {}
       products.forEach((product) => {
-        next[product.id] = prev[product.id] ? false
+        next[product.id] = prev[product.id] ?? false
       })
       return next
     })
@@ -1651,7 +1651,7 @@ export default function useAppData() {
     if (tpl && options.shouldCopy) {
       try {
         await navigator.clipboard.writeText(tpl.value)
-        toast.success("Şablon kopyalandı", { duration: 1600, position: "top-right" })
+        toast.success("┼Şablon kopyaland─▒", { duration: 1600, position: "top-right" })
         toast(
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200">
@@ -1663,7 +1663,7 @@ export default function useAppData() {
         )
       } catch (error) {
         console.error("Copy failed", error)
-        toast.error("Kopyalanamadı", { duration: 1600, position: "top-right" })
+        toast.error("Kopyalanamad─▒", { duration: 1600, position: "top-right" })
       }
     }
   }
@@ -1683,7 +1683,7 @@ export default function useAppData() {
     if (!activeTemplate || showLoading) return
     const nextValue = activeTemplateDraft.trim()
     if (!nextValue) {
-      toast.error("Mesaj boş olamaz.")
+      toast.error("Mesaj bo┼ş olamaz.")
       return
     }
     if ((activeTemplate.value || "").trim() === nextValue) {
@@ -1709,10 +1709,10 @@ export default function useAppData() {
       }
       setActiveTemplateDraft(nextValue)
       setIsEditingActiveTemplate(false)
-      toast.success("Şablon güncellendi")
+      toast.success("┼Şablon g├╝ncellendi")
     } catch (error) {
       console.error(error)
-      toast.error("Şablon güncellenemedi (API/DB kontrol edin).")
+      toast.error("┼Şablon g├╝ncellenemedi (API/DB kontrol edin).")
     } finally {
       setIsTemplateSaving(false)
     }
@@ -1739,7 +1739,7 @@ export default function useAppData() {
       })
 
       if (res.status === 409) {
-        toast("Var olan şablon aktif edildi", { position: "top-right" })
+        toast("Var olan ┼şablon aktif edildi", { position: "top-right" })
         setSelectedTemplate(safeTitle)
         setSelectedCategory(safeCategory)
         return
@@ -1754,7 +1754,7 @@ export default function useAppData() {
       }
       setSelectedTemplate(created.label)
       setSelectedCategory(created.category || safeCategory)
-      toast.success("Yeni şablon eklendi")
+      toast.success("Yeni ┼şablon eklendi")
     } catch (error) {
       console.error(error)
       toast.error("Kaydedilemedi (API/DB kontrol edin).")
@@ -1763,13 +1763,13 @@ export default function useAppData() {
 
   const handleDeleteTemplate = async (targetLabel = selectedTemplate) => {
     if (templates.length <= 1) {
-      toast.error("En az bir şablon kalmalı.")
+      toast.error("En az bir ┼şablon kalmal─▒.")
       return
     }
     const target = templates.find((tpl) => tpl.label === targetLabel)
     const targetId = target?.id
     if (!targetId) {
-      toast.error("Silinecek şablon bulunamadı.")
+      toast.error("Silinecek ┼şablon bulunamad─▒.")
       return
     }
 
@@ -1780,7 +1780,7 @@ export default function useAppData() {
       const nextTemplates = templates.filter((tpl) => tpl.label !== targetLabel)
       const fallback = nextTemplates[0]
       setTemplates(nextTemplates)
-      const nextSelected = selectedTemplate === targetLabel ? fallback?.label ? selectedTemplate : selectedTemplate
+      const nextSelected = selectedTemplate === targetLabel ? fallback?.label ?? selectedTemplate : selectedTemplate
       if (nextSelected) {
         setSelectedTemplate(nextSelected)
         const nextTpl = nextTemplates.find((tpl) => tpl.label === nextSelected)
@@ -1788,7 +1788,7 @@ export default function useAppData() {
           setSelectedCategory(nextTpl.category || "Genel")
         }
       }
-      toast.success("Şablon silindi")
+      toast.success("┼Şablon silindi")
     } catch (error) {
       console.error(error)
       toast.error("Silinemedi (API/DB kontrol edin).")
@@ -1802,7 +1802,7 @@ export default function useAppData() {
       return
     }
     setConfirmTarget(targetLabel)
-    toast("Silmek için tekrar tıkla", { position: "top-right" })
+    toast("Silmek i├ğin tekrar t─▒kla", { position: "top-right" })
   }
 
   const handleCategoryAdd = async () => {
@@ -1866,7 +1866,7 @@ export default function useAppData() {
       return
     }
     setConfirmCategoryTarget(cat)
-    toast("Silmek için tekrar tıkla", { position: "top-right" })
+    toast("Silmek i├ğin tekrar t─▒kla", { position: "top-right" })
   }
 
   const updateListById = (listId, updater) => {
@@ -1934,7 +1934,7 @@ export default function useAppData() {
   const handleListCreate = async () => {
     const name = listName.trim()
     if (!name) {
-      toast.error("Liste adı girin.")
+      toast.error("Liste ad─▒ girin.")
       return
     }
     const rows = createEmptySheet(DEFAULT_LIST_ROWS, DEFAULT_LIST_COLS)
@@ -1949,10 +1949,10 @@ export default function useAppData() {
       setLists((prev) => [created, ...prev])
       setActiveListId(created.id)
       setListName("")
-      toast.success("Liste oluşturuldu")
+      toast.success("Liste olu┼şturuldu")
     } catch (error) {
       console.error(error)
-      toast.error("Liste oluşturulamadı (API/DB kontrol edin).")
+      toast.error("Liste olu┼şturulamad─▒ (API/DB kontrol edin).")
     }
   }
 
@@ -1960,12 +1960,12 @@ export default function useAppData() {
     if (!activeList) return
     const name = listRenameDraft.trim()
     if (!name) {
-      toast.error("Liste adı boş olamaz.")
+      toast.error("Liste ad─▒ bo┼ş olamaz.")
       return
     }
     if (name === activeList.name) return
     updateListById(activeList.id, (list) => ({ ...list, name }))
-    toast.success("Liste adı güncellendi")
+    toast.success("Liste ad─▒ g├╝ncellendi")
   }
 
   const handleListDelete = async (listId) => {
@@ -2029,7 +2029,7 @@ export default function useAppData() {
     }
     grid.forEach((gridRow, rowOffset) => {
       const targetRowIndex = rowIndex + rowOffset
-      const row = rows[targetRowIndex] ? []
+      const row = rows[targetRowIndex] ?? []
       const nextRow = [...row]
       const requiredCols = colIndex + gridRow.length
       while (nextRow.length < requiredCols) {
@@ -2103,7 +2103,7 @@ export default function useAppData() {
     )
     if (selected.length === 0) return
     if (selected.length >= activeListRows.length) {
-      toast.error("En az bir satır kalmalı.")
+      toast.error("En az bir satir kalmali.")
       return
     }
     const selectedSet = new Set(selected)
@@ -2123,7 +2123,7 @@ export default function useAppData() {
     const selected = Array.from(selectedListCols).filter((index) => index >= 0 && index < colCount)
     if (selected.length === 0) return
     if (selected.length >= colCount) {
-      toast.error("En az bir sütun kalmalı.")
+      toast.error("En az bir sutun kalmali.")
       return
     }
     const selectedSet = new Set(selected)
@@ -2181,7 +2181,7 @@ export default function useAppData() {
     const fallbackIndex = activeList.rows.length - 1
     const targetRow = Number.isFinite(rowIndex)
       ? rowIndex
-      : selectedListCell.row ? fallbackIndex
+      : selectedListCell.row ?? fallbackIndex
     if (activeList.rows.length <= 1 || targetRow < 0) return
     updateListById(activeList.id, (list) => {
       const rows = list.rows.filter((_, index) => index !== targetRow)
@@ -2197,7 +2197,7 @@ export default function useAppData() {
     if (!activeList) return
     const colCount = getListColumnCount(activeList.rows)
     const fallbackIndex = colCount - 1
-    const targetCol = Number.isFinite(colIndex) ? colIndex : selectedListCell.col ? fallbackIndex
+    const targetCol = Number.isFinite(colIndex) ? colIndex : selectedListCell.col ?? fallbackIndex
     if (colCount <= 1 || targetCol < 0) return
     updateListById(activeList.id, (list) => {
       const rows = list.rows.map((row) => {
@@ -2329,7 +2329,7 @@ export default function useAppData() {
     const name = productForm.name.trim()
     const deliveryTemplate = productForm.deliveryTemplate.trim()
     if (!name) {
-      toast.error("Ürün ismi boş olamaz.")
+      toast.error("├£r├╝n ismi bo┼ş olamaz.")
       return
     }
     const deliveryMessage =
@@ -2351,10 +2351,10 @@ export default function useAppData() {
       setProducts((prev) => [created, ...prev])
       setProductForm({ name: "", deliveryTemplate: "" })
       setStockForm((prev) => ({ ...prev, productId: created.id }))
-      toast.success("Ürün eklendi")
+      toast.success("├£r├╝n eklendi")
     } catch (error) {
       console.error(error)
-      toast.error("Ürün eklenemedi (API/DB kontrol edin).")
+      toast.error("├£r├╝n eklenemedi (API/DB kontrol edin).")
     }
   }
 
@@ -2363,11 +2363,11 @@ export default function useAppData() {
     const normalizedCode = stockForm.code.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
     const codes = normalizedCode.split("\n").map((line) => line.trim()).filter(Boolean)
     if (!productId) {
-      toast.error("Ürün seçin.")
+      toast.error("├£r├╝n se├ğin.")
       return
     }
     if (codes.length === 0) {
-      toast.error("Anahtar kodu boş olamaz.")
+      toast.error("Anahtar kodu bo┼ş olamaz.")
       return
     }
 
@@ -2409,11 +2409,11 @@ export default function useAppData() {
     const normalized = stockModalDraft.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
     const codes = normalized.split("\n").map((line) => line.trim()).filter(Boolean)
     if (!productId) {
-      toast.error("Ürün seçin.")
+      toast.error("├£r├╝n se├ğin.")
       return
     }
     if (codes.length === 0) {
-      toast.error("Anahtar kodu boş olamaz.")
+      toast.error("Anahtar kodu bo┼ş olamaz.")
       return
     }
 
@@ -2447,12 +2447,12 @@ export default function useAppData() {
     const rawCount = bulkCount[productId]
     const count = Math.max(
       1,
-      Number(rawCount ? availableStocks.length) || availableStocks.length,
+      Number(rawCount ?? availableStocks.length) || availableStocks.length,
     )
     const codes = availableStocks.slice(0, count).map((stk) => stk.code)
     const removed = availableStocks.slice(0, count)
     if (codes.length === 0) {
-      toast.error("Bu üründe kopyalanacak stok yok.")
+      toast.error("Bu ├╝r├╝nde kopyalanacak stok yok.")
       return
     }
 
@@ -2476,7 +2476,7 @@ export default function useAppData() {
             : p,
         ),
       )
-      toast.success(`${codes.length} stok kopyalandı ve silindi`, { duration: 1800, position: "top-right" })
+      toast.success(`${codes.length} stok kopyaland─▒ ve silindi`, { duration: 1800, position: "top-right" })
     } catch (error) {
       console.error(error)
       toast.error("Stoklar silinemedi (API/DB kontrol edin).")
@@ -2504,7 +2504,7 @@ export default function useAppData() {
           return next
         })
         setConfirmProductTarget(null)
-        toast.success("Ürün ve stokları silindi")
+        toast.success("├£r├╝n ve stoklar─▒ silindi")
         return
       } catch (error) {
         console.error(error)
@@ -2514,7 +2514,7 @@ export default function useAppData() {
       }
     }
     setConfirmProductTarget(productId)
-    toast("Silmek için tekrar tıkla", { position: "top-right" })
+    toast("Silmek i├ğin tekrar t─▒kla", { position: "top-right" })
   }
   const handleEditStart = (product) => {
     const matchedTemplate =
@@ -2547,7 +2547,7 @@ export default function useAppData() {
     const name = draft?.name?.trim()
     const selectedTemplate = draft?.deliveryTemplate?.trim()
     if (!name) {
-      toast.error("İsim boş olamaz.")
+      toast.error("─░sim bo┼ş olamaz.")
       return
     }
     const templateValue = selectedTemplate
@@ -2570,15 +2570,15 @@ export default function useAppData() {
       const updated = await res.json()
       setProducts((prev) => prev.map((p) => (p.id === productId ? updated : p)))
       handleEditCancel(productId)
-      toast.success("Ürün güncellendi")
+      toast.success("├£r├╝n g├╝ncellendi")
     } catch (error) {
       console.error(error)
-      toast.error("Ürün güncellenemedi (API/DB kontrol edin).")
+      toast.error("├£r├╝n g├╝ncellenemedi (API/DB kontrol edin).")
     }
   }
 
   const handleStockEditStart = (stockId, code) => {
-    setEditingStocks((prev) => ({ ...prev, [stockId]: code ? "" }))
+    setEditingStocks((prev) => ({ ...prev, [stockId]: code ?? "" }))
   }
 
   const handleStockEditChange = (stockId, value) => {
@@ -2598,14 +2598,14 @@ export default function useAppData() {
     const draft = editingStocks[stockId]
     const code = draft?.trim()
     if (!code) {
-      toast.error("Stok kodu boş olamaz.")
+      toast.error("Stok kodu bo┼ş olamaz.")
       return
     }
 
     const product = products.find((item) => item.id === productId)
     const existing = product?.stocks.find((stk) => stk.id === stockId)
     if (!existing) {
-      toast.error("Stok bulunamadı.")
+      toast.error("Stok bulunamad─▒.")
       handleStockEditCancel(stockId)
       return
     }
@@ -2634,10 +2634,10 @@ export default function useAppData() {
         ),
       )
       handleStockEditCancel(stockId)
-      toast.success("Stok güncellendi")
+      toast.success("Stok g├╝ncellendi")
     } catch (error) {
       console.error(error)
-      toast.error("Stok güncellenemedi (API/DB kontrol edin).")
+      toast.error("Stok g├╝ncellenemedi (API/DB kontrol edin).")
     } finally {
       setSavingStocks((prev) => {
         const next = { ...prev }
@@ -2649,13 +2649,13 @@ export default function useAppData() {
 
   const handleUndoDelete = async () => {
     if (!lastDeleted) {
-      toast.error("Geri alınacak kayıt yok.")
+      toast.error("Geri al─▒nacak kay─▒t yok.")
       return
     }
     const { productId, stocks } = lastDeleted
     const codes = stocks.map((stk) => stk.code).filter(Boolean)
     if (codes.length === 0) {
-      toast.error("Geri alınacak stok bulunamadı.")
+      toast.error("Geri al─▒nacak stok bulunamad─▒.")
       return
     }
 
@@ -2671,25 +2671,25 @@ export default function useAppData() {
         prev.map((p) => (p.id === productId ? { ...p, stocks: updatedStocks } : p)),
       )
       setLastDeleted(null)
-      toast.success("Silinen kayıt geri alındı", { duration: 1400, position: "top-right" })
+      toast.success("Silinen kay─▒t geri al─▒nd─▒", { duration: 1400, position: "top-right" })
     } catch (error) {
       console.error(error)
-      toast.error("Geri alınamadı (API/DB kontrol edin).")
+      toast.error("Geri al─▒namad─▒ (API/DB kontrol edin).")
     }
   }
   const handleProductCopyMessage = async (productId) => {
     const product = products.find((p) => p.id === productId)
     const message = product?.deliveryMessage?.trim()
     if (!message) {
-      toast.error("Bu ürüne teslimat mesajı eklenmemiş.")
+      toast.error("Bu ├╝r├╝ne teslimat mesaj─▒ eklenmemi┼ş.")
       return
     }
     try {
       await navigator.clipboard.writeText(message)
-      toast.success("Teslimat mesajı kopyalandı", { duration: 1500, position: "top-right" })
+      toast.success("Teslimat mesaj─▒ kopyaland─▒", { duration: 1500, position: "top-right" })
     } catch (error) {
       console.error(error)
-      toast.error("Kopyalanamadı")
+      toast.error("Kopyalanamad─▒")
     }
   }
 
@@ -2701,12 +2701,12 @@ export default function useAppData() {
     const rawCount = bulkCount[productId]
     const count = Math.max(
       1,
-      Number(rawCount ? availableStocks.length) || availableStocks.length,
+      Number(rawCount ?? availableStocks.length) || availableStocks.length,
     )
     const selected = availableStocks.slice(0, count)
     const codes = selected.map((stk) => stk.code)
     if (codes.length === 0) {
-      toast.error("Bu üründe kullanılacak stok yok.")
+      toast.error("Bu ├╝r├╝nde kullan─▒lacak stok yok.")
       return
     }
 
@@ -2741,15 +2741,15 @@ export default function useAppData() {
       )
       const failedCount = selected.length - succeededIds.size
       if (failedCount > 0) {
-        toast.error(`${failedCount} stok güncellenemedi`, { duration: 1800, position: "top-right" })
+        toast.error(`${failedCount} stok g├╝ncellenemedi`, { duration: 1800, position: "top-right" })
       }
-      toast.success(`${succeededIds.size} stok kopyalandı ve kullanıldı`, {
+      toast.success(`${succeededIds.size} stok kopyaland─▒ ve kullan─▒ld─▒`, {
         duration: 1800,
         position: "top-right",
       })
     } catch (error) {
       console.error(error)
-      toast.error("Stoklar güncellenemedi (API/DB kontrol edin).")
+      toast.error("Stoklar g├╝ncellenemedi (API/DB kontrol edin).")
     }
   }
 
@@ -2789,7 +2789,7 @@ export default function useAppData() {
           })
         }, 320)
       }
-      toast.success(status === STOCK_STATUS.used ? "Stok kullan?ld?" : "Stok geri al?nd?", {
+      toast.success(status === STOCK_STATUS.used ? "Stok kullan─▒ld─▒" : "Stok geri al─▒nd─▒", {
         duration: 1400,
         position: "top-right",
       })
@@ -2802,7 +2802,7 @@ export default function useAppData() {
           return next
         })
       }
-      toast.error("Stok güncellenemedi (API/DB kontrol edin).")
+      toast.error("Stok g├╝ncellenemedi (API/DB kontrol edin).")
     }
   }
 
@@ -2812,10 +2812,10 @@ export default function useAppData() {
 
     const usedStocks = splitStocks(product.stocks).used
     const rawCount = usedBulkCount[productId]
-    const count = Math.max(1, Number(rawCount ? usedStocks.length) || usedStocks.length)
+    const count = Math.max(1, Number(rawCount ?? usedStocks.length) || usedStocks.length)
     const removed = usedStocks.slice(0, count)
     if (removed.length === 0) {
-      toast.error("Bu üründe silinecek kullanılmamış stok yok.")
+      toast.error("Bu ├╝r├╝nde silinecek kullan─▒lm─▒┼ş stok yok.")
       return
     }
 
@@ -2836,7 +2836,7 @@ export default function useAppData() {
         ),
       )
       setUsedBulkCount((prev) => ({ ...prev, [productId]: "" }))
-      toast.success(`${removed.length} kullanılmamış stok silindi`, {
+      toast.success(`${removed.length} kullan─▒lm─▒┼ş stok silindi`, {
         duration: 1800,
         position: "top-right",
       })
@@ -2913,15 +2913,15 @@ export default function useAppData() {
       }
     }
     setConfirmStockTarget(key)
-    toast("Silmek için tekrar tıkla", { position: "top-right" })
+    toast("Silmek i├ğin tekrar t─▒kla", { position: "top-right" })
   }
   const handleStockCopy = async (code) => {
     try {
       await navigator.clipboard.writeText(code)
-      toast.success("Anahtar kopyalandı", { duration: 1500, position: "top-right" })
+      toast.success("Anahtar kopyaland─▒", { duration: 1500, position: "top-right" })
     } catch (error) {
       console.error(error)
-      toast.error("Kopyalanamadı", { duration: 1500, position: "top-right" })
+      toast.error("Kopyalanamad─▒", { duration: 1500, position: "top-right" })
     }
   }
 
@@ -2929,7 +2929,7 @@ export default function useAppData() {
     const user = problemUsername.trim()
     const issue = problemIssue.trim()
     if (!user || !issue) {
-      toast.error("Kullanıcı adı ve sorun girin.")
+      toast.error("Kullan─▒c─▒ ad─▒ ve sorun girin.")
       return
     }
     try {
@@ -2960,10 +2960,10 @@ export default function useAppData() {
       if (!res.ok) throw new Error("problem_update_failed")
       const updated = await res.json()
       setProblems((prev) => prev.map((p) => (p.id === id ? updated : p)))
-      toast.success("Problem çözüldü")
+      toast.success("Problem ├ğ├Âz├╝ld├╝")
     } catch (error) {
       console.error(error)
-      toast.error("Güncellenemedi (API/DB kontrol edin).")
+      toast.error("G├╝ncellenemedi (API/DB kontrol edin).")
     }
   }
 
@@ -2977,20 +2977,20 @@ export default function useAppData() {
       if (!res.ok) throw new Error("problem_reopen_failed")
       const updated = await res.json()
       setProblems((prev) => prev.map((p) => (p.id === id ? updated : p)))
-      toast.success("Aktif probleme taşındı")
+      toast.success("Aktif probleme ta┼ş─▒nd─▒")
     } catch (error) {
       console.error(error)
-      toast.error("Güncellenemedi (API/DB kontrol edin).")
+      toast.error("G├╝ncellenemedi (API/DB kontrol edin).")
     }
   }
 
   const handleProblemCopy = async (text) => {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success("Kullanıcı adı kopyalandı", { duration: 1400, position: "top-right" })
+      toast.success("Kullan─▒c─▒ ad─▒ kopyaland─▒", { duration: 1400, position: "top-right" })
     } catch (error) {
       console.error(error)
-      toast.error("Kopyalanamadı", { duration: 1600, position: "top-right" })
+      toast.error("Kopyalanamad─▒", { duration: 1600, position: "top-right" })
     }
   }
 
@@ -3011,7 +3011,7 @@ export default function useAppData() {
       }
     }
     setConfirmProblemTarget(id)
-    toast("Silmek için tekrar tıkla", { position: "top-right" })
+    toast("Silmek i├ğin tekrar t─▒kla", { position: "top-right" })
   }
 
   const openProblems = problems.filter((p) => p.status !== "resolved")
