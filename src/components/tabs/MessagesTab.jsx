@@ -53,7 +53,10 @@ function MessagesSkeleton({ panelClass }) {
 export default function MessagesTab({
   isLoading,
   panelClass,
-  canEdit,
+  canCreateTemplates,
+  canEditTemplates,
+  canDeleteTemplates,
+  canManageCategories,
   templateCountText,
   categoryCountText,
   selectedCategoryText,
@@ -90,7 +93,7 @@ export default function MessagesTab({
   setSelectedCategory,
 }) {
   const showLoading = isLoading
-  const showEditMode = Boolean(canEdit && isEditingActiveTemplate)
+  const showEditMode = Boolean(canEditTemplates && isEditingActiveTemplate)
 
   if (showLoading) {
     return <MessagesSkeleton panelClass={panelClass} />
@@ -149,9 +152,10 @@ export default function MessagesTab({
                     </span>
                   </div>
                 </div>
-                {canEdit && (
+                {(canEditTemplates || canDeleteTemplates) && (
                 <div className="flex shrink-0 items-center gap-2">
-                  <button
+                  {canEditTemplates && (
+                    <button
                     type="button"
                     onClick={
                       isEditingActiveTemplate ? handleActiveTemplateEditCancel : handleActiveTemplateEditStart
@@ -164,19 +168,22 @@ export default function MessagesTab({
                     disabled={!activeTemplate || showLoading || isTemplateSaving}
                   >
                     {isEditingActiveTemplate ? "Vazgeç" : "Mesajı düzenle"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteWithConfirm(selectedTemplate)}
-                    className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
-                      confirmTarget === selectedTemplate
-                        ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                        : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
-                    }`}
-                    disabled={!selectedTemplate || isTemplateSaving}
-                  >
-                    {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
-                  </button>
+                    </button>
+                  )}
+                  {canDeleteTemplates && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteWithConfirm(selectedTemplate)}
+                      className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                        confirmTarget === selectedTemplate
+                          ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                          : "border-rose-500/60 bg-rose-500/15 text-rose-100 hover:border-rose-300 hover:bg-rose-500/25"
+                      }`}
+                      disabled={!selectedTemplate || isTemplateSaving}
+                    >
+                      {confirmTarget === selectedTemplate ? "Emin misin?" : "Sil"}
+                    </button>
+                  )}
                 </div>
                 )}
               </div>
@@ -323,9 +330,8 @@ export default function MessagesTab({
         </div>
 
         <div className="space-y-6">
-          {canEdit && (
-            <>
-              <div className={`${panelClass} bg-ink-800/60`}>
+          {canManageCategories && (
+            <div className={`${panelClass} bg-ink-800/60`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
@@ -377,7 +383,9 @@ export default function MessagesTab({
               ))}
             </div>
           </div>
+          )}
 
+          {canCreateTemplates && (
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between">
               <div>
@@ -453,7 +461,6 @@ export default function MessagesTab({
               </div>
             </div>
           </div>
-            </>
           )}
 
           <div className={`${panelClass} bg-ink-800/60`}>

@@ -169,6 +169,16 @@ export default function useAppData() {
   const isLight = theme === "light"
   const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
   const hasPermission = useCallback((permission) => permissions.includes(permission), [permissions])
+  const hasAnyPermission = useCallback(
+    (permissionList) => {
+      if (!Array.isArray(permissionList)) return false
+      return permissionList.some((permission) => permissions.includes(permission))
+    },
+    [permissions],
+  )
+  const canManageRoles = hasAnyPermission([PERMISSIONS.adminRolesManage, PERMISSIONS.adminManage])
+  const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
+  const canManageAdmin = canManageRoles || canManageUsers
   const availableTabs = useMemo(() => {
     const tabs = []
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
@@ -176,10 +186,9 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (permissions.includes(PERMISSIONS.stockView)) tabs.push("stock")
-    if (permissions.includes(PERMISSIONS.adminManage)) tabs.push("admin")
+    if (canManageAdmin) tabs.push("admin")
     return tabs
-  }, [permissions])
-  const canManageAdmin = permissions.includes(PERMISSIONS.adminManage)
+  }, [permissions, canManageAdmin])
 
   useEffect(() => {
     const root = document.documentElement
@@ -345,13 +354,39 @@ export default function useAppData() {
       setIsAdminLoading(true)
       try {
         const [rolesRes, usersRes] = await Promise.all([
-          apiFetch("/api/roles", { signal }),
-          apiFetch("/api/users", { signal }),
+          canManageRoles ? apiFetch("/api/roles", { signal }) : Promise.resolve(null),
+          canManageUsers ? apiFetch("/api/users", { signal }) : Promise.resolve(null),
         ])
-        if (!rolesRes.ok || !usersRes.ok) throw new Error("admin_load_failed")
-        const [rolesData, usersData] = await Promise.all([rolesRes.json(), usersRes.json()])
-        setRoles(Array.isArray(rolesData) ? rolesData : [])
-        setUsers(Array.isArray(usersData) ? usersData : [])
+
+        let hasError = false
+
+        if (rolesRes) {
+          if (!rolesRes.ok) {
+            hasError = true
+            setRoles([])
+          } else {
+            const rolesData = await rolesRes.json()
+            setRoles(Array.isArray(rolesData) ? rolesData : [])
+          }
+        } else {
+          setRoles([])
+        }
+
+        if (usersRes) {
+          if (!usersRes.ok) {
+            hasError = true
+            setUsers([])
+          } else {
+            const usersData = await usersRes.json()
+            setUsers(Array.isArray(usersData) ? usersData : [])
+          }
+        } else {
+          setUsers([])
+        }
+
+        if (hasError) {
+          throw new Error("admin_load_failed")
+        }
       } catch (error) {
         if (error?.name === "AbortError") return
         setRoles([])
@@ -361,7 +396,7 @@ export default function useAppData() {
         setIsAdminLoading(false)
       }
     },
-    [apiFetch],
+    [apiFetch, canManageRoles, canManageUsers],
   )
 
   useEffect(() => {
@@ -3033,6 +3068,7 @@ export default function useAppData() {
     themeToggleButton,
     permissions,
     hasPermission,
+    hasAnyPermission,
     canManageAdmin,
     toastStyle,
     toastIconTheme,

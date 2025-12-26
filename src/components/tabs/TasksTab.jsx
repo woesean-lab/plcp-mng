@@ -55,7 +55,10 @@ function TasksSkeleton({ panelClass }) {
 export default function TasksTab({
   isLoading,
   panelClass,
-  canEdit,
+  canCreateTasks,
+  canUpdateTasks,
+  canDeleteTasks,
+  canProgressTasks,
   taskCountText,
   taskStats,
   taskStatusMeta,
@@ -165,10 +168,10 @@ export default function TasksTab({
                 : Object.entries(taskStatusMeta).map(([status, meta]) => (
                 <div
                   key={status}
-                  onDragOver={canEdit ? (event) => handleTaskDragOver(event, status) : undefined}
-                  onDrop={canEdit ? (event) => handleTaskDrop(event, status) : undefined}
+                  onDragOver={canProgressTasks ? (event) => handleTaskDragOver(event, status) : undefined}
+                  onDrop={canProgressTasks ? (event) => handleTaskDrop(event, status) : undefined}
                   onDragLeave={
-                    canEdit
+                    canProgressTasks
                       ? () =>
                         setTaskDragState((prev) =>
                           prev.overStatus === status ? { ...prev, overStatus: null } : prev,
@@ -200,9 +203,11 @@ export default function TasksTab({
                       return (
                         <div
                           key={task.id}
-                          draggable={canEdit}
-                          onDragStart={canEdit ? (event) => handleTaskDragStart(event, task.id) : undefined}
-                          onDragEnd={canEdit ? handleTaskDragEnd : undefined}
+                          draggable={canProgressTasks}
+                          onDragStart={
+                            canProgressTasks ? (event) => handleTaskDragStart(event, task.id) : undefined
+                          }
+                          onDragEnd={canProgressTasks ? handleTaskDragEnd : undefined}
                           className="flex flex-col gap-3 rounded-xl border border-white/10 bg-ink-800/70 p-3 shadow-inner transition hover:border-accent-300/40 hover:bg-ink-800/80 hover:shadow-glow cursor-grab"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -241,7 +246,7 @@ export default function TasksTab({
                             Bitiş: {getTaskDueLabel(task)}
                           </span>
                           <div className="flex flex-wrap gap-2">
-                            {canEdit && status !== "done" && (
+                            {canProgressTasks && status !== "done" && (
                               <button
                                 type="button"
                                 onClick={() => handleTaskAdvance(task.id)}
@@ -257,8 +262,9 @@ export default function TasksTab({
                             >
                               Detay
                             </button>
-                            {canEdit && (
+                            {(canUpdateTasks || canProgressTasks || canDeleteTasks) && (
                               <>
+                            {canUpdateTasks && (
                             <button
                               type="button"
                               onClick={() => openTaskEdit(task)}
@@ -266,7 +272,8 @@ export default function TasksTab({
                             >
                               Düzenle
                             </button>
-                            {status === "done" && (
+                            )}
+                            {canProgressTasks && status === "done" && (
                               <button
                                 type="button"
                                 onClick={() => handleTaskReopen(task.id)}
@@ -275,6 +282,7 @@ export default function TasksTab({
                                 Geri al
                               </button>
                             )}
+                            {canDeleteTasks && (
                             <button
                               type="button"
                               onClick={() => handleTaskDeleteWithConfirm(task.id)}
@@ -286,6 +294,7 @@ export default function TasksTab({
                             >
                               {confirmTaskDelete === task.id ? "Emin misin?" : "Sil"}
                             </button>
+                            )}
                               </>
                             )}
                           </div>
@@ -300,7 +309,7 @@ export default function TasksTab({
         </div>
 
         <div className="space-y-6">
-          {canEdit && (
+          {canCreateTasks && (
           <div className={`${panelClass} bg-ink-900/70`}>
             <div className="flex items-center justify-between">
               <div>
@@ -487,3 +496,4 @@ export default function TasksTab({
     </div>
   )
 }
+

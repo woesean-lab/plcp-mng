@@ -23,18 +23,48 @@ const authTokenTtlMs =
 const authTokens = new Map()
 const DEFAULT_ADMIN_PERMISSIONS = [
   "messages.view",
-  "messages.edit",
+  "messages.create",
+  "messages.template.edit",
+  "messages.delete",
+  "messages.category.manage",
   "tasks.view",
-  "tasks.edit",
+  "tasks.create",
+  "tasks.update",
+  "tasks.progress",
+  "tasks.delete",
   "problems.view",
-  "problems.manage",
+  "problems.create",
+  "problems.resolve",
+  "problems.delete",
   "lists.view",
-  "lists.edit",
+  "lists.create",
+  "lists.rename",
+  "lists.delete",
+  "lists.cells.edit",
+  "lists.structure.edit",
   "stock.view",
+  "stock.product.create",
+  "stock.product.edit",
+  "stock.product.delete",
+  "stock.product.reorder",
+  "stock.stock.add",
+  "stock.stock.edit",
+  "stock.stock.delete",
+  "stock.stock.status",
+  "stock.stock.copy",
+  "stock.stock.bulk",
+  "admin.roles.manage",
+  "admin.users.manage",
+]
+const LEGACY_PERMISSIONS = [
+  "messages.edit",
+  "tasks.edit",
+  "problems.manage",
+  "lists.edit",
   "stock.manage",
   "admin.manage",
 ]
-const allowedPermissions = new Set(DEFAULT_ADMIN_PERMISSIONS)
+const allowedPermissions = new Set([...DEFAULT_ADMIN_PERMISSIONS, ...LEGACY_PERMISSIONS])
 
 const normalizePermissions = (value) => {
   const rawList = Array.isArray(value) ? value : []
@@ -180,6 +210,16 @@ const requireAuth = async (req, res, next) => {
 const requirePermission = (permission) => (req, res, next) => {
   const permissions = req.user?.role?.permissions || []
   if (!permissions.includes(permission)) {
+    res.status(403).json({ error: "forbidden" })
+    return
+  }
+  next()
+}
+
+const requireAnyPermission = (permissionList) => (req, res, next) => {
+  const permissions = req.user?.role?.permissions || []
+  const required = Array.isArray(permissionList) ? permissionList : [permissionList]
+  if (!required.some((permission) => permissions.includes(permission))) {
     res.status(403).json({ error: "forbidden" })
     return
   }
@@ -366,12 +406,12 @@ app.delete("/api/categories/:name", async (req, res) => {
   res.status(204).end()
 })
 
-app.get("/api/roles", requirePermission("admin.manage"), async (_req, res) => {
+app.get("/api/roles", requireAnyPermission(["admin.roles.manage", "admin.manage"]), async (_req, res) => {
   const roles = await prisma.role.findMany({ orderBy: { name: "asc" } })
   res.json(roles)
 })
 
-app.post("/api/roles", requirePermission("admin.manage"), async (req, res) => {
+app.post("/api/roles", requireAnyPermission(["admin.roles.manage", "admin.manage"]), async (req, res) => {
   const name = String(req.body?.name ?? "").trim()
   if (!name) {
     res.status(400).json({ error: "name is required" })
@@ -391,7 +431,7 @@ app.post("/api/roles", requirePermission("admin.manage"), async (req, res) => {
   }
 })
 
-app.put("/api/roles/:id", requirePermission("admin.manage"), async (req, res) => {
+app.put("/api/roles/:id", requireAnyPermission(["admin.roles.manage", "admin.manage"]), async (req, res) => {
   const id = Number(req.params.id)
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "invalid id" })
@@ -428,7 +468,7 @@ app.put("/api/roles/:id", requirePermission("admin.manage"), async (req, res) =>
   }
 })
 
-app.delete("/api/roles/:id", requirePermission("admin.manage"), async (req, res) => {
+app.delete("/api/roles/:id", requireAnyPermission(["admin.roles.manage", "admin.manage"]), async (req, res) => {
   const id = Number(req.params.id)
   if (!Number.isFinite(id)) {
     res.status(400).json({ error: "invalid id" })
@@ -453,7 +493,7 @@ app.delete("/api/roles/:id", requirePermission("admin.manage"), async (req, res)
   }
 })
 
-app.get("/api/users", requirePermission("admin.manage"), async (_req, res) => {
+app.get("/api/users", requireAnyPermission(["admin.users.manage", "admin.manage"]), async (_req, res) => {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
     include: { role: true },
@@ -461,7 +501,7 @@ app.get("/api/users", requirePermission("admin.manage"), async (_req, res) => {
   res.json(users.map((user) => serializeUser(user)))
 })
 
-app.post("/api/users", requirePermission("admin.manage"), async (req, res) => {
+app.post("/api/users", requireAnyPermission(["admin.users.manage", "admin.manage"]), async (req, res) => {
   const username = String(req.body?.username ?? "").trim()
   const password = String(req.body?.password ?? "")
   const roleIdRaw = req.body?.roleId
@@ -496,7 +536,7 @@ app.post("/api/users", requirePermission("admin.manage"), async (req, res) => {
   }
 })
 
-app.put("/api/users/:id", requirePermission("admin.manage"), async (req, res) => {
+app.put("/api/users/:id", requireAnyPermission(["admin.users.manage", "admin.manage"]), async (req, res) => {
   const id = String(req.params.id ?? "").trim()
   if (!id) {
     res.status(400).json({ error: "invalid id" })
@@ -557,7 +597,7 @@ app.put("/api/users/:id", requirePermission("admin.manage"), async (req, res) =>
   }
 })
 
-app.delete("/api/users/:id", requirePermission("admin.manage"), async (req, res) => {
+app.delete("/api/users/:id", requireAnyPermission(["admin.users.manage", "admin.manage"]), async (req, res) => {
   const id = String(req.params.id ?? "").trim()
   if (!id) {
     res.status(400).json({ error: "invalid id" })

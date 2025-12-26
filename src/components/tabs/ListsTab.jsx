@@ -46,6 +46,7 @@ function ListsSkeleton({ panelClass }) {
               ))}
             </div>
           </div>
+          )}
         </div>
         <div className="space-y-6">
           <div className={`${panelClass} bg-ink-900/70`}>
@@ -66,6 +67,12 @@ function ListsSkeleton({ panelClass }) {
 export default function ListsTab({
   isLoading,
   panelClass,
+  canCreateList,
+  canRenameList,
+  canDeleteList,
+  canEditCells,
+  canEditStructure,
+  canSaveList,
   listCountText,
   activeList,
   activeListId,
@@ -204,6 +211,7 @@ export default function ListsTab({
               )}
             </div>
           </div>
+          )}
 
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -222,7 +230,9 @@ export default function ListsTab({
                     <span className="text-[11px] text-slate-500">Otomatik kaydedilir</span>
                   )}
                 </div>
-                {activeList && (selectedListRows.size > 0 || selectedListCols.size > 0) && (
+                {canEditStructure &&
+                  activeList &&
+                  (selectedListRows.size > 0 || selectedListCols.size > 0) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {selectedListRows.size > 0 && (
                       <button
@@ -244,14 +254,16 @@ export default function ListsTab({
                     )}
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={handleListSaveNow}
-                  disabled={!activeList || isListSaving || isListsTabLoading}
-                  className="inline-flex items-center rounded-[0.5rem] border border-emerald-300/70 bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 shadow-glow transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isListSaving ? "Kaydediliyor" : "Kaydet"}
-                </button>
+                {canSaveList && (
+                  <button
+                    type="button"
+                    onClick={handleListSaveNow}
+                    disabled={!activeList || isListSaving || isListsTabLoading}
+                    className="inline-flex items-center rounded-[0.5rem] border border-emerald-300/70 bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 shadow-glow transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isListSaving ? "Kaydediliyor" : "Kaydet"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -287,9 +299,15 @@ export default function ListsTab({
                           return (
                             <th
                               key={label}
-                              onClick={(event) => handleListColumnSelect(event, colIndex)}
-                              onContextMenu={(event) =>
-                                handleListContextMenu(event, "column", colIndex)
+                              onClick={
+                                canEditStructure
+                                  ? (event) => handleListColumnSelect(event, colIndex)
+                                  : undefined
+                              }
+                              onContextMenu={
+                                canEditStructure
+                                  ? (event) => handleListContextMenu(event, "column", colIndex)
+                                  : undefined
                               }
                               className={`cursor-pointer border border-white/10 px-2 py-1 text-center text-[11px] font-semibold ${
                                 isSelected ? "bg-white/10 text-white" : ""
@@ -305,8 +323,14 @@ export default function ListsTab({
                       {activeListRows.map((row, rowIndex) => (
                         <tr key={`${activeList.id}-${rowIndex}`}>
                           <td
-                            onClick={(event) => handleListRowSelect(event, rowIndex)}
-                            onContextMenu={(event) => handleListContextMenu(event, "row", rowIndex)}
+                            onClick={
+                              canEditStructure ? (event) => handleListRowSelect(event, rowIndex) : undefined
+                            }
+                            onContextMenu={
+                              canEditStructure
+                                ? (event) => handleListContextMenu(event, "row", rowIndex)
+                                : undefined
+                            }
                             className={`cursor-pointer border border-white/10 px-2 py-1 text-center text-[11px] ${
                               selectedListRows.has(rowIndex) || selectedListCell.row === rowIndex
                                 ? "bg-white/10 text-white"
@@ -347,20 +371,27 @@ export default function ListsTab({
                                 <input
                                   value={displayValue}
                                   onFocus={() => {
+                                    if (!canEditCells) return
                                     setEditingListCell({ row: rowIndex, col: colIndex })
                                     setSelectedListCell({ row: rowIndex, col: colIndex })
                                   }}
                                   onBlur={() => {
+                                    if (!canEditCells) return
                                     setEditingListCell((prev) =>
                                       prev.row === rowIndex && prev.col === colIndex
                                         ? { row: null, col: null }
                                         : prev,
                                     )
                                   }}
-                                  onChange={(e) =>
+                                  onChange={(e) => {
+                                    if (!canEditCells) return
                                     handleListCellChange(rowIndex, colIndex, e.target.value)
-                                  }
-                                  onPaste={(e) => handleListPaste(e, rowIndex, colIndex)}
+                                  }}
+                                  onPaste={(e) => {
+                                    if (!canEditCells) return
+                                    handleListPaste(e, rowIndex, colIndex)
+                                  }}
+                                  readOnly={!canEditCells}
                                   spellCheck={false}
                                   className={`h-8 w-full bg-transparent px-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-accent-400/60 ${cellTextClass}`}
                                 />
@@ -378,6 +409,7 @@ export default function ListsTab({
         </div>
 
         <div className="space-y-6">
+          {canCreateList && (
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between">
               <div>
@@ -418,7 +450,9 @@ export default function ListsTab({
               </button>
             </div>
           </div>
+          )}
 
+          {(canRenameList || canDeleteList) && (
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between">
               <div>
@@ -433,6 +467,7 @@ export default function ListsTab({
             </div>
 
             <div className="mt-4 space-y-3">
+              {canRenameList && (
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-200" htmlFor="list-rename">
                   Liste adı
@@ -453,7 +488,9 @@ export default function ListsTab({
                   className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
+              )}
               <div className="flex flex-wrap gap-3">
+                {canRenameList && (
                 <button
                   type="button"
                   onClick={handleListRename}
@@ -462,6 +499,8 @@ export default function ListsTab({
                 >
                   Güncelle
                 </button>
+                )}
+                {canDeleteList && (
                 <button
                   type="button"
                   onClick={() => {
@@ -482,10 +521,12 @@ export default function ListsTab({
                 >
                   {confirmListDelete === activeList?.id ? "Emin misin?" : "Listeyi sil"}
                 </button>
+                )}
               </div>
             </div>
           </div>
 
+          )}
           <div className={`${panelClass} bg-ink-800/60`}>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">İpuçları</p>
             <ul className="mt-3 space-y-2 text-sm text-slate-300">
@@ -501,7 +542,7 @@ export default function ListsTab({
           </div>
         </div>
       </div>
-      {listContextMenu.open && (
+      {canEditStructure && listContextMenu.open && (
         <div
           className="fixed z-50"
           style={{ left: listContextMenu.x, top: listContextMenu.y }}
@@ -593,3 +634,7 @@ export default function ListsTab({
     </div>
   )
 }
+
+
+
+

@@ -1,7 +1,8 @@
-ï»¿export default function TaskDetailModal({
+export default function TaskDetailModal({
   target,
   onClose,
   onEdit,
+  canEdit,
   taskStatusMeta,
   getTaskDueLabel,
   detailNoteText,
@@ -21,11 +22,12 @@
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-              GÃ¶rev detayÄ±
+              Görev detayý
             </p>
             <p className="text-lg font-semibold text-slate-100">{target.title}</p>
           </div>
           <div className="flex items-center gap-2">
+            {canEdit && (
             <button
               type="button"
               onClick={() => {
@@ -34,8 +36,9 @@
               }}
               className="rounded-lg border border-accent-300/70 bg-accent-500/15 px-3 py-1 text-xs font-semibold text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/25"
             >
-              DÃ¼zenle
+              Düzenle
             </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -53,10 +56,10 @@
             </span>
           )}
           <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
-            Durum: {taskStatusMeta[target.status]?.label || "YapÄ±lacak"}
+            Durum: {taskStatusMeta[target.status]?.label || "Yapýlacak"}
           </span>
           <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
-            BitiÅŸ: {getTaskDueLabel(target)}
+            Bitiþ: {getTaskDueLabel(target)}
           </span>
         </div>
 
@@ -87,3 +90,4 @@
     </div>
   )
 }
+

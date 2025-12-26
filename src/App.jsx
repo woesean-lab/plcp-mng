@@ -28,6 +28,7 @@ function App() {
     logoutButton,
     themeToggleButton,
     hasPermission,
+    hasAnyPermission,
     toastStyle,
     toastIconTheme,
     activeTab,
@@ -267,16 +268,51 @@ function App() {
   } = useAppData()
 
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
-  const canEditMessages = hasPermission(PERMISSIONS.messagesEdit)
+  const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
+  const canEditMessages = hasAnyPermission([PERMISSIONS.messagesTemplateEdit, PERMISSIONS.messagesEdit])
+  const canDeleteMessages = hasAnyPermission([PERMISSIONS.messagesDelete, PERMISSIONS.messagesEdit])
+  const canManageMessageCategories = hasAnyPermission([
+    PERMISSIONS.messagesCategoryManage,
+    PERMISSIONS.messagesEdit,
+  ])
   const canViewTasks = hasPermission(PERMISSIONS.tasksView)
-  const canEditTasks = hasPermission(PERMISSIONS.tasksEdit)
+  const canCreateTasks = hasAnyPermission([PERMISSIONS.tasksCreate, PERMISSIONS.tasksEdit])
+  const canUpdateTasks = hasAnyPermission([PERMISSIONS.tasksUpdate, PERMISSIONS.tasksEdit])
+  const canProgressTasks = hasAnyPermission([PERMISSIONS.tasksProgress, PERMISSIONS.tasksEdit])
+  const canDeleteTasks = hasAnyPermission([PERMISSIONS.tasksDelete, PERMISSIONS.tasksEdit])
   const canViewProblems = hasPermission(PERMISSIONS.problemsView)
-  const canManageProblems = hasPermission(PERMISSIONS.problemsManage)
+  const canCreateProblems = hasAnyPermission([PERMISSIONS.problemsCreate, PERMISSIONS.problemsManage])
+  const canResolveProblems = hasAnyPermission([PERMISSIONS.problemsResolve, PERMISSIONS.problemsManage])
+  const canDeleteProblems = hasAnyPermission([PERMISSIONS.problemsDelete, PERMISSIONS.problemsManage])
   const canViewLists = hasPermission(PERMISSIONS.listsView)
-  const canEditLists = hasPermission(PERMISSIONS.listsEdit)
+  const canCreateLists = hasAnyPermission([PERMISSIONS.listsCreate, PERMISSIONS.listsEdit])
+  const canRenameLists = hasAnyPermission([PERMISSIONS.listsRename, PERMISSIONS.listsEdit])
+  const canDeleteLists = hasAnyPermission([PERMISSIONS.listsDelete, PERMISSIONS.listsEdit])
+  const canEditListCells = hasAnyPermission([PERMISSIONS.listsCellsEdit, PERMISSIONS.listsEdit])
+  const canEditListStructure = hasAnyPermission([
+    PERMISSIONS.listsStructureEdit,
+    PERMISSIONS.listsEdit,
+  ])
   const canViewStock = hasPermission(PERMISSIONS.stockView)
-  const canManageStock = hasPermission(PERMISSIONS.stockManage)
-  const canViewAdmin = hasPermission(PERMISSIONS.adminManage)
+  const canCreateProducts = hasAnyPermission([PERMISSIONS.stockProductCreate, PERMISSIONS.stockManage])
+  const canEditProducts = hasAnyPermission([PERMISSIONS.stockProductEdit, PERMISSIONS.stockManage])
+  const canDeleteProducts = hasAnyPermission([PERMISSIONS.stockProductDelete, PERMISSIONS.stockManage])
+  const canReorderProducts = hasAnyPermission([
+    PERMISSIONS.stockProductReorder,
+    PERMISSIONS.stockManage,
+  ])
+  const canAddStocks = hasAnyPermission([PERMISSIONS.stockStockAdd, PERMISSIONS.stockManage])
+  const canEditStocks = hasAnyPermission([PERMISSIONS.stockStockEdit, PERMISSIONS.stockManage])
+  const canDeleteStocks = hasAnyPermission([PERMISSIONS.stockStockDelete, PERMISSIONS.stockManage])
+  const canChangeStockStatus = hasAnyPermission([
+    PERMISSIONS.stockStockStatus,
+    PERMISSIONS.stockManage,
+  ])
+  const canCopyStocks = hasAnyPermission([PERMISSIONS.stockStockCopy, PERMISSIONS.stockManage])
+  const canBulkStocks = hasAnyPermission([PERMISSIONS.stockStockBulk, PERMISSIONS.stockManage])
+  const canManageRoles = hasAnyPermission([PERMISSIONS.adminRolesManage, PERMISSIONS.adminManage])
+  const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
+  const canViewAdmin = canManageRoles || canManageUsers
   if (isAuthChecking) {
     return null
   }
@@ -458,7 +494,10 @@ function App() {
           <MessagesTab
             isLoading={showLoading}
             panelClass={panelClass}
-            canEdit={canEditMessages}
+            canCreateTemplates={canCreateMessages}
+            canEditTemplates={canEditMessages}
+            canDeleteTemplates={canDeleteMessages}
+            canManageCategories={canManageMessageCategories}
             templateCountText={templateCountText}
             categoryCountText={categoryCountText}
             selectedCategoryText={selectedCategoryText}
@@ -500,7 +539,10 @@ function App() {
           <TasksTab
             isLoading={isTasksTabLoading}
             panelClass={panelClass}
-            canEdit={canEditTasks}
+            canCreateTasks={canCreateTasks}
+            canUpdateTasks={canUpdateTasks}
+            canProgressTasks={canProgressTasks}
+            canDeleteTasks={canDeleteTasks}
             taskCountText={taskCountText}
             taskStats={taskStats}
             taskStatusMeta={taskStatusMeta}
@@ -537,7 +579,12 @@ function App() {
           <ListsTab
             isLoading={isListsTabLoading}
             panelClass={panelClass}
-            canEdit={canEditLists}
+            canCreateList={canCreateLists}
+            canRenameList={canRenameLists}
+            canDeleteList={canDeleteLists}
+            canEditCells={canEditListCells}
+            canEditStructure={canEditListStructure}
+            canSaveList={canEditListCells}
             listCountText={listCountText}
             activeList={activeList}
             activeListId={activeListId}
@@ -590,7 +637,16 @@ function App() {
           <StockTab
             isLoading={isStockTabLoading}
             panelClass={panelClass}
-            canManage={canManageStock}
+            canCreateProducts={canCreateProducts}
+            canEditProducts={canEditProducts}
+            canDeleteProducts={canDeleteProducts}
+            canReorderProducts={canReorderProducts}
+            canAddStocks={canAddStocks}
+            canEditStocks={canEditStocks}
+            canDeleteStocks={canDeleteStocks}
+            canChangeStockStatus={canChangeStockStatus}
+            canCopyStocks={canCopyStocks}
+            canBulkStocks={canBulkStocks}
             stockSummary={stockSummary}
             products={products}
             productSearch={productSearch}
@@ -652,7 +708,9 @@ function App() {
           <ProblemsTab
             isLoading={isProblemsTabLoading}
             panelClass={panelClass}
-            canManage={canManageProblems}
+            canCreate={canCreateProblems}
+            canResolve={canResolveProblems}
+            canDelete={canDeleteProblems}
             openProblems={openProblems}
             resolvedProblems={resolvedProblems}
             problems={problems}
@@ -673,6 +731,8 @@ function App() {
           <AdminTab
             isLoading={isAdminTabLoading}
             panelClass={panelClass}
+            canManageRoles={canManageRoles}
+            canManageUsers={canManageUsers}
             activeUser={activeUser}
             roles={roles}
             users={users}
@@ -734,6 +794,7 @@ function App() {
           target={taskDetailTarget}
           onClose={closeTaskDetail}
           onEdit={openTaskEdit}
+          canEdit={canUpdateTasks}
           taskStatusMeta={taskStatusMeta}
           getTaskDueLabel={getTaskDueLabel}
           detailNoteText={detailNoteText}

@@ -49,7 +49,9 @@ function ProblemsSkeleton({ panelClass }) {
 export default function ProblemsTab({
   isLoading,
   panelClass,
-  canManage,
+  canCreate,
+  canResolve,
+  canDelete,
   openProblems,
   resolvedProblems,
   problems,
@@ -154,8 +156,9 @@ export default function ProblemsTab({
                         {pb.issue}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {canManage && (
+                        {(canResolve || canDelete) && (
                           <>
+                        {canResolve && (
                         <button
                           type="button"
                           onClick={() => handleProblemResolve(pb.id)}
@@ -163,6 +166,8 @@ export default function ProblemsTab({
                         >
                           Çözüldü
                         </button>
+                        )}
+                        {canDelete && (
                         <button
                           type="button"
                           onClick={() => handleProblemDeleteWithConfirm(pb.id)}
@@ -174,6 +179,7 @@ export default function ProblemsTab({
                         >
                           {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
                         </button>
+                        )}
                           </>
                         )}
                       </div>
@@ -238,8 +244,9 @@ export default function ProblemsTab({
                         {pb.issue}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {canManage && (
+                        {(canResolve || canDelete) && (
                           <>
+                        {canResolve && (
                         <button
                           type="button"
                           onClick={() => handleProblemReopen(pb.id)}
@@ -247,6 +254,8 @@ export default function ProblemsTab({
                         >
                           Çözülmedi
                         </button>
+                        )}
+                        {canDelete && (
                         <button
                           type="button"
                           onClick={() => handleProblemDeleteWithConfirm(pb.id)}
@@ -258,6 +267,7 @@ export default function ProblemsTab({
                         >
                           {confirmProblemTarget === pb.id ? "Emin misin?" : "Sil"}
                         </button>
+                        )}
                           </>
                         )}
                       </div>
@@ -270,7 +280,7 @@ export default function ProblemsTab({
         </div>
 
         <div className="space-y-6">
-          {canManage && (
+          {canCreate && (
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between">
               <div>
@@ -338,3 +348,4 @@ export default function ProblemsTab({
     </div>
   )
 }
+

@@ -25,6 +25,8 @@ function AdminSkeleton({ panelClass }) {
 export default function AdminTab({
   isLoading,
   panelClass,
+  canManageRoles,
+  canManageUsers,
   activeUser,
   roles,
   users,
@@ -65,17 +67,22 @@ export default function AdminTab({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Roller: {roles.length}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Kullanicilar: {users.length}
-            </span>
+            {canManageRoles && (
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                Roller: {roles.length}
+              </span>
+            )}
+            {canManageUsers && (
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                Kullanicilar: {users.length}
+              </span>
+            )}
           </div>
         </div>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {canManageRoles && (
         <div className="space-y-6">
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between">
@@ -196,7 +203,9 @@ export default function AdminTab({
             </div>
           </div>
         </div>
+        )}
 
+        {canManageUsers && (
         <div className="space-y-6">
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between">
@@ -324,6 +333,7 @@ export default function AdminTab({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   )

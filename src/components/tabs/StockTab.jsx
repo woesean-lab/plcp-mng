@@ -58,6 +58,16 @@ function StockSkeleton({ panelClass }) {
 export default function StockTab({
   isLoading,
   panelClass,
+  canCreateProducts,
+  canEditProducts,
+  canDeleteProducts,
+  canReorderProducts,
+  canAddStocks,
+  canEditStocks,
+  canDeleteStocks,
+  canChangeStockStatus,
+  canCopyStocks,
+  canBulkStocks,
   stockSummary,
   products,
   productSearch,
@@ -147,6 +157,7 @@ export default function StockTab({
                     </span>
                   )}
                 </div>
+                )}
               </div>
             </header>
 
@@ -246,15 +257,15 @@ export default function StockTab({
                       return (
                         <div
                         key={product.id}
-                        draggable
-                        onDragStart={(event) => handleDragStart(event, product.id)}
-                        onDragOver={(event) => handleDragOver(event, product.id)}
-                        onDrop={(event) => handleDrop(event, product.id)}
-                        onDragEnd={handleDragEnd}
+                        draggable={canReorderProducts}
+                        onDragStart={canReorderProducts ? (event) => handleDragStart(event, product.id) : undefined}
+                        onDragOver={canReorderProducts ? (event) => handleDragOver(event, product.id) : undefined}
+                        onDrop={canReorderProducts ? (event) => handleDrop(event, product.id) : undefined}
+                        onDragEnd={canReorderProducts ? handleDragEnd : undefined}
                         title="Sürükle ve sırala"
                         className={`rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner transition hover:border-accent-400/60 hover:bg-ink-800/80 hover:shadow-card ${
                           dragState.activeId === product.id ? "opacity-60" : ""
-                        } ${dragState.overId === product.id ? "ring-2 ring-accent-300/60" : ""} cursor-grab`}
+                        } ${dragState.overId === product.id ? "ring-2 ring-accent-300/60" : ""} ${canReorderProducts ? "cursor-grab" : "cursor-default"}`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <button
@@ -298,14 +309,16 @@ export default function StockTab({
                                 Geri al
                               </button>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => openStockModal(product)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300/60 hover:bg-white/10 hover:text-accent-100"
-                              aria-label="Stok ekle"
-                            >
-                              +
-                            </button>
+                            {canAddStocks && (
+                              <button
+                                type="button"
+                                onClick={() => openStockModal(product)}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300/60 hover:bg-white/10 hover:text-accent-100"
+                                aria-label="Stok ekle"
+                              >
+                                +
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => toggleProductOpen(product.id)}
@@ -324,7 +337,8 @@ export default function StockTab({
                         {openProducts[product.id] && (
                           <div className="mt-4 space-y-3">
                             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2 text-xs text-slate-300">
-                              {product.deliveryTemplate?.trim() &&
+                              {canCopyStocks &&
+                                product.deliveryTemplate?.trim() &&
                                 templates.some((tpl) => tpl.label === product.deliveryTemplate) &&
                                 product.deliveryMessage?.trim() && (
                                   <button
@@ -335,7 +349,7 @@ export default function StockTab({
                                     Teslimat mesajını kopyala
                                   </button>
                                 )}
-                              {!editingProduct[product.id] && (
+                              {canEditProducts && !canEditProducts && editingProduct[product.id] && (
                                 <button
                                   type="button"
                                   onClick={() => handleEditStart(product)}
@@ -344,6 +358,7 @@ export default function StockTab({
                                   Düzenle
                                 </button>
                               )}
+                              {canDeleteProducts && (
                               <button
                                 type="button"
                                 onClick={() => handleProductDeleteWithConfirm(product.id)}
@@ -355,8 +370,9 @@ export default function StockTab({
                               >
                                 {confirmProductTarget === product.id ? "Silmek için tekrar tıkla" : "Ürünü sil"}
                               </button>
+                              )}
                             </div>
-                            {editingProduct[product.id] && (
+                            {canEditProducts && editingProduct[product.id] && (
                               <div className="space-y-2 rounded-xl border border-white/10 bg-ink-900/70 p-3">
                                 <div className="grid gap-2 sm:grid-cols-2">
                                   <div className="space-y-1">
@@ -421,6 +437,7 @@ export default function StockTab({
                             )}
                             {availableCount > 0 && (
                               <div className="space-y-3 rounded-2xl border border-white/10 bg-ink-900/60 p-3">
+                                {canBulkStocks && (
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                   <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
                                     Toplu kopyala & sil
@@ -442,6 +459,7 @@ export default function StockTab({
                                       />
                                       <span className="text-[11px] text-slate-500">/ {availableCount}</span>
                                     </div>
+                                    {canCopyStocks && canChangeStockStatus && (
                                     <button
                                       type="button"
                                       onClick={() => handleBulkCopyAndMarkUsed(product.id)}
@@ -449,6 +467,8 @@ export default function StockTab({
                                     >
                                       Kopyala & kullanıldı
                                     </button>
+                                    )}
+                                    {canCopyStocks && canDeleteStocks && (
                                     <button
                                       type="button"
                                       onClick={() => handleBulkCopyAndDelete(product.id)}
@@ -456,8 +476,10 @@ export default function StockTab({
                                     >
                                       Kopyala & sil
                                     </button>
+                                    )}
                                   </div>
                                 </div>
+                                )}
                                 <div className="space-y-2">
                                   {availableStocks.map((stk, idx) => {
                                     const isEditingStock = Object.prototype.hasOwnProperty.call(
@@ -543,6 +565,7 @@ export default function StockTab({
                                             </>
                                           ) : (
                                             <>
+                                              {canCopyStocks && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleStockCopy(stk.code)}
@@ -551,6 +574,8 @@ export default function StockTab({
                                               >
                                                 Kopyala
                                               </button>
+                                              )}
+                                              {canEditStocks && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleStockEditStart(stk.id, stk.code)}
@@ -559,6 +584,8 @@ export default function StockTab({
                                               >
                                                 Düzenle
                                               </button>
+                                              )}
+                                              {canChangeStockStatus && (
                                               <button
                                                 type="button"
                                                 onClick={() =>
@@ -570,6 +597,8 @@ export default function StockTab({
                                               >
                                                 Kullanıldı
                                               </button>
+                                              )}
+                                              {canDeleteStocks && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
@@ -583,6 +612,7 @@ export default function StockTab({
                                               >
                                                 Sil
                                               </button>
+                                              )}
                                             </>
                                           )}
                                         </div>
@@ -599,6 +629,7 @@ export default function StockTab({
                                     Kullanılan stoklar
                                   </span>
                                   <div className="flex flex-wrap items-center gap-2">
+                                    {canBulkStocks && (
                                     <div className="flex items-center gap-2 rounded-full border border-white/10 bg-ink-900 px-2 py-1">
                                       <input
                                         id={`used-bulk-${product.id}`}
@@ -615,6 +646,8 @@ export default function StockTab({
                                       />
                                       <span className="text-[11px] text-slate-500">/ {usedCount}</span>
                                     </div>
+                                    )}
+                                    {canBulkStocks && canDeleteStocks && (
                                     <button
                                       type="button"
                                       onClick={() => handleUsedBulkDelete(product.id)}
@@ -622,6 +655,7 @@ export default function StockTab({
                                     >
                                       Toplu sil
                                     </button>
+                                    )}
                                     <span className="rounded-full border border-amber-300/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-50">
                                       {usedCount} adet
                                     </span>
@@ -710,6 +744,7 @@ export default function StockTab({
                                             </>
                                           ) : (
                                             <>
+                                              {canCopyStocks && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleStockCopy(stk.code)}
@@ -718,6 +753,8 @@ export default function StockTab({
                                               >
                                                 Kopyala
                                               </button>
+                                              )}
+                                              {canEditStocks && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleStockEditStart(stk.id, stk.code)}
@@ -726,6 +763,7 @@ export default function StockTab({
                                               >
                                                 Düzenle
                                               </button>
+                                              )}
                                               <button
                                                 type="button"
                                                 onClick={() =>
@@ -741,6 +779,7 @@ export default function StockTab({
                                               >
                                                 Geri al
                                               </button>
+                                              {canDeleteStocks && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
@@ -754,6 +793,7 @@ export default function StockTab({
                                               >
                                                 Sil
                                               </button>
+                                              )}
                                             </>
                                           )}
                                         </div>
@@ -775,6 +815,7 @@ export default function StockTab({
               </div>
 
               <div className="space-y-6 lg:sticky lg:top-6">
+                {canCreateProducts && (
                 <div className={`${panelClass} relative overflow-hidden bg-ink-900/70`}>
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.12),transparent)]" />
                   <div className="relative">
@@ -841,7 +882,9 @@ export default function StockTab({
                     </div>
                   </div>
                 </div>
+                )}
 
+                {canAddStocks && (
                 <div className={`${panelClass} relative overflow-hidden bg-ink-900/70`}>
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.08),transparent)]" />
                   <div className="relative">
@@ -912,3 +955,9 @@ export default function StockTab({
             </div>
   )
 }
+
+
+
+
+
+
