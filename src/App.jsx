@@ -406,75 +406,78 @@ function App() {
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="sticky top-4 z-30 flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-accent-500/20 via-white/5 to-transparent px-4 py-2">
-            <span className="h-2 w-2 rounded-full bg-accent-400 shadow-glow" />
-            <span className="font-display text-sm font-semibold text-white">Pulcip Manage</span>
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-1.5">
+            <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-accent-500/25 via-white/5 to-transparent px-4 py-2">
+              <span className="h-2 w-2 rounded-full bg-accent-400 shadow-glow" />
+              <span className="font-display text-sm font-semibold text-white">Pulcip Manage</span>
+            </div>
+            <span className="hidden h-7 w-px bg-white/10 sm:block" />
+            {canViewMessages && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("messages")}
+                className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                  activeTab === "messages"
+                    ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                }`}
+              >
+                Mesajlar
+              </button>
+            )}
+            {canViewTasks && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("tasks")}
+                className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                  activeTab === "tasks"
+                    ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                }`}
+              >
+                {"G\u00f6rev"}
+              </button>
+            )}
+            {canViewProblems && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("problems")}
+                className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                  activeTab === "problems"
+                    ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                }`}
+              >
+                {"Problemli M\u00fc\u015fteriler"}
+              </button>
+            )}
+            {canViewLists && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("lists")}
+                className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                  activeTab === "lists"
+                    ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                }`}
+              >
+                Listeler
+              </button>
+            )}
+            {canViewStock && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("stock")}
+                className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                  activeTab === "stock"
+                    ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                }`}
+              >
+                Stok
+              </button>
+            )}
           </div>
-          {canViewMessages && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("messages")}
-              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === "messages"
-                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                  : "bg-white/5 text-slate-200 hover:bg-white/10"
-              }`}
-            >
-              Mesajlar
-            </button>
-          )}
-          {canViewTasks && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("tasks")}
-              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === "tasks"
-                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                  : "bg-white/5 text-slate-200 hover:bg-white/10"
-              }`}
-            >
-              {"G\u00f6rev"}
-            </button>
-          )}
-          {canViewProblems && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("problems")}
-              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === "problems"
-                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                  : "bg-white/5 text-slate-200 hover:bg-white/10"
-              }`}
-            >
-              {"Problemli M\u00fc\u015fteriler"}
-            </button>
-          )}
-          {canViewLists && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("lists")}
-              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === "lists"
-                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                  : "bg-white/5 text-slate-200 hover:bg-white/10"
-              }`}
-            >
-              Listeler
-            </button>
-          )}
-          {canViewStock && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("stock")}
-              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === "stock"
-                  ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                  : "bg-white/5 text-slate-200 hover:bg-white/10"
-              }`}
-            >
-              Stok
-            </button>
-          )}
           <div className="ml-auto flex items-center gap-2">
             {canViewAdmin && (
               <button
