@@ -476,27 +476,13 @@ function App() {
               <button
                 type="button"
                 onClick={() => setActiveTab("admin")}
-                aria-label="Ayarlar"
-                title="Ayarlar"
                 className={`inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                   activeTab === "admin"
                     ? "bg-accent-500/20 text-accent-50 shadow-glow"
                     : "bg-white/5 text-slate-200 hover:bg-white/10"
                 }`}
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="3.2" />
-                  <path d="M19.4 15a7.9 7.9 0 0 0 .1-6l-2.1.3a6.3 6.3 0 0 0-1.2-1.2l.3-2.1a7.9 7.9 0 0 0-6 0l.3 2.1a6.3 6.3 0 0 0-1.2 1.2l-2.1-.3a7.9 7.9 0 0 0 0 6l2.1-.3a6.3 6.3 0 0 0 1.2 1.2l-.3 2.1a7.9 7.9 0 0 0 6 0l-.3-2.1a6.3 6.3 0 0 0 1.2-1.2Z" />
-                </svg>
+                Admin
               </button>
             )}
             {logoutButton}
