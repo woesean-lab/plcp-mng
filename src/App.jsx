@@ -508,6 +508,8 @@ function App() {
   const [productOrder, setProductOrder] = useState([])
   const [dragState, setDragState] = useState({ activeId: null, overId: null })
   const [editingProduct, setEditingProduct] = useState({})
+  const [editingStocks, setEditingStocks] = useState({})
+  const [savingStocks, setSavingStocks] = useState({})
   const [deletingStocks, setDeletingStocks] = useState({})
   const [usingStocks, setUsingStocks] = useState({})
   const [highlightStocks, setHighlightStocks] = useState({})
@@ -2663,6 +2665,77 @@ function App() {
       toast.error("Ürün güncellenemedi (API/DB kontrol edin).")
     }
   }
+
+  const handleStockEditStart = (stockId, code) => {
+    setEditingStocks((prev) => ({ ...prev, [stockId]: code ?? "" }))
+  }
+
+  const handleStockEditChange = (stockId, value) => {
+    setEditingStocks((prev) => ({ ...prev, [stockId]: value }))
+  }
+
+  const handleStockEditCancel = (stockId) => {
+    setEditingStocks((prev) => {
+      const next = { ...prev }
+      delete next[stockId]
+      return next
+    })
+  }
+
+  const handleStockEditSave = async (productId, stockId) => {
+    if (savingStocks[stockId]) return
+    const draft = editingStocks[stockId]
+    const code = draft?.trim()
+    if (!code) {
+      toast.error("Stok kodu boş olamaz.")
+      return
+    }
+
+    const product = products.find((item) => item.id === productId)
+    const existing = product?.stocks.find((stk) => stk.id === stockId)
+    if (!existing) {
+      toast.error("Stok bulunamadı.")
+      handleStockEditCancel(stockId)
+      return
+    }
+    if (existing.code === code) {
+      handleStockEditCancel(stockId)
+      return
+    }
+
+    setSavingStocks((prev) => ({ ...prev, [stockId]: true }))
+    try {
+      const res = await apiFetch(`/api/stocks/${stockId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      })
+      if (!res.ok) throw new Error("stock_update_failed")
+      const updated = await res.json()
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === productId
+            ? {
+              ...item,
+              stocks: item.stocks.map((stk) => (stk.id === stockId ? { ...stk, ...updated } : stk)),
+            }
+            : item,
+        ),
+      )
+      handleStockEditCancel(stockId)
+      toast.success("Stok güncellendi")
+    } catch (error) {
+      console.error(error)
+      toast.error("Stok güncellenemedi (API/DB kontrol edin).")
+    } finally {
+      setSavingStocks((prev) => {
+        const next = { ...prev }
+        delete next[stockId]
+        return next
+      })
+    }
+  }
+
   const handleUndoDelete = async () => {
     if (!lastDeleted) {
       toast.error("Geri alınacak kayıt yok.")
@@ -2903,6 +2976,16 @@ function App() {
             setLastDeleted({ productId, stocks: [removed] })
           }
           setDeletingStocks((prev) => {
+            const next = { ...prev }
+            delete next[stockId]
+            return next
+          })
+          setEditingStocks((prev) => {
+            const next = { ...prev }
+            delete next[stockId]
+            return next
+          })
+          setSavingStocks((prev) => {
             const next = { ...prev }
             delete next[stockId]
             return next
@@ -4726,71 +4809,136 @@ function App() {
                                   </div>
                                 </div>
                                 <div className="space-y-2">
-                                  {availableStocks.map((stk, idx) => (
-                                    <div
-                                      data-no-drag="true"
-                                      key={stk.id}
-                                      className={`group flex flex-col items-start gap-3 rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 transition-all duration-300 hover:border-emerald-200/70 hover:bg-emerald-500/15 cursor-default sm:flex-row sm:items-center ${
-                                        deletingStocks[stk.id] ? "opacity-50 scale-[0.98]" : ""
-                                      } ${
-                                        usingStocks[stk.id] ? "opacity-60 -translate-y-0.5 scale-[0.97]" : ""
-                                      } ${
-                                        highlightStocks[stk.id]
-                                          ? "ring-2 ring-emerald-200/70 shadow-glow"
-                                          : ""
-                                      }`}
-                                      onDragStart={(event) => event.preventDefault()}
-                                      onMouseDown={(event) => {
-                                        event.stopPropagation()
-                                        isStockTextSelectingRef.current = true
-                                      }}
-                                      onMouseUp={() => {
-                                        isStockTextSelectingRef.current = false
-                                      }}
-                                      onMouseLeave={() => {
-                                        isStockTextSelectingRef.current = false
-                                      }}
-                                    >
-                                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-accent-300 group-hover:text-accent-100">
-                                        #{idx + 1}
-                                      </span>
-                                      <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100 group-hover:text-accent-50">
-                                        {stk.code}
-                                      </p>
-                                      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleStockCopy(stk.code)}
-                                          className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
-                                          aria-label="Stoku kopyala"
-                                        >
-                                          Kopyala
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleStockStatusUpdate(product.id, stk.id, STOCK_STATUS.used)
-                                          }
-                                          className="flex h-7 w-full items-center justify-center rounded-md border border-amber-300/60 bg-amber-500/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/20 sm:w-auto"
-                                          aria-label="Stoku kullanıldı yap"
-                                        >
-                                          Kullanıldı
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
-                                          className={`flex h-7 w-full items-center justify-center rounded-md border px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 sm:w-auto ${
-                                            confirmStockTarget === `${product.id}-${stk.id}`
-                                              ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                              : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
-                                          }`}
-                                          aria-label="Stoku sil"
-                                        >
-                                          Sil
-                                        </button>
+                                  {availableStocks.map((stk, idx) => {
+                                    const isEditingStock = Object.prototype.hasOwnProperty.call(
+                                      editingStocks,
+                                      stk.id,
+                                    )
+                                    const isSavingStock = Boolean(savingStocks[stk.id])
+                                    return (
+                                      <div
+                                        data-no-drag="true"
+                                        key={stk.id}
+                                        className={`group flex flex-col items-start gap-3 rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 transition-all duration-300 hover:border-emerald-200/70 hover:bg-emerald-500/15 cursor-default sm:flex-row sm:items-center ${
+                                          deletingStocks[stk.id] ? "opacity-50 scale-[0.98]" : ""
+                                        } ${
+                                          usingStocks[stk.id] ? "opacity-60 -translate-y-0.5 scale-[0.97]" : ""
+                                        } ${
+                                          highlightStocks[stk.id]
+                                            ? "ring-2 ring-emerald-200/70 shadow-glow"
+                                            : ""
+                                        }`}
+                                        onDragStart={(event) => event.preventDefault()}
+                                        onMouseDown={(event) => {
+                                          event.stopPropagation()
+                                          isStockTextSelectingRef.current = true
+                                        }}
+                                        onMouseUp={() => {
+                                          isStockTextSelectingRef.current = false
+                                        }}
+                                        onMouseLeave={() => {
+                                          isStockTextSelectingRef.current = false
+                                        }}
+                                      >
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-accent-300 group-hover:text-accent-100">
+                                          #{idx + 1}
+                                        </span>
+                                        {isEditingStock ? (
+                                          <div className="w-full flex-1">
+                                            <input
+                                              type="text"
+                                              value={editingStocks[stk.id] ?? ""}
+                                              onChange={(event) =>
+                                                handleStockEditChange(stk.id, event.target.value)
+                                              }
+                                              onKeyDown={(event) => {
+                                                if (event.key === "Enter") {
+                                                  event.preventDefault()
+                                                  handleStockEditSave(product.id, stk.id)
+                                                }
+                                                if (event.key === "Escape") {
+                                                  event.preventDefault()
+                                                  handleStockEditCancel(stk.id)
+                                                }
+                                              }}
+                                              disabled={isSavingStock}
+                                              autoFocus
+                                              className="w-full rounded-md border border-white/10 bg-ink-900 px-2.5 py-1.5 font-mono text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                            />
+                                          </div>
+                                        ) : (
+                                          <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100 group-hover:text-accent-50">
+                                            {stk.code}
+                                          </p>
+                                        )}
+                                        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                                          {isEditingStock ? (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockEditSave(product.id, stk.id)}
+                                                disabled={isSavingStock}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                              >
+                                                Kaydet
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockEditCancel(stk.id)}
+                                                disabled={isSavingStock}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                              >
+                                                İptal
+                                              </button>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockCopy(stk.code)}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
+                                                aria-label="Stoku kopyala"
+                                              >
+                                                Kopyala
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockEditStart(stk.id, stk.code)}
+                                                disabled={isSavingStock}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                              >
+                                                Düzenle
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  handleStockStatusUpdate(product.id, stk.id, STOCK_STATUS.used)
+                                                }
+                                                disabled={isSavingStock}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-amber-300/60 bg-amber-500/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/20 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                aria-label="Stoku kullanıldı yap"
+                                              >
+                                                Kullanıldı
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
+                                                disabled={isSavingStock}
+                                                className={`flex h-7 w-full items-center justify-center rounded-md border px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60 ${
+                                                  confirmStockTarget === `${product.id}-${stk.id}`
+                                                    ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                    : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
+                                                }`}
+                                                aria-label="Stoku sil"
+                                              >
+                                                Sil
+                                              </button>
+                                            </>
+                                          )}
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    )
+                                  })}
                                 </div>
                               </div>
                             )}
@@ -4830,69 +4978,138 @@ function App() {
                                   </div>
                                 </div>
                                 <div className="space-y-2">
-                                  {usedStocks.map((stk, idx) => (
-                                    <div
-                                      data-no-drag="true"
-                                      key={stk.id}
-                                      className={`group flex flex-col items-start gap-3 rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 transition-all duration-300 hover:border-rose-200/70 hover:bg-rose-500/15 cursor-default sm:flex-row sm:items-center ${
-                                        deletingStocks[stk.id] ? "opacity-50 scale-[0.98]" : ""
-                                      } ${
-                                        highlightStocks[stk.id]
-                                          ? "ring-2 ring-rose-200/70 shadow-glow"
-                                          : ""
-                                      }`}
-                                      onDragStart={(event) => event.preventDefault()}
-                                      onMouseDown={(event) => {
-                                        event.stopPropagation()
-                                        isStockTextSelectingRef.current = true
-                                      }}
-                                      onMouseUp={() => {
-                                        isStockTextSelectingRef.current = false
-                                      }}
-                                      onMouseLeave={() => {
-                                        isStockTextSelectingRef.current = false
-                                      }}
-                                    >
-                                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-amber-300 group-hover:text-amber-100">
-                                        #{idx + 1}
-                                      </span>
-                                      <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100 group-hover:text-amber-50">
-                                        {stk.code}
-                                      </p>
-                                      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleStockCopy(stk.code)}
-                                          className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
-                                          aria-label="Stoku kopyala"
-                                        >
-                                          Kopyala
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleStockStatusUpdate(product.id, stk.id, STOCK_STATUS.available)
-                                          }
-                                          className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 sm:w-auto"
-                                          aria-label="Stoku geri al"
-                                        >
-                                          Geri al
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
-                                          className={`flex h-7 w-full items-center justify-center rounded-md border px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 sm:w-auto ${
-                                            confirmStockTarget === `${product.id}-${stk.id}`
-                                              ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                              : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
-                                          }`}
-                                          aria-label="Stoku sil"
-                                        >
-                                          Sil
-                                        </button>
+                                  {usedStocks.map((stk, idx) => {
+                                    const isEditingStock = Object.prototype.hasOwnProperty.call(
+                                      editingStocks,
+                                      stk.id,
+                                    )
+                                    const isSavingStock = Boolean(savingStocks[stk.id])
+                                    return (
+                                      <div
+                                        data-no-drag="true"
+                                        key={stk.id}
+                                        className={`group flex flex-col items-start gap-3 rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 transition-all duration-300 hover:border-rose-200/70 hover:bg-rose-500/15 cursor-default sm:flex-row sm:items-center ${
+                                          deletingStocks[stk.id] ? "opacity-50 scale-[0.98]" : ""
+                                        } ${
+                                          highlightStocks[stk.id]
+                                            ? "ring-2 ring-rose-200/70 shadow-glow"
+                                            : ""
+                                        }`}
+                                        onDragStart={(event) => event.preventDefault()}
+                                        onMouseDown={(event) => {
+                                          event.stopPropagation()
+                                          isStockTextSelectingRef.current = true
+                                        }}
+                                        onMouseUp={() => {
+                                          isStockTextSelectingRef.current = false
+                                        }}
+                                        onMouseLeave={() => {
+                                          isStockTextSelectingRef.current = false
+                                        }}
+                                      >
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-amber-300 group-hover:text-amber-100">
+                                          #{idx + 1}
+                                        </span>
+                                        {isEditingStock ? (
+                                          <div className="w-full flex-1">
+                                            <input
+                                              type="text"
+                                              value={editingStocks[stk.id] ?? ""}
+                                              onChange={(event) =>
+                                                handleStockEditChange(stk.id, event.target.value)
+                                              }
+                                              onKeyDown={(event) => {
+                                                if (event.key === "Enter") {
+                                                  event.preventDefault()
+                                                  handleStockEditSave(product.id, stk.id)
+                                                }
+                                                if (event.key === "Escape") {
+                                                  event.preventDefault()
+                                                  handleStockEditCancel(stk.id)
+                                                }
+                                              }}
+                                              disabled={isSavingStock}
+                                              autoFocus
+                                              className="w-full rounded-md border border-white/10 bg-ink-900 px-2.5 py-1.5 font-mono text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                            />
+                                          </div>
+                                        ) : (
+                                          <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100 group-hover:text-amber-50">
+                                            {stk.code}
+                                          </p>
+                                        )}
+                                        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                                          {isEditingStock ? (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockEditSave(product.id, stk.id)}
+                                                disabled={isSavingStock}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                              >
+                                                Kaydet
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockEditCancel(stk.id)}
+                                                disabled={isSavingStock}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                              >
+                                                İptal
+                                              </button>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockCopy(stk.code)}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
+                                                aria-label="Stoku kopyala"
+                                              >
+                                                Kopyala
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockEditStart(stk.id, stk.code)}
+                                                disabled={isSavingStock}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                              >
+                                                Düzenle
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  handleStockStatusUpdate(
+                                                    product.id,
+                                                    stk.id,
+                                                    STOCK_STATUS.available,
+                                                  )
+                                                }
+                                                disabled={isSavingStock}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                aria-label="Stoku geri al"
+                                              >
+                                                Geri al
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleStockDeleteWithConfirm(product.id, stk.id)}
+                                                disabled={isSavingStock}
+                                                className={`flex h-7 w-full items-center justify-center rounded-md border px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60 ${
+                                                  confirmStockTarget === `${product.id}-${stk.id}`
+                                                    ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                    : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
+                                                }`}
+                                                aria-label="Stoku sil"
+                                              >
+                                                Sil
+                                              </button>
+                                            </>
+                                          )}
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    )
+                                  })}
                                 </div>
                               </div>
                             )}
@@ -5725,12 +5942,6 @@ function App() {
 }
 
 export default App
-
-
-
-
-
-
 
 
 

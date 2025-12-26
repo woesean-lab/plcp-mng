@@ -719,21 +719,34 @@ app.put("/api/stocks/:id", async (req, res) => {
   }
 
   const statusRaw = req.body?.status
-  if (statusRaw === undefined) {
-    res.status(400).json({ error: "status is required" })
+  const codeRaw = req.body?.code
+  if (statusRaw === undefined && codeRaw === undefined) {
+    res.status(400).json({ error: "status or code is required" })
     return
   }
 
-  const status = String(statusRaw).trim()
-  if (!allowedStockStatus.has(status)) {
-    res.status(400).json({ error: "invalid status" })
-    return
+  const data = {}
+  if (statusRaw !== undefined) {
+    const status = String(statusRaw).trim()
+    if (!allowedStockStatus.has(status)) {
+      res.status(400).json({ error: "invalid status" })
+      return
+    }
+    data.status = status
+  }
+  if (codeRaw !== undefined) {
+    const code = String(codeRaw).trim()
+    if (!code) {
+      res.status(400).json({ error: "invalid code" })
+      return
+    }
+    data.code = code
   }
 
   try {
     const updated = await prisma.stock.update({
       where: { id },
-      data: { status },
+      data,
     })
     res.json(updated)
   } catch (error) {
