@@ -1,4 +1,4 @@
-# Pulcip Message Copy
+# Pulcip Manage
 
 Ortak mesaj şablonlarını kategorilere göre yönetmek ve tek tıkla panoya kopyalamak için yapılmış küçük bir uygulama.
 

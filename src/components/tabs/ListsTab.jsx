@@ -508,7 +508,7 @@ export default function ListsTab({
                       return
                     }
                     setConfirmListDelete(activeList.id)
-                    toast("Silmek için tekrar tıkla", { position: "top-right" })
+                    toast("Silmek i\u00E7in tekrar t\u0131kla", { position: "top-right" })
                   }}
                   disabled={!activeList}
                   className={`min-w-[140px] rounded-lg border px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition ${
