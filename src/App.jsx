@@ -406,9 +406,12 @@ function App() {
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="sticky top-4 z-30 flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-accent-500/20 via-white/5 to-transparent px-4 py-2">
-            <span className="h-2 w-2 rounded-full bg-accent-400 shadow-glow" />
-            <span className="font-display text-sm font-semibold text-white">Pulcip Manage</span>
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2">
+            <span className="rounded-full border border-accent-400/40 bg-accent-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.34em] text-accent-100">
+              Pulcip
+            </span>
+            <span className="h-6 w-px bg-white/10" />
+            <span className="font-display text-sm font-semibold text-white">Manage</span>
           </div>
           <span className="hidden h-7 w-px bg-white/10 sm:block" />
           {canViewMessages && (
