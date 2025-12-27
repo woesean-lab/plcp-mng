@@ -323,9 +323,17 @@ function App() {
         <div className="mx-auto flex w-full max-w-lg flex-col gap-6">
           <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-ink-900/80 px-4 py-3 shadow-card backdrop-blur">
             <div className="space-y-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-accent-200">
-                Pulcip Manage
-              </span>
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 shadow-inner">
+                <span className="h-6 w-1 rounded-full bg-accent-400/80 shadow-glow" />
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-accent-200">
+                    Pulcip
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-400">
+                    Manage
+                  </span>
+                </div>
+              </div>
               <h1 className="font-display text-2xl font-semibold text-white">Giris paneli</h1>
             </div>
             {themeToggleButton}
