@@ -325,7 +325,7 @@ function App() {
         {isAuthBusy && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/70 px-4 backdrop-blur">
             <div className="rounded-2xl border border-white/10 bg-ink-900/80 px-5 py-4 shadow-card">
-              <LoadingIndicator label="Giri\u015F yap\u0131l\u0131yor" />
+              <LoadingIndicator label="Giriş yapılıyor" />
             </div>
           </div>
         )}
@@ -424,7 +424,7 @@ function App() {
       {isLogoutLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/70 px-4 backdrop-blur">
           <div className="rounded-2xl border border-white/10 bg-ink-900/80 px-5 py-4 shadow-card">
-            <LoadingIndicator label="\u00C7\u0131k\u0131\u015F yap\u0131l\u0131yor" />
+            <LoadingIndicator label="Çıkış yapılıyor" />
           </div>
         </div>
       )}
