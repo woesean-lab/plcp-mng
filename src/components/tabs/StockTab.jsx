@@ -137,7 +137,7 @@ export default function StockTab({
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
                     Stok
                   </span>
-                  <h1 className="font-display text-3xl font-semibold text-white">Dijital Anahtar Stoku</h1>
+                  <h1 className="font-display text-3xl font-semibold text-white">Stok</h1>
                   <p className="max-w-2xl text-sm text-slate-200/80">
                     Anahtarları görsel olarak tut, kopyala, ekle ve sil. Bu bölüm veri tabanına bağlı çalışır.
                   </p>
