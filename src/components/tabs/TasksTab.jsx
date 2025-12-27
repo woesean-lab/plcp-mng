@@ -253,7 +253,7 @@ export default function TasksTab({
                                 onClick={() => handleTaskAdvance(task.id)}
                                 className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
                               >
-                                {status === "todo" ? "BaÅŸlat" : "Tamamla"}
+                                {status === "todo" ? "Ba\u015flat" : "Tamamla"}
                               </button>
                             )}
                             <button
@@ -271,7 +271,7 @@ export default function TasksTab({
                               onClick={() => openTaskEdit(task)}
                               className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
                             >
-                              DÃ¼zenle
+                              {"D\u00fczenle"}
                             </button>
                             )}
                             {canProgressTasks && status === "done" && (
