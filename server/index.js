@@ -723,8 +723,13 @@ app.get(
 
 app.get("/api/tasks", async (req, res) => {
   const username = String(req.user?.username ?? "").trim()
+  const permissions = req.user?.role?.permissions || []
+  const canViewAllTasks =
+    permissions.includes("admin.roles.manage") ||
+    permissions.includes("admin.users.manage") ||
+    permissions.includes("admin.manage")
   const tasks = await prisma.task.findMany({
-    where: username ? { owner: username } : undefined,
+    where: !canViewAllTasks && username ? { owner: username } : undefined,
     orderBy: { createdAt: "desc" },
   })
   res.json(tasks)

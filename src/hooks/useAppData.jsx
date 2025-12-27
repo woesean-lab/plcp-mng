@@ -851,7 +851,8 @@ export default function useAppData() {
         const data = await res.json()
         const normalized = Array.isArray(data) ? data.map(normalizeTask) : []
         const owner = activeUser?.username
-        setTasks(owner ? normalized.filter((task) => task.owner === owner) : normalized)
+        const shouldFilter = !canManageAdmin && owner
+        setTasks(shouldFilter ? normalized.filter((task) => task.owner === owner) : normalized)
         taskLoadErrorRef.current = false
       } catch (error) {
         if (error?.name === "AbortError") return
@@ -861,12 +862,13 @@ export default function useAppData() {
         }
         const fallback = initialTasks.map(normalizeTask)
         const owner = activeUser?.username
-        setTasks(owner ? fallback.filter((task) => task.owner === owner) : fallback)
+        const shouldFilter = !canManageAdmin && owner
+        setTasks(shouldFilter ? fallback.filter((task) => task.owner === owner) : fallback)
       } finally {
         setIsTasksLoading(false)
       }
     },
-    [activeUser, apiFetch],
+    [activeUser, apiFetch, canManageAdmin],
   )
 
   useEffect(() => {
@@ -1122,7 +1124,7 @@ export default function useAppData() {
       const updated = await res.json()
       const normalized = normalizeTask(updated)
       setTasks((prev) => {
-        if (activeUser?.username && normalized.owner !== activeUser.username) {
+        if (!canManageAdmin && activeUser?.username && normalized.owner !== activeUser.username) {
           return prev.filter((task) => task.id !== taskId)
         }
         return prev.map((task) => (task.id === taskId ? normalized : task))
@@ -1171,7 +1173,7 @@ export default function useAppData() {
       if (!res.ok) throw new Error("task_create_failed")
       const created = await res.json()
       const normalized = normalizeTask(created)
-      if (!activeUser?.username || normalized.owner === activeUser.username) {
+      if (canManageAdmin || !activeUser?.username || normalized.owner === activeUser.username) {
         setTasks((prev) => [normalized, ...prev])
       }
       resetTaskForm()
