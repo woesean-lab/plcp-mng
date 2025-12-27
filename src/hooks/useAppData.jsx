@@ -62,6 +62,7 @@ export default function useAppData() {
   const [authPassword, setAuthPassword] = useState("")
   const [authError, setAuthError] = useState("")
   const [isAuthLoading, setIsAuthLoading] = useState(false)
+  const [isLogoutLoading, setIsLogoutLoading] = useState(false)
   const [title, setTitle] = useState("Pulcip Manage")
   const [message, setMessage] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Genel")
@@ -1282,7 +1283,10 @@ export default function useAppData() {
     }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isLogoutLoading) return
+    setIsLogoutLoading(true)
+    await delay(5000)
     setIsAuthed(false)
     setAuthToken("")
     setActiveUser(null)
@@ -1294,6 +1298,7 @@ export default function useAppData() {
     } catch (error) {
       console.warn("Could not clear auth token", error)
     }
+    setIsLogoutLoading(false)
   }
 
   const resetRoleDraft = () => setRoleDraft({ id: null, name: "", permissions: [] })
@@ -2346,9 +2351,14 @@ export default function useAppData() {
     <button
       type="button"
       onClick={handleLogout}
-      className="inline-flex items-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+      disabled={isLogoutLoading}
+      className="inline-flex items-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {"\u00C7\u0131k\u0131\u015F"}
+      {isLogoutLoading ? (
+        <LoadingIndicator label="\u00C7\u0131k\u0131\u015F yap\u0131l\u0131yor" />
+      ) : (
+        "\u00C7\u0131k\u0131\u015F"
+      )}
     </button>
   )
 
