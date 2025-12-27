@@ -1269,7 +1269,7 @@ export default function useAppData() {
         console.warn("Could not persist auth token", error)
       }
       setAuthToken(token)
-      await delay(1700)
+      await delay(4700)
       setIsAuthed(true)
       setActiveUser(data?.user ?? null)
       setAuthUsername("")
