@@ -1286,7 +1286,7 @@ export default function useAppData() {
   const handleLogout = async () => {
     if (isLogoutLoading) return
     setIsLogoutLoading(true)
-    await delay(3000)
+    await delay(1500)
     setIsAuthed(false)
     setAuthToken("")
     setActiveUser(null)
@@ -3318,3 +3318,4 @@ export default function useAppData() {
     handleDetailNoteScroll
   }
 }
+

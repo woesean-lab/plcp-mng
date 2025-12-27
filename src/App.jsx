@@ -1,4 +1,4 @@
-import { Toaster } from "react-hot-toast"
+﻿import { Toaster } from "react-hot-toast"
 import NoteModal from "./components/modals/NoteModal"
 import StockModal from "./components/modals/StockModal"
 import TaskDetailModal from "./components/modals/TaskDetailModal"
@@ -323,9 +323,9 @@ function App() {
     return (
       <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
         {isAuthBusy && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/70 px-4 backdrop-blur">
-            <div className="rounded-2xl border border-white/10 bg-ink-900/90 px-5 py-4 shadow-card">
-              <LoadingIndicator label="Giriş yapılıyor" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/70 px-4 backdrop-blur">
+            <div className="rounded-2xl border border-white/10 bg-ink-900/80 px-5 py-4 shadow-card">
+              <LoadingIndicator label="Giri\u015F yap\u0131l\u0131yor" />
             </div>
           </div>
         )}
@@ -396,7 +396,7 @@ function App() {
                 disabled={isAuthBusy}
                 className="w-full rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isAuthBusy ? "Kontrol ediliyor" : "Giris yap"}
+                Giris yap
               </button>
             </form>
 
@@ -422,8 +422,8 @@ function App() {
   return (
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
       {isLogoutLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/70 px-4 backdrop-blur">
-          <div className="rounded-2xl border border-white/10 bg-ink-900/90 px-5 py-4 shadow-card">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/70 px-4 backdrop-blur">
+          <div className="rounded-2xl border border-white/10 bg-ink-900/80 px-5 py-4 shadow-card">
             <LoadingIndicator label="\u00C7\u0131k\u0131\u015F yap\u0131l\u0131yor" />
           </div>
         </div>
@@ -857,3 +857,4 @@ function App() {
 }
 
 export default App
+
