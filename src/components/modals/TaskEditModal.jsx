@@ -5,6 +5,7 @@
   onSave,
   openNoteModal,
   setDraft,
+  taskUsers,
   taskDueTypeOptions,
   taskRepeatDays,
   normalizeRepeatDays,
@@ -83,16 +84,24 @@
             <label className="text-xs font-semibold text-slate-200" htmlFor="task-edit-owner">
               Sorumlu
             </label>
-            <input
+            <select
               id="task-edit-owner"
-              type="text"
               value={draft.owner}
               onChange={(event) =>
                 setDraft((prev) => (prev ? { ...prev, owner: event.target.value } : prev))
               }
-              placeholder="Örn: Ayşe"
-              className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-            />
+              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+            >
+              <option value="" disabled>
+                Sorumlu sec
+              </option>
+              {Array.isArray(taskUsers) &&
+                taskUsers.map((user) => (
+                  <option key={user.id ?? user.username} value={user.username}>
+                    {user.username}
+                  </option>
+                ))}
+            </select>
           </div>
 
           <div className="space-y-2">
@@ -202,3 +211,4 @@
     </div>
   )
 }
+

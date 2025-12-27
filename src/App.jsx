@@ -93,6 +93,7 @@ function App() {
     confirmTaskDelete,
     taskForm,
     setTaskForm,
+    taskUsers,
     openNoteModal,
     taskDueTypeOptions,
     taskFormRepeatLabels,
@@ -600,6 +601,7 @@ function App() {
             confirmTaskDelete={confirmTaskDelete}
             taskForm={taskForm}
             setTaskForm={setTaskForm}
+            taskUsers={taskUsers}
             openNoteModal={openNoteModal}
             taskDueTypeOptions={taskDueTypeOptions}
             taskFormRepeatLabels={taskFormRepeatLabels}
@@ -798,6 +800,7 @@ function App() {
           onSave={handleTaskEditSave}
           openNoteModal={openNoteModal}
           setDraft={setTaskEditDraft}
+          taskUsers={taskUsers}
           taskDueTypeOptions={taskDueTypeOptions}
           taskRepeatDays={taskRepeatDays}
           normalizeRepeatDays={normalizeRepeatDays}

@@ -146,6 +146,7 @@ export default function useAppData() {
   const isStockTextSelectingRef = useRef(false)
 
   const [tasks, setTasks] = useState([])
+  const [taskUsers, setTaskUsers] = useState([])
   const [taskForm, setTaskForm] = useState({
     title: "",
     note: "",
@@ -280,6 +281,18 @@ export default function useAppData() {
       setActiveTab(availableTabs[0])
     }
   }, [activeTab, availableTabs, isAuthed])
+
+  useEffect(() => {
+    if (!activeUser?.username) return
+    setTaskForm((prev) => {
+      if (!prev || prev.owner) return prev
+      return { ...prev, owner: activeUser.username }
+    })
+    setTaskUsers((prev) => {
+      if (Array.isArray(prev) && prev.length > 0) return prev
+      return [{ id: activeUser.id, username: activeUser.username }]
+    })
+  }, [activeUser])
 
   const apiFetch = useCallback(
     async (input, init = {}) => {
@@ -810,6 +823,25 @@ export default function useAppData() {
     }
   }, [productOrder])
 
+  const loadTaskUsers = useCallback(
+    async (signal) => {
+      try {
+        const res = await apiFetch("/api/task-users", { signal })
+        if (!res.ok) throw new Error("api_error")
+        const data = await res.json()
+        setTaskUsers(Array.isArray(data) ? data : [])
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        if (activeUser?.username) {
+          setTaskUsers([{ id: activeUser.id, username: activeUser.username }])
+        } else {
+          setTaskUsers([])
+        }
+      }
+    },
+    [activeUser, apiFetch],
+  )
+
   const loadTasks = useCallback(
     async (signal) => {
       setIsTasksLoading(true)
@@ -817,7 +849,9 @@ export default function useAppData() {
         const res = await apiFetch("/api/tasks", { signal })
         if (!res.ok) throw new Error("api_error")
         const data = await res.json()
-        setTasks(Array.isArray(data) ? data.map(normalizeTask) : [])
+        const normalized = Array.isArray(data) ? data.map(normalizeTask) : []
+        const owner = activeUser?.username
+        setTasks(owner ? normalized.filter((task) => task.owner === owner) : normalized)
         taskLoadErrorRef.current = false
       } catch (error) {
         if (error?.name === "AbortError") return
@@ -825,20 +859,23 @@ export default function useAppData() {
           taskLoadErrorRef.current = true
           toast.error("G\u00F6revler al\u0131namad\u0131 (API/DB kontrol edin).")
         }
-        setTasks(initialTasks.map(normalizeTask))
+        const fallback = initialTasks.map(normalizeTask)
+        const owner = activeUser?.username
+        setTasks(owner ? fallback.filter((task) => task.owner === owner) : fallback)
       } finally {
         setIsTasksLoading(false)
       }
     },
-    [apiFetch],
+    [activeUser, apiFetch],
   )
 
   useEffect(() => {
     if (!isAuthed) return
     const controller = new AbortController()
+    loadTaskUsers(controller.signal)
     loadTasks(controller.signal)
     return () => controller.abort()
-  }, [isAuthed, loadTasks])
+  }, [isAuthed, loadTaskUsers, loadTasks])
 
   useEffect(() => {
     if (!isAuthed || activeTab !== "tasks") return
@@ -1057,7 +1094,7 @@ export default function useAppData() {
     setTaskForm({
       title: "",
       note: "",
-      owner: "",
+      owner: activeUser?.username ?? "",
       dueType: "today",
       repeatDays: ["1"],
       dueDate: "",
@@ -1084,13 +1121,12 @@ export default function useAppData() {
       if (!res.ok) throw new Error("task_update_failed")
       const updated = await res.json()
       const normalized = normalizeTask(updated)
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === taskId
-            ? normalized
-            : task,
-        ),
-      )
+      setTasks((prev) => {
+        if (activeUser?.username && normalized.owner !== activeUser.username) {
+          return prev.filter((task) => task.id !== taskId)
+        }
+        return prev.map((task) => (task.id === taskId ? normalized : task))
+      })
       return updated
     } catch (error) {
       console.error(error)
@@ -1103,6 +1139,11 @@ export default function useAppData() {
     const titleValue = taskForm.title.trim()
     if (!titleValue) {
       toast.error("G\u00F6rev ad\u0131 gerekli.")
+      return
+    }
+    const ownerValue = taskForm.owner.trim()
+    if (!ownerValue) {
+      toast.error("Sorumlu secin.")
       return
     }
     const repeatDays = normalizeRepeatDays(taskForm.repeatDays)
@@ -1121,7 +1162,7 @@ export default function useAppData() {
         body: JSON.stringify({
           title: titleValue,
           note: taskForm.note.trim(),
-          owner: taskForm.owner.trim(),
+          owner: ownerValue,
           dueType: taskForm.dueType,
           repeatDays: taskForm.dueType === "repeat" ? repeatDays : [],
           dueDate: taskForm.dueType === "date" ? taskForm.dueDate : "",
@@ -1129,7 +1170,10 @@ export default function useAppData() {
       })
       if (!res.ok) throw new Error("task_create_failed")
       const created = await res.json()
-      setTasks((prev) => [normalizeTask(created), ...prev])
+      const normalized = normalizeTask(created)
+      if (!activeUser?.username || normalized.owner === activeUser.username) {
+        setTasks((prev) => [normalized, ...prev])
+      }
       resetTaskForm()
       toast.success("G\u00F6rev eklendi")
     } catch (error) {
@@ -1145,6 +1189,11 @@ export default function useAppData() {
       toast.error("G\u00F6rev ad\u0131 gerekli.")
       return
     }
+    const ownerValue = taskEditDraft.owner.trim()
+    if (!ownerValue) {
+      toast.error("Sorumlu secin.")
+      return
+    }
     const repeatDays = normalizeRepeatDays(taskEditDraft.repeatDays)
     if (taskEditDraft.dueType === "repeat" && repeatDays.length === 0) {
       toast.error("Tekrarlanabilir g\u00FCn se\u00E7in.")
@@ -1157,7 +1206,7 @@ export default function useAppData() {
     const updated = await saveTaskUpdate(taskEditDraft.id, {
       title: titleValue,
       note: taskEditDraft.note.trim(),
-      owner: taskEditDraft.owner.trim(),
+      owner: ownerValue,
       dueType: taskEditDraft.dueType,
       repeatDays: taskEditDraft.dueType === "repeat" ? repeatDays : [],
       dueDate: taskEditDraft.dueType === "date" ? taskEditDraft.dueDate : null,
@@ -3143,6 +3192,7 @@ export default function useAppData() {
     confirmTaskDelete,
     taskForm,
     setTaskForm,
+    taskUsers,
     openNoteModal,
     taskDueTypeOptions,
     taskFormRepeatLabels,

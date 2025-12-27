@@ -709,8 +709,24 @@ app.delete("/api/problems/:id", async (req, res) => {
   }
 })
 
-app.get("/api/tasks", async (_req, res) => {
-  const tasks = await prisma.task.findMany({ orderBy: { createdAt: "desc" } })
+app.get(
+  "/api/task-users",
+  requireAnyPermission(["tasks.view", "tasks.create", "tasks.edit"]),
+  async (_req, res) => {
+    const taskUsers = await prisma.user.findMany({
+      orderBy: { username: "asc" },
+      select: { id: true, username: true },
+    })
+    res.json(taskUsers)
+  },
+)
+
+app.get("/api/tasks", async (req, res) => {
+  const username = String(req.user?.username ?? "").trim()
+  const tasks = await prisma.task.findMany({
+    where: username ? { owner: username } : undefined,
+    orderBy: { createdAt: "desc" },
+  })
   res.json(tasks)
 })
 
@@ -758,8 +774,16 @@ app.post("/api/tasks", async (req, res) => {
 
   const note =
     noteRaw === undefined ? undefined : noteRaw === null ? null : String(noteRaw).trim() || null
-  const owner =
-    ownerRaw === undefined ? undefined : ownerRaw === null ? null : String(ownerRaw).trim() || null
+  const owner = String(ownerRaw ?? "").trim()
+  if (!owner) {
+    res.status(400).json({ error: "owner is required" })
+    return
+  }
+  const ownerUser = await prisma.user.findUnique({ where: { username: owner } })
+  if (!ownerUser) {
+    res.status(400).json({ error: "invalid owner" })
+    return
+  }
 
   const created = await prisma.task.create({
     data: {
@@ -767,7 +791,7 @@ app.post("/api/tasks", async (req, res) => {
       status: "todo",
       dueType,
       ...(note === undefined ? {} : { note }),
-      ...(owner === undefined ? {} : { owner }),
+      owner,
       ...(dueType === "repeat" ? { repeatDays } : { repeatDays: [] }),
       ...(dueType === "date" ? { dueDate } : { dueDate: null }),
       repeatWakeAt: null,
@@ -814,12 +838,17 @@ app.put("/api/tasks/:id", async (req, res) => {
   }
 
   if (ownerRaw !== undefined) {
-    if (ownerRaw === null) {
-      data.owner = null
-    } else {
-      const owner = String(ownerRaw).trim()
-      data.owner = owner ? owner : null
+    const owner = ownerRaw === null ? "" : String(ownerRaw).trim()
+    if (!owner) {
+      res.status(400).json({ error: "owner is required" })
+      return
     }
+    const ownerUser = await prisma.user.findUnique({ where: { username: owner } })
+    if (!ownerUser) {
+      res.status(400).json({ error: "invalid owner" })
+      return
+    }
+    data.owner = owner
   }
 
   if (statusRaw !== undefined) {
