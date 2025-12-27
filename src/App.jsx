@@ -3,6 +3,7 @@ import NoteModal from "./components/modals/NoteModal"
 import StockModal from "./components/modals/StockModal"
 import TaskDetailModal from "./components/modals/TaskDetailModal"
 import TaskEditModal from "./components/modals/TaskEditModal"
+import LoadingIndicator from "./components/LoadingIndicator"
 import ListsTab from "./components/tabs/ListsTab"
 import MessagesTab from "./components/tabs/MessagesTab"
 import ProblemsTab from "./components/tabs/ProblemsTab"
@@ -17,6 +18,7 @@ function App() {
     isAuthChecking,
     isAuthed,
     isAuthBusy,
+    isLogoutLoading,
     activeUser,
     authUsername,
     setAuthUsername,
@@ -412,6 +414,13 @@ function App() {
 
   return (
     <div className="min-h-screen px-4 pb-16 pt-10 text-slate-50">
+      {isLogoutLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/70 px-4 backdrop-blur">
+          <div className="rounded-2xl border border-white/10 bg-ink-900/90 px-5 py-4 shadow-card">
+            <LoadingIndicator label="\u00C7\u0131k\u0131\u015F yap\u0131l\u0131yor" />
+          </div>
+        </div>
+      )}
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="sticky top-4 z-30 flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
           <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 shadow-inner">

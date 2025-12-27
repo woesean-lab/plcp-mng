@@ -2354,11 +2354,7 @@ export default function useAppData() {
       disabled={isLogoutLoading}
       className="inline-flex items-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {isLogoutLoading ? (
-        <LoadingIndicator label="\u00C7\u0131k\u0131\u015F yap\u0131l\u0131yor" />
-      ) : (
-        "\u00C7\u0131k\u0131\u015F"
-      )}
+      {"\u00C7\u0131k\u0131\u015F"}
     </button>
   )
 
@@ -3069,6 +3065,7 @@ export default function useAppData() {
     isAuthChecking,
     isAuthed,
     isAuthBusy,
+    isLogoutLoading,
     activeUser,
     authUsername,
     setAuthUsername,
