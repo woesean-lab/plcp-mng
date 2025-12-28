@@ -563,7 +563,7 @@ function App() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:ml-auto">
+            <div className="flex items-center gap-2 self-end sm:self-auto sm:ml-auto">
               <button
                 type="button"
                 onClick={() => setIsTabMenuOpen((prev) => !prev)}
