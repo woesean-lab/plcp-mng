@@ -370,6 +370,10 @@ function App() {
     [canViewAdmin, canViewLists, canViewMessages, canViewProblems, canViewStock, canViewTasks],
   )
   const visibleTabs = useMemo(() => tabItems.filter((item) => item.canView), [tabItems])
+  const nonAdminTabs = useMemo(
+    () => visibleTabs.filter((item) => item.key !== "admin"),
+    [visibleTabs],
+  )
   const tabOrder = useMemo(() => visibleTabs.map((item) => item.key), [visibleTabs])
 
   const handleTabSwitch = (nextTab) => {
@@ -574,7 +578,7 @@ function App() {
                 <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 sm:overflow-visible sm:pb-0">
                   <div className="flex items-center gap-2 whitespace-nowrap pr-2">
                     <span className="hidden h-7 w-px bg-white/10 sm:block" />
-                    {visibleTabs.map((item) => (
+                  {nonAdminTabs.map((item) => (
                       <button
                         key={item.key}
                         type="button"
@@ -589,6 +593,20 @@ function App() {
               </div>
 
               <div className="ml-auto flex items-center gap-2">
+                {canViewAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabSwitch("admin")}
+                    className={`inline-flex items-center gap-1.5 rounded-2xl px-3.5 py-2 text-sm font-semibold transition ${
+                      activeTab === "admin"
+                        ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                        : "bg-white/5 text-slate-200 hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-accent-400 shadow-glow" />
+                    Admin
+                  </button>
+                )}
                 {themeToggleButton}
                 <div className="relative" ref={userMenuRef}>
                   <button
@@ -663,7 +681,7 @@ function App() {
           {isTabMenuOpen && (
             <div id="mobile-tab-menu" className="mt-2 sm:hidden">
               <div className="space-y-2 rounded-2xl border border-white/10 bg-ink-900/95 p-3 shadow-card">
-                {visibleTabs.map((item) => (
+                {nonAdminTabs.map((item) => (
                   <button
                     key={item.key}
                     type="button"
