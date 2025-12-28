@@ -567,7 +567,7 @@ function App() {
               <button
                 type="button"
                 onClick={() => setIsTabMenuOpen((prev) => !prev)}
-                className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 sm:hidden ${
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-200 transition hover:bg-white/10 sm:hidden ${
                   isTabMenuOpen ? "bg-white/10" : ""
                 }`}
                 aria-label="Sekme menüsü"
