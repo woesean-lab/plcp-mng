@@ -178,6 +178,12 @@ export default function ChartsTab({ isLoading, panelClass }) {
     return data.reduce((acc, item) => (item.value > acc.value ? item : acc), data[0])
   }, [data])
   const recentEntries = useMemo(() => [...data].slice(-5).reverse(), [data])
+  const tickLabels = useMemo(() => {
+    if (data.length === 0) return []
+    if (data.length <= 3) return data.map((item) => item.label)
+    const middle = Math.floor((data.length - 1) / 2)
+    return [data[0].label, data[middle].label, data[data.length - 1].label]
+  }, [data])
 
   const handleEntrySubmit = (event) => {
     event.preventDefault()
@@ -212,34 +218,58 @@ export default function ChartsTab({ isLoading, panelClass }) {
           <div className="absolute -left-16 -top-10 h-48 w-48 rounded-full bg-accent-400/20 blur-3xl" />
           <div className="absolute right-0 bottom-0 h-56 w-56 rounded-full bg-sky-300/10 blur-3xl" />
         </div>
-        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
+        <div className="relative z-10 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <div className="space-y-4">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
               Grafik
             </span>
-            <h1 className="font-display text-3xl font-semibold text-white md:text-4xl">
-              Satis panosu
-            </h1>
-            <p className="max-w-2xl text-sm text-slate-200/80">
-              Gunluk, haftalik, aylik ve yillik satisi tek bir line chart ile izle.
-            </p>
+            <div className="space-y-2">
+              <h1 className="font-display text-3xl font-semibold text-white md:text-4xl">
+                Satis panosu
+              </h1>
+              <p className="max-w-2xl text-sm text-slate-200/80">
+                Gunluk, haftalik, aylik ve yillik satisi tek bir line chart ile izle.
+              </p>
+            </div>
+            <div className="inline-flex flex-wrap gap-2 rounded-full border border-white/10 bg-white/5 p-1">
+              {rangeOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setRange(option.key)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    range === option.key
+                      ? "bg-accent-500/20 text-accent-50 shadow-glow"
+                      : "text-slate-300 hover:bg-white/10"
+                  }`}
+                  aria-pressed={range === option.key}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="inline-flex flex-wrap gap-2 rounded-full border border-white/10 bg-white/5 p-1">
-            {rangeOptions.map((option) => (
-              <button
-                key={option.key}
-                type="button"
-                onClick={() => setRange(option.key)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                  range === option.key
-                    ? "bg-accent-500/20 text-accent-50 shadow-glow"
-                    : "text-slate-300 hover:bg-white/10"
-                }`}
-                aria-pressed={range === option.key}
-              >
-                {option.label}
-              </button>
-            ))}
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-inner">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400">En cok satis</p>
+            <div className="mt-3 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-lg font-semibold text-slate-100">
+                  {topEntry ? topEntry.date || topEntry.label : "-"}
+                </p>
+                <p className="text-xs text-slate-400">Satis zirvesi</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-semibold text-slate-100">
+                  {topEntry ? numberFormatter.format(topEntry.value) : "-"}
+                </p>
+                <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500">
+                  {rangeMeta.caption}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+              Toplam: {numberFormatter.format(summary.total)}
+            </div>
           </div>
         </div>
       </header>
@@ -309,23 +339,35 @@ export default function ChartsTab({ isLoading, panelClass }) {
                 {recentEntries.length} kayit
               </span>
             </div>
-            <div className="mt-4 space-y-3">
-              {recentEntries.map((item, index) => (
-                <div key={`${item.label}-${index}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-100">{item.date || item.label}</p>
-                      <p className="text-xs text-slate-400">Etiket: {item.label}</p>
+            <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto] items-center gap-2 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.24em] text-slate-400">
+                <span>Tarih</span>
+                <span>Etiket</span>
+                <span className="text-right">Satis</span>
+              </div>
+              {recentEntries.length === 0 ? (
+                <div className="px-3 py-4 text-xs text-slate-400">Henuz giris yok.</div>
+              ) : (
+                <div className="divide-y divide-white/10">
+                  {recentEntries.map((item, index) => (
+                    <div
+                      key={`${item.label}-${index}`}
+                      className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto] items-center gap-2 px-3 py-2"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-slate-100">
+                          {item.date || item.label}
+                        </p>
+                        <p className="text-[11px] text-slate-500">Giris kaydi</p>
+                      </div>
+                      <span className="inline-flex w-fit items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                        {item.label}
+                      </span>
+                      <span className="text-right text-sm font-semibold text-slate-100">
+                        {numberFormatter.format(item.value)}
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-slate-100">
-                      {numberFormatter.format(item.value)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              {recentEntries.length === 0 && (
-                <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-xs text-slate-400">
-                  Henuz giris yok.
+                  ))}
                 </div>
               )}
             </div>
@@ -333,102 +375,101 @@ export default function ChartsTab({ isLoading, panelClass }) {
         </div>
 
         <div className="space-y-6">
-          <section className={`${panelClass} relative overflow-hidden bg-ink-900/60`}>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(58,199,255,0.12),transparent_55%)]" />
-            <div className="relative z-10 p-0">
-              <div className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                    Line chart
-                  </p>
-                  <p className="text-xs text-slate-400">{rangeMeta.caption}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
-                    Toplam: {numberFormatter.format(summary.total)}
-                  </span>
-                  <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${trendTone.badge}`}>
-                    {trendTone.label} {trendTone.sign}{Math.abs(trendPercent)}%
-                  </span>
-                </div>
+          <section className={`${panelClass} bg-gradient-to-br from-ink-900/70 via-ink-900/60 to-ink-800/60`}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                  Satis grafigi
+                </p>
+                <p className="text-xs text-slate-400">{rangeMeta.caption}</p>
               </div>
-
-              <div className="px-6 pb-6">
-                <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-                  <svg
-                    viewBox={`0 0 ${lineChart.width} ${lineChart.height}`}
-                    className="h-52 w-full"
-                    preserveAspectRatio="none"
-                    role="img"
-                    aria-label="Satis line chart"
-                  >
-                    <defs>
-                      <linearGradient id="sales-area" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3ac7ff" stopOpacity="0.28" />
-                        <stop offset="100%" stopColor="#2b9fff" stopOpacity="0.04" />
-                      </linearGradient>
-                      <linearGradient id="sales-line" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#3ac7ff" />
-                        <stop offset="100%" stopColor="#2b9fff" />
-                      </linearGradient>
-                    </defs>
-                    {lineChart.gridLines.map((y, index) => (
-                      <line
-                        key={`line-grid-${index}`}
-                        x1={lineChart.padding}
-                        x2={lineChart.width - lineChart.padding}
-                        y1={y}
-                        y2={y}
-                        stroke="rgba(255, 255, 255, 0.08)"
-                        strokeDasharray="4 5"
-                      />
-                    ))}
-                    {lineChart.areaPath && (
-                      <path d={lineChart.areaPath} fill="url(#sales-area)" stroke="none" />
-                    )}
-                    {lineChart.linePath && (
-                      <path d={lineChart.linePath} fill="none" stroke="url(#sales-line)" strokeWidth="3" />
-                    )}
-                    {lineChart.points.map((point, index) => (
-                      <circle
-                        key={`line-point-${index}`}
-                        cx={point.x}
-                        cy={point.y}
-                        r={index === lineChart.points.length - 1 ? 4.6 : 3.6}
-                        fill={index === lineChart.points.length - 1 ? "#e2f5ff" : "#3ac7ff"}
-                        opacity={index === lineChart.points.length - 1 ? 1 : 0.75}
-                      />
-                    ))}
-                  </svg>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {data.map((item, index) => (
-                    <span
-                      key={`${item.label}-${index}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200"
-                    >
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          index === data.length - 1 ? "bg-accent-300 shadow-glow" : "bg-accent-400/80"
-                        }`}
-                      />
-                      <span className="font-semibold text-slate-100">{item.label}</span>
-                      <span className="text-slate-400">{numberFormatter.format(item.value)}</span>
-                    </span>
-                  ))}
-                </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
+                  Ortalama: {numberFormatter.format(summary.average)}
+                </span>
+                <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${trendTone.badge}`}>
+                  {trendTone.label} {trendTone.sign}{Math.abs(trendPercent)}%
+                </span>
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-200 sm:absolute sm:right-6 sm:top-6 sm:mt-0 sm:w-48">
-              <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">En cok satis</p>
-              <p className="mt-2 text-sm font-semibold text-slate-100">
-                {topEntry ? topEntry.date || topEntry.label : "-"}
-              </p>
-              <p className="text-xs text-slate-400">
-                {topEntry ? numberFormatter.format(topEntry.value) : "Veri yok"}
-              </p>
+            <div className="mt-5">
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(58,199,255,0.16),transparent_60%)]" />
+                <svg
+                  viewBox={`0 0 ${lineChart.width} ${lineChart.height}`}
+                  className="relative z-10 h-52 w-full"
+                  preserveAspectRatio="none"
+                  role="img"
+                  aria-label="Satis line chart"
+                >
+                  <defs>
+                    <linearGradient id="sales-area" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3ac7ff" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#2b9fff" stopOpacity="0.03" />
+                    </linearGradient>
+                    <linearGradient id="sales-line" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#3ac7ff" />
+                      <stop offset="100%" stopColor="#2b9fff" />
+                    </linearGradient>
+                  </defs>
+                  {lineChart.gridLines.map((y, index) => (
+                    <line
+                      key={`line-grid-${index}`}
+                      x1={lineChart.padding}
+                      x2={lineChart.width - lineChart.padding}
+                      y1={y}
+                      y2={y}
+                      stroke="rgba(255, 255, 255, 0.08)"
+                      strokeDasharray="4 5"
+                    />
+                  ))}
+                  {lineChart.areaPath && (
+                    <path d={lineChart.areaPath} fill="url(#sales-area)" stroke="none" />
+                  )}
+                  {lineChart.linePath && (
+                    <path
+                      d={lineChart.linePath}
+                      fill="none"
+                      stroke="url(#sales-line)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+                  {lineChart.points.map((point, index) => {
+                    const isLast = index === lineChart.points.length - 1
+                    return (
+                      <g key={`line-point-${index}`}>
+                        <circle
+                          cx={point.x}
+                          cy={point.y}
+                          r={isLast ? 4.8 : 3.8}
+                          fill={isLast ? "#e2f5ff" : "#3ac7ff"}
+                          opacity={isLast ? 1 : 0.75}
+                        />
+                        {isLast && (
+                          <circle
+                            cx={point.x}
+                            cy={point.y}
+                            r="8.5"
+                            fill="none"
+                            stroke="rgba(58, 199, 255, 0.5)"
+                            strokeWidth="2"
+                          />
+                        )}
+                      </g>
+                    )
+                  })}
+                </svg>
+              </div>
+              {tickLabels.length > 0 && (
+                <div className="mt-3 flex justify-between text-[10px] uppercase tracking-[0.24em] text-slate-500">
+                  {tickLabels.map((label) => (
+                    <span key={`tick-${label}`}>{label}</span>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 
@@ -441,13 +482,20 @@ export default function ChartsTab({ isLoading, panelClass }) {
                 Toplam satis
               </span>
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Toplam</p>
-                <p className="mt-2 text-xl font-semibold text-slate-100">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-ink-900/80 via-ink-900/60 to-ink-800/60 p-4 sm:col-span-2">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Toplam satis</p>
+                <p className="mt-2 text-3xl font-semibold text-slate-100">
                   {numberFormatter.format(summary.total)}
                 </p>
-                <p className="text-xs text-slate-400">Secili donem</p>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
+                    Ortalama: {numberFormatter.format(summary.average)}
+                  </span>
+                  <span className={`rounded-full border px-2.5 py-1 font-semibold ${trendTone.badge}`}>
+                    {trendTone.label} {trendTone.sign}{Math.abs(trendPercent)}%
+                  </span>
+                </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Ortalama</p>
@@ -458,9 +506,15 @@ export default function ChartsTab({ isLoading, panelClass }) {
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Min / Max</p>
-                <p className="mt-2 text-lg font-semibold text-slate-100">
-                  {numberFormatter.format(summary.min)} / {numberFormatter.format(summary.max)}
-                </p>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="text-lg font-semibold text-slate-100">
+                    {numberFormatter.format(summary.min)}
+                  </span>
+                  <span className="text-sm text-slate-500">/</span>
+                  <span className="text-lg font-semibold text-slate-100">
+                    {numberFormatter.format(summary.max)}
+                  </span>
+                </div>
                 <p className="text-xs text-slate-400">Aralik</p>
               </div>
             </div>
