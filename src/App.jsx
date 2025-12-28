@@ -11,6 +11,7 @@ import MessagesTab from "./components/tabs/MessagesTab"
 import ProblemsTab from "./components/tabs/ProblemsTab"
 import StockTab from "./components/tabs/StockTab"
 import TasksTab from "./components/tabs/TasksTab"
+import ChartsTab from "./components/tabs/ChartsTab"
 import AdminTab from "./components/tabs/AdminTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
@@ -159,6 +160,7 @@ function App() {
     handleListInsertColumn,
     handleListDeleteColumn,
     isStockTabLoading,
+    isChartsTabLoading,
     stockSummary,
     products,
     productSearch,
@@ -339,6 +341,7 @@ function App() {
     PERMISSIONS.listsEdit,
   ])
   const canViewStock = hasPermission(PERMISSIONS.stockView)
+  const canViewCharts = true
   const canCreateProducts = hasAnyPermission([PERMISSIONS.stockProductCreate, PERMISSIONS.stockManage])
   const canEditProducts = hasAnyPermission([PERMISSIONS.stockProductEdit, PERMISSIONS.stockManage])
   const canDeleteProducts = hasAnyPermission([PERMISSIONS.stockProductDelete, PERMISSIONS.stockManage])
@@ -365,9 +368,18 @@ function App() {
       { key: "problems", label: "Problemli M\u00fc\u015fteriler", canView: canViewProblems },
       { key: "lists", label: "Listeler", canView: canViewLists },
       { key: "stock", label: "Stok", canView: canViewStock },
+      { key: "charts", label: "Grafik", canView: canViewCharts },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
-    [canViewAdmin, canViewLists, canViewMessages, canViewProblems, canViewStock, canViewTasks],
+    [
+      canViewAdmin,
+      canViewCharts,
+      canViewLists,
+      canViewMessages,
+      canViewProblems,
+      canViewStock,
+      canViewTasks,
+    ],
   )
   const visibleTabs = useMemo(() => tabItems.filter((item) => item.canView), [tabItems])
   const nonAdminTabs = useMemo(() => visibleTabs.filter((item) => item.key !== "admin"), [visibleTabs])
@@ -914,6 +926,12 @@ function App() {
               handleStockAdd={handleStockAdd}
               resetStockForm={resetStockForm}
             />
+          </div>
+        )}
+
+        {activeTab === "charts" && canViewCharts && (
+          <div className={getTabSlideClass("charts")}>
+            <ChartsTab isLoading={isChartsTabLoading} panelClass={panelClass} />
           </div>
         )}
 
