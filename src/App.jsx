@@ -283,6 +283,8 @@ function App() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const userMenuRef = useRef(null)
   const prevTabRef = useRef(activeTab)
+  const manualDirectionRef = useRef(false)
+  const [tabSlideDirection, setTabSlideDirection] = useState("forward")
   const hasMountedRef = useRef(false)
   const userInitial = (activeUser?.username || "?").trim().charAt(0).toUpperCase() || "?"
   const userName = activeUser?.username ?? ""
@@ -308,10 +310,6 @@ function App() {
   useEffect(() => {
     hasMountedRef.current = true
   }, [])
-
-  useEffect(() => {
-    prevTabRef.current = activeTab
-  }, [activeTab])
 
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
   const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
@@ -369,15 +367,39 @@ function App() {
     if (canViewAdmin) order.push("admin")
     return order
   }, [canViewAdmin, canViewLists, canViewMessages, canViewProblems, canViewStock, canViewTasks])
-  const slideDirection = (() => {
-    const prevIndex = tabOrder.indexOf(prevTabRef.current)
-    const nextIndex = tabOrder.indexOf(activeTab)
-    if (prevIndex === -1 || nextIndex === -1) return "forward"
-    return nextIndex >= prevIndex ? "forward" : "backward"
-  })()
+
+  const handleTabSwitch = (nextTab) => {
+    if (nextTab === activeTab) return
+    const prevIndex = tabOrder.indexOf(activeTab)
+    const nextIndex = tabOrder.indexOf(nextTab)
+    const direction =
+      prevIndex === -1 || nextIndex === -1 || nextIndex >= prevIndex ? "forward" : "backward"
+    manualDirectionRef.current = true
+    setTabSlideDirection(direction)
+    setActiveTab(nextTab)
+  }
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      prevTabRef.current = activeTab
+      return
+    }
+    const prevTab = prevTabRef.current
+    if (prevTab === activeTab) return
+    if (manualDirectionRef.current) {
+      manualDirectionRef.current = false
+    } else {
+      const prevIndex = tabOrder.indexOf(prevTab)
+      const nextIndex = tabOrder.indexOf(activeTab)
+      const direction =
+        prevIndex === -1 || nextIndex === -1 || nextIndex >= prevIndex ? "forward" : "backward"
+      setTabSlideDirection(direction)
+    }
+    prevTabRef.current = activeTab
+  }, [activeTab, tabOrder])
   const getTabSlideClass = (tabKey) => {
     if (!hasMountedRef.current || activeTab !== tabKey) return ""
-    return slideDirection === "backward" ? "tab-slide-in-right" : "tab-slide-in-left"
+    return tabSlideDirection === "backward" ? "tab-slide-in-right" : "tab-slide-in-left"
   }
   if (isAuthChecking) {
     return null
@@ -509,7 +531,7 @@ function App() {
           {canViewMessages && (
             <button
               type="button"
-              onClick={() => setActiveTab("messages")}
+              onClick={() => handleTabSwitch("messages")}
               className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                 activeTab === "messages"
                   ? "bg-accent-500/20 text-accent-50 shadow-glow"
@@ -522,7 +544,7 @@ function App() {
           {canViewTasks && (
             <button
               type="button"
-              onClick={() => setActiveTab("tasks")}
+              onClick={() => handleTabSwitch("tasks")}
               className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                 activeTab === "tasks"
                   ? "bg-accent-500/20 text-accent-50 shadow-glow"
@@ -535,7 +557,7 @@ function App() {
           {canViewProblems && (
             <button
               type="button"
-              onClick={() => setActiveTab("problems")}
+              onClick={() => handleTabSwitch("problems")}
               className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                 activeTab === "problems"
                   ? "bg-accent-500/20 text-accent-50 shadow-glow"
@@ -548,7 +570,7 @@ function App() {
           {canViewLists && (
             <button
               type="button"
-              onClick={() => setActiveTab("lists")}
+              onClick={() => handleTabSwitch("lists")}
               className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                 activeTab === "lists"
                   ? "bg-accent-500/20 text-accent-50 shadow-glow"
@@ -561,7 +583,7 @@ function App() {
           {canViewStock && (
             <button
               type="button"
-              onClick={() => setActiveTab("stock")}
+              onClick={() => handleTabSwitch("stock")}
               className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                 activeTab === "stock"
                   ? "bg-accent-500/20 text-accent-50 shadow-glow"
@@ -575,7 +597,7 @@ function App() {
             {canViewAdmin && (
               <button
                 type="button"
-                onClick={() => setActiveTab("admin")}
+                onClick={() => handleTabSwitch("admin")}
                 className={`inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                   activeTab === "admin"
                     ? "bg-accent-500/20 text-accent-50 shadow-glow"
