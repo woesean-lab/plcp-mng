@@ -1003,7 +1003,7 @@ function App() {
             </div>
           </div>
         </div>
-        <div className="relative" style={{ overflowX: "hidden" }}>
+        <div className="relative">
           {prevTabContent && tabTransition.prev && (
             <div className="absolute inset-0" style={prevPanelStyle} aria-hidden="true">
               {prevTabContent}
