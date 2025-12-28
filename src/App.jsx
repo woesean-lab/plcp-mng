@@ -283,6 +283,8 @@ function App() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const userMenuRef = useRef(null)
   const prevTabRef = useRef(activeTab)
+  const [tabTransition, setTabTransition] = useState({ exiting: null, direction: "forward" })
+  const transitionTimerRef = useRef(null)
   const hasMountedRef = useRef(false)
   const userInitial = (activeUser?.username || "?").trim().charAt(0).toUpperCase() || "?"
   const userName = activeUser?.username ?? ""
@@ -308,10 +310,6 @@ function App() {
   useEffect(() => {
     hasMountedRef.current = true
   }, [])
-
-  useEffect(() => {
-    prevTabRef.current = activeTab
-  }, [activeTab])
 
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
   const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
@@ -369,15 +367,54 @@ function App() {
     if (canViewAdmin) order.push("admin")
     return order
   }, [canViewAdmin, canViewLists, canViewMessages, canViewProblems, canViewStock, canViewTasks])
-  const slideDirection = (() => {
-    const prevIndex = tabOrder.indexOf(prevTabRef.current)
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      prevTabRef.current = activeTab
+      return
+    }
+    const prevTab = prevTabRef.current
+    if (prevTab === activeTab) return
+    const prevIndex = tabOrder.indexOf(prevTab)
     const nextIndex = tabOrder.indexOf(activeTab)
-    if (prevIndex === -1 || nextIndex === -1) return "forward"
-    return nextIndex >= prevIndex ? "forward" : "backward"
-  })()
-  const getTabSlideClass = (tabKey) => {
-    if (!hasMountedRef.current || activeTab !== tabKey) return ""
-    return slideDirection === "backward" ? "tab-slide-in-left" : "tab-slide-in-right"
+    const direction =
+      prevIndex === -1 || nextIndex === -1 || nextIndex >= prevIndex ? "forward" : "backward"
+    setTabTransition({ exiting: prevTab, direction })
+    if (transitionTimerRef.current) {
+      window.clearTimeout(transitionTimerRef.current)
+    }
+    transitionTimerRef.current = window.setTimeout(() => {
+      setTabTransition((current) => (current.exiting ? { ...current, exiting: null } : current))
+    }, 300)
+    prevTabRef.current = activeTab
+  }, [activeTab, tabOrder])
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current) {
+        window.clearTimeout(transitionTimerRef.current)
+      }
+    }
+  }, [])
+
+  const shouldAnimateTabs = Boolean(tabTransition.exiting)
+  const getTabAnimationClass = (tabKey) => {
+    if (!hasMountedRef.current || !shouldAnimateTabs) return ""
+    if (tabKey === activeTab) {
+      return tabTransition.direction === "backward" ? "tab-slide-in-left" : "tab-slide-in-right"
+    }
+    if (tabKey === tabTransition.exiting) {
+      return tabTransition.direction === "backward" ? "tab-slide-out-right" : "tab-slide-out-left"
+    }
+    return ""
+  }
+  const shouldRenderTab = (tabKey) =>
+    activeTab === tabKey || tabTransition.exiting === tabKey
+  const getTabWrapperClass = (tabKey) => {
+    if (!shouldRenderTab(tabKey)) return "hidden"
+    const isActive = activeTab === tabKey
+    const baseClass = isActive ? "relative z-10" : "absolute inset-0 z-0 pointer-events-none"
+    return `${baseClass} ${getTabAnimationClass(tabKey)}`.trim()
   }
   if (isAuthChecking) {
     return null
@@ -656,8 +693,12 @@ function App() {
           </div>
         </div>
 
-        {activeTab === "messages" && canViewMessages && (
-          <div className={getTabSlideClass("messages")}>
+        <div className="relative">
+          {shouldRenderTab("messages") && canViewMessages && (
+            <div
+              className={getTabWrapperClass("messages")}
+              aria-hidden={activeTab !== "messages"}
+            >
             <MessagesTab
               isLoading={showLoading}
               panelClass={panelClass}
@@ -695,16 +736,19 @@ function App() {
               title={title}
               setTitle={setTitle}
               messageLength={messageLength}
-              message={message}
-              setMessage={setMessage}
-              handleAdd={handleAdd}
-              setSelectedCategory={setSelectedCategory}
-            />
-          </div>
-        )}
+            message={message}
+            setMessage={setMessage}
+            handleAdd={handleAdd}
+            setSelectedCategory={setSelectedCategory}
+          />
+            </div>
+          )}
 
-        {activeTab === "tasks" && canViewTasks && (
-          <div className={getTabSlideClass("tasks")}>
+          {shouldRenderTab("tasks") && canViewTasks && (
+            <div
+              className={getTabWrapperClass("tasks")}
+              aria-hidden={activeTab !== "tasks"}
+            >
             <TasksTab
               isLoading={isTasksTabLoading}
               panelClass={panelClass}
@@ -740,15 +784,18 @@ function App() {
               taskRepeatDays={taskRepeatDays}
               normalizeRepeatDays={normalizeRepeatDays}
               toggleRepeatDay={toggleRepeatDay}
-              handleTaskAdd={handleTaskAdd}
-              resetTaskForm={resetTaskForm}
-              focusTask={focusTask}
-            />
-          </div>
-        )}
+            handleTaskAdd={handleTaskAdd}
+            resetTaskForm={resetTaskForm}
+            focusTask={focusTask}
+          />
+            </div>
+          )}
 
-        {activeTab === "lists" && canViewLists && (
-          <div className={getTabSlideClass("lists")}>
+          {shouldRenderTab("lists") && canViewLists && (
+            <div
+              className={getTabWrapperClass("lists")}
+              aria-hidden={activeTab !== "lists"}
+            >
             <ListsTab
               isLoading={isListsTabLoading}
               panelClass={panelClass}
@@ -801,14 +848,17 @@ function App() {
               handleListInsertRow={handleListInsertRow}
               handleListContextMenuClose={handleListContextMenuClose}
               handleListDeleteRow={handleListDeleteRow}
-              handleListInsertColumn={handleListInsertColumn}
-              handleListDeleteColumn={handleListDeleteColumn}
-            />
-          </div>
-        )}
+            handleListInsertColumn={handleListInsertColumn}
+            handleListDeleteColumn={handleListDeleteColumn}
+          />
+            </div>
+          )}
 
-        {activeTab === "stock" && canViewStock && (
-          <div className={getTabSlideClass("stock")}>
+          {shouldRenderTab("stock") && canViewStock && (
+            <div
+              className={getTabWrapperClass("stock")}
+              aria-hidden={activeTab !== "stock"}
+            >
             <StockTab
               isLoading={isStockTabLoading}
               panelClass={panelClass}
@@ -874,14 +924,17 @@ function App() {
               handleProductAdd={handleProductAdd}
               stockForm={stockForm}
               setStockForm={setStockForm}
-              handleStockAdd={handleStockAdd}
-              resetStockForm={resetStockForm}
-            />
-          </div>
-        )}
+            handleStockAdd={handleStockAdd}
+            resetStockForm={resetStockForm}
+          />
+            </div>
+          )}
 
-        {activeTab === "problems" && canViewProblems && (
-          <div className={getTabSlideClass("problems")}>
+          {shouldRenderTab("problems") && canViewProblems && (
+            <div
+              className={getTabWrapperClass("problems")}
+              aria-hidden={activeTab !== "problems"}
+            >
             <ProblemsTab
               isLoading={isProblemsTabLoading}
               panelClass={panelClass}
@@ -898,15 +951,18 @@ function App() {
               handleProblemReopen={handleProblemReopen}
               problemUsername={problemUsername}
               setProblemUsername={setProblemUsername}
-              problemIssue={problemIssue}
-              setProblemIssue={setProblemIssue}
-              handleProblemAdd={handleProblemAdd}
-            />
-          </div>
-        )}
+            problemIssue={problemIssue}
+            setProblemIssue={setProblemIssue}
+            handleProblemAdd={handleProblemAdd}
+          />
+            </div>
+          )}
 
-        {activeTab === "admin" && canViewAdmin && (
-          <div className={getTabSlideClass("admin")}>
+          {shouldRenderTab("admin") && canViewAdmin && (
+            <div
+              className={getTabWrapperClass("admin")}
+              aria-hidden={activeTab !== "admin"}
+            >
             <AdminTab
               isLoading={isAdminTabLoading}
               panelClass={panelClass}
@@ -928,11 +984,12 @@ function App() {
               handleRoleDeleteWithConfirm={handleRoleDeleteWithConfirm}
               handleUserEditStart={handleUserEditStart}
               handleUserEditCancel={handleUserEditCancel}
-              handleUserSave={handleUserSave}
-              handleUserDeleteWithConfirm={handleUserDeleteWithConfirm}
-            />
-          </div>
-        )}
+            handleUserSave={handleUserSave}
+            handleUserDeleteWithConfirm={handleUserDeleteWithConfirm}
+          />
+            </div>
+          )}
+        </div>
 
         <TaskEditModal
           isOpen={isTaskEditOpen}
