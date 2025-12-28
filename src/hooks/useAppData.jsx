@@ -194,6 +194,8 @@ export default function useAppData() {
     const tabs = []
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
     if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
+    // Grafik sekmesi mock veri kullandığı için herkese açık
+    tabs.push("charts")
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (permissions.includes(PERMISSIONS.stockView)) tabs.push("stock")
