@@ -532,8 +532,31 @@ function App() {
       )}
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="sticky top-4 z-30 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 shadow-inner">
+          <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 sm:flex sm:items-center">
+            <button
+              type="button"
+              onClick={() => setIsTabMenuOpen((prev) => !prev)}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-200 transition hover:bg-white/10 sm:hidden ${
+                isTabMenuOpen ? "bg-white/10" : ""
+              }`}
+              aria-label="Sekme menüsü"
+              aria-expanded={isTabMenuOpen}
+              aria-controls="mobile-tab-menu"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="col-span-3 row-start-2 flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 shadow-inner sm:col-auto sm:row-auto">
               <span className="h-6 w-1 rounded-full bg-accent-400/80 shadow-glow" />
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-accent-200">
@@ -545,7 +568,7 @@ function App() {
               </div>
             </div>
 
-            <div className="order-last hidden w-full sm:order-none sm:flex sm:flex-1">
+            <div className="hidden sm:flex sm:flex-1">
               <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 sm:overflow-visible sm:pb-0">
                 <div className="flex items-center gap-2 whitespace-nowrap pr-2">
                   <span className="hidden h-7 w-px bg-white/10 sm:block" />
@@ -563,30 +586,7 @@ function App() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-auto sm:ml-auto">
-              <button
-                type="button"
-                onClick={() => setIsTabMenuOpen((prev) => !prev)}
-                className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-200 transition hover:bg-white/10 sm:hidden ${
-                  isTabMenuOpen ? "bg-white/10" : ""
-                }`}
-                aria-label="Sekme menüsü"
-                aria-expanded={isTabMenuOpen}
-                aria-controls="mobile-tab-menu"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
+            <div className="col-start-3 row-start-1 flex items-center gap-2 justify-self-end sm:col-auto sm:row-auto sm:ml-auto">
               {themeToggleButton}
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -1029,4 +1029,5 @@ function App() {
 }
 
 export default App
+
 
