@@ -361,9 +361,9 @@ function App() {
       ].filter(Boolean),
     [canViewMessages, canViewTasks, canViewProblems, canViewLists, canViewStock, canViewAdmin],
   )
-  const slideDurationMs = 260
-  const slideEasing = "cubic-bezier(0.22, 1, 0.36, 1)"
-  const slideDistance = 100
+  const slideDurationMs = 320
+  const slideEasing = "cubic-bezier(0.16, 1, 0.3, 1)"
+  const slideDistance = 28
   const prevTabRef = useRef(activeTab)
   const transitionTimerRef = useRef(null)
   const transitionRafRef = useRef(null)
@@ -815,18 +815,20 @@ function App() {
       : "none"
   const currentPanelStyle = {
     transform: isPreparing
-      ? `translateX(${tabTransition.direction * slideDistance}%)`
-      : "translateX(0%)",
-    opacity: isPreparing ? 0.6 : 1,
+      ? `translate3d(${tabTransition.direction * slideDistance}%, 0, 0) scale(0.985)`
+      : "translate3d(0%, 0, 0) scale(1)",
+    opacity: isPreparing ? 0.3 : 1,
     transition,
+    transformOrigin: "center",
     willChange: "transform, opacity",
   }
   const prevPanelStyle = {
     transform: isPreparing
-      ? "translateX(0%)"
-      : `translateX(${-tabTransition.direction * slideDistance}%)`,
-    opacity: isPreparing ? 1 : 0.4,
+      ? "translate3d(0%, 0, 0) scale(1)"
+      : `translate3d(${-tabTransition.direction * slideDistance * 0.6}%, 0, 0) scale(0.985)`,
+    opacity: isPreparing ? 1 : 0.15,
     transition,
+    transformOrigin: "center",
     pointerEvents: "none",
     willChange: "transform, opacity",
   }
