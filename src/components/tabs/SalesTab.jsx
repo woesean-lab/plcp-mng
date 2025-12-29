@@ -235,14 +235,14 @@ export default function SalesTab({
                           <div
                             className={`relative w-full rounded-2xl ${
                               bar.isPeak
-                                ? "bg-[#1f5b45]"
+                                ? "bg-accent-400"
                                 : "bg-slate-600/80"
                             }`}
                             style={{ height: `${bar.heightPercent}%` }}
                           >
                             <span
                               className={`absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] font-semibold ${
-                                bar.isPeak ? "text-emerald-300" : "text-slate-300"
+                                bar.isPeak ? "text-accent-200" : "text-slate-300"
                               }`}
                             >
                               {bar.amount}
