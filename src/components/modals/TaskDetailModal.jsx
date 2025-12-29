@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { toast } from "react-hot-toast"
 
 export default function TaskDetailModal({
   target,
@@ -19,21 +20,68 @@ export default function TaskDetailModal({
   if (!target) return null
   const comments = Array.isArray(detailComments) ? detailComments : []
   const [detailDraft, setDetailDraft] = useState("")
+  const [pendingImages, setPendingImages] = useState([])
   const [isSaving, setIsSaving] = useState(false)
   const canAddComment = Boolean(canEdit && onDetailCommentAdd)
   const canDeleteComment = Boolean(canEdit && onDetailCommentDelete)
-  const isDirty = detailDraft.trim().length > 0
+  const hasContent = detailDraft.trim().length > 0 || pendingImages.length > 0
+  const isDirty = hasContent
+  const maxImages = 3
+  const maxImageBytes = 2_000_000
 
   useEffect(() => {
     setDetailDraft("")
+    setPendingImages([])
   }, [target?.id])
 
   const handleDetailCommentSave = async () => {
     if (!canAddComment || !target?.id) return
     setIsSaving(true)
-    const saved = await onDetailCommentAdd(target.id, detailDraft)
-    if (saved) setDetailDraft("")
+    const saved = await onDetailCommentAdd(target.id, detailDraft, pendingImages)
+    if (saved) {
+      setDetailDraft("")
+      setPendingImages([])
+    }
     setIsSaving(false)
+  }
+
+  const handleCommentPaste = (event) => {
+    const items = Array.from(event.clipboardData?.items ?? [])
+    const imageItems = items.filter((item) => item.type?.startsWith("image/"))
+    if (imageItems.length === 0) return
+    event.preventDefault()
+    const pastedText = event.clipboardData?.getData("text") || ""
+    if (pastedText) {
+      setDetailDraft((prev) => (prev ? `${prev}\n${pastedText}` : pastedText))
+    }
+    const availableSlots = maxImages - pendingImages.length
+    if (availableSlots <= 0) {
+      toast.error("En fazla 3 görsel ekleyebilirsin.")
+      return
+    }
+    const toProcess = imageItems.slice(0, availableSlots)
+    toProcess.forEach((item) => {
+      const file = item.getAsFile()
+      if (!file) return
+      if (file.size > maxImageBytes) {
+        toast.error("Görsel 2MB sınırını aşıyor.")
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result
+        if (typeof result !== "string") return
+        setPendingImages((prev) => [...prev, result])
+      }
+      reader.readAsDataURL(file)
+    })
+    if (imageItems.length > availableSlots) {
+      toast.error("En fazla 3 görsel ekleyebilirsin.")
+    }
+  }
+
+  const handleRemovePendingImage = (index) => {
+    setPendingImages((prev) => prev.filter((_, idx) => idx !== index))
   }
 
   return (
@@ -119,10 +167,41 @@ export default function TaskDetailModal({
             rows={6}
             value={detailDraft}
             onChange={(event) => setDetailDraft(event.target.value)}
+            onPaste={handleCommentPaste}
             placeholder="Görevi detaylandır..."
             readOnly={!canAddComment}
             className="w-full resize-none bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
           />
+          {pendingImages.length > 0 && (
+            <div className="border-t border-white/10 bg-ink-900 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Eklenen görseller ({pendingImages.length}/{maxImages})
+              </p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {pendingImages.map((src, index) => (
+                  <div
+                    key={`${src}-${index}`}
+                    className="group relative overflow-hidden rounded-lg border border-white/10 bg-ink-900/70"
+                  >
+                    <img
+                      src={src}
+                      alt={`Yorum görseli ${index + 1}`}
+                      className="h-20 w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePendingImage(index)}
+                      className="absolute right-2 top-2 rounded-full border border-white/10 bg-ink-900/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200 opacity-0 transition group-hover:opacity-100"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3 text-xs">
             <span className="text-slate-400">
               {canAddComment ? "Yorumlar notlardan ayrı tutulur." : "Düzenleme yetkisi gerekli."}
@@ -154,6 +233,20 @@ export default function TaskDetailModal({
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-2">
                         <p className="whitespace-pre-wrap">{comment.text}</p>
+                        {Array.isArray(comment.images) && comment.images.length > 0 && (
+                          <div className="grid grid-cols-2 gap-2">
+                            {comment.images.map((src, index) => (
+                              <img
+                                key={`${comment.id}-image-${index}`}
+                                src={src}
+                                alt={`Yorum görseli ${index + 1}`}
+                                className="h-24 w-full rounded-lg border border-white/10 object-cover"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            ))}
+                          </div>
+                        )}
                         <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-500">
                           <span>{comment.authorName || "Bilinmiyor"}</span>
                           {comment.createdAt && (

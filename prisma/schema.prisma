@@ -81,6 +81,7 @@ model TaskComment {
   authorId   String?
   authorName String
   text       String
+  images     String[] @default([])
   createdAt  DateTime @default(now())
 }
 

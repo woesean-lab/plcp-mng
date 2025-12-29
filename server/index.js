@@ -192,7 +192,7 @@ async function ensureDefaults() {
 const app = express()
 app.disable("x-powered-by")
 
-app.use(express.json({ limit: "64kb" }))
+app.use(express.json({ limit: "12mb" }))
 
 const requireAuth = async (req, res, next) => {
   try {
@@ -689,6 +689,8 @@ app.put("/api/profile", async (req, res) => {
 const allowedProblemStatus = new Set(["open", "resolved"])
 const allowedTaskStatus = new Set(["todo", "doing", "done"])
 const allowedTaskDueTypes = new Set(["today", "repeat", "date"])
+const MAX_COMMENT_IMAGES = 3
+const MAX_COMMENT_IMAGE_CHARS = 3_000_000
 
 const canViewAllTasksForUser = (user) => {
   const permissions = user?.role?.permissions || []
@@ -1057,9 +1059,19 @@ app.post("/api/tasks/:id/comments", async (req, res) => {
     return
   }
 
-  const text = String(req.body?.text ?? "").trim()
-  if (!text) {
-    res.status(400).json({ error: "text is required" })
+  const textRaw = req.body?.text
+  const text = textRaw === undefined ? "" : String(textRaw).trim()
+  const imagesRaw = req.body?.images
+  const images = Array.isArray(imagesRaw)
+    ? imagesRaw.map((item) => String(item ?? "")).filter(Boolean)
+    : []
+  const normalizedImages = images
+    .filter((item) => item.startsWith("data:image/"))
+    .filter((item) => item.length <= MAX_COMMENT_IMAGE_CHARS)
+    .slice(0, MAX_COMMENT_IMAGES)
+
+  if (!text && normalizedImages.length === 0) {
+    res.status(400).json({ error: "text or images required" })
     return
   }
 
@@ -1073,6 +1085,7 @@ app.post("/api/tasks/:id/comments", async (req, res) => {
     data: {
       taskId: id,
       text,
+      images: normalizedImages,
       authorId: req.user?.id ?? null,
       authorName: req.user?.username || "Bilinmiyor",
     },

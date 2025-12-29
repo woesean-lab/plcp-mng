@@ -1330,18 +1330,19 @@ export default function useAppData() {
     setTaskDetailTarget(null)
   }
 
-  const handleTaskDetailCommentAdd = async (taskId, text) => {
+  const handleTaskDetailCommentAdd = async (taskId, text, images = []) => {
     if (!taskId) return null
     const trimmed = (text ?? "").trim()
-    if (!trimmed) {
-      toast.error("Yorum girin.")
+    const cleanImages = Array.isArray(images) ? images.filter(Boolean) : []
+    if (!trimmed && cleanImages.length === 0) {
+      toast.error("Yorum veya görsel ekleyin.")
       return null
     }
     try {
       const res = await apiFetch(`/api/tasks/${taskId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: trimmed }),
+        body: JSON.stringify({ text: trimmed, images: cleanImages }),
       })
       if (!res.ok) throw new Error("task_comment_create_failed")
       const created = await res.json()
