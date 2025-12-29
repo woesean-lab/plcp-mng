@@ -139,7 +139,6 @@ export default function SalesTab({
     return { bars, maxValue }
   })()
   const [updateDate, setUpdateDate] = useState("")
-  const [updateNextDate, setUpdateNextDate] = useState("")
   const [updateAmount, setUpdateAmount] = useState("")
 
   return (
@@ -264,64 +263,6 @@ export default function SalesTab({
               )}
             </div>
           </div>
-          <div className={`${panelClass} bg-ink-800/60`}>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-              Hizli guncelle
-            </p>
-            <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-                <input
-                  type="date"
-                  value={updateDate}
-                  onChange={(e) => setUpdateDate(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-                <input
-                  type="date"
-                  value={updateNextDate}
-                  onChange={(e) => setUpdateNextDate(e.target.value)}
-                  placeholder="Yeni tarih"
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={updateAmount}
-                  onChange={(e) => setUpdateAmount(e.target.value)}
-                  placeholder="Yeni adet"
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const success = handleSaleUpdateByDate(updateDate, updateNextDate, updateAmount)
-                    if (success) {
-                      setUpdateDate("")
-                      setUpdateNextDate("")
-                      setUpdateAmount("")
-                    }
-                  }}
-                  className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-                >
-                  Guncelle
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUpdateDate("")
-                    setUpdateNextDate("")
-                    setUpdateAmount("")
-                  }}
-                  className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                >
-                  Temizle
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="space-y-6">
@@ -388,6 +329,55 @@ export default function SalesTab({
             </div>
           </div>
           )}
+          <div className={`${panelClass} bg-ink-800/60`}>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+              Hizli guncelle
+            </p>
+            <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <input
+                  type="date"
+                  value={updateDate}
+                  onChange={(e) => setUpdateDate(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                />
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={updateAmount}
+                  onChange={(e) => setUpdateAmount(e.target.value)}
+                  placeholder="Yeni adet"
+                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const success = handleSaleUpdateByDate(updateDate, "", updateAmount)
+                    if (success) {
+                      setUpdateDate("")
+                      setUpdateAmount("")
+                    }
+                  }}
+                  className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                >
+                  Guncelle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpdateDate("")
+                    setUpdateAmount("")
+                  }}
+                  className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                >
+                  Temizle
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
