@@ -116,6 +116,8 @@ function App() {
     isSalesTabLoading,
     salesSummary,
     salesChartData,
+    salesRange,
+    setSalesRange,
     salesForm,
     setSalesForm,
     handleSaleAdd,
@@ -811,6 +813,8 @@ function App() {
               canCreate={canCreateSales}
               salesSummary={salesSummary}
               salesChartData={salesChartData}
+              salesRange={salesRange}
+              setSalesRange={setSalesRange}
               salesForm={salesForm}
               setSalesForm={setSalesForm}
               handleSaleAdd={handleSaleAdd}

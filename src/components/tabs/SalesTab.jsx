@@ -62,6 +62,8 @@ export default function SalesTab({
   canCreate,
   salesSummary,
   salesChartData,
+  salesRange,
+  setSalesRange,
   salesForm,
   setSalesForm,
   handleSaleAdd,
@@ -76,6 +78,23 @@ export default function SalesTab({
   const summary = salesSummary || { total: 0, count: 0, average: 0, last7Total: 0 }
   const salesList = Array.isArray(recentSales) ? recentSales : []
   const chartData = Array.isArray(salesChartData) ? salesChartData : []
+  const rangeMeta = {
+    daily: { label: "Gunluk", helper: "Son 14 gunluk kayit" },
+    weekly: { label: "Haftalik", helper: "Son 12 haftalik kayit" },
+    monthly: { label: "Aylik", helper: "Son 12 aylik kayit" },
+    yearly: { label: "Yillik", helper: "Son 6 yillik kayit" },
+  }
+  const activeRange = rangeMeta[salesRange] || rangeMeta.daily
+  const formatRangeLabel = (value) => {
+    if (!value) return ""
+    if (salesRange === "yearly") return value
+    if (salesRange === "monthly") {
+      const [year, month] = value.split("-")
+      if (!year || !month) return value
+      return `${month}/${year}`
+    }
+    return formatDate(value)
+  }
 
   const chart = (() => {
     if (chartData.length === 0) return null
@@ -97,9 +116,9 @@ export default function SalesTab({
     return { line, area, maxValue }
   })()
 
-  const chartStartLabel = chartData[0]?.date ? formatDate(chartData[0].date) : ""
+  const chartStartLabel = chartData[0]?.date ? formatRangeLabel(chartData[0].date) : ""
   const lastChartItem = chartData[chartData.length - 1]
-  const chartEndLabel = lastChartItem?.date ? formatDate(lastChartItem.date) : ""
+  const chartEndLabel = lastChartItem?.date ? formatRangeLabel(lastChartItem.date) : ""
 
   return (
     <div className="space-y-6">
@@ -160,11 +179,29 @@ export default function SalesTab({
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Satis grafigi
                 </p>
-                <p className="text-sm text-slate-400">Son 14 kayitlik hareket.</p>
+                <p className="text-sm text-slate-400">{activeRange.helper}.</p>
               </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                En yuksek: {chart?.maxValue ?? 0}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(rangeMeta).map(([key, meta]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSalesRange(key)}
+                      className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                        salesRange === key
+                          ? "border-accent-300 bg-accent-500/20 text-accent-50 shadow-glow"
+                          : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60 hover:text-accent-100"
+                      }`}
+                    >
+                      {meta.label}
+                    </button>
+                  ))}
+                </div>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                  En yuksek: {chart?.maxValue ?? 0}
+                </span>
+              </div>
             </div>
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">

@@ -188,6 +188,7 @@ export default function useAppData() {
     const day = String(today.getDate()).padStart(2, "0")
     return { date: `${year}-${month}-${day}`, amount: "" }
   })
+  const [salesRange, setSalesRange] = useState("daily")
 
   const isLight = theme === "light"
   const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
@@ -1033,7 +1034,45 @@ export default function useAppData() {
       .map(([date, amount]) => ({ date, amount }))
   }, [sales])
 
-  const salesChartData = useMemo(() => salesByDate.slice(-14), [salesByDate])
+  const salesAggregated = useMemo(() => {
+    if (salesRange === "daily") return salesByDate
+    const totals = new Map()
+    salesByDate.forEach((entry) => {
+      const date = String(entry?.date ?? "").trim()
+      if (!date) return
+      const parsed = new Date(`${date}T00:00:00`)
+      if (Number.isNaN(parsed.getTime())) return
+      let key = date
+      if (salesRange === "weekly") {
+        const day = parsed.getDay()
+        const diff = day === 0 ? -6 : 1 - day
+        const weekStart = new Date(parsed)
+        weekStart.setDate(parsed.getDate() + diff)
+        key = getLocalDateString(weekStart)
+      } else if (salesRange === "monthly") {
+        const year = parsed.getFullYear()
+        const month = String(parsed.getMonth() + 1).padStart(2, "0")
+        key = `${year}-${month}`
+      } else if (salesRange === "yearly") {
+        key = String(parsed.getFullYear())
+      }
+      const amount = Number(entry?.amount ?? 0)
+      totals.set(key, (totals.get(key) ?? 0) + (Number.isFinite(amount) ? amount : 0))
+    })
+    return Array.from(totals.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, amount]) => ({ date, amount }))
+  }, [salesByDate, salesRange])
+
+  const salesChartData = useMemo(() => {
+    const maxItems = {
+      daily: 14,
+      weekly: 12,
+      monthly: 12,
+      yearly: 6,
+    }[salesRange] ?? 14
+    return salesAggregated.slice(-maxItems)
+  }, [salesAggregated, salesRange])
 
   const salesSummary = useMemo(() => {
     const total = sales.reduce((sum, sale) => sum + (Number(sale?.amount) || 0), 0)
@@ -3416,6 +3455,8 @@ export default function useAppData() {
     isSalesTabLoading,
     salesSummary,
     salesChartData,
+    salesRange,
+    setSalesRange,
     salesForm,
     setSalesForm,
     handleSaleAdd,
