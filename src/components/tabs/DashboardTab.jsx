@@ -75,8 +75,8 @@ export default function DashboardTab({
     canViewLists && { id: "lists", label: "Listeler", value: listCountText, note: "Aktif" },
   ].filter(Boolean)
   const headerMetrics = [
-    { id: "modules", label: "Aktif modul", value: moduleCount, note: "Erisilebilir sekmeler" },
-    { id: "alerts", label: "Kritik uyari", value: alerts.length, note: "Goz onunde tut" },
+    { id: "modules", label: "Aktif görev", value: moduleCount, note: "Erisilebilir sekmeler" },
+    { id: "alerts", label: "Aktif problemli müşteri", value: alerts.length, note: "Goz onunde tut" },
     canViewTasks
       ? { id: "tasks", label: "Gorev toplam", value: tasks.total, note: "Yurutulen isler" }
       : { id: "resolved", label: "Cozulen problem", value: resolvedCount, note: "Son kontrol" },
@@ -94,7 +94,7 @@ export default function DashboardTab({
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
                 Kontrol Merkezi
               </span>
-              <h1 className="mt-3 font-display text-3xl font-semibold text-white">Genel Durum</h1>
+            <h1 className="mt-3 font-display text-3xl font-semibold text-white">Akış</h1>
               <p className="mt-2 text-sm text-slate-200/80">
                 Merhaba {userName}, bugunku operasyonlari tek bakista yonetebilirsin.
               </p>
