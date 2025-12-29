@@ -203,7 +203,11 @@ export default function useAppData() {
   const canManageRoles = hasAnyPermission([PERMISSIONS.adminRolesManage, PERMISSIONS.adminManage])
   const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
   const canManageAdmin = canManageRoles || canManageUsers
-  const canViewSales = isAuthed
+  const canViewSales = isAuthed && hasAnyPermission([
+    PERMISSIONS.salesView,
+    PERMISSIONS.salesCreate,
+    PERMISSIONS.adminManage,
+  ])
   const availableTabs = useMemo(() => {
     const tabs = []
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")

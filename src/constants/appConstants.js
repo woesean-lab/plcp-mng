@@ -88,6 +88,8 @@ export const PERMISSIONS = {
   tasksProgress: "tasks.progress",
   tasksDelete: "tasks.delete",
   tasksEdit: "tasks.edit",
+  salesView: "sales.view",
+  salesCreate: "sales.create",
   problemsView: "problems.view",
   problemsCreate: "problems.create",
   problemsResolve: "problems.resolve",
@@ -138,6 +140,13 @@ export const PERMISSION_GROUPS = [
       { id: PERMISSIONS.tasksProgress, label: "Durum degistir" },
       { id: PERMISSIONS.tasksDelete, label: "Gorev sil" },
       { id: PERMISSIONS.tasksEdit, label: "Tum yetki (eski)" },
+    ],
+  },
+  {
+    title: "Satislar",
+    items: [
+      { id: PERMISSIONS.salesView, label: "Goruntule" },
+      { id: PERMISSIONS.salesCreate, label: "Satis ekle" },
     ],
   },
   {

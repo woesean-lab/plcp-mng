@@ -32,6 +32,8 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "tasks.update",
   "tasks.progress",
   "tasks.delete",
+  "sales.view",
+  "sales.create",
   "problems.view",
   "problems.create",
   "problems.resolve",
@@ -1031,12 +1033,12 @@ app.delete("/api/tasks/:id", async (req, res) => {
   }
 })
 
-app.get("/api/sales", async (_req, res) => {
+app.get("/api/sales", requireAnyPermission(["sales.view", "sales.create", "admin.manage"]), async (_req, res) => {
   const sales = await prisma.sale.findMany({ orderBy: { date: "asc" } })
   res.json(sales)
 })
 
-app.post("/api/sales", async (req, res) => {
+app.post("/api/sales", requireAnyPermission(["sales.create", "admin.manage"]), async (req, res) => {
   const date = String(req.body?.date ?? "").trim()
   const amount = Number(req.body?.amount)
   const parsed = new Date(`${date}T00:00:00`)

@@ -335,8 +335,12 @@ function App() {
   const canUpdateTasks = hasAnyPermission([PERMISSIONS.tasksUpdate, PERMISSIONS.tasksEdit])
   const canProgressTasks = hasAnyPermission([PERMISSIONS.tasksProgress, PERMISSIONS.tasksEdit])
   const canDeleteTasks = hasAnyPermission([PERMISSIONS.tasksDelete, PERMISSIONS.tasksEdit])
-  const canViewSales = isAuthed
-  const canCreateSales = isAuthed
+  const canViewSales = isAuthed && hasAnyPermission([
+    PERMISSIONS.salesView,
+    PERMISSIONS.salesCreate,
+    PERMISSIONS.adminManage,
+  ])
+  const canCreateSales = isAuthed && hasAnyPermission([PERMISSIONS.salesCreate, PERMISSIONS.adminManage])
   const canViewProblems = hasPermission(PERMISSIONS.problemsView)
   const canCreateProblems = hasAnyPermission([PERMISSIONS.problemsCreate, PERMISSIONS.problemsManage])
   const canResolveProblems = hasAnyPermission([PERMISSIONS.problemsResolve, PERMISSIONS.problemsManage])
