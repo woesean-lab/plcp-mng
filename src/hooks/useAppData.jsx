@@ -197,7 +197,6 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (permissions.includes(PERMISSIONS.stockView)) tabs.push("stock")
-    tabs.push("charts")
     if (canManageAdmin) tabs.push("admin")
     return tabs
   }, [permissions, canManageAdmin])
@@ -2449,7 +2448,6 @@ export default function useAppData() {
   const isTasksTabLoading = isTasksLoading || (activeTab === "tasks" && isTabLoading)
   const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
   const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
-  const isChartsTabLoading = activeTab === "charts" && isTabLoading
   const isProblemsTabLoading = isProblemsLoading || (activeTab === "problems" && isTabLoading)
   const isAdminTabLoading = isAdminLoading || (activeTab === "admin" && isTabLoading)
 
@@ -3355,7 +3353,6 @@ export default function useAppData() {
     handleListInsertColumn,
     handleListDeleteColumn,
     isStockTabLoading,
-    isChartsTabLoading,
     stockSummary,
     products,
     productSearch,
