@@ -233,6 +233,39 @@ export default function DashboardTab({
             </div>
           </div>
         </div>
+
+        <div className="space-y-4">
+          <div className={`${panelClass} bg-ink-900/55`}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Son 24 saat</p>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+              Hareket
+            </span>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {activityItems.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 text-sm text-slate-400 sm:col-span-2">
+                Son 24 saatte hareket yok.
+              </div>
+            ) : (
+              activityItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3"
+                >
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <span className={`h-2.5 w-2.5 rounded-full ${item.accent}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-white">{item.value}</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">{item.hint}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)]">
@@ -268,63 +301,65 @@ export default function DashboardTab({
               <div key={item.id} className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 rounded-full ${item.accent}`} />
-                      <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
-                    </div>
-                    <p className="text-lg font-semibold text-white">{item.value}</p>
+                    <span className={`h-2.5 w-2.5 rounded-full ${item.accent}`} />
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
                   </div>
-                  {item.hint && <p className="mt-2 text-xs text-slate-400">{item.hint}</p>}
-                  {item.subLabel && (
-                    <div className="mt-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
-                      <span>{item.subLabel}</span>
-                      <span className="font-semibold text-white">{item.subValue}</span>
-                    </div>
-                  )}
+                  <p className="text-lg font-semibold text-white">{item.value}</p>
                 </div>
-              ))}
-            </div>
+                {item.hint && <p className="mt-2 text-xs text-slate-400">{item.hint}</p>}
+                {item.subLabel && (
+                  <div className="mt-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+                    <span>{item.subLabel}</span>
+                    <span className="font-semibold text-white">{item.subValue}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className={`${panelClass} bg-ink-900/55`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Aksiyonlar</p>
-              <p className="mt-1 text-sm text-slate-300">İş akışını hızlandır.</p>
-            </div>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
-              {actionItems.length} iş
-            </span>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {actionItems.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-4 text-sm text-slate-400 sm:col-span-2">
-                Aksiyon bulunamadı.
+        <div className="space-y-4">
+          <div className={`${panelClass} bg-ink-900/55`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Aksiyonlar</p>
+                <p className="mt-1 text-sm text-slate-300">İş akışını hızlandır.</p>
               </div>
-            ) : (
-              actionItems.map((action) => (
-                <button
-                  key={action.id}
-                  type="button"
-                  onClick={() => onOpenTab(action.tab)}
-                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-4 text-left shadow-inner transition hover:-translate-y-0.5 hover:border-white/20"
-                >
-                  <span className={`absolute inset-x-0 top-0 h-1 ${action.accent}`} />
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-white">{action.label}</p>
-                      <p className="text-xs text-slate-400">{action.detail}</p>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+                {actionItems.length} iş
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {actionItems.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-4 text-sm text-slate-400 sm:col-span-2">
+                  Aksiyon bulunamadı.
+                </div>
+              ) : (
+                actionItems.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    onClick={() => onOpenTab(action.tab)}
+                    className="group relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-4 text-left shadow-inner transition hover:-translate-y-0.5 hover:border-white/20"
+                  >
+                    <span className={`absolute inset-x-0 top-0 h-1 ${action.accent}`} />
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{action.label}</p>
+                        <p className="text-xs text-slate-400">{action.detail}</p>
+                      </div>
+                      <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-500 transition group-hover:text-slate-200">
+                        Git
+                        <span className="h-1 w-6 rounded-full bg-white/10 transition group-hover:w-10" />
+                      </span>
                     </div>
-                    <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-500 transition group-hover:text-slate-200">
-                      Git
-                      <span className="h-1 w-6 rounded-full bg-white/10 transition group-hover:w-10" />
-                    </span>
-                  </div>
-                </button>
-              ))
-            )}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="mt-5 border-t border-white/10 pt-4">
+          <div className={`${panelClass} bg-ink-900/55`}>
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Son 24 saat</p>
               <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-300">
