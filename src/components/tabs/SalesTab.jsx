@@ -235,7 +235,7 @@ export default function SalesTab({
                           <div
                             className={`relative w-full rounded-2xl ${
                               bar.isPeak
-                                ? "bg-[#0b3b2e]"
+                                ? "bg-[#1f5b45]"
                                 : "bg-slate-600/80"
                             }`}
                             style={{ height: `${bar.heightPercent}%` }}
