@@ -22,7 +22,7 @@ export default function DashboardTab({
   const openCount = Array.isArray(openProblems) ? openProblems.length : 0
   const resolvedCount = Array.isArray(resolvedProblems) ? resolvedProblems.length : 0
   const stocks = stockSummary || { total: 0, used: 0, empty: 0 }
-  const userName = activeUser?.username || "Kullanici"
+  const userName = activeUser?.username || "Kullanıcı"
   const userRole = activeUser?.role?.name || "Personel"
   const permissionCount = Array.isArray(activeUser?.role?.permissions)
     ? activeUser.role.permissions.length
@@ -45,12 +45,12 @@ export default function DashboardTab({
   const attentionItems = [
     canViewTasks && {
       id: "focus-tasks",
-      text: `Tamamlanmasi gereken ${tasks.todo} goreviniz var.`,
+      text: `Tamamlanması gereken ${tasks.todo} göreviniz var.`,
       accent: "bg-sky-400",
     },
     canViewProblems && {
       id: "focus-problems",
-      text: `Cozulmesi gereken ${openCount} problemli musteri var.`,
+      text: `Çözülmesi gereken ${openCount} problemli müşteri var.`,
       accent: "bg-rose-400",
     },
   ].filter(Boolean)
@@ -58,30 +58,30 @@ export default function DashboardTab({
   const kpiItems = [
     canViewSales && {
       id: "sales",
-      label: "Son 7 gun satis",
+      label: "Son 7 gün satış",
       value: summary.last7Total,
       hint: `Ortalama ${summary.average}`,
       accent: "bg-emerald-400",
     },
     canViewTasks && {
       id: "tasks",
-      label: "Aktif gorev",
+      label: "Aktif görev",
       value: activeTaskCount,
       hint: `${tasks.todo} bekleyen`,
       accent: "bg-sky-400",
     },
     canViewProblems && {
       id: "problems",
-      label: "Problemli musteri",
+      label: "Problemli müşteri",
       value: openCount,
       hint: openCount > 0 ? "Takipte" : "Temiz",
       accent: "bg-rose-400",
     },
     canViewStock && {
       id: "stock",
-      label: "Biten urun",
+      label: "Biten ürün",
       value: stocks.empty,
-      hint: `Kullanim ${stockUsage}%`,
+      hint: `Kullanım ${stockUsage}%`,
       accent: "bg-amber-400",
     },
     canViewLists && {
@@ -95,23 +95,23 @@ export default function DashboardTab({
   const fallbackKpis = [
     {
       id: "modules",
-      label: "Erisim modulu",
+      label: "Erişim modülü",
       value: moduleCount,
-      hint: "Gorunur sekmeler",
+      hint: "Görünür sekmeler",
       accent: "bg-slate-400",
     },
     {
       id: "permissions",
       label: "Yetki seviyesi",
       value: permissionCount,
-      hint: "Rol kapsaminda",
+      hint: "Rol kapsamında",
       accent: "bg-slate-400",
     },
     {
       id: "resolved",
-      label: "Cozulen problem",
+      label: "Çözülen problem",
       value: resolvedCount,
-      hint: "Takip kaydi",
+      hint: "Takip kaydı",
       accent: "bg-slate-400",
     },
   ]
@@ -119,43 +119,43 @@ export default function DashboardTab({
   const actionItems = [
     canViewTasks && {
       id: "act-tasks",
-      label: "Gorevleri planla",
+      label: "Görevleri planla",
       detail: "Yeni aksiyon ekle",
       tab: "tasks",
       accent: "bg-sky-400",
     },
     canViewSales && {
       id: "act-sales",
-      label: "Satis girisi",
-      detail: "Yeni kayit ekle",
+      label: "Satış girişi",
+      detail: "Yeni kayıt ekle",
       tab: "sales",
       accent: "bg-emerald-400",
     },
     canViewProblems && {
       id: "act-problems",
-      label: "Problemli musteriler",
-      detail: "Kayitlari guncelle",
+      label: "Problemli müşteriler",
+      detail: "Kayıtları güncelle",
       tab: "problems",
       accent: "bg-rose-400",
     },
     canViewStock && {
       id: "act-stock",
-      label: "Stok guncelle",
-      detail: "Urunleri kontrol et",
+      label: "Stok güncelle",
+      detail: "Ürünleri kontrol et",
       tab: "stock",
       accent: "bg-amber-400",
     },
     canViewMessages && {
       id: "act-messages",
-      label: "Sablonlari yonet",
+      label: "Şablonları yönet",
       detail: "Mesaj havuzu",
       tab: "messages",
       accent: "bg-indigo-400",
     },
     canViewLists && {
       id: "act-lists",
-      label: "Listeleri ac",
-      detail: "Katilimlari guncelle",
+      label: "Listeleri aç",
+      detail: "Katılımları güncelle",
       tab: "lists",
       accent: "bg-slate-400",
     },
@@ -170,11 +170,11 @@ export default function DashboardTab({
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              Is Yonetim Paneli
+              İş Yönetim Paneli
             </span>
-            <h1 className="mt-3 font-display text-3xl font-semibold text-white">Akis</h1>
+            <h1 className="mt-3 font-display text-3xl font-semibold text-white">Akış</h1>
             <p className="mt-2 text-sm text-slate-200/80">
-              Merhaba {userName}, bugunku operasyonlari tek bakista yonetebilirsin.
+              Merhaba {userName}, bugünkü operasyonları tek bakışta yönetebilirsin.
             </p>
           </div>
           <div className="flex flex-wrap items-stretch gap-3">
@@ -196,8 +196,8 @@ export default function DashboardTab({
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 Durum stabil
               </div>
-              <div className="mt-2 text-xs text-slate-400">Erisim modulu: {moduleCount}</div>
-              <div className="mt-1 text-xs text-slate-400">Cozulen problem: {resolvedCount}</div>
+              <div className="mt-2 text-xs text-slate-400">Erişim modülü: {moduleCount}</div>
+              <div className="mt-1 text-xs text-slate-400">Çözülen problem: {resolvedCount}</div>
             </div>
           </div>
         </div>
@@ -207,17 +207,17 @@ export default function DashboardTab({
         <div className={`${panelClass} bg-ink-900/55`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Odak notlari</p>
-              <p className="mt-1 text-sm text-slate-300">Bugun onceliklendirilmesi gerekenler.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Odak notları</p>
+              <p className="mt-1 text-sm text-slate-300">Bugün önceliklendirilmesi gerekenler.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
-              Canli
+              Canlı
             </span>
           </div>
           <div className="mt-4 space-y-2">
             {attentionItems.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 text-sm text-slate-400">
-                Bugun kritik is bulunamadi.
+                Bugün kritik iş bulunamadı.
               </div>
             ) : (
               attentionItems.map((item) => (
@@ -251,16 +251,16 @@ export default function DashboardTab({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Aksiyonlar</p>
-              <p className="mt-1 text-sm text-slate-300">Is akisini hizlandir.</p>
+              <p className="mt-1 text-sm text-slate-300">İş akışını hızlandır.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
-              {actionItems.length} is
+              {actionItems.length} iş
             </span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {actionItems.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-4 text-sm text-slate-400 sm:col-span-2">
-                Aksiyon bulunamadi.
+                Aksiyon bulunamadı.
               </div>
             ) : (
               actionItems.map((action) => (
