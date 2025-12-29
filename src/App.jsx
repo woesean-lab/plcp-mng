@@ -122,7 +122,6 @@ function App() {
     setSalesForm,
     handleSaleAdd,
     salesRecords,
-    handleSaleUpdateByDate,
     isListsTabLoading,
     listCountText,
     activeList,
@@ -820,7 +819,6 @@ function App() {
               setSalesForm={setSalesForm}
               handleSaleAdd={handleSaleAdd}
               salesRecords={salesRecords}
-              handleSaleUpdateByDate={handleSaleUpdateByDate}
             />
           </div>
         )}

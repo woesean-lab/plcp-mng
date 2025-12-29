@@ -1218,41 +1218,6 @@ export default function useAppData() {
     return true
   }
 
-  const handleSaleUpdateByDate = (currentDate, nextDate, nextAmount) => {
-    const dateKey = String(currentDate ?? "").trim()
-    if (!dateKey) {
-      toast.error("Tarih secin.")
-      return false
-    }
-    const amount = Number(nextAmount)
-    if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
-      toast.error("Satış adedi girin.")
-      return false
-    }
-    const matches = sales.filter((sale) => String(sale?.date ?? "").trim() === dateKey)
-    if (matches.length === 0) {
-      toast.error("Kayit bulunamadi.")
-      return false
-    }
-    setSales((prev) => {
-      let kept = false
-      return prev.reduce((acc, sale) => {
-        const saleDate = String(sale?.date ?? "").trim()
-        if (saleDate === dateKey) {
-          if (!kept) {
-            kept = true
-            acc.push({ ...sale, amount })
-          }
-          return acc
-        }
-        acc.push(sale)
-        return acc
-      }, [])
-    })
-    toast.success("Satış güncellendi")
-    return true
-  }
-
   const openNoteModal = (value, onSave) => {
     setNoteModalDraft(value ?? "")
     noteModalTargetRef.current = onSave
@@ -3547,7 +3512,6 @@ export default function useAppData() {
     setSalesForm,
     handleSaleAdd,
     salesRecords,
-    handleSaleUpdateByDate,
     isListsTabLoading,
     listCountText,
     activeList,
