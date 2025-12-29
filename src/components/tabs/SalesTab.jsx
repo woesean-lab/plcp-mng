@@ -142,6 +142,13 @@ export default function SalesTab({
     label: formatPointLabel(item.date),
     show: index % labelEvery === 0 || index === chartData.length - 1,
   }))
+  const labelPositions = chart
+    ? chart.points.map((point, index) => ({
+      left: `${point.x}%`,
+      label: pointLabels[index]?.label ?? "",
+      show: pointLabels[index]?.show ?? false,
+    }))
+    : []
 
   return (
     <div className="space-y-6">
@@ -266,16 +273,19 @@ export default function SalesTab({
                     <span>{chartStartLabel || "-"}</span>
                     <span>{chartEndLabel || "-"}</span>
                   </div>
-                  {pointLabels.length > 0 && (
-                    <div
-                      className="mt-2 grid gap-1 text-[10px] text-slate-500"
-                      style={{ gridTemplateColumns: `repeat(${pointLabels.length}, minmax(0, 1fr))` }}
-                    >
-                      {pointLabels.map((item, idx) => (
-                        <span key={`lbl-${idx}`} className={item.show ? "" : "opacity-0"}>
-                          {item.label}
-                        </span>
-                      ))}
+                  {labelPositions.length > 0 && (
+                    <div className="relative mt-2 h-4 text-[10px] text-slate-500">
+                      {labelPositions
+                        .filter((item) => item.show)
+                        .map((item, idx) => (
+                          <span
+                            key={`lbl-${idx}`}
+                            className="absolute -translate-x-1/2"
+                            style={{ left: item.left }}
+                          >
+                            {item.label}
+                          </span>
+                        ))}
                     </div>
                   )}
                 </div>
