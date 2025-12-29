@@ -15,19 +15,20 @@ export default function TaskDetailModal({
   handleDetailNoteScroll,
 }) {
   if (!target) return null
-  const [detailDraft, setDetailDraft] = useState(detailNoteText || "")
+  const [detailDraft, setDetailDraft] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const canEditNote = Boolean(canEdit && onDetailNoteSave)
-  const isDirty = detailDraft.trim() !== (detailNoteText || "").trim()
+  const isDirty = detailDraft.trim().length > 0
 
   useEffect(() => {
-    setDetailDraft(detailNoteText || "")
-  }, [detailNoteText, target?.id])
+    setDetailDraft("")
+  }, [target?.id])
 
   const handleDetailNoteSave = async () => {
     if (!canEditNote || !target?.id) return
     setIsSaving(true)
-    await onDetailNoteSave(target.id, detailDraft)
+    const saved = await onDetailNoteSave(target.id, detailDraft)
+    if (saved) setDetailDraft("")
     setIsSaving(false)
   }
 
@@ -107,7 +108,7 @@ export default function TaskDetailModal({
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-inner">
           <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Görevi detaylandır</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Görevi detaylandır (yorum)</p>
             <span className="text-xs text-slate-400">{detailDraft.length} karakter</span>
           </div>
           <textarea
@@ -120,7 +121,7 @@ export default function TaskDetailModal({
           />
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3 text-xs">
             <span className="text-slate-400">
-              {canEditNote ? "Notu kaydetmek için güncelle." : "Düzenleme yetkisi gerekli."}
+              {canEditNote ? "Yorumlar mevcut notların altına eklenir." : "Düzenleme yetkisi gerekli."}
             </span>
             <button
               type="button"

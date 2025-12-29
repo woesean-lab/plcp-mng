@@ -1311,15 +1311,19 @@ export default function useAppData() {
   const handleTaskDetailNoteSave = async (taskId, note) => {
     if (!taskId) return null
     const trimmed = (note ?? "").trim()
-    const current = (taskDetailTarget?.note ?? "").trim()
-    if (trimmed === current) {
-      toast("Değişiklik yok.", { position: "top-right" })
+    if (!trimmed) {
+      toast.error("Yorum girin.")
       return null
     }
-    const updated = await saveTaskUpdate(taskId, { note: trimmed })
+    const current = (taskDetailTarget?.note ?? "").trim()
+    const timestamp = new Date().toLocaleString("tr-TR")
+    const nextNote = current
+      ? `${current}\n\nYorum (${timestamp}):\n${trimmed}`
+      : `Yorum (${timestamp}):\n${trimmed}`
+    const updated = await saveTaskUpdate(taskId, { note: nextNote })
     if (updated) {
       setTaskDetailTarget(updated)
-      toast.success("Görev notu güncellendi")
+      toast.success("Yorum eklendi")
     }
     return updated
   }
