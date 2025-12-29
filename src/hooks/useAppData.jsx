@@ -11,6 +11,7 @@ import {
   PERMISSIONS,
   PRODUCT_ORDER_STORAGE_KEY,
   STOCK_STATUS,
+  TASK_DETAIL_COMMENTS_STORAGE_KEY,
   THEME_STORAGE_KEY,
   categoryPalette,
   panelClass,
@@ -169,6 +170,16 @@ export default function useAppData() {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
   const [noteModalDraft, setNoteModalDraft] = useState("")
   const [taskDetailTarget, setTaskDetailTarget] = useState(null)
+  const [taskDetailComments, setTaskDetailComments] = useState(() => {
+    if (typeof window === "undefined") return {}
+    try {
+      const stored = localStorage.getItem(TASK_DETAIL_COMMENTS_STORAGE_KEY)
+      return stored ? JSON.parse(stored) : {}
+    } catch (error) {
+      console.warn("Could not read task detail comments", error)
+      return {}
+    }
+  })
   const noteTextareaRef = useRef(null)
   const noteLineRef = useRef(null)
   const detailNoteRef = useRef(null)
@@ -176,6 +187,15 @@ export default function useAppData() {
   const noteModalTargetRef = useRef(null)
   const [isTasksLoading, setIsTasksLoading] = useState(true)
   const taskLoadErrorRef = useRef(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      localStorage.setItem(TASK_DETAIL_COMMENTS_STORAGE_KEY, JSON.stringify(taskDetailComments))
+    } catch (error) {
+      console.warn("Could not persist task detail comments", error)
+    }
+  }, [taskDetailComments])
 
   const buildSalesForm = () => {
     const today = new Date()
@@ -1308,24 +1328,28 @@ export default function useAppData() {
     setTaskDetailTarget(null)
   }
 
-  const handleTaskDetailNoteSave = async (taskId, note) => {
+  const handleTaskDetailCommentAdd = (taskId, text) => {
     if (!taskId) return null
-    const trimmed = (note ?? "").trim()
+    const trimmed = (text ?? "").trim()
     if (!trimmed) {
       toast.error("Yorum girin.")
       return null
     }
-    const current = (taskDetailTarget?.note ?? "").trim()
-    const timestamp = new Date().toLocaleString("tr-TR")
-    const nextNote = current
-      ? `${current}\n\nYorum (${timestamp}):\n${trimmed}`
-      : `Yorum (${timestamp}):\n${trimmed}`
-    const updated = await saveTaskUpdate(taskId, { note: nextNote })
-    if (updated) {
-      setTaskDetailTarget(updated)
-      toast.success("Yorum eklendi")
+    const newComment = {
+      id: `${taskId}-${Date.now()}`,
+      text: trimmed,
+      createdAt: new Date().toISOString(),
     }
-    return updated
+    setTaskDetailComments((prev) => {
+      const safePrev = prev && typeof prev === "object" ? prev : {}
+      const existing = Array.isArray(safePrev[taskId]) ? safePrev[taskId] : []
+      return {
+        ...safePrev,
+        [taskId]: [newComment, ...existing],
+      }
+    })
+    toast.success("Yorum eklendi")
+    return newComment
   }
 
   const openTaskEdit = (task) => {
@@ -3539,7 +3563,6 @@ export default function useAppData() {
     getTaskDueLabel,
     handleTaskAdvance,
     openTaskDetail,
-    handleTaskDetailNoteSave,
     openTaskEdit,
     handleTaskReopen,
     handleTaskDeleteWithConfirm,
@@ -3726,6 +3749,8 @@ export default function useAppData() {
     handleStockModalScroll,
     handleStockModalSave,
     taskDetailTarget,
+    taskDetailComments,
+    handleTaskDetailCommentAdd,
     closeTaskDetail,
     detailNoteText,
     detailNoteLineCount,

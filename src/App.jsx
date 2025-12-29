@@ -285,7 +285,8 @@ function App() {
     handleStockModalSave,
     taskDetailTarget,
     closeTaskDetail,
-    handleTaskDetailNoteSave,
+    taskDetailComments,
+    handleTaskDetailCommentAdd,
     detailNoteText,
     detailNoteLineCount,
     detailNoteLineRef,
@@ -1101,7 +1102,12 @@ function App() {
           onClose={closeTaskDetail}
           onEdit={openTaskEdit}
           canEdit={canUpdateTasks}
-          onDetailNoteSave={handleTaskDetailNoteSave}
+          detailComments={
+            taskDetailTarget && taskDetailComments
+              ? taskDetailComments[taskDetailTarget.id] || []
+              : []
+          }
+          onDetailCommentAdd={handleTaskDetailCommentAdd}
           taskStatusMeta={taskStatusMeta}
           getTaskDueLabel={getTaskDueLabel}
           detailNoteText={detailNoteText}

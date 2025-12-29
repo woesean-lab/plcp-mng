@@ -5,7 +5,8 @@ export default function TaskDetailModal({
   onClose,
   onEdit,
   canEdit,
-  onDetailNoteSave,
+  detailComments,
+  onDetailCommentAdd,
   taskStatusMeta,
   getTaskDueLabel,
   detailNoteText,
@@ -15,19 +16,20 @@ export default function TaskDetailModal({
   handleDetailNoteScroll,
 }) {
   if (!target) return null
+  const comments = Array.isArray(detailComments) ? detailComments : []
   const [detailDraft, setDetailDraft] = useState("")
   const [isSaving, setIsSaving] = useState(false)
-  const canEditNote = Boolean(canEdit && onDetailNoteSave)
+  const canAddComment = Boolean(canEdit && onDetailCommentAdd)
   const isDirty = detailDraft.trim().length > 0
 
   useEffect(() => {
     setDetailDraft("")
   }, [target?.id])
 
-  const handleDetailNoteSave = async () => {
-    if (!canEditNote || !target?.id) return
+  const handleDetailCommentSave = async () => {
+    if (!canAddComment || !target?.id) return
     setIsSaving(true)
-    const saved = await onDetailNoteSave(target.id, detailDraft)
+    const saved = await onDetailCommentAdd(target.id, detailDraft)
     if (saved) setDetailDraft("")
     setIsSaving(false)
   }
@@ -116,25 +118,47 @@ export default function TaskDetailModal({
             value={detailDraft}
             onChange={(event) => setDetailDraft(event.target.value)}
             placeholder="Görevi detaylandır..."
-            readOnly={!canEditNote}
+            readOnly={!canAddComment}
             className="w-full resize-none bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
           />
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3 text-xs">
             <span className="text-slate-400">
-              {canEditNote ? "Yorumlar mevcut notların altına eklenir." : "Düzenleme yetkisi gerekli."}
+              {canAddComment ? "Yorumlar notlardan ayrı tutulur." : "Düzenleme yetkisi gerekli."}
             </span>
             <button
               type="button"
-              onClick={handleDetailNoteSave}
-              disabled={!canEditNote || !isDirty || isSaving}
+              onClick={handleDetailCommentSave}
+              disabled={!canAddComment || !isDirty || isSaving}
               className={`min-w-[120px] rounded-lg border px-3 py-1 text-xs font-semibold transition ${
-                !canEditNote || !isDirty || isSaving
+                !canAddComment || !isDirty || isSaving
                   ? "border-white/10 bg-white/5 text-slate-500"
                   : "border-accent-300/70 bg-accent-500/15 text-accent-50 hover:border-accent-200 hover:bg-accent-500/25"
               }`}
             >
               {isSaving ? "Kaydediliyor..." : "Kaydet"}
             </button>
+          </div>
+          <div className="border-t border-white/10 bg-ink-900 px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Yorumlar</p>
+            <div className="mt-3 space-y-3">
+              {comments.length === 0 ? (
+                <p className="text-xs text-slate-400">Henüz yorum yok.</p>
+              ) : (
+                comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-slate-200"
+                  >
+                    <p className="whitespace-pre-wrap">{comment.text}</p>
+                    {comment.createdAt && (
+                      <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                        {new Date(comment.createdAt).toLocaleString("tr-TR")}
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
