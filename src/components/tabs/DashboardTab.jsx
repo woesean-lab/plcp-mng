@@ -197,58 +197,77 @@ export default function DashboardTab({
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {kpisToShow.map((item) => (
-            <div
-              key={item.id}
-              className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${item.tone} px-4 py-4 shadow-inner`}
-            >
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/40 via-white/10 to-transparent opacity-70" />
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-200/70">{item.label}</p>
-                  <p className="mt-2 text-3xl font-semibold text-white">{item.value}</p>
-                </div>
-                <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[9px] uppercase tracking-[0.2em] text-slate-200/80">
-                  Ozet
-                </span>
-              </div>
-              <p className="mt-2 text-xs text-slate-200/70">{item.hint}</p>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)]">
+        <div className={`${panelClass} bg-ink-900/55`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Kilit metrikler</p>
+              <p className="mt-1 text-sm text-slate-300">Bugunun performans fotografindan ozet.</p>
             </div>
-          ))}
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+              Canli
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {kpisToShow.map((item) => (
+              <div
+                key={item.id}
+                className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${item.tone} px-4 py-4 shadow-inner`}
+              >
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_60%)] opacity-60" />
+                <div className="relative">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-slate-200/70">{item.label}</p>
+                    <span className="rounded-full border border-white/10 bg-white/10 px-2 py-1 text-[9px] uppercase tracking-[0.2em] text-slate-200/80">
+                      Ozet
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-baseline justify-between gap-3">
+                    <p className="text-3xl font-semibold text-white">{item.value}</p>
+                    <span className="text-xs text-slate-200/80">{item.hint}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className={`${panelClass} bg-ink-900/55`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Aksiyonlar</p>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
-              Hizli {actionItems.length}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Aksiyonlar</p>
+              <p className="mt-1 text-sm text-slate-300">Is akisini hizlandir.</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+              {actionItems.length} is
             </span>
           </div>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70">
+          <div className="mt-4 space-y-2">
             {actionItems.length === 0 ? (
-              <div className="px-4 py-4 text-sm text-slate-400">Aksiyon bulunamadi.</div>
+              <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-4 text-sm text-slate-400">
+                Aksiyon bulunamadi.
+              </div>
             ) : (
-              <div className="divide-y divide-white/5">
-                {actionItems.map((action) => (
-                  <button
-                    key={action.id}
-                    type="button"
-                    onClick={() => onOpenTab(action.tab)}
-                    className="group flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/5"
-                  >
-                    <span className={`h-2.5 w-2.5 rounded-full ${action.accent} shadow-glow`} />
-                    <div className="flex-1">
+              actionItems.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={() => onOpenTab(action.tab)}
+                  className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 text-left shadow-inner transition hover:-translate-y-0.5 hover:border-white/20"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`h-8 w-1 rounded-full ${action.accent}`} />
+                    <div>
                       <p className="text-sm font-semibold text-white">{action.label}</p>
                       <p className="text-xs text-slate-400">{action.detail}</p>
                     </div>
-                    <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 transition group-hover:text-slate-200">
-                      Git
-                    </span>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                  <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-500 transition group-hover:text-slate-200">
+                    Ac
+                    <span className="h-1 w-6 rounded-full bg-white/10 transition group-hover:w-10" />
+                  </span>
+                </button>
+              ))
             )}
           </div>
         </div>
