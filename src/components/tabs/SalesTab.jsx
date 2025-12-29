@@ -77,7 +77,7 @@ export default function SalesTab({
     return <SalesSkeleton panelClass={panelClass} />
   }
 
-  const summary = salesSummary || { total: 0, count: 0, average: 0, last7Total: 0 }
+  const summary = salesSummary || { total: 0, count: 0, average: 0, last7Total: 0, yesterdayTotal: 0 }
   const salesList = Array.isArray(salesRecords) ? salesRecords : []
   const chartData = Array.isArray(salesChartData) ? salesChartData : []
   const rangeMeta = {

@@ -17,7 +17,7 @@ export default function DashboardTab({
   canViewStock,
   onNavigate,
 }) {
-  const summary = salesSummary || { total: 0, count: 0, average: 0, last7Total: 0 }
+  const summary = salesSummary || { total: 0, count: 0, average: 0, last7Total: 0, yesterdayTotal: 0 }
   const tasks = taskStats || { total: 0, todo: 0, doing: 0, done: 0 }
   const openCount = Array.isArray(openProblems) ? openProblems.length : 0
   const resolvedCount = Array.isArray(resolvedProblems) ? resolvedProblems.length : 0
@@ -37,7 +37,6 @@ export default function DashboardTab({
   ].filter(Boolean).length
   const userInitial = userName.slice(0, 1).toUpperCase() || "K"
   const activeTaskCount = tasks.todo + tasks.doing
-  const stockUsage = stocks.total > 0 ? Math.round((stocks.used / stocks.total) * 100) : 0
   const onOpenTab = (tabKey) => {
     if (typeof onNavigate === "function") onNavigate(tabKey)
   }
@@ -60,7 +59,7 @@ export default function DashboardTab({
       id: "sales",
       label: "Son 7 gün satış",
       value: summary.last7Total,
-      hint: `Ortalama ${summary.average}`,
+      hint: `Dün ${summary.yesterdayTotal}`,
       accent: "bg-emerald-400",
     },
     canViewTasks && {
@@ -79,9 +78,9 @@ export default function DashboardTab({
     },
     canViewStock && {
       id: "stock",
-      label: "Biten ürün",
+      label: "Stoksuz ürün",
       value: stocks.empty,
-      hint: `Kullanım ${stockUsage}%`,
+      hint: `Stokta ${stocks.total}`,
       accent: "bg-amber-400",
     },
     canViewLists && {

@@ -1095,11 +1095,21 @@ export default function useAppData() {
     const startMonth = String(start.getMonth() + 1).padStart(2, "0")
     const startDay = String(start.getDate()).padStart(2, "0")
     const startKey = `${startYear}-${startMonth}-${startDay}`
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayYear = yesterday.getFullYear()
+    const yesterdayMonth = String(yesterday.getMonth() + 1).padStart(2, "0")
+    const yesterdayDay = String(yesterday.getDate()).padStart(2, "0")
+    const yesterdayKey = `${yesterdayYear}-${yesterdayMonth}-${yesterdayDay}`
     const last7Total = sales.reduce((sum, sale) => {
       if (!sale?.date || sale.date < startKey) return sum
       return sum + (Number(sale?.amount) || 0)
     }, 0)
-    return { total, count, average, last7Total }
+    const yesterdayTotal = sales.reduce((sum, sale) => {
+      if (!sale?.date || sale.date !== yesterdayKey) return sum
+      return sum + (Number(sale?.amount) || 0)
+    }, 0)
+    return { total, count, average, last7Total, yesterdayTotal }
   }, [sales])
 
   const salesRecords = useMemo(() => {
