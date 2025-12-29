@@ -376,19 +376,8 @@ function App() {
   const canManageRoles = hasAnyPermission([PERMISSIONS.adminRolesManage, PERMISSIONS.adminManage])
   const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
   const canViewAdmin = canManageRoles || canManageUsers
-  const dashboardLabel = (
-    <span className="inline-flex items-center">
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
-        <path
-          d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5Z"
-          fill="currentColor"
-        />
-      </svg>
-    </span>
-  )
   const tabItems = useMemo(
     () => [
-      { key: "dashboard", label: dashboardLabel, canView: canViewDashboard },
       { key: "messages", label: "Mesajlar", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
@@ -406,7 +395,6 @@ function App() {
       canViewSales,
       canViewStock,
       canViewTasks,
-      dashboardLabel,
     ],
   )
   const visibleTabs = useMemo(() => tabItems.filter((item) => item.canView), [tabItems])
@@ -573,18 +561,24 @@ function App() {
       )}
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="sticky top-4 z-30 rounded-3xl border border-white/10 bg-ink-900/80 px-3 py-2 shadow-card backdrop-blur">
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 shadow-inner">
-              <span className="h-6 w-1 rounded-full bg-accent-400/80 shadow-glow" />
-              <div className="flex items-baseline gap-2">
-                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-accent-200">
-                  Pulcip
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-400">
-                  Manage
-                </span>
-              </div>
-            </div>
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <button
+                type="button"
+                onClick={() => handleTabSwitch("dashboard")}
+                className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 shadow-inner transition hover:border-white/20 hover:bg-white/10"
+                aria-label="Akis sayfasina git"
+                title="Akis sayfasina git"
+              >
+                <span className="h-6 w-1 rounded-full bg-accent-400/80 shadow-glow" />
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-accent-200">
+                    Pulcip
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-400">
+                    Manage
+                  </span>
+                </div>
+              </button>
 
             <div className="flex w-full items-center gap-2">
               <button
