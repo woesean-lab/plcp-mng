@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 
 function SkeletonBlock({ className = "" }) {
@@ -307,7 +308,7 @@ export default function ListsTab({
                                   ? (event) => handleListContextMenu(event, "column", colIndex)
                                   : undefined
                               }
-                              className={`cursor-pointer border border-white/10 px-2 py-1 text-center text-[11px] font-semibold ${
+                              className={`min-w-[120px] cursor-pointer border border-white/10 px-2 py-1 text-center text-[11px] font-semibold ${
                                 isSelected ? "bg-white/10 text-white" : ""
                               }`}
                             >
@@ -364,7 +365,7 @@ export default function ListsTab({
                             return (
                               <td
                                 key={`${rowIndex}-${colIndex}`}
-                                className={`border border-white/10 p-0 ${cellToneClass}`}
+                                className={`min-w-[120px] border border-white/10 p-0 ${cellToneClass}`}
                               >
                                 <input
                                   value={displayValue}
@@ -540,7 +541,10 @@ export default function ListsTab({
           </div>
         </div>
       </div>
-      {canEditStructure && listContextMenu.open && (
+      {canEditStructure &&
+        listContextMenu.open &&
+        typeof document !== "undefined" &&
+        createPortal(
         <div
           className="fixed z-50"
           style={{ left: listContextMenu.x, top: listContextMenu.y }}
@@ -627,7 +631,8 @@ export default function ListsTab({
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
