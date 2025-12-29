@@ -283,37 +283,37 @@ export default function DashboardTab({
                 </div>
               ))}
             </div>
-            <div className="mt-4">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Son 24 saat</p>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-300">
-                  Hareket
-                </span>
-              </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {activityItems.length === 0 ? (
-                  <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 text-sm text-slate-400 sm:col-span-2">
-                    Son 24 saatte hareket yok.
-                  </div>
-                ) : (
-                  activityItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3"
-                    >
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <span className={`h-2.5 w-2.5 rounded-full ${item.accent}`} />
-                        <span>{item.label}</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-white">{item.value}</p>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">{item.hint}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+          <div className={`${panelClass} bg-ink-900/55 mt-4`}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Son 24 saat</p>
+              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+                Hareket
+              </span>
             </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {activityItems.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 text-sm text-slate-400 sm:col-span-2">
+                  Son 24 saatte hareket yok.
+                </div>
+              ) : (
+                activityItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3"
+                  >
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span className={`h-2.5 w-2.5 rounded-full ${item.accent}`} />
+                      <span>{item.label}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-white">{item.value}</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">{item.hint}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
           </div>
 
         <div className={`${panelClass} bg-ink-900/55`}>
