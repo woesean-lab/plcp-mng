@@ -12,6 +12,7 @@ import ProblemsTab from "./components/tabs/ProblemsTab"
 import StockTab from "./components/tabs/StockTab"
 import TasksTab from "./components/tabs/TasksTab"
 import SalesTab from "./components/tabs/SalesTab"
+import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
@@ -322,6 +323,7 @@ function App() {
     hasMountedRef.current = true
   }, [])
 
+  const canViewDashboard = isAuthed
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
   const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
   const canEditMessages = hasAnyPermission([PERMISSIONS.messagesTemplateEdit, PERMISSIONS.messagesEdit])
@@ -376,6 +378,7 @@ function App() {
   const canViewAdmin = canManageRoles || canManageUsers
   const tabItems = useMemo(
     () => [
+      { key: "dashboard", label: "Dashboard", canView: canViewDashboard },
       { key: "messages", label: "Mesajlar", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
@@ -386,6 +389,7 @@ function App() {
     ],
     [
       canViewAdmin,
+      canViewDashboard,
       canViewLists,
       canViewMessages,
       canViewProblems,
@@ -717,6 +721,29 @@ function App() {
             </div>
           )}
         </div>
+
+        {activeTab === "dashboard" && canViewDashboard && (
+          <div className={getTabSlideClass("dashboard")}>
+            <DashboardTab
+              panelClass={panelClass}
+              activeUser={activeUser}
+              templateCountText={templateCountText}
+              categoryCountText={categoryCountText}
+              taskStats={taskStats}
+              salesSummary={salesSummary}
+              listCountText={listCountText}
+              stockSummary={stockSummary}
+              openProblems={openProblems}
+              resolvedProblems={resolvedProblems}
+              canViewMessages={canViewMessages}
+              canViewTasks={canViewTasks}
+              canViewSales={canViewSales}
+              canViewProblems={canViewProblems}
+              canViewLists={canViewLists}
+              canViewStock={canViewStock}
+            />
+          </div>
+        )}
 
         {activeTab === "messages" && canViewMessages && (
           <div className={getTabSlideClass("messages")}>

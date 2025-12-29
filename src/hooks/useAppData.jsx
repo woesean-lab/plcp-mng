@@ -42,7 +42,7 @@ import { getInitialTheme } from "../utils/theme"
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export default function useAppData() {
-  const [activeTab, setActiveTab] = useState("messages")
+  const [activeTab, setActiveTab] = useState("dashboard")
   const [isTabLoading, setIsTabLoading] = useState(false)
   const tabLoadingTimerRef = useRef(null)
   const [theme, setTheme] = useState(() => getInitialTheme())
@@ -210,6 +210,7 @@ export default function useAppData() {
   ])
   const availableTabs = useMemo(() => {
     const tabs = []
+    if (isAuthed) tabs.push("dashboard")
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
     if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
     if (canViewSales) tabs.push("sales")
@@ -218,7 +219,7 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.stockView)) tabs.push("stock")
     if (canManageAdmin) tabs.push("admin")
     return tabs
-  }, [permissions, canManageAdmin, canViewSales])
+  }, [permissions, canManageAdmin, canViewSales, isAuthed])
 
   useEffect(() => {
     const root = document.documentElement
