@@ -1,3 +1,5 @@
+import { useMemo, useState } from "react"
+
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
 }
@@ -66,12 +68,9 @@ export default function SalesTab({
   setSalesRange,
   salesForm,
   setSalesForm,
-  salesEditId,
-  startSaleEdit,
-  cancelSaleEdit,
   handleSaleAdd,
   handleSaleUpdate,
-  recentSales,
+  salesRecords,
 }) {
   const isSalesTabLoading = isLoading
 
@@ -80,7 +79,7 @@ export default function SalesTab({
   }
 
   const summary = salesSummary || { total: 0, count: 0, average: 0, last7Total: 0 }
-  const salesList = Array.isArray(recentSales) ? recentSales : []
+  const salesList = Array.isArray(salesRecords) ? salesRecords : []
   const chartData = Array.isArray(salesChartData) ? salesChartData : []
   const rangeMeta = {
     daily: { label: "Gunluk", helper: "Son 14 gunluk kayit" },
@@ -139,7 +138,51 @@ export default function SalesTab({
     })
     return { bars, maxValue }
   })()
-  const isEditingSale = Boolean(salesEditId)
+  const [filterStart, setFilterStart] = useState("")
+  const [filterEnd, setFilterEnd] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [editingSaleId, setEditingSaleId] = useState(null)
+  const [editDraft, setEditDraft] = useState({ date: "", amount: "" })
+
+  const filteredSales = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    return salesList.filter((sale) => {
+      const saleDate = String(sale?.date ?? "")
+      if (filterStart && saleDate && saleDate < filterStart) return false
+      if (filterEnd && saleDate && saleDate > filterEnd) return false
+      if (!term) return true
+      const formatted = formatDate(saleDate)
+      const amountText = String(sale?.amount ?? "")
+      return (
+        saleDate.toLowerCase().includes(term) ||
+        formatted.toLowerCase().includes(term) ||
+        amountText.toLowerCase().includes(term)
+      )
+    })
+  }, [salesList, filterStart, filterEnd, searchTerm])
+  const hasFilters = Boolean(filterStart || filterEnd || searchTerm)
+
+  const startInlineEdit = (sale) => {
+    if (!sale?.id) return
+    setEditingSaleId(sale.id)
+    setEditDraft({
+      date: String(sale.date ?? "").trim(),
+      amount: sale.amount === null || sale.amount === undefined ? "" : String(sale.amount),
+    })
+  }
+
+  const cancelInlineEdit = () => {
+    setEditingSaleId(null)
+    setEditDraft({ date: "", amount: "" })
+  }
+
+  const handleInlineSave = (saleId) => {
+    const success = handleSaleUpdate(saleId, editDraft.date, editDraft.amount)
+    if (success) {
+      setEditingSaleId(null)
+      setEditDraft({ date: "", amount: "" })
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -271,11 +314,9 @@ export default function SalesTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  {isEditingSale ? "Satis guncelleme" : "Satis girisi"}
+                  Satis girisi
                 </p>
-                <p className="text-sm text-slate-400">
-                  {isEditingSale ? "Secili kaydi duzenle." : "Tarih ve satis adetini ekle."}
-                </p>
+                <p className="text-sm text-slate-400">Tarih ve satis adetini ekle.</p>
               </div>
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                 Kayit: {summary.count}
@@ -315,21 +356,17 @@ export default function SalesTab({
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={isEditingSale ? handleSaleUpdate : handleSaleAdd}
+                  onClick={handleSaleAdd}
                   className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                 >
-                  {isEditingSale ? "Guncelle" : "Kaydet"}
+                  Kaydet
                 </button>
                 <button
                   type="button"
-                  onClick={
-                    isEditingSale
-                      ? cancelSaleEdit
-                      : () => setSalesForm((prev) => ({ ...prev, amount: "" }))
-                  }
+                  onClick={() => setSalesForm((prev) => ({ ...prev, amount: "" }))}
                   className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
                 >
-                  {isEditingSale ? "Iptal" : "Temizle"}
+                  Temizle
                 </button>
               </div>
             </div>
@@ -337,37 +374,115 @@ export default function SalesTab({
           )}
 
           <div className={`${panelClass} bg-ink-800/60`}>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-              Son kayitlar
-            </p>
-            <div className="mt-4 space-y-3 text-sm text-slate-300">
-              {salesList.length === 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                Satis kayitlari
+              </p>
+              <span className="text-xs text-slate-400">
+                {filteredSales.length}/{salesList.length} kayit
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
+              <input
+                type="date"
+                value={filterStart}
+                onChange={(e) => setFilterStart(e.target.value)}
+                className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+              />
+              <input
+                type="date"
+                value={filterEnd}
+                onChange={(e) => setFilterEnd(e.target.value)}
+                className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+              />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Ara: tarih veya adet"
+                className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterStart("")
+                  setFilterEnd("")
+                  setSearchTerm("")
+                }}
+                disabled={!hasFilters}
+                className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Filtre temizle
+              </button>
+            </div>
+            <div className="mt-4 max-h-72 space-y-3 overflow-auto text-sm text-slate-300">
+              {filteredSales.length === 0 ? (
                 <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-400">
                   Kayit bulunamadi.
                 </p>
               ) : (
-                salesList.map((sale) => (
-                  <div
-                    key={sale.id}
-                    className={`flex items-center justify-between rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 text-sm text-slate-200 shadow-inner ${
-                      salesEditId === sale.id ? "border-emerald-400/50 bg-ink-800/70" : ""
-                    }`}
-                  >
-                    <span>{formatDate(sale.date)}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-100">{sale.amount}</span>
-                      {canCreate && (
-                        <button
-                          type="button"
-                          onClick={() => startSaleEdit(sale)}
-                          className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                        >
-                          Duzenle
-                        </button>
+                filteredSales.map((sale) => {
+                  const isEditing = editingSaleId === sale.id
+                  return (
+                    <div
+                      key={sale.id}
+                      className={`rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 text-sm text-slate-200 shadow-inner ${
+                        isEditing ? "border-emerald-400/50 bg-ink-800/70" : ""
+                      }`}
+                    >
+                      {isEditing ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input
+                            type="date"
+                            value={editDraft.date}
+                            onChange={(e) => setEditDraft((prev) => ({ ...prev, date: e.target.value }))}
+                            className="min-w-[140px] flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                          />
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={editDraft.amount}
+                            onChange={(e) => setEditDraft((prev) => ({ ...prev, amount: e.target.value }))}
+                            className="min-w-[120px] flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleInlineSave(sale.id)}
+                            className="rounded-full border border-accent-400/70 bg-accent-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/25"
+                          >
+                            Kaydet
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelInlineEdit}
+                            className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                          >
+                            Iptal
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <span>{formatDate(sale.date)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-slate-100">{sale.amount}</span>
+                            {canCreate && (
+                              <button
+                                type="button"
+                                onClick={() => startInlineEdit(sale)}
+                                className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                              >
+                                Duzenle
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
           </div>

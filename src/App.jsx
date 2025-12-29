@@ -120,12 +120,9 @@ function App() {
     setSalesRange,
     salesForm,
     setSalesForm,
-    salesEditId,
-    startSaleEdit,
-    cancelSaleEdit,
     handleSaleAdd,
     handleSaleUpdate,
-    recentSales,
+    salesRecords,
     isListsTabLoading,
     listCountText,
     activeList,
@@ -821,12 +818,9 @@ function App() {
               setSalesRange={setSalesRange}
               salesForm={salesForm}
               setSalesForm={setSalesForm}
-              salesEditId={salesEditId}
-              startSaleEdit={startSaleEdit}
-              cancelSaleEdit={cancelSaleEdit}
               handleSaleAdd={handleSaleAdd}
               handleSaleUpdate={handleSaleUpdate}
-              recentSales={recentSales}
+              salesRecords={salesRecords}
             />
           </div>
         )}
