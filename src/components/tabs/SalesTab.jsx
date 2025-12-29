@@ -26,7 +26,7 @@ function SalesSkeleton({ panelClass }) {
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,0.8fr)]">
         <div className="space-y-6">
           <div className={`${panelClass} bg-ink-900/60`}>
             <SkeletonBlock className="h-4 w-36" />
@@ -196,7 +196,7 @@ export default function SalesTab({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,0.8fr)]">
         <div className="space-y-6">
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
