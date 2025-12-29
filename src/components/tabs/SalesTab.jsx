@@ -123,33 +123,20 @@ export default function SalesTab({
     const maxValue = Math.max(...chartData.map((item) => item.amount), 0)
     const span = height - padTop - padBottom
     const count = chartData.length
-    let gap = count > 10 ? 0.6 : count > 6 ? 0.9 : 1.2
-    let barWidth = (width - padX * 2 - gap * (count - 1)) / count
-    if (barWidth < 1.2) {
-      gap = 0.4
-      barWidth = (width - padX * 2 - gap * (count - 1)) / count
-    }
-    const bars = chartData.map((item, index) => {
+    const step = count > 1 ? (width - padX * 2) / (count - 1) : 0
+    const points = chartData.map((item, index) => {
       const value = Number(item.amount ?? 0)
       const ratio = maxValue > 0 ? value / maxValue : 0
-      const barHeight = Math.max(0, ratio * span)
-      const x = padX + index * (barWidth + gap)
-      const y = height - padBottom - barHeight
-      const center = x + barWidth / 2
-      return {
-        x,
-        y,
-        width: barWidth,
-        height: barHeight,
-        center,
-        amount: value,
-        isPeak: value === maxValue,
-        isLast: index === count - 1,
-        intensity: count > 1 ? index / (count - 1) : 1,
-      }
+      const x = count > 1 ? padX + index * step : width / 2
+      const y = height - padBottom - ratio * span
+      return { x, y, amount: value }
     })
+    const line = points.map((point, idx) => `${idx === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ")
+    const area = `${line} L ${points[points.length - 1].x} ${height - padBottom} L ${points[0].x} ${height - padBottom} Z`
+    const peakIndex = points.findIndex((point) => point.amount === maxValue)
+    const lastIndex = points.length - 1
     const gridLines = Array.from({ length: 4 }, (_, idx) => padTop + (span / 3) * idx)
-    return { bars, maxValue, gridLines, height, padX, padTop, padBottom }
+    return { points, line, area, maxValue, gridLines, height, padX, padTop, padBottom, peakIndex, lastIndex }
   })()
 
   const chartStartLabel = chartData[0]?.date ? formatRangeLabel(chartData[0].date) : ""
@@ -252,12 +239,12 @@ export default function SalesTab({
                 <div className="space-y-2 px-3 pb-3 pt-1">
                   <svg viewBox={`0 0 100 ${chartViewHeight}`} className="h-52 w-full">
                     <defs>
-                      <linearGradient id="sales-bar-gradient" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="#ffd36a" stopOpacity="0.95" />
-                        <stop offset="100%" stopColor="#ff7a45" stopOpacity="0.85" />
+                      <linearGradient id="sales-area-gradient" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="#22c55e" stopOpacity="0.45" />
+                        <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
                       </linearGradient>
-                      <filter id="bar-glow" x="-20%" y="-20%" width="140%" height="160%">
-                        <feGaussianBlur stdDeviation="0.9" result="coloredBlur" />
+                      <filter id="line-glow" x="-20%" y="-20%" width="140%" height="160%">
+                        <feGaussianBlur stdDeviation="0.6" result="coloredBlur" />
                         <feMerge>
                           <feMergeNode in="coloredBlur" />
                           <feMergeNode in="SourceGraphic" />
@@ -275,37 +262,32 @@ export default function SalesTab({
                         strokeWidth="0.6"
                       />
                     ))}
-                    {chart.bars.map((bar, idx) => (
-                      <g key={`bar-${idx}`}>
-                        <rect
-                          x={bar.x}
-                          y={bar.y}
-                          width={bar.width}
-                          height={bar.height}
-                          rx={Math.min(1.6, bar.width / 2)}
-                          fill="url(#sales-bar-gradient)"
-                          fillOpacity={0.65 + bar.intensity * 0.25}
-                          filter={bar.isPeak || bar.isLast ? "url(#bar-glow)" : undefined}
+                    <path d={chart.area} fill="url(#sales-area-gradient)" />
+                    <path d={chart.line} fill="none" stroke="#22c55e" strokeWidth="1.6" filter="url(#line-glow)" />
+                    {chart.points.map((point, idx) => {
+                      const isFocus = idx === chart.lastIndex || idx === chart.peakIndex
+                      if (!isFocus) return null
+                      return (
+                        <circle
+                          key={`dot-${idx}`}
+                          cx={point.x}
+                          cy={point.y}
+                          r={idx === chart.lastIndex ? 2.4 : 2}
+                          fill="#22c55e"
+                          stroke="#0f1625"
+                          strokeWidth="0.8"
                         />
-                        <rect
-                          x={bar.x}
-                          y={bar.y}
-                          width={bar.width}
-                          height={Math.min(0.8, bar.height)}
-                          rx={Math.min(1.6, bar.width / 2)}
-                          fill="#ffe7b0"
-                          fillOpacity={0.9}
-                        />
-                      </g>
-                    ))}
-                    {chart.bars.map((bar, idx) => {
-                      if (bar.amount === undefined || bar.amount === null) return null
-                      const valueText = String(bar.amount)
-                      const valueWidth = Math.max(3.8, valueText.length * 2.2 + 1.6)
-                      const valueHeight = 3.6
-                      const labelY = Math.max(bar.y - 3.8, chart.padTop - 0.6)
+                      )
+                    })}
+                    {chart.points.map((point, idx) => {
+                      const isFocus = idx === chart.lastIndex || idx === chart.peakIndex
+                      if (!isFocus) return null
+                      const valueText = String(point.amount)
+                      const valueWidth = Math.max(4, valueText.length * 2.3 + 1.6)
+                      const valueHeight = 3.8
+                      const labelY = Math.max(point.y - 4.2, chart.padTop - 0.4)
                       const rectX = Math.min(
-                        Math.max(bar.center - valueWidth / 2, chart.padX),
+                        Math.max(point.x - valueWidth / 2, chart.padX),
                         100 - chart.padX - valueWidth,
                       )
                       const rectY = labelY - valueHeight / 2
@@ -317,9 +299,9 @@ export default function SalesTab({
                             y={rectY}
                             width={valueWidth}
                             height={valueHeight}
-                            rx="1"
-                            fill="#0b1320"
-                            stroke="#263445"
+                            rx="1.2"
+                            fill="#0b1512"
+                            stroke="#1f3a2a"
                             strokeWidth="0.4"
                           />
                           <text
@@ -328,7 +310,7 @@ export default function SalesTab({
                             textAnchor="middle"
                             fontSize="2.4"
                             fontWeight="600"
-                            fill="#e2f3ff"
+                            fill="#dcfce7"
                             dominantBaseline="central"
                           >
                             {valueText}
@@ -336,13 +318,13 @@ export default function SalesTab({
                         </g>
                       )
                     })}
-                    {chart.bars.map((bar, idx) => {
+                    {chart.points.map((point, idx) => {
                       const label = pointLabels[idx]
                       if (!label?.show) return null
                       return (
                         <text
                           key={`lbl-${idx}`}
-                          x={bar.center}
+                          x={point.x}
                           y={chartLabelY}
                           textAnchor="middle"
                           fontSize="2.6"
