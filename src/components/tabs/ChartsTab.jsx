@@ -74,62 +74,6 @@ const formatRangeLabel = (dateString, rangeKey) => {
   return `H${week}`
 }
 
-const buildLineChart = (values, width = 720, height = 220, padding = 40) => {
-  if (!Array.isArray(values) || values.length === 0) {
-    return {
-      width,
-      height,
-      padding,
-      points: [],
-      linePath: "",
-      areaPath: "",
-      gridLines: [],
-      min: 0,
-      max: 0,
-      range: 1,
-      innerHeight: height - padding * 2,
-    }
-  }
-  const max = Math.max(...values)
-  const min = Math.min(...values)
-  const range = Math.max(1, max - min)
-  const step = values.length > 1 ? (width - padding * 2) / (values.length - 1) : 0
-  const innerHeight = height - padding * 2
-  const points = values.map((value, index) => {
-    const x = padding + index * step
-    const y = padding + innerHeight - ((value - min) / range) * innerHeight
-    return { x, y, value }
-  })
-  const linePath = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`).join(" ")
-  const areaPath = `${linePath} L ${width - padding} ${height - padding} L ${padding} ${height - padding} Z`
-  const gridLines = Array.from({ length: 4 }, (_, index) => {
-    return padding + (innerHeight / 3) * index
-  })
-  return { width, height, padding, points, linePath, areaPath, gridLines, min, max, range, innerHeight }
-}
-
-const buildGhostSeries = (values) => {
-  if (!Array.isArray(values) || values.length === 0) return []
-  return values.map((value, index) => Math.round(value * (0.78 + (index % 4) * 0.06)))
-}
-
-const mapValuesToPoints = (values, chart) => {
-  if (!Array.isArray(values) || values.length === 0 || !chart) return []
-  const step =
-    values.length > 1 ? (chart.width - chart.padding * 2) / (values.length - 1) : 0
-  const range = chart.range || 1
-  return values.map((value, index) => {
-    const x = chart.padding + index * step
-    const y =
-      chart.padding + chart.innerHeight - ((value - chart.min) / range) * chart.innerHeight
-    return { x, y, value }
-  })
-}
-
-const pointsToPath = (points) => {
-  if (!Array.isArray(points) || points.length === 0) return ""
-  return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`).join(" ")
-}
 
 const getTrendTone = (value) => {
   if (value >= 0) {
@@ -204,27 +148,9 @@ export default function ChartsTab({ isLoading, panelClass }) {
     const average = Math.round(total / values.length)
     return { total, average, max, min }
   }, [values])
-  const lineChart = useMemo(() => buildLineChart(values, 780, 260, 48), [values])
-  const ghostValues = useMemo(() => buildGhostSeries(values), [values])
-  const ghostPath = useMemo(
-    () => pointsToPath(mapValuesToPoints(ghostValues, lineChart)),
-    [ghostValues, lineChart],
-  )
   const trendValue = values.length > 1 ? values[values.length - 1] - values[0] : 0
   const trendPercent = values[0] ? Math.round((trendValue / values[0]) * 100) : 0
   const trendTone = getTrendTone(trendValue)
-  const valueToY = (value) => {
-    const safeRange = lineChart.range || 1
-    return lineChart.padding + lineChart.innerHeight - ((value - lineChart.min) / safeRange) * lineChart.innerHeight
-  }
-  const yTicks = useMemo(() => {
-    if (values.length === 0) return []
-    return [
-      { label: numberFormatter.format(summary.max), value: summary.max },
-      { label: numberFormatter.format(summary.average), value: summary.average },
-      { label: numberFormatter.format(summary.min), value: summary.min },
-    ]
-  }, [numberFormatter, summary, values.length])
   const topEntry = useMemo(() => {
     if (data.length === 0) return null
     return data.reduce((acc, item) => (item.value > acc.value ? item : acc), data[0])
@@ -239,23 +165,10 @@ export default function ChartsTab({ isLoading, panelClass }) {
     () => recentEntries.reduce((acc, item) => acc + item.value, 0),
     [recentEntries],
   )
-  const extremes = useMemo(() => {
-    if (values.length === 0) return { maxIndex: -1, minIndex: -1 }
-    let maxIndex = 0
-    let minIndex = 0
-    values.forEach((value, index) => {
-      if (value > values[maxIndex]) maxIndex = index
-      if (value < values[minIndex]) minIndex = index
-    })
-    return { maxIndex, minIndex }
-  }, [values])
-  const maxEntry = extremes.maxIndex >= 0 ? data[extremes.maxIndex] : null
-  const minEntry = extremes.minIndex >= 0 ? data[extremes.minIndex] : null
-  const tickLabels = useMemo(() => {
-    if (data.length === 0) return []
-    if (data.length <= 3) return data.map((item) => item.label)
-    const middle = Math.floor((data.length - 1) / 2)
-    return [data[0].label, data[middle].label, data[data.length - 1].label]
+  const maxEntry = topEntry
+  const minEntry = useMemo(() => {
+    if (data.length === 0) return null
+    return data.reduce((acc, item) => (item.value < acc.value ? item : acc), data[0])
   }, [data])
 
   const handleEntrySubmit = (event) => {
@@ -511,171 +424,27 @@ export default function ChartsTab({ isLoading, panelClass }) {
                 </div>
               </div>
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,0.3fr)_minmax(0,1fr)]">
-                <div className="grid gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Son deger</p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-100">
-                      {lastEntry ? numberFormatter.format(lastEntry.value) : "-"}
-                    </p>
-                    <p className="text-xs text-slate-400">{lastEntry ? lastEntry.label : "Kayit yok"}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Zirve</p>
-                    <p className="mt-2 text-xl font-semibold text-slate-100">
-                      {maxEntry ? numberFormatter.format(maxEntry.value) : "-"}
-                    </p>
-                    <p className="text-xs text-slate-400">{maxEntry ? maxEntry.label : "-"}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Dip</p>
-                    <p className="mt-2 text-xl font-semibold text-slate-100">
-                      {minEntry ? numberFormatter.format(minEntry.value) : "-"}
-                    </p>
-                    <p className="text-xs text-slate-400">{minEntry ? minEntry.label : "-"}</p>
-                  </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Son deger</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-100">
+                    {lastEntry ? numberFormatter.format(lastEntry.value) : "-"}
+                  </p>
+                  <p className="text-xs text-slate-400">{lastEntry ? lastEntry.label : "Kayit yok"}</p>
                 </div>
-
-                <div className="rounded-3xl border border-white/10 bg-ink-900/70 p-5 shadow-inner">
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.24em] text-slate-400">
-                    <span>Line chart</span>
-                    <span>Aralik: {rangeMeta.label}</span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="relative h-60 w-full">
-                      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top,rgba(58,199,255,0.18),transparent_55%)]" />
-                      <svg
-                        viewBox={`0 0 ${lineChart.width} ${lineChart.height}`}
-                        className="absolute inset-0 h-full w-full"
-                        preserveAspectRatio="none"
-                        role="img"
-                        aria-label="Satis line chart"
-                      >
-                        <defs>
-                          <linearGradient id="sales-area" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#3ac7ff" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="#2b9fff" stopOpacity="0.03" />
-                          </linearGradient>
-                          <linearGradient id="sales-line" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#3ac7ff" />
-                            <stop offset="100%" stopColor="#2b9fff" />
-                          </linearGradient>
-                          <linearGradient id="ghost-line" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="rgba(148,163,184,0.7)" />
-                            <stop offset="100%" stopColor="rgba(148,163,184,0.2)" />
-                          </linearGradient>
-                          <filter id="line-glow" x="-20%" y="-20%" width="140%" height="140%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#3ac7ff" floodOpacity="0.35" />
-                          </filter>
-                        </defs>
-                        {lineChart.gridLines.map((y, index) => (
-                          <line
-                            key={`line-grid-${index}`}
-                            x1={lineChart.padding}
-                            x2={lineChart.width - lineChart.padding}
-                            y1={y}
-                            y2={y}
-                            stroke="rgba(255, 255, 255, 0.08)"
-                            strokeDasharray="4 5"
-                          />
-                        ))}
-                        {yTicks.map((tick) => (
-                          <text
-                            key={`tick-${tick.label}`}
-                            x={lineChart.padding - 10}
-                            y={valueToY(tick.value) + 4}
-                            textAnchor="end"
-                            fontSize="10"
-                            fill="rgba(148,163,184,0.7)"
-                          >
-                            {tick.label}
-                          </text>
-                        ))}
-                        {values.length > 0 && (
-                          <line
-                            x1={lineChart.padding}
-                            x2={lineChart.width - lineChart.padding}
-                            y1={valueToY(summary.average)}
-                            y2={valueToY(summary.average)}
-                            stroke="rgba(148,163,184,0.4)"
-                            strokeDasharray="6 6"
-                          />
-                        )}
-                        {ghostPath && (
-                          <path
-                            d={ghostPath}
-                            fill="none"
-                            stroke="url(#ghost-line)"
-                            strokeWidth="2"
-                            strokeDasharray="6 6"
-                          />
-                        )}
-                        {lineChart.areaPath && (
-                          <path d={lineChart.areaPath} fill="url(#sales-area)" stroke="none" />
-                        )}
-                        {lineChart.linePath && (
-                          <path
-                            d={lineChart.linePath}
-                            fill="none"
-                            stroke="url(#sales-line)"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            filter="url(#line-glow)"
-                          />
-                        )}
-                        {lineChart.points.map((point, index) => {
-                          const isLast = index === lineChart.points.length - 1
-                          const isMax = index === extremes.maxIndex
-                          const isMin = index === extremes.minIndex
-                          return (
-                            <g key={`line-point-${index}`}>
-                              <circle
-                                cx={point.x}
-                                cy={point.y}
-                                r={isLast ? 4.8 : 3.6}
-                                fill={isLast ? "#e2f5ff" : "#3ac7ff"}
-                                opacity={isLast ? 1 : 0.7}
-                              />
-                              {isLast && (
-                                <circle
-                                  cx={point.x}
-                                  cy={point.y}
-                                  r="8.5"
-                                  fill="none"
-                                  stroke="rgba(58, 199, 255, 0.5)"
-                                  strokeWidth="2"
-                                />
-                              )}
-                              {(isMax || isMin) && (
-                                <text
-                                  x={point.x + 8}
-                                  y={point.y - 8}
-                                  fontSize="10"
-                                  fill={isMax ? "rgba(226,245,255,0.95)" : "rgba(148,163,184,0.85)"}
-                                >
-                                  {isMax
-                                    ? `Zirve ${numberFormatter.format(point.value)}`
-                                    : `Dip ${numberFormatter.format(point.value)}`}
-                                </text>
-                              )}
-                            </g>
-                          )
-                        })}
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.24em] text-slate-500">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-accent-300 shadow-glow" />
-                      <span>Guncel</span>
-                      <span className="h-2 w-2 rounded-full bg-slate-400/60" />
-                      <span>Onceki</span>
-                    </div>
-                    {tickLabels.length > 0 && (
-                      <span>{tickLabels[0]} - {tickLabels[tickLabels.length - 1]}</span>
-                    )}
-                  </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Zirve</p>
+                  <p className="mt-2 text-xl font-semibold text-slate-100">
+                    {maxEntry ? numberFormatter.format(maxEntry.value) : "-"}
+                  </p>
+                  <p className="text-xs text-slate-400">{maxEntry ? maxEntry.label : "-"}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Dip</p>
+                  <p className="mt-2 text-xl font-semibold text-slate-100">
+                    {minEntry ? numberFormatter.format(minEntry.value) : "-"}
+                  </p>
+                  <p className="text-xs text-slate-400">{minEntry ? minEntry.label : "-"}</p>
                 </div>
               </div>
             </div>
