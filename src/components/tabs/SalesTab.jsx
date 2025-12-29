@@ -82,10 +82,10 @@ export default function SalesTab({
   const salesList = Array.isArray(salesRecords) ? salesRecords : []
   const chartData = Array.isArray(salesChartData) ? salesChartData : []
   const rangeMeta = {
-    daily: { label: "Gunluk", helper: "Son 14 gunluk kayit" },
-    weekly: { label: "Haftalik", helper: "Son 12 haftalik kayit" },
-    monthly: { label: "Aylik", helper: "Son 12 aylik kayit" },
-    yearly: { label: "Yillik", helper: "Son 6 yillik kayit" },
+    daily: { label: "Günlük", helper: "Son 14 günlük kayıt" },
+    weekly: { label: "Haftalık", helper: "Son 12 haftalık kayıt" },
+    monthly: { label: "Aylık", helper: "Son 12 aylık kayıt" },
+    yearly: { label: "Yıllık", helper: "Son 6 yıllık kayıt" },
   }
   const activeRange = rangeMeta[salesRange] || rangeMeta.daily
   const formatRangeLabel = (value) => {
@@ -225,7 +225,7 @@ export default function SalesTab({
             </span>
             <h1 className="font-display text-3xl font-semibold text-white">Satış</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Tarih bazli satis gir, hareketi grafikte takip et.
+              Tarih bazlı satış gir, hareketi grafikte takip et.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -233,7 +233,7 @@ export default function SalesTab({
               Toplam: {summary.total}
             </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Kayit: {summary.count}
+              Kayıt: {summary.count}
             </span>
           </div>
         </div>
@@ -243,17 +243,17 @@ export default function SalesTab({
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
           <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Toplam satis</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Toplam satış</p>
             <p className="mt-2 text-3xl font-semibold text-white">{summary.total}</p>
-            <p className="mt-1 text-xs text-slate-400">Tum kayitlar</p>
+            <p className="mt-1 text-xs text-slate-400">Tüm kayıtlar</p>
           </div>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(59,130,246,0.18),transparent)]" />
           <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Son 7 gun</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Son 7 gün</p>
             <p className="mt-2 text-3xl font-semibold text-white">{summary.last7Total}</p>
-            <p className="mt-1 text-xs text-slate-400">Gunluk satis girisi</p>
+            <p className="mt-1 text-xs text-slate-400">Günlük satış girişi</p>
           </div>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
@@ -261,7 +261,7 @@ export default function SalesTab({
           <div className="relative">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Ortalama</p>
             <p className="mt-2 text-3xl font-semibold text-white">{summary.average}</p>
-            <p className="mt-1 text-xs text-slate-400">Kayit basina</p>
+            <p className="mt-1 text-xs text-slate-400">Kayıt başına</p>
           </div>
         </div>
       </div>
@@ -277,16 +277,16 @@ export default function SalesTab({
                 <p className="text-sm text-slate-400">{activeRange.helper}.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
                   {Object.entries(rangeMeta).map(([key, meta]) => (
                     <button
                       key={key}
                       type="button"
                       onClick={() => setSalesRange(key)}
-                      className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                      className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
                         salesRange === key
-                          ? "border-accent-300 bg-accent-500/20 text-accent-50 shadow-glow"
-                          : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60 hover:text-accent-100"
+                          ? "bg-accent-400 text-ink-900 shadow-glow"
+                          : "text-slate-300 hover:bg-white/5 hover:text-white"
                       }`}
                     >
                       {meta.label}
@@ -294,7 +294,7 @@ export default function SalesTab({
                   ))}
                 </div>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                  En yuksek: {chart?.maxValue ?? 0}
+                  En yüksek: {chart?.maxValue ?? 0}
                 </span>
               </div>
             </div>
@@ -332,7 +332,7 @@ export default function SalesTab({
                 </div>
               ) : (
                 <div className="rounded-xl border border-white/10 bg-ink-900/80 px-4 py-6 text-center text-sm text-slate-400">
-                  Henuz satis kaydi yok. Ilk satisi ekleyin.
+                  Henüz satış kaydı yok. İlk satışı ekleyin.
                 </div>
               )}
             </div>
@@ -343,7 +343,7 @@ export default function SalesTab({
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Satış özetleri
                 </p>
-                <p className="text-xs text-slate-400">Kisa performans ozeti.</p>
+                <p className="text-xs text-slate-400">Kısa performans özeti.</p>
               </div>
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                 Gun: {analytics.totalDays}
@@ -352,7 +352,7 @@ export default function SalesTab({
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  En yuksek gun
+                  En yüksek gun
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-100">
                   {analytics.bestDay ? formatDate(analytics.bestDay.date) : "-"}
@@ -363,7 +363,7 @@ export default function SalesTab({
               </div>
               <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  En yuksek ay
+                  En yüksek ay
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-100">
                   {analytics.bestMonth ? formatMonthLabel(analytics.bestMonth.key) : "-"}
@@ -374,7 +374,7 @@ export default function SalesTab({
               </div>
               <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  En yuksek yil
+                  En yüksek yil
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-100">
                   {analytics.bestYear ? analytics.bestYear.key : "-"}
@@ -385,18 +385,18 @@ export default function SalesTab({
               </div>
               <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  Ortalama gunluk
+                  Ortalama günlük
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-100">{analytics.averageDaily}</p>
                 <p className="text-xs text-slate-400">Toplam: {analytics.totalSales}</p>
               </div>
               <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner sm:col-span-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  Son 7 gun
+                  Son 7 gün
                 </p>
                 <div className="mt-1 flex items-baseline justify-between">
                   <p className="text-sm font-semibold text-slate-100">{summary.last7Total}</p>
-                  <p className="text-xs text-slate-400">Kayit: {summary.count}</p>
+                  <p className="text-xs text-slate-400">Kayıt: {summary.count}</p>
                 </div>
               </div>
             </div>
@@ -411,10 +411,10 @@ export default function SalesTab({
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Satış girişi
                 </p>
-                <p className="text-sm text-slate-400">Tarih ve satis adetini ekle.</p>
+                <p className="text-sm text-slate-400">Tarih ve satış adetini ekle.</p>
               </div>
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                Kayit: {summary.count}
+                Kayıt: {summary.count}
               </span>
             </div>
 
@@ -443,7 +443,7 @@ export default function SalesTab({
                   step="1"
                   value={salesForm.amount}
                   onChange={(e) => setSalesForm((prev) => ({ ...prev, amount: e.target.value }))}
-                  placeholder="Orn: 42"
+                  placeholder="Örn: 42"
                   className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                 />
               </div>
@@ -473,9 +473,9 @@ export default function SalesTab({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                    Hizli guncelle
+                    Hızlı güncelle
                   </p>
-                  <p className="text-xs text-slate-400">Kisa panel, tek hamle.</p>
+                  <p className="text-xs text-slate-400">Kısa panel, tek hamle.</p>
                 </div>
                 <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-200">
                   HIZLI
@@ -518,7 +518,7 @@ export default function SalesTab({
                     2. Adet
                   </span>
                   <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
-                    3. Guncelle
+                    3. Güncelle
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -533,7 +533,7 @@ export default function SalesTab({
                     }}
                     className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                   >
-                    Guncelle
+                    Güncelle
                   </button>
                   <button
                     type="button"
