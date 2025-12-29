@@ -221,7 +221,7 @@ export default function SalesTab({
               </div>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-white/10 bg-white/95 p-4 text-slate-900 shadow-inner">
+            <div className="mt-3 rounded-2xl border border-white/10 bg-ink-900/70 p-4 text-slate-100 shadow-inner">
               {chart ? (
                 <div className="space-y-3">
                   <div className="flex items-end gap-3">
@@ -229,7 +229,7 @@ export default function SalesTab({
                       <div key={`bar-${idx}`} className="flex flex-1 flex-col items-center justify-end gap-2">
                         <span
                           className={`text-[11px] font-semibold ${
-                            bar.isPeak ? "text-emerald-600" : "text-slate-500"
+                            bar.isPeak ? "text-emerald-300" : "text-slate-300"
                           }`}
                         >
                           {bar.amount}
@@ -238,15 +238,15 @@ export default function SalesTab({
                           <div
                             className={`w-full rounded-2xl ${
                               bar.isPeak
-                                ? "bg-emerald-500 shadow-[0_10px_18px_rgba(16,185,129,0.3)]"
-                                : "bg-slate-300"
+                                ? "bg-emerald-400 shadow-[0_10px_18px_rgba(16,185,129,0.3)]"
+                                : "bg-slate-600/80"
                             }`}
                             style={{ height: `${bar.heightPercent}%` }}
                           />
                         </div>
                         <span
                           className={`text-[11px] font-medium ${
-                            bar.showLabel ? "text-slate-600" : "text-transparent"
+                            bar.showLabel ? "text-slate-300" : "text-transparent"
                           }`}
                         >
                           {bar.label}
@@ -256,7 +256,7 @@ export default function SalesTab({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
+                <div className="rounded-xl border border-white/10 bg-ink-900/80 px-4 py-6 text-center text-sm text-slate-400">
                   Henuz satis kaydi yok. Ilk satisi ekleyin.
                 </div>
               )}
