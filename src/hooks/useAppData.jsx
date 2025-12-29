@@ -1308,6 +1308,22 @@ export default function useAppData() {
     setTaskDetailTarget(null)
   }
 
+  const handleTaskDetailNoteSave = async (taskId, note) => {
+    if (!taskId) return null
+    const trimmed = (note ?? "").trim()
+    const current = (taskDetailTarget?.note ?? "").trim()
+    if (trimmed === current) {
+      toast("Değişiklik yok.", { position: "top-right" })
+      return null
+    }
+    const updated = await saveTaskUpdate(taskId, { note: trimmed })
+    if (updated) {
+      setTaskDetailTarget(updated)
+      toast.success("Görev notu güncellendi")
+    }
+    return updated
+  }
+
   const openTaskEdit = (task) => {
     const normalized = normalizeTask(task)
     setTaskEditDraft({
@@ -3519,6 +3535,7 @@ export default function useAppData() {
     getTaskDueLabel,
     handleTaskAdvance,
     openTaskDetail,
+    handleTaskDetailNoteSave,
     openTaskEdit,
     handleTaskReopen,
     handleTaskDeleteWithConfirm,

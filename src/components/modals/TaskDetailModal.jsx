@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react"
+
 export default function TaskDetailModal({
   target,
   onClose,
   onEdit,
   canEdit,
+  onDetailNoteSave,
   taskStatusMeta,
   getTaskDueLabel,
   detailNoteText,
@@ -12,6 +15,21 @@ export default function TaskDetailModal({
   handleDetailNoteScroll,
 }) {
   if (!target) return null
+  const [detailDraft, setDetailDraft] = useState(detailNoteText || "")
+  const [isSaving, setIsSaving] = useState(false)
+  const canEditNote = Boolean(canEdit && onDetailNoteSave)
+  const isDirty = detailDraft.trim() !== (detailNoteText || "").trim()
+
+  useEffect(() => {
+    setDetailDraft(detailNoteText || "")
+  }, [detailNoteText, target?.id])
+
+  const handleDetailNoteSave = async () => {
+    if (!canEditNote || !target?.id) return
+    setIsSaving(true)
+    await onDetailNoteSave(target.id, detailDraft)
+    setIsSaving(false)
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" onClick={onClose}>
@@ -84,6 +102,38 @@ export default function TaskDetailModal({
             >
               {detailNoteText || "Not eklenmedi."}
             </div>
+          </div>
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-inner">
+          <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Görevi detaylandır</p>
+            <span className="text-xs text-slate-400">{detailDraft.length} karakter</span>
+          </div>
+          <textarea
+            rows={6}
+            value={detailDraft}
+            onChange={(event) => setDetailDraft(event.target.value)}
+            placeholder="Görevi detaylandır..."
+            readOnly={!canEditNote}
+            className="w-full resize-none bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
+          />
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3 text-xs">
+            <span className="text-slate-400">
+              {canEditNote ? "Notu kaydetmek için güncelle." : "Düzenleme yetkisi gerekli."}
+            </span>
+            <button
+              type="button"
+              onClick={handleDetailNoteSave}
+              disabled={!canEditNote || !isDirty || isSaving}
+              className={`min-w-[120px] rounded-lg border px-3 py-1 text-xs font-semibold transition ${
+                !canEditNote || !isDirty || isSaving
+                  ? "border-white/10 bg-white/5 text-slate-500"
+                  : "border-accent-300/70 bg-accent-500/15 text-accent-50 hover:border-accent-200 hover:bg-accent-500/25"
+              }`}
+            >
+              {isSaving ? "Kaydediliyor..." : "Kaydet"}
+            </button>
           </div>
         </div>
       </div>
