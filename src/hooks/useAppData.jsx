@@ -179,16 +179,19 @@ export default function useAppData() {
   const [isTasksLoading, setIsTasksLoading] = useState(true)
   const taskLoadErrorRef = useRef(false)
 
-  const [sales, setSales] = useState([])
-  const [isSalesLoading, setIsSalesLoading] = useState(true)
-  const [salesForm, setSalesForm] = useState(() => {
+  const buildSalesForm = () => {
     const today = new Date()
     const year = today.getFullYear()
     const month = String(today.getMonth() + 1).padStart(2, "0")
     const day = String(today.getDate()).padStart(2, "0")
     return { date: `${year}-${month}-${day}`, amount: "" }
-  })
+  }
+
+  const [sales, setSales] = useState([])
+  const [isSalesLoading, setIsSalesLoading] = useState(true)
+  const [salesForm, setSalesForm] = useState(() => buildSalesForm())
   const [salesRange, setSalesRange] = useState("daily")
+  const [salesEditId, setSalesEditId] = useState(null)
 
   const isLight = theme === "light"
   const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
@@ -1165,6 +1168,44 @@ export default function useAppData() {
     setSales((prev) => [...prev, { id, date, amount, createdAt }])
     setSalesForm((prev) => ({ ...prev, amount: "" }))
     toast.success("Satis eklendi")
+  }
+
+  const startSaleEdit = (sale) => {
+    if (!sale?.id) return
+    setSalesEditId(sale.id)
+    setSalesForm({
+      date: String(sale.date ?? "").trim(),
+      amount: sale.amount === null || sale.amount === undefined ? "" : String(sale.amount),
+    })
+  }
+
+  const cancelSaleEdit = () => {
+    setSalesEditId(null)
+    setSalesForm(buildSalesForm())
+  }
+
+  const handleSaleUpdate = () => {
+    if (!salesEditId) {
+      toast.error("Guncellenecek kayit secin.")
+      return
+    }
+    const date = String(salesForm.date ?? "").trim()
+    const amount = Number(salesForm.amount)
+    const parsed = new Date(`${date}T00:00:00`)
+    if (!date || Number.isNaN(parsed.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      toast.error("Tarih girin.")
+      return
+    }
+    if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
+      toast.error("Satis adedi girin.")
+      return
+    }
+    setSales((prev) =>
+      prev.map((sale) => (sale.id === salesEditId ? { ...sale, date, amount } : sale)),
+    )
+    setSalesEditId(null)
+    setSalesForm(buildSalesForm())
+    toast.success("Satis guncellendi")
   }
 
   const openNoteModal = (value, onSave) => {
@@ -3459,7 +3500,11 @@ export default function useAppData() {
     setSalesRange,
     salesForm,
     setSalesForm,
+    salesEditId,
+    startSaleEdit,
+    cancelSaleEdit,
     handleSaleAdd,
+    handleSaleUpdate,
     recentSales,
     isListsTabLoading,
     listCountText,
