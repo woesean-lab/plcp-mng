@@ -267,11 +267,13 @@ function App() {
     isNoteModalOpen,
     handleNoteModalClose,
     noteModalDraft,
+    noteModalImages,
     noteLineRef,
     noteModalLineCount,
     noteTextareaRef,
     handleNoteScroll,
     setNoteModalDraft,
+    setNoteModalImages,
     handleNoteModalSave,
     isStockModalOpen,
     handleStockModalClose,
@@ -289,6 +291,7 @@ function App() {
     handleTaskDetailCommentAdd,
     handleTaskDetailCommentDelete,
     detailNoteText,
+    detailNoteImages,
     detailNoteLineCount,
     detailNoteLineRef,
     detailNoteRef,
@@ -1079,11 +1082,13 @@ function App() {
           isOpen={isNoteModalOpen}
           onClose={handleNoteModalClose}
           draft={noteModalDraft}
+          images={noteModalImages}
           lineRef={noteLineRef}
           lineCount={noteModalLineCount}
           textareaRef={noteTextareaRef}
           onScroll={handleNoteScroll}
           setDraft={setNoteModalDraft}
+          setImages={setNoteModalImages}
           onSave={handleNoteModalSave}
         />
         <StockModal
@@ -1113,6 +1118,7 @@ function App() {
           taskStatusMeta={taskStatusMeta}
           getTaskDueLabel={getTaskDueLabel}
           detailNoteText={detailNoteText}
+          detailNoteImages={detailNoteImages}
           detailNoteLineCount={detailNoteLineCount}
           detailNoteLineRef={detailNoteLineRef}
           detailNoteRef={detailNoteRef}

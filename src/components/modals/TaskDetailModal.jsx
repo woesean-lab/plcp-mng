@@ -12,6 +12,7 @@ export default function TaskDetailModal({
   taskStatusMeta,
   getTaskDueLabel,
   detailNoteText,
+  detailNoteImages,
   detailNoteLineCount,
   detailNoteLineRef,
   detailNoteRef,
@@ -156,6 +157,23 @@ export default function TaskDetailModal({
               {detailNoteText || "Not eklenmedi."}
             </div>
           </div>
+          {Array.isArray(detailNoteImages) && detailNoteImages.length > 0 && (
+            <div className="border-t border-white/10 bg-ink-900 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Not görselleri</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {detailNoteImages.map((src, index) => (
+                  <img
+                    key={`${src}-${index}`}
+                    src={src}
+                    alt={`Not görseli ${index + 1}`}
+                    className="h-28 w-full rounded-lg border border-white/10 object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-inner">

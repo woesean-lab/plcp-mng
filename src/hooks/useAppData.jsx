@@ -157,6 +157,7 @@ export default function useAppData() {
   const [taskForm, setTaskForm] = useState({
     title: "",
     note: "",
+    noteImages: [],
     owner: "",
     dueType: "today",
     repeatDays: ["1"],
@@ -168,6 +169,7 @@ export default function useAppData() {
   const [taskEditDraft, setTaskEditDraft] = useState(null)
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
   const [noteModalDraft, setNoteModalDraft] = useState("")
+  const [noteModalImages, setNoteModalImages] = useState([])
   const [taskDetailTarget, setTaskDetailTarget] = useState(null)
   const [taskDetailComments, setTaskDetailComments] = useState({})
   const noteTextareaRef = useRef(null)
@@ -1156,6 +1158,7 @@ export default function useAppData() {
     return {
       ...task,
       note: task?.note ?? "",
+      noteImages: Array.isArray(task?.noteImages) ? task.noteImages : [],
       owner: task?.owner ?? "",
       dueType,
       dueDate: dueType === "date" ? dueDate : "",
@@ -1252,22 +1255,30 @@ export default function useAppData() {
     return true
   }
 
-  const openNoteModal = (value, onSave) => {
-    setNoteModalDraft(value ?? "")
+  const openNoteModal = (value, onSave, images = []) => {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      setNoteModalDraft(value.text ?? "")
+      setNoteModalImages(Array.isArray(value.images) ? value.images : [])
+    } else {
+      setNoteModalDraft(value ?? "")
+      setNoteModalImages(Array.isArray(images) ? images : [])
+    }
     noteModalTargetRef.current = onSave
     setIsNoteModalOpen(true)
   }
 
   const handleNoteModalSave = () => {
     if (noteModalTargetRef.current) {
-      noteModalTargetRef.current(noteModalDraft)
+      noteModalTargetRef.current({ text: noteModalDraft, images: noteModalImages })
     }
     noteModalTargetRef.current = null
+    setNoteModalImages([])
     setIsNoteModalOpen(false)
   }
 
   const handleNoteModalClose = () => {
     noteModalTargetRef.current = null
+    setNoteModalImages([])
     setIsNoteModalOpen(false)
   }
 
@@ -1292,6 +1303,9 @@ export default function useAppData() {
   }
 
   const detailNoteText = taskDetailTarget?.note || ""
+  const detailNoteImages = Array.isArray(taskDetailTarget?.noteImages)
+    ? taskDetailTarget.noteImages
+    : []
   const detailNoteLineCount = useMemo(() => {
     const count = detailNoteText.split("\n").length
     return Math.max(1, count)
@@ -1391,6 +1405,7 @@ export default function useAppData() {
       id: normalized.id,
       title: normalized.title ?? "",
       note: normalized.note ?? "",
+      noteImages: normalized.noteImages ?? [],
       owner: normalized.owner ?? "",
       dueType: normalized.dueType ?? "today",
       repeatDays: normalized.repeatDays ?? [],
@@ -1408,6 +1423,7 @@ export default function useAppData() {
     setTaskForm({
       title: "",
       note: "",
+      noteImages: [],
       owner: activeUser?.username ?? "",
       dueType: "today",
       repeatDays: ["1"],
@@ -1476,6 +1492,7 @@ export default function useAppData() {
         body: JSON.stringify({
           title: titleValue,
           note: taskForm.note.trim(),
+          noteImages: Array.isArray(taskForm.noteImages) ? taskForm.noteImages : [],
           owner: ownerValue,
           dueType: taskForm.dueType,
           repeatDays: taskForm.dueType === "repeat" ? repeatDays : [],
@@ -1520,6 +1537,7 @@ export default function useAppData() {
     const updated = await saveTaskUpdate(taskEditDraft.id, {
       title: titleValue,
       note: taskEditDraft.note.trim(),
+      noteImages: Array.isArray(taskEditDraft.noteImages) ? taskEditDraft.noteImages : [],
       owner: ownerValue,
       dueType: taskEditDraft.dueType,
       repeatDays: taskEditDraft.dueType === "repeat" ? repeatDays : [],
@@ -3765,11 +3783,13 @@ export default function useAppData() {
     isNoteModalOpen,
     handleNoteModalClose,
     noteModalDraft,
+    noteModalImages,
     noteLineRef,
     noteModalLineCount,
     noteTextareaRef,
     handleNoteScroll,
     setNoteModalDraft,
+    setNoteModalImages,
     handleNoteModalSave,
     isStockModalOpen,
     handleStockModalClose,
@@ -3787,6 +3807,7 @@ export default function useAppData() {
     handleTaskDetailCommentDelete,
     closeTaskDetail,
     detailNoteText,
+    detailNoteImages,
     detailNoteLineCount,
     detailNoteLineRef,
     detailNoteRef,

@@ -1,15 +1,61 @@
-﻿export default function NoteModal({
+import { toast } from "react-hot-toast"
+
+export default function NoteModal({
   isOpen,
   onClose,
   draft,
+  images,
   lineRef,
   lineCount,
   textareaRef,
   onScroll,
   setDraft,
+  setImages,
   onSave,
 }) {
   if (!isOpen) return null
+  const safeImages = Array.isArray(images) ? images : []
+  const maxImages = 3
+  const maxImageBytes = 2_000_000
+
+  const handlePaste = (event) => {
+    const items = Array.from(event.clipboardData?.items ?? [])
+    const imageItems = items.filter((item) => item.type?.startsWith("image/"))
+    if (imageItems.length === 0) return
+    event.preventDefault()
+    const pastedText = event.clipboardData?.getData("text") || ""
+    if (pastedText) {
+      setDraft((prev) => (prev ? `${prev}\n${pastedText}` : pastedText))
+    }
+    const availableSlots = maxImages - safeImages.length
+    if (availableSlots <= 0) {
+      toast.error("En fazla 3 görsel ekleyebilirsin.")
+      return
+    }
+    const toProcess = imageItems.slice(0, availableSlots)
+    toProcess.forEach((item) => {
+      const file = item.getAsFile()
+      if (!file) return
+      if (file.size > maxImageBytes) {
+        toast.error("Görsel 2MB sınırını aşıyor.")
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result
+        if (typeof result !== "string") return
+        setImages((prev) => [...prev, result])
+      }
+      reader.readAsDataURL(file)
+    })
+    if (imageItems.length > availableSlots) {
+      toast.error("En fazla 3 görsel ekleyebilirsin.")
+    }
+  }
+
+  const handleRemoveImage = (index) => {
+    setImages((prev) => prev.filter((_, idx) => idx !== index))
+  }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4" onClick={onClose}>
@@ -49,10 +95,41 @@
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onScroll={onScroll}
+            onPaste={handlePaste}
             placeholder="Detaylı notunu buraya yaz..."
             className="flex-1 resize-none overflow-auto bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
           />
         </div>
+        {safeImages.length > 0 && (
+          <div className="border-t border-white/10 bg-ink-900 px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              Eklenen görseller ({safeImages.length}/{maxImages})
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {safeImages.map((src, index) => (
+                <div
+                  key={`${src}-${index}`}
+                  className="group relative overflow-hidden rounded-lg border border-white/10 bg-ink-900/70"
+                >
+                  <img
+                    src={src}
+                    alt={`Not görseli ${index + 1}`}
+                    className="h-20 w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute right-2 top-2 rounded-full border border-white/10 bg-ink-900/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200 opacity-0 transition group-hover:opacity-100"
+                  >
+                    Sil
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3">
           <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Esc ile kapat</p>

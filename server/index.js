@@ -690,7 +690,18 @@ const allowedProblemStatus = new Set(["open", "resolved"])
 const allowedTaskStatus = new Set(["todo", "doing", "done"])
 const allowedTaskDueTypes = new Set(["today", "repeat", "date"])
 const MAX_COMMENT_IMAGES = 3
-const MAX_COMMENT_IMAGE_CHARS = 3_000_000
+const MAX_TASK_NOTE_IMAGES = 3
+const MAX_IMAGE_CHARS = 3_000_000
+
+const normalizeImageList = (imagesRaw, maxImages) => {
+  const images = Array.isArray(imagesRaw)
+    ? imagesRaw.map((item) => String(item ?? "")).filter(Boolean)
+    : []
+  return images
+    .filter((item) => item.startsWith("data:image/"))
+    .filter((item) => item.length <= MAX_IMAGE_CHARS)
+    .slice(0, maxImages)
+}
 
 const canViewAllTasksForUser = (user) => {
   const permissions = user?.role?.permissions || []
@@ -822,6 +833,7 @@ app.get("/api/tasks", async (req, res) => {
 app.post("/api/tasks", async (req, res) => {
   const title = String(req.body?.title ?? "").trim()
   const noteRaw = req.body?.note
+  const noteImagesRaw = req.body?.noteImages
   const ownerRaw = req.body?.owner
   const dueTypeRaw = req.body?.dueType
   const repeatDaysRaw = req.body?.repeatDays
@@ -863,6 +875,7 @@ app.post("/api/tasks", async (req, res) => {
 
   const note =
     noteRaw === undefined ? undefined : noteRaw === null ? null : String(noteRaw).trim() || null
+  const noteImages = normalizeImageList(noteImagesRaw, MAX_TASK_NOTE_IMAGES)
   const owner = String(ownerRaw ?? "").trim()
   if (!owner) {
     res.status(400).json({ error: "owner is required" })
@@ -880,6 +893,7 @@ app.post("/api/tasks", async (req, res) => {
       status: "todo",
       dueType,
       ...(note === undefined ? {} : { note }),
+      noteImages,
       owner,
       ...(dueType === "repeat" ? { repeatDays } : { repeatDays: [] }),
       ...(dueType === "date" ? { dueDate } : { dueDate: null }),
@@ -899,6 +913,7 @@ app.put("/api/tasks/:id", async (req, res) => {
 
   const titleRaw = req.body?.title
   const noteRaw = req.body?.note
+  const noteImagesRaw = req.body?.noteImages
   const ownerRaw = req.body?.owner
   const statusRaw = req.body?.status
   const dueTypeRaw = req.body?.dueType
@@ -923,6 +938,14 @@ app.put("/api/tasks/:id", async (req, res) => {
     } else {
       const note = String(noteRaw).trim()
       data.note = note ? note : null
+    }
+  }
+
+  if (noteImagesRaw !== undefined) {
+    if (noteImagesRaw === null) {
+      data.noteImages = []
+    } else {
+      data.noteImages = normalizeImageList(noteImagesRaw, MAX_TASK_NOTE_IMAGES)
     }
   }
 
@@ -1061,14 +1084,7 @@ app.post("/api/tasks/:id/comments", async (req, res) => {
 
   const textRaw = req.body?.text
   const text = textRaw === undefined ? "" : String(textRaw).trim()
-  const imagesRaw = req.body?.images
-  const images = Array.isArray(imagesRaw)
-    ? imagesRaw.map((item) => String(item ?? "")).filter(Boolean)
-    : []
-  const normalizedImages = images
-    .filter((item) => item.startsWith("data:image/"))
-    .filter((item) => item.length <= MAX_COMMENT_IMAGE_CHARS)
-    .slice(0, MAX_COMMENT_IMAGES)
+  const normalizedImages = normalizeImageList(req.body?.images, MAX_COMMENT_IMAGES)
 
   if (!text && normalizedImages.length === 0) {
     res.status(400).json({ error: "text or images required" })

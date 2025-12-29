@@ -357,8 +357,14 @@ export default function TasksTab({
                   <button
                     type="button"
                     onClick={() =>
-                      openNoteModal(taskForm.note, (value) =>
-                        setTaskForm((prev) => ({ ...prev, note: value })),
+                      openNoteModal(
+                        { text: taskForm.note, images: taskForm.noteImages },
+                        ({ text, images }) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            note: text,
+                            noteImages: Array.isArray(images) ? images : [],
+                          })),
                       )
                     }
                     className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"

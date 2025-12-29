@@ -63,6 +63,7 @@ model Task {
   id            String   @id @default(cuid())
   title         String
   note          String?
+  noteImages    String[] @default([])
   owner         String?
   status        String   @default("todo")
   dueType       String   @default("today")
