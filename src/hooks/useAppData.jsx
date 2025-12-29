@@ -1160,6 +1160,10 @@ export default function useAppData() {
       toast.error("Satis adedi girin.")
       return
     }
+    if (sales.some((sale) => String(sale?.date ?? "").trim() === date)) {
+      toast.error("Ayni tarih zaten var.")
+      return
+    }
     const createdAt = new Date().toISOString()
     const id = `sale-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
     setSales((prev) => [...prev, { id, date, amount, createdAt }])
@@ -1181,6 +1185,10 @@ export default function useAppData() {
     }
     if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
       toast.error("Satis adedi girin.")
+      return false
+    }
+    if (sales.some((sale) => sale.id !== saleId && String(sale?.date ?? "").trim() === date)) {
+      toast.error("Ayni tarih zaten var.")
       return false
     }
     const exists = sales.some((sale) => sale.id === saleId)
