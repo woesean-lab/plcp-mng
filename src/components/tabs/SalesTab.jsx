@@ -240,16 +240,9 @@ export default function SalesTab({
                   <svg viewBox={`0 0 100 ${chartViewHeight}`} className="h-52 w-full">
                     <defs>
                       <linearGradient id="sales-area-gradient" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="#22c55e" stopOpacity="0.45" />
+                        <stop offset="0%" stopColor="#22c55e" stopOpacity="0.28" />
                         <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
                       </linearGradient>
-                      <filter id="line-glow" x="-20%" y="-20%" width="140%" height="160%">
-                        <feGaussianBlur stdDeviation="0.6" result="coloredBlur" />
-                        <feMerge>
-                          <feMergeNode in="coloredBlur" />
-                          <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                      </filter>
                     </defs>
                     {chart.gridLines.map((y, idx) => (
                       <line
@@ -263,7 +256,7 @@ export default function SalesTab({
                       />
                     ))}
                     <path d={chart.area} fill="url(#sales-area-gradient)" />
-                    <path d={chart.line} fill="none" stroke="#22c55e" strokeWidth="1.6" filter="url(#line-glow)" />
+                    <path d={chart.line} fill="none" stroke="#22c55e" strokeWidth="1.6" />
                     {chart.points.map((point, idx) => {
                       const isFocus = idx === chart.lastIndex || idx === chart.peakIndex
                       if (!isFocus) return null
