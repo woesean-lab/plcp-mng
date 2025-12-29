@@ -142,13 +142,8 @@ export default function SalesTab({
     label: formatPointLabel(item.date),
     show: index % labelEvery === 0 || index === chartData.length - 1,
   }))
-  const labelPositions = chart
-    ? chart.points.map((point, index) => ({
-      left: `${point.x}%`,
-      label: pointLabels[index]?.label ?? "",
-      show: pointLabels[index]?.show ?? false,
-    }))
-    : []
+  const chartViewHeight = chart ? chart.height + 8 : 40
+  const chartLabelY = chart ? chart.height + 2.5 : 0
 
   return (
     <div className="space-y-6">
@@ -237,7 +232,7 @@ export default function SalesTab({
             <div className="mt-5 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
               {chart ? (
                 <div className="space-y-3">
-                  <svg viewBox="0 0 100 40" className="h-32 w-full">
+                  <svg viewBox={`0 0 100 ${chartViewHeight}`} className="h-36 w-full">
                     <defs>
                       <linearGradient id="sales-gradient" x1="0" x2="0" y1="0" y2="1">
                         <stop offset="0%" stopColor="#3ac7ff" stopOpacity="0.35" />
@@ -268,26 +263,28 @@ export default function SalesTab({
                         strokeWidth="0.6"
                       />
                     ))}
+                    {chart.points.map((point, idx) => {
+                      const label = pointLabels[idx]
+                      if (!label?.show) return null
+                      return (
+                        <text
+                          key={`lbl-${idx}`}
+                          x={point.x}
+                          y={chartLabelY}
+                          textAnchor="middle"
+                          fontSize="2.6"
+                          fill="#94a3b8"
+                          dominantBaseline="hanging"
+                        >
+                          {label.label}
+                        </text>
+                      )
+                    })}
                   </svg>
                   <div className="flex items-center justify-between text-xs text-slate-400">
                     <span>{chartStartLabel || "-"}</span>
                     <span>{chartEndLabel || "-"}</span>
                   </div>
-                  {labelPositions.length > 0 && (
-                    <div className="relative mt-2 h-4 text-[10px] text-slate-500">
-                      {labelPositions
-                        .filter((item) => item.show)
-                        .map((item, idx) => (
-                          <span
-                            key={`lbl-${idx}`}
-                            className="absolute -translate-x-1/2"
-                            style={{ left: item.left }}
-                          >
-                            {item.label}
-                          </span>
-                        ))}
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-slate-400">
