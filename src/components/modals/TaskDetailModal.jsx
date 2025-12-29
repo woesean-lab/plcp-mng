@@ -7,6 +7,7 @@ export default function TaskDetailModal({
   canEdit,
   detailComments,
   onDetailCommentAdd,
+  onDetailCommentDelete,
   taskStatusMeta,
   getTaskDueLabel,
   detailNoteText,
@@ -20,6 +21,7 @@ export default function TaskDetailModal({
   const [detailDraft, setDetailDraft] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const canAddComment = Boolean(canEdit && onDetailCommentAdd)
+  const canDeleteComment = Boolean(canEdit && onDetailCommentDelete)
   const isDirty = detailDraft.trim().length > 0
 
   useEffect(() => {
@@ -149,12 +151,26 @@ export default function TaskDetailModal({
                     key={comment.id}
                     className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-slate-200"
                   >
-                    <p className="whitespace-pre-wrap">{comment.text}</p>
-                    {comment.createdAt && (
-                      <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                        {new Date(comment.createdAt).toLocaleString("tr-TR")}
-                      </p>
-                    )}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-2">
+                        <p className="whitespace-pre-wrap">{comment.text}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                          <span>{comment.authorName || "Bilinmiyor"}</span>
+                          {comment.createdAt && (
+                            <span>{new Date(comment.createdAt).toLocaleString("tr-TR")}</span>
+                          )}
+                        </div>
+                      </div>
+                      {canDeleteComment && (
+                        <button
+                          type="button"
+                          onClick={() => onDetailCommentDelete(target.id, comment.id)}
+                          className="rounded-lg border border-rose-400/60 bg-rose-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
+                        >
+                          Sil
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))
               )}

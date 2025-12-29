@@ -1080,6 +1080,39 @@ app.post("/api/tasks/:id/comments", async (req, res) => {
   res.status(201).json(created)
 })
 
+app.delete("/api/tasks/:id/comments/:commentId", async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  const commentId = String(req.params.commentId ?? "").trim()
+  if (!id || !commentId) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const task = await getTaskForUser(req.user, id)
+  if (!task) {
+    res.status(404).json({ error: "Task not found" })
+    return
+  }
+
+  const comment = await prisma.taskComment.findUnique({ where: { id: commentId } })
+  if (!comment || comment.taskId !== id) {
+    res.status(404).json({ error: "Comment not found" })
+    return
+  }
+
+  const canDelete =
+    canViewAllTasksForUser(req.user) ||
+    (comment.authorId && comment.authorId === req.user?.id) ||
+    (task.owner && task.owner === req.user?.username)
+  if (!canDelete) {
+    res.status(403).json({ error: "forbidden" })
+    return
+  }
+
+  await prisma.taskComment.delete({ where: { id: commentId } })
+  res.status(204).end()
+})
+
 app.delete("/api/tasks/:id", async (req, res) => {
   const id = String(req.params.id ?? "").trim()
   if (!id) {

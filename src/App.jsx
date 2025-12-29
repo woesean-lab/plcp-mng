@@ -287,6 +287,7 @@ function App() {
     closeTaskDetail,
     taskDetailComments,
     handleTaskDetailCommentAdd,
+    handleTaskDetailCommentDelete,
     detailNoteText,
     detailNoteLineCount,
     detailNoteLineRef,
@@ -1108,6 +1109,7 @@ function App() {
               : []
           }
           onDetailCommentAdd={handleTaskDetailCommentAdd}
+          onDetailCommentDelete={handleTaskDetailCommentDelete}
           taskStatusMeta={taskStatusMeta}
           getTaskDueLabel={getTaskDueLabel}
           detailNoteText={detailNoteText}

@@ -1362,6 +1362,28 @@ export default function useAppData() {
     }
   }
 
+  const handleTaskDetailCommentDelete = async (taskId, commentId) => {
+    if (!taskId || !commentId) return
+    try {
+      const res = await apiFetch(`/api/tasks/${taskId}/comments/${commentId}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error("task_comment_delete_failed")
+      setTaskDetailComments((prev) => {
+        const safePrev = prev && typeof prev === "object" ? prev : {}
+        const existing = Array.isArray(safePrev[taskId]) ? safePrev[taskId] : []
+        return {
+          ...safePrev,
+          [taskId]: existing.filter((item) => item.id !== commentId),
+        }
+      })
+      toast.success("Yorum silindi")
+    } catch (error) {
+      console.warn("Task comment delete failed", error)
+      toast.error("Yorum silinemedi (API/DB kontrol edin).")
+    }
+  }
+
   const openTaskEdit = (task) => {
     const normalized = normalizeTask(task)
     setTaskEditDraft({
@@ -3761,6 +3783,7 @@ export default function useAppData() {
     taskDetailTarget,
     taskDetailComments,
     handleTaskDetailCommentAdd,
+    handleTaskDetailCommentDelete,
     closeTaskDetail,
     detailNoteText,
     detailNoteLineCount,
