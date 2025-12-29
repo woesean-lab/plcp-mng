@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -115,6 +115,12 @@ export default function SalesTab({
     if (!year || !month || !day) return value
     return `${day}.${month}`
   }
+  const formatMonthLabel = (value) => {
+    if (!value) return ""
+    const [year, month] = value.split("-")
+    if (!year || !month) return value
+    return `${month}/${year}`
+  }
 
   const chart = (() => {
     if (chartData.length === 0) return null
@@ -140,6 +146,74 @@ export default function SalesTab({
   })()
   const [updateDate, setUpdateDate] = useState("")
   const [updateAmount, setUpdateAmount] = useState("")
+  const analytics = useMemo(() => {
+    if (salesList.length === 0) {
+      return {
+        bestDay: null,
+        bestMonth: null,
+        bestYear: null,
+        averageDaily: 0,
+        totalDays: 0,
+        totalSales: 0,
+      }
+    }
+    const dailyTotals = new Map()
+    let totalSales = 0
+    salesList.forEach((sale) => {
+      const date = String(sale?.date ?? "").trim()
+      if (!date) return
+      const amount = Number(sale?.amount ?? 0)
+      if (!Number.isFinite(amount) || amount <= 0) return
+      totalSales += amount
+      dailyTotals.set(date, (dailyTotals.get(date) ?? 0) + amount)
+    })
+    if (dailyTotals.size === 0) {
+      return {
+        bestDay: null,
+        bestMonth: null,
+        bestYear: null,
+        averageDaily: 0,
+        totalDays: 0,
+        totalSales: 0,
+      }
+    }
+    let bestDay = { date: "", total: -Infinity }
+    const monthTotals = new Map()
+    const yearTotals = new Map()
+    dailyTotals.forEach((total, date) => {
+      if (total > bestDay.total) bestDay = { date, total }
+      const [year, month] = date.split("-")
+      if (year) {
+        yearTotals.set(year, (yearTotals.get(year) ?? 0) + total)
+      }
+      if (year && month) {
+        const monthKey = `${year}-${month}`
+        monthTotals.set(monthKey, (monthTotals.get(monthKey) ?? 0) + total)
+      }
+    })
+    let bestMonth = null
+    monthTotals.forEach((total, key) => {
+      if (!bestMonth || total > bestMonth.total) {
+        bestMonth = { key, total }
+      }
+    })
+    let bestYear = null
+    yearTotals.forEach((total, key) => {
+      if (!bestYear || total > bestYear.total) {
+        bestYear = { key, total }
+      }
+    })
+    const totalDays = dailyTotals.size
+    const averageDaily = totalDays > 0 ? Math.round(totalSales / totalDays) : 0
+    return {
+      bestDay: bestDay.total > -Infinity ? bestDay : null,
+      bestMonth,
+      bestYear,
+      averageDaily,
+      totalDays,
+      totalSales,
+    }
+  }, [salesList])
 
   return (
     <div className="space-y-6">
@@ -261,6 +335,70 @@ export default function SalesTab({
                   Henuz satis kaydi yok. Ilk satisi ekleyin.
                 </div>
               )}
+            </div>
+          </div>
+          <div className={`${panelClass} bg-ink-900/60`}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                  Satis ozetleri
+                </p>
+                <p className="text-xs text-slate-400">Kisa performans ozeti.</p>
+              </div>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                Gun: {analytics.totalDays}
+              </span>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  En yuksek gun
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-100">
+                  {analytics.bestDay ? formatDate(analytics.bestDay.date) : "-"}
+                </p>
+                <p className="text-xs text-accent-200">
+                  {analytics.bestDay ? analytics.bestDay.total : 0}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  En yuksek ay
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-100">
+                  {analytics.bestMonth ? formatMonthLabel(analytics.bestMonth.key) : "-"}
+                </p>
+                <p className="text-xs text-accent-200">
+                  {analytics.bestMonth ? analytics.bestMonth.total : 0}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  En yuksek yil
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-100">
+                  {analytics.bestYear ? analytics.bestYear.key : "-"}
+                </p>
+                <p className="text-xs text-accent-200">
+                  {analytics.bestYear ? analytics.bestYear.total : 0}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  Ortalama gunluk
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-100">{analytics.averageDaily}</p>
+                <p className="text-xs text-slate-400">Toplam: {analytics.totalSales}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner sm:col-span-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  Son 7 gun
+                </p>
+                <div className="mt-1 flex items-baseline justify-between">
+                  <p className="text-sm font-semibold text-slate-100">{summary.last7Total}</p>
+                  <p className="text-xs text-slate-400">Kayit: {summary.count}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
