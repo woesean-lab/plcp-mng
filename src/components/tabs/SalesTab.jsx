@@ -221,9 +221,9 @@ export default function SalesTab({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              Satis
+              Satış
             </span>
-            <h1 className="font-display text-3xl font-semibold text-white">Satis</h1>
+            <h1 className="font-display text-3xl font-semibold text-white">Satış</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
               Tarih bazli satis gir, hareketi grafikte takip et.
             </p>
@@ -272,7 +272,7 @@ export default function SalesTab({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  Satis Grafigi
+                  Satış Grafiği
                 </p>
                 <p className="text-sm text-slate-400">{activeRange.helper}.</p>
               </div>
@@ -341,7 +341,7 @@ export default function SalesTab({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  Satis ozetleri
+                  Satış özetleri
                 </p>
                 <p className="text-xs text-slate-400">Kisa performans ozeti.</p>
               </div>
@@ -409,7 +409,7 @@ export default function SalesTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  Satis girisi
+                  Satış girişi
                 </p>
                 <p className="text-sm text-slate-400">Tarih ve satis adetini ekle.</p>
               </div>
@@ -434,7 +434,7 @@ export default function SalesTab({
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-200" htmlFor="sales-amount">
-                  Satis adedi
+                  Satış adedi
                 </label>
                 <input
                   id="sales-amount"

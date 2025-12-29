@@ -375,7 +375,7 @@ function App() {
     () => [
       { key: "messages", label: "Mesajlar", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
-      { key: "sales", label: "Satis", canView: canViewSales },
+      { key: "sales", label: "Satış", canView: canViewSales },
       { key: "problems", label: "Problemli M\u00fc\u015fteriler", canView: canViewProblems },
       { key: "lists", label: "Listeler", canView: canViewLists },
       { key: "stock", label: "Stok", canView: canViewStock },
