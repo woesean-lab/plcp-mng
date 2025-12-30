@@ -41,7 +41,7 @@ const normalizeStoredNotes = (raw) => {
     .filter((note) => note.title.trim() || note.body.trim())
 }
 
-export default function DeliveryTab({ panelClass }) {
+export default function DeliveryTab() {
   const [notes, setNotes] = useState(() => {
     if (typeof window === "undefined") return []
     try {
@@ -191,34 +191,36 @@ export default function DeliveryTab({ panelClass }) {
 
   return (
     <div className="space-y-6">
-      <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              Not
-            </span>
+      <header className="border border-white/10 bg-ink-900/60 px-6 py-5">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-3">
+            <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">Not</p>
             <h1 className="font-display text-3xl font-semibold text-white">Notlar</h1>
-            <p className="max-w-2xl text-sm text-slate-200/80">
+            <p className="max-w-2xl text-sm text-slate-300/80">
               Evernote tarzinda not tut, etiketle ve baslik/etiket ile ara. Tum notlar lokal
               calisir.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Not: {notes.length}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Sonuc: {filteredNotes.length}
-            </span>
+          <div className="grid w-full max-w-[260px] grid-cols-2 gap-3 text-[10px] uppercase tracking-[0.2em] text-slate-400 md:w-auto">
+            <div className="border border-white/10 bg-white/5 px-3 py-2">
+              <span className="block text-[10px] text-slate-500">Not</span>
+              <span className="text-sm font-semibold text-slate-100">{notes.length}</span>
+            </div>
+            <div className="border border-white/10 bg-white/5 px-3 py-2">
+              <span className="block text-[10px] text-slate-500">Sonuc</span>
+              <span className="text-sm font-semibold text-slate-100">
+                {filteredNotes.length}
+              </span>
+            </div>
           </div>
         </div>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <div className="space-y-6">
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex flex-col gap-4">
-              <div>
+          <div className="border border-white/10 bg-ink-900/60 px-6 py-6">
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2 border-b border-white/10 pb-4">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Notlar
                 </p>
@@ -228,7 +230,7 @@ export default function DeliveryTab({ panelClass }) {
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex h-11 flex-1 items-center gap-3 rounded-[6px] border border-white/10 bg-ink-900 px-4 shadow-inner">
+                <div className="flex h-11 flex-1 items-center gap-3 border border-white/10 bg-ink-900/80 px-4">
                   <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
                   <div className="flex flex-1 items-center gap-2">
                     <svg
@@ -257,7 +259,7 @@ export default function DeliveryTab({ panelClass }) {
                   <button
                     type="button"
                     onClick={handleSearchClear}
-                    className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                    className="min-w-[110px] border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
                   >
                     Temizle
                   </button>
@@ -265,45 +267,44 @@ export default function DeliveryTab({ panelClass }) {
               </div>
 
               {filteredNotes.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-400">
+                <div className="border border-dashed border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-400">
                   {notes.length === 0
                     ? "Henuz not yok. Yeni not olusturabilirsin."
                     : "Bu aramada not bulunamadi."}
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {filteredNotes.map((note) => {
+                <div className="space-y-3">
+                  {filteredNotes.map((note, index) => {
                     const isActive = isEditorOpen && note.id === activeNoteId
-                    const primaryTag = note.tags[0]
-                    const extraTagCount = Math.max(0, note.tags.length - 1)
-                    const tagLabel = primaryTag
-                      ? `#${primaryTag}${extraTagCount > 0 ? ` +${extraTagCount}` : ""}`
-                      : ""
                     const titleText = note.title || "Basliksiz not"
-                    const noteInitial = titleText.trim().charAt(0).toUpperCase() || "N"
+                    const displayDate = formatNoteDate(note.updatedAt) || "Tarih yok"
+                    const visibleTags = note.tags.slice(0, 3)
+                    const remainingTagCount = Math.max(0, note.tags.length - visibleTags.length)
+                    const orderLabel = String(index + 1).padStart(2, "0")
                     return (
                       <button
                         key={note.id}
                         type="button"
                         onClick={() => handleNoteOpen(note)}
-                        className={`group relative w-full border border-white/10 bg-transparent px-4 py-2.5 text-left transition hover:border-accent-300/60 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300/40 sm:px-5 ${
-                          isActive ? "border-accent-300/70 bg-white/10" : ""
+                        className={`group w-full border border-white/10 bg-transparent px-4 py-3 text-left transition hover:border-white/15 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300/40 ${
+                          isActive ? "border-accent-300/60 bg-white/10" : ""
                         }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-200">
-                            {noteInitial}
+                        <div className="flex items-start gap-4">
+                          <div className="flex w-24 shrink-0 flex-col gap-1 border border-white/10 bg-ink-900 px-2 py-2 text-[10px] uppercase text-slate-500">
+                            <span className="text-slate-300 tracking-[0.32em]">
+                              {orderLabel}
+                            </span>
+                            <span className="tracking-[0.2em]">{displayDate}</span>
                           </div>
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="flex flex-wrap items-center gap-2">
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <div className="flex items-center justify-between gap-3">
                               <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">
                                 {titleText}
                               </p>
-                              {tagLabel && (
-                                <span className="border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] text-slate-300">
-                                  {tagLabel}
-                                </span>
-                              )}
+                              <span className="text-[10px] uppercase tracking-[0.24em] text-slate-500">
+                                {note.tags.length} etiket
+                              </span>
                             </div>
                             {note.body && (
                               <p
@@ -321,11 +322,14 @@ export default function DeliveryTab({ panelClass }) {
                                 {note.body}
                               </p>
                             )}
-                            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.24em] text-slate-500">
-                              <span>{formatNoteDate(note.updatedAt) || "Tarih yok"}</span>
-                              <span className="h-1 w-1 rounded-full bg-slate-500/60" />
-                              <span>{note.tags.length} etiket</span>
-                            </div>
+                            {note.tags.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                                {visibleTags.map((tag) => (
+                                  <span key={`${note.id}-tag-${tag}`}>#{tag}</span>
+                                ))}
+                                {remainingTagCount > 0 && <span>+{remainingTagCount}</span>}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </button>
@@ -338,8 +342,8 @@ export default function DeliveryTab({ panelClass }) {
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-6">
-          <div className={`${panelClass} bg-ink-900/70`}>
-            <div className="flex items-center justify-between">
+          <div className="border border-white/10 bg-ink-900/70 px-6 py-6">
+            <div className="flex flex-col gap-4 border-b border-white/10 pb-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Not editoru
@@ -355,7 +359,7 @@ export default function DeliveryTab({ panelClass }) {
               <button
                 type="button"
                 onClick={handleCreateOpen}
-                className="rounded-full border border-accent-400/70 bg-accent-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                className="border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
               >
                 Yeni not
               </button>
@@ -374,7 +378,7 @@ export default function DeliveryTab({ panelClass }) {
                       value={draft.title}
                       onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
                       placeholder="Orn: Teslimat adimlari"
-                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
                     />
                   </div>
                   <div className="space-y-2">
@@ -387,7 +391,7 @@ export default function DeliveryTab({ panelClass }) {
                       value={draft.tags}
                       onChange={(event) => setDraft((prev) => ({ ...prev, tags: event.target.value }))}
                       placeholder="Orn: kargo, kritik"
-                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                      className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
                     />
                     <p className="text-xs text-slate-500">Etiketleri virgul ile ayir.</p>
                   </div>
@@ -397,10 +401,10 @@ export default function DeliveryTab({ panelClass }) {
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
                     <label htmlFor="note-body">Not editoru</label>
                     <span className="text-[11px] font-medium text-slate-500">
-                      {lineCount} satir • {draft.body.length} karakter
+                      {lineCount} satir / {draft.body.length} karakter
                     </span>
                   </div>
-                  <div className="overflow-hidden rounded-xl border border-white/10 bg-ink-900/80 shadow-inner">
+                  <div className="overflow-hidden border border-white/10 bg-ink-900/80">
                     <div className="flex max-h-[360px] min-h-[220px] overflow-hidden">
                       <div
                         ref={lineRef}
@@ -429,7 +433,7 @@ export default function DeliveryTab({ panelClass }) {
                     <button
                       type="button"
                       onClick={handleDeleteRequest}
-                      className={`min-w-[120px] rounded-lg border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition ${
+                      className={`min-w-[120px] border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition ${
                         deleteConfirmId === activeNoteId
                           ? "border-rose-300 bg-rose-500/25 text-rose-50"
                           : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
@@ -442,45 +446,45 @@ export default function DeliveryTab({ panelClass }) {
                     type="button"
                     onClick={handleSave}
                     disabled={!canSaveNote}
-                    className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-w-[140px] border border-accent-400/70 bg-accent-500/10 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isEditing ? "Guncelle" : "Not olustur"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setDraft({ title: "", body: "", tags: "" })}
-                    className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                    className="min-w-[120px] border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
                   >
                     Temizle
                   </button>
                   <button
                     type="button"
                     onClick={handleEditorClose}
-                    className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                    className="min-w-[120px] border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
                   >
                     Kapat
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+              <div className="mt-4 border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
                 Listeden bir not sec veya yeni not olustur.
               </div>
             )}
           </div>
 
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex items-center justify-between">
+          <div className="border border-white/10 bg-ink-900/60 px-6 py-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                 Etiketler
               </p>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+              <span className="border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
                 {tagStats.length} etiket
               </span>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {tagStats.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                <div className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
                   Etiket ekleyince burada gorunecek.
                 </div>
               ) : (
@@ -491,10 +495,10 @@ export default function DeliveryTab({ panelClass }) {
                     onClick={() => {
                       setSearchInput(tag)
                     }}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200 transition hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
+                    className="inline-flex items-center gap-2 border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200 transition hover:border-accent-300/60 hover:bg-white/10"
                   >
                     #{tag}
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-300">
+                    <span className="border border-white/10 bg-white/10 px-2 py-0.5 text-[10px] text-slate-300">
                       {count}
                     </span>
                   </button>
