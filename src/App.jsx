@@ -386,11 +386,11 @@ function App() {
   const canViewAdmin = canManageRoles || canManageUsers
   const tabItems = useMemo(
     () => [
-      { key: "messages", label: "Mesajlar", canView: canViewMessages },
+      { key: "messages", label: "Mesaj", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
-      { key: "problems", label: "Problemli M\u00fc\u015fteriler", canView: canViewProblems },
-      { key: "lists", label: "Listeler", canView: canViewLists },
+      { key: "problems", label: "Problem", canView: canViewProblems },
+      { key: "lists", label: "Liste", canView: canViewLists },
       { key: "stock", label: "Stok", canView: canViewStock },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
