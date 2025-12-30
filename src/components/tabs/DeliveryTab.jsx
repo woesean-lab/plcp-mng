@@ -271,7 +271,7 @@ export default function DeliveryTab({ panelClass }) {
                     : "Bu aramada not bulunamadi."}
                 </div>
               ) : (
-                <div className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                <div className="space-y-3">
                   {filteredNotes.map((note) => {
                     const isActive = isEditorOpen && note.id === activeNoteId
                     const primaryTag = note.tags[0]
@@ -279,42 +279,60 @@ export default function DeliveryTab({ panelClass }) {
                     const tagLabel = primaryTag
                       ? `#${primaryTag}${extraTagCount > 0 ? ` +${extraTagCount}` : ""}`
                       : ""
+                    const titleText = note.title || "Basliksiz not"
+                    const noteInitial = titleText.trim().charAt(0).toUpperCase() || "N"
                     return (
                       <button
                         key={note.id}
                         type="button"
                         onClick={() => handleNoteOpen(note)}
-                        className={`group flex w-full flex-col gap-1.5 px-4 py-2.5 text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300/40 sm:px-5 ${
-                          isActive ? "bg-white/10" : ""
+                        className={`group relative w-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent px-4 py-3 text-left transition hover:border-accent-300/60 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300/40 sm:px-5 ${
+                          isActive ? "border-accent-300/70 bg-accent-500/10 shadow-glow" : ""
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`h-2 w-2 rounded-full ${
-                              isActive ? "bg-accent-400 shadow-glow" : "bg-slate-500/70"
-                            }`}
-                          />
-                          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">
-                            {note.title || "Basliksiz not"}
-                          </p>
-                          <span className="shrink-0 text-[10px] uppercase tracking-[0.24em] text-slate-500">
-                            {formatNoteDate(note.updatedAt) || "Tarih yok"}
-                          </span>
-                        </div>
-                        {(note.body || tagLabel) && (
-                          <div className="flex items-center gap-2">
+                        <span
+                          className={`pointer-events-none absolute left-0 top-4 h-8 w-0.5 rounded-full bg-accent-400/70 transition ${
+                            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                          }`}
+                        />
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-200">
+                            {noteInitial}
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">
+                                {titleText}
+                              </p>
+                              {tagLabel && (
+                                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] text-slate-300">
+                                  {tagLabel}
+                                </span>
+                              )}
+                            </div>
                             {note.body && (
-                              <p className="min-w-0 flex-1 truncate text-xs text-slate-400" title={note.body}>
+                              <p
+                                className="text-xs text-slate-400"
+                                style={{
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                  overflowWrap: "anywhere",
+                                  wordBreak: "break-word",
+                                }}
+                                title={note.body}
+                              >
                                 {note.body}
                               </p>
                             )}
-                            {tagLabel && (
-                              <span className="ml-auto shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
-                                {tagLabel}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.24em] text-slate-500">
+                              <span>{formatNoteDate(note.updatedAt) || "Tarih yok"}</span>
+                              <span className="h-1 w-1 rounded-full bg-slate-500/60" />
+                              <span>{note.tags.length} etiket</span>
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </button>
                     )
                   })}
