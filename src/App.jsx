@@ -394,7 +394,7 @@ function App() {
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "stock", label: "Stok", canView: canViewStock },
-      { key: "delivery", label: "Teslimat", canView: canViewDelivery },
+      { key: "delivery", label: "Not", canView: canViewDelivery },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [

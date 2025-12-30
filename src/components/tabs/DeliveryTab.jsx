@@ -189,9 +189,9 @@ export default function DeliveryTab({ panelClass }) {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              Teslimat
+              Not
             </span>
-            <h1 className="font-display text-3xl font-semibold text-white">Teslimat Notlari</h1>
+            <h1 className="font-display text-3xl font-semibold text-white">Notlar</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
               Evernote tarzinda not tut, etiketle ve baslik/etiket ile ara. Tum notlar lokal
               calisir.
