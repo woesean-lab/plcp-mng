@@ -9,6 +9,8 @@ export default function DeliveryNoteModal({
   setDraft,
   canSave,
   isEditing = false,
+  onDelete,
+  deleteConfirm = false,
 }) {
   if (!isOpen) return null
   if (typeof document === "undefined") return null
@@ -28,6 +30,7 @@ export default function DeliveryNoteModal({
   )
   const helperText = isEditing ? "Notu guncelle" : hasDraft ? "Taslak hazir" : "Baslik ve icerik gir"
   const actionLabel = isEditing ? "Guncelle" : "Not olustur"
+  const deleteLabel = deleteConfirm ? "Emin misin?" : "Sil"
 
   const handleScroll = () => {
     if (!lineRef.current || !textareaRef.current) return
@@ -133,6 +136,19 @@ export default function DeliveryNoteModal({
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Esc ile kapat</p>
             <div className="flex flex-wrap gap-3">
+              {isEditing && typeof onDelete === "function" && (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className={`min-w-[120px] rounded-lg border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition ${
+                    deleteConfirm
+                      ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                      : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                  }`}
+                >
+                  {deleteLabel}
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={!canSave}
