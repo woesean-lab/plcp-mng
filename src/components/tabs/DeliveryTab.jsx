@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { DELIVERY_NOTES_STORAGE_KEY } from "../../constants/appConstants"
+import DeliveryNoteModal from "../modals/DeliveryNoteModal"
 
 const createNoteId = () => `note-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
@@ -70,6 +71,7 @@ export default function DeliveryTab({ panelClass }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [draft, setDraft] = useState({ title: "", body: "", tags: "" })
   const [tagDrafts, setTagDrafts] = useState({})
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -112,6 +114,7 @@ export default function DeliveryTab({ panelClass }) {
   }, [notes])
 
   const canCreateNote = Boolean(draft.title.trim() || draft.body.trim())
+  const hasDraft = Boolean(draft.title.trim() || draft.body.trim() || draft.tags.trim())
   const handleSearch = (event) => {
     event.preventDefault()
     setSearchQuery(searchInput)
@@ -121,11 +124,10 @@ export default function DeliveryTab({ panelClass }) {
     setSearchQuery("")
   }
 
-  const handleCreateNote = (event) => {
-    event.preventDefault()
+  const handleCreateNote = () => {
     const title = draft.title.trim()
     const body = draft.body.trim()
-    if (!title && !body) return
+    if (!title && !body) return false
     const now = new Date().toISOString()
     const tags = parseTags(draft.tags)
     const newNote = {
@@ -138,7 +140,17 @@ export default function DeliveryTab({ panelClass }) {
     }
     setNotes((prev) => [newNote, ...prev])
     setDraft({ title: "", body: "", tags: "" })
+    return true
   }
+
+  const handleCreateSave = () => {
+    if (handleCreateNote()) {
+      setIsCreateOpen(false)
+    }
+  }
+
+  const handleCreateOpen = () => setIsCreateOpen(true)
+  const handleCreateClose = () => setIsCreateOpen(false)
 
   const handleTagAdd = (noteId) => {
     const raw = tagDrafts[noteId] || ""
@@ -261,7 +273,7 @@ export default function DeliveryTab({ panelClass }) {
                 {filteredNotes.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-400">
                     {notes.length === 0
-                      ? "Henuz not yok. Sagdan yeni not olusturabilirsin."
+                      ? "Henuz not yok. Yeni not olusturabilirsin."
                       : "Bu aramada not bulunamadi."}
                   </div>
                 ) : (
@@ -366,73 +378,39 @@ export default function DeliveryTab({ panelClass }) {
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Yeni not
                 </p>
-                <p className="text-sm text-slate-400">Teslimat notunu hizlica ekle.</p>
+                <p className="text-sm text-slate-400">Notu modalda olusturup listeye ekle.</p>
               </div>
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                 {notes.length} not
               </span>
             </div>
 
-            <form className="mt-4 space-y-4" onSubmit={handleCreateNote}>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200" htmlFor="delivery-note-title">
-                  Not basligi
-                </label>
-                <input
-                  id="delivery-note-title"
-                  type="text"
-                  value={draft.title}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
-                  placeholder="Orn: Musteri teslimati"
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200" htmlFor="delivery-note-body">
-                  Not icerigi
-                </label>
-                <textarea
-                  id="delivery-note-body"
-                  rows={6}
-                  value={draft.body}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, body: event.target.value }))}
-                  placeholder="Teslimat adimlari, uyarilar veya kontrol listesi"
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200" htmlFor="delivery-note-tags">
-                  Etiketler
-                </label>
-                <input
-                  id="delivery-note-tags"
-                  type="text"
-                  value={draft.tags}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, tags: event.target.value }))}
-                  placeholder="Orn: kargo, kritik"
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                />
-              </div>
-
+            <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+              <p className="text-sm text-slate-300">Baslik, icerik ve etiket ekleyip kaydet.</p>
+              <p className="text-xs text-slate-400">
+                {hasDraft
+                  ? "Taslak hazir. Modal acinca kaldigin yerden devam edersin."
+                  : "Taslak bos. Yeni notu baslatmak icin ac."}
+              </p>
               <div className="flex flex-wrap gap-3">
                 <button
-                  type="submit"
-                  disabled={!canCreateNote}
-                  className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                  type="button"
+                  onClick={handleCreateOpen}
+                  className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                 >
                   Not olustur
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setDraft({ title: "", body: "", tags: "" })}
-                  className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                >
-                  Temizle
-                </button>
+                {hasDraft && (
+                  <button
+                    type="button"
+                    onClick={() => setDraft({ title: "", body: "", tags: "" })}
+                    className="min-w-[140px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+                  >
+                    Taslagi temizle
+                  </button>
+                )}
               </div>
-            </form>
+            </div>
           </div>
 
           <div className={`${panelClass} bg-ink-900/60`}>
@@ -471,6 +449,14 @@ export default function DeliveryTab({ panelClass }) {
           </div>
         </div>
       </div>
+      <DeliveryNoteModal
+        isOpen={isCreateOpen}
+        onClose={handleCreateClose}
+        onSave={handleCreateSave}
+        draft={draft}
+        setDraft={setDraft}
+        canSave={canCreateNote}
+      />
     </div>
   )
 }
