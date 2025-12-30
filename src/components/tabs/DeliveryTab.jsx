@@ -68,10 +68,11 @@ export default function DeliveryTab({ panelClass }) {
     }
   })
   const [searchInput, setSearchInput] = useState("")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [draft, setDraft] = useState({ title: "", body: "", tags: "" })
+  const [createDraft, setCreateDraft] = useState({ title: "", body: "", tags: "" })
+  const [editDraft, setEditDraft] = useState({ title: "", body: "", tags: "" })
   const [tagDrafts, setTagDrafts] = useState({})
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [editingNoteId, setEditingNoteId] = useState(null)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -90,7 +91,7 @@ export default function DeliveryTab({ panelClass }) {
     })
   }, [notes])
 
-  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const normalizedQuery = searchInput.trim().toLowerCase()
   const filteredNotes = useMemo(() => {
     if (!normalizedQuery) return sortedNotes
     return sortedNotes.filter((note) => {
@@ -113,44 +114,71 @@ export default function DeliveryTab({ panelClass }) {
     })
   }, [notes])
 
-  const canCreateNote = Boolean(draft.title.trim() || draft.body.trim())
-  const hasDraft = Boolean(draft.title.trim() || draft.body.trim() || draft.tags.trim())
-  const handleSearch = (event) => {
-    event.preventDefault()
-    setSearchQuery(searchInput)
-  }
+  const isEditing = Boolean(editingNoteId)
+  const activeDraft = isEditing ? editDraft : createDraft
+  const setActiveDraft = isEditing ? setEditDraft : setCreateDraft
+  const canSaveNote = Boolean(activeDraft.title.trim() || activeDraft.body.trim())
+  const hasDraft = Boolean(
+    createDraft.title.trim() || createDraft.body.trim() || createDraft.tags.trim(),
+  )
   const handleSearchClear = () => {
     setSearchInput("")
-    setSearchQuery("")
-  }
-
-  const handleCreateNote = () => {
-    const title = draft.title.trim()
-    const body = draft.body.trim()
-    if (!title && !body) return false
-    const now = new Date().toISOString()
-    const tags = parseTags(draft.tags)
-    const newNote = {
-      id: createNoteId(),
-      title,
-      body,
-      tags,
-      createdAt: now,
-      updatedAt: now,
-    }
-    setNotes((prev) => [newNote, ...prev])
-    setDraft({ title: "", body: "", tags: "" })
-    return true
   }
 
   const handleCreateSave = () => {
-    if (handleCreateNote()) {
-      setIsCreateOpen(false)
+    const title = activeDraft.title.trim()
+    const body = activeDraft.body.trim()
+    if (!title && !body) return
+    const now = new Date().toISOString()
+    const tags = parseTags(activeDraft.tags)
+    if (isEditing) {
+      setNotes((prev) =>
+        prev.map((note) =>
+          note.id === editingNoteId
+            ? {
+              ...note,
+              title,
+              body,
+              tags,
+              updatedAt: now,
+            }
+            : note,
+        ),
+      )
+      setEditDraft({ title: "", body: "", tags: "" })
+      setEditingNoteId(null)
+    } else {
+      const newNote = {
+        id: createNoteId(),
+        title,
+        body,
+        tags,
+        createdAt: now,
+        updatedAt: now,
+      }
+      setNotes((prev) => [newNote, ...prev])
+      setCreateDraft({ title: "", body: "", tags: "" })
     }
+    setIsCreateOpen(false)
   }
 
-  const handleCreateOpen = () => setIsCreateOpen(true)
-  const handleCreateClose = () => setIsCreateOpen(false)
+  const handleCreateOpen = () => {
+    setEditingNoteId(null)
+    setIsCreateOpen(true)
+  }
+  const handleCreateClose = () => {
+    setIsCreateOpen(false)
+    setEditingNoteId(null)
+  }
+  const handleNoteOpen = (note) => {
+    setEditingNoteId(note.id)
+    setEditDraft({
+      title: note.title || "",
+      body: note.body || "",
+      tags: note.tags.join(", "),
+    })
+    setIsCreateOpen(true)
+  }
 
   const handleTagAdd = (noteId) => {
     const raw = tagDrafts[noteId] || ""
@@ -224,7 +252,7 @@ export default function DeliveryTab({ panelClass }) {
                 </p>
               </div>
 
-              <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex h-11 flex-1 items-center gap-3 rounded-[6px] border border-white/10 bg-ink-900 px-4 shadow-inner">
                   <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
                   <div className="flex flex-1 items-center gap-2">
@@ -250,26 +278,18 @@ export default function DeliveryTab({ panelClass }) {
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                {searchInput.trim() && (
                   <button
-                    type="submit"
-                    className="min-w-[110px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                    type="button"
+                    onClick={handleSearchClear}
+                    className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
                   >
-                    Ara
+                    Temizle
                   </button>
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={handleSearchClear}
-                      className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                    >
-                      Temizle
-                    </button>
-                  )}
-                </div>
-              </form>
+                )}
+              </div>
 
-              <div className="grid gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {filteredNotes.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-400">
                     {notes.length === 0
@@ -280,7 +300,16 @@ export default function DeliveryTab({ panelClass }) {
                   filteredNotes.map((note) => (
                     <div
                       key={note.id}
-                      className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner transition hover:border-accent-300/40 hover:bg-ink-800/80"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleNoteOpen(note)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault()
+                          handleNoteOpen(note)
+                        }
+                      }}
+                      className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 p-4 text-left shadow-inner transition hover:border-accent-300/40 hover:bg-ink-800/80"
                     >
                       <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-accent-400/60 via-white/10 to-transparent" />
                       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -327,7 +356,10 @@ export default function DeliveryTab({ panelClass }) {
                               #{tag}
                               <button
                                 type="button"
-                                onClick={() => handleTagRemove(note.id, tag)}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleTagRemove(note.id, tag)
+                                }}
                                 className="text-slate-400 transition hover:text-rose-200"
                                 aria-label={`Etiketi kaldir: ${tag}`}
                               >
@@ -346,17 +378,22 @@ export default function DeliveryTab({ panelClass }) {
                             setTagDrafts((prev) => ({ ...prev, [note.id]: event.target.value }))
                           }
                           onKeyDown={(event) => {
+                            event.stopPropagation()
                             if (event.key === "Enter") {
                               event.preventDefault()
                               handleTagAdd(note.id)
                             }
                           }}
+                          onClick={(event) => event.stopPropagation()}
                           placeholder="Etiket ekle (virgul ile)"
                           className="w-full flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                         />
                         <button
                           type="button"
-                          onClick={() => handleTagAdd(note.id)}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleTagAdd(note.id)
+                          }}
                           disabled={!tagDrafts[note.id]?.trim()}
                           className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
                         >
@@ -403,7 +440,7 @@ export default function DeliveryTab({ panelClass }) {
                 {hasDraft && (
                   <button
                     type="button"
-                    onClick={() => setDraft({ title: "", body: "", tags: "" })}
+                    onClick={() => setCreateDraft({ title: "", body: "", tags: "" })}
                     className="min-w-[140px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
                   >
                     Taslagi temizle
@@ -434,7 +471,6 @@ export default function DeliveryTab({ panelClass }) {
                     type="button"
                     onClick={() => {
                       setSearchInput(tag)
-                      setSearchQuery(tag)
                     }}
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200 transition hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
                   >
@@ -453,9 +489,10 @@ export default function DeliveryTab({ panelClass }) {
         isOpen={isCreateOpen}
         onClose={handleCreateClose}
         onSave={handleCreateSave}
-        draft={draft}
-        setDraft={setDraft}
-        canSave={canCreateNote}
+        draft={activeDraft}
+        setDraft={setActiveDraft}
+        canSave={canSaveNote}
+        isEditing={isEditing}
       />
     </div>
   )
