@@ -14,7 +14,6 @@ import TasksTab from "./components/tabs/TasksTab"
 import SalesTab from "./components/tabs/SalesTab"
 import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
-import DeliveryTab from "./components/tabs/DeliveryTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
 
@@ -241,20 +240,6 @@ function App() {
     problemIssue,
     setProblemIssue,
     handleProblemAdd,
-    deliveryNotes,
-    filteredDeliveryNotes,
-    deliveryDraft,
-    setDeliveryDraft,
-    deliverySearchInput,
-    setDeliverySearchInput,
-    deliverySearchQuery,
-    handleDeliverySearch,
-    handleDeliveryClearSearch,
-    handleDeliveryTagSelect,
-    handleDeliveryNoteAdd,
-    handleDeliveryNoteDelete,
-    deliveryTagCloud,
-    deliveryStats,
     roles,
     users,
     isAdminLoading,
@@ -360,7 +345,6 @@ function App() {
   const canUpdateTasks = hasAnyPermission([PERMISSIONS.tasksUpdate, PERMISSIONS.tasksEdit])
   const canProgressTasks = hasAnyPermission([PERMISSIONS.tasksProgress, PERMISSIONS.tasksEdit])
   const canDeleteTasks = hasAnyPermission([PERMISSIONS.tasksDelete, PERMISSIONS.tasksEdit])
-  const canViewDelivery = isAuthed
   const canViewSales = isAuthed && hasAnyPermission([
     PERMISSIONS.salesView,
     PERMISSIONS.salesCreate,
@@ -404,7 +388,6 @@ function App() {
     () => [
       { key: "messages", label: "Mesaj", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
-      { key: "delivery", label: "Teslimat", canView: canViewDelivery },
       { key: "sales", label: "Satış", canView: canViewSales },
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
@@ -414,7 +397,6 @@ function App() {
     [
       canViewAdmin,
       canViewDashboard,
-      canViewDelivery,
       canViewLists,
       canViewMessages,
       canViewProblems,
@@ -866,28 +848,6 @@ function App() {
               handleTaskAdd={handleTaskAdd}
               resetTaskForm={resetTaskForm}
               focusTask={focusTask}
-            />
-          </div>
-        )}
-
-        {activeTab === "delivery" && canViewDelivery && (
-          <div className={getTabSlideClass("delivery")}>
-            <DeliveryTab
-              panelClass={panelClass}
-              deliveryNotes={filteredDeliveryNotes}
-              allNotesCount={deliveryNotes.length}
-              deliveryDraft={deliveryDraft}
-              setDeliveryDraft={setDeliveryDraft}
-              deliverySearchInput={deliverySearchInput}
-              setDeliverySearchInput={setDeliverySearchInput}
-              deliverySearchQuery={deliverySearchQuery}
-              handleDeliverySearch={handleDeliverySearch}
-              handleDeliveryClearSearch={handleDeliveryClearSearch}
-              handleDeliveryTagSelect={handleDeliveryTagSelect}
-              handleDeliveryNoteAdd={handleDeliveryNoteAdd}
-              handleDeliveryNoteDelete={handleDeliveryNoteDelete}
-              deliveryTagCloud={deliveryTagCloud}
-              deliveryStats={deliveryStats}
             />
           </div>
         )}

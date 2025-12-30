@@ -2,7 +2,6 @@ export const PRODUCT_ORDER_STORAGE_KEY = "pulcipProductOrder"
 export const THEME_STORAGE_KEY = "pulcipTheme"
 export const AUTH_TOKEN_STORAGE_KEY = "pulcipAuthToken"
 export const SALES_STORAGE_KEY = "pulcipSales"
-export const DELIVERY_NOTES_STORAGE_KEY = "pulcipDeliveryNotes"
 
 export const DEFAULT_LIST_ROWS = 8
 export const DEFAULT_LIST_COLS = 5

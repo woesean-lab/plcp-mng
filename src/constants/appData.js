@@ -78,36 +78,6 @@ export const initialTasks = [
   },
 ]
 
-export const initialDeliveryNotes = [
-  {
-    id: "del-1",
-    title: "Acil cikislar",
-    body: "Saat 16:00 kurye turu icin hazir olacak paketleri kontrol et. VIP musterilerin kargolarini en ustte tut.",
-    tags: ["oncelik", "kurye", "vip"],
-    createdAt: "2025-12-28T09:00:00.000Z",
-    updatedAt: "2025-12-28T09:00:00.000Z",
-    color: "from-amber-500/15 to-rose-500/10",
-  },
-  {
-    id: "del-2",
-    title: "Not: Depo duzeni",
-    body: "Hacimli urunleri arka raflara tasidik. Etiketler sari renk, QR kodlar guncel.",
-    tags: ["depo", "etiket"],
-    createdAt: "2025-12-27T15:30:00.000Z",
-    updatedAt: "2025-12-27T15:30:00.000Z",
-    color: "from-emerald-500/15 to-sky-500/10",
-  },
-  {
-    id: "del-3",
-    title: "Teslimat sonrasi",
-    body: "Kuryeden gelen imzali formlar tarandi ve paylasildi. Problemli teslimat yok.",
-    tags: ["rapor", "sorunsuz"],
-    createdAt: "2025-12-26T18:45:00.000Z",
-    updatedAt: "2025-12-26T18:45:00.000Z",
-    color: "from-indigo-500/15 to-fuchsia-500/10",
-  },
-]
-
 export const initialSales = [
   { id: "sale-1", date: "2025-12-20", amount: 12, createdAt: "2025-12-20T08:00:00.000Z" },
   { id: "sale-2", date: "2025-12-21", amount: 18, createdAt: "2025-12-21T08:00:00.000Z" },

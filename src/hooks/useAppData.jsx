@@ -3,7 +3,6 @@ import { toast } from "react-hot-toast"
 import LoadingIndicator from "../components/LoadingIndicator"
 import {
   AUTH_TOKEN_STORAGE_KEY,
-  DELIVERY_NOTES_STORAGE_KEY,
   DEFAULT_LIST_COLS,
   DEFAULT_LIST_ROWS,
   FORMULA_ERRORS,
@@ -23,7 +22,6 @@ import {
 import {
   fallbackCategories,
   fallbackTemplates,
-  initialDeliveryNotes,
   initialProblems,
   initialProducts,
   initialTasks,
@@ -42,54 +40,8 @@ import { getStockStatus, splitStocks } from "../utils/stockUtils"
 import { getInitialTheme } from "../utils/theme"
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-const deliveryAccentPool = [
-  "from-emerald-500/15 to-sky-500/10",
-  "from-amber-500/15 to-rose-500/10",
-  "from-indigo-500/15 to-fuchsia-500/10",
-  "from-sky-500/15 to-emerald-500/10",
-  "from-rose-500/15 to-amber-500/10",
-]
-const createDeliveryId = () => `del-${Math.random().toString(16).slice(2)}-${Date.now()}`
-const normalizeDeliveryTags = (value) => {
-  if (!value) return []
-  const raw = Array.isArray(value) ? value : String(value).split(/[,#]/)
-  return raw
-    .flatMap((item) => String(item ?? "").split(/[,#]/))
-    .map((tag) => tag.trim().toLowerCase())
-    .filter(Boolean)
-}
 
 export default function useAppData() {
-  const normalizeDeliveryNote = (note, index = 0) => {
-    const tags = normalizeDeliveryTags(note?.tags)
-    const nowIso = new Date().toISOString()
-    const createdAt = note?.createdAt || nowIso
-    return {
-      id: note?.id || createDeliveryId(),
-      title: String(note?.title ?? "").trim() || "Basliksiz not",
-      body: String(note?.body ?? "").trim(),
-      tags,
-      createdAt,
-      updatedAt: note?.updatedAt || createdAt,
-      color: note?.color || deliveryAccentPool[index % deliveryAccentPool.length],
-    }
-  }
-
-  const buildInitialDeliveryNotes = () => {
-    const fallback = initialDeliveryNotes.map((note, idx) => normalizeDeliveryNote(note, idx))
-    if (typeof window === "undefined") return fallback
-    try {
-      const raw = localStorage.getItem(DELIVERY_NOTES_STORAGE_KEY)
-      if (!raw) return fallback
-      const parsed = JSON.parse(raw)
-      if (!Array.isArray(parsed)) return fallback
-      return parsed.map((note, idx) => normalizeDeliveryNote(note, idx))
-    } catch (error) {
-      console.warn("Could not load delivery notes", error)
-      return fallback
-    }
-  }
-
   const [activeTab, setActiveTab] = useState("dashboard")
   const [isTabLoading, setIsTabLoading] = useState(false)
   const tabLoadingTimerRef = useRef(null)
@@ -165,11 +117,6 @@ export default function useAppData() {
   const [problemUsername, setProblemUsername] = useState("")
   const [problemIssue, setProblemIssue] = useState("")
   const [confirmProblemTarget, setConfirmProblemTarget] = useState(null)
-
-  const [deliveryNotes, setDeliveryNotes] = useState(() => buildInitialDeliveryNotes())
-  const [deliveryDraft, setDeliveryDraft] = useState({ title: "", body: "", tags: "" })
-  const [deliverySearchInput, setDeliverySearchInput] = useState("")
-  const [deliverySearchQuery, setDeliverySearchQuery] = useState("")
 
   const [roles, setRoles] = useState([])
   const [users, setUsers] = useState([])
@@ -270,7 +217,6 @@ export default function useAppData() {
     if (isAuthed) tabs.push("dashboard")
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
     if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
-    if (isAuthed) tabs.push("delivery")
     if (canViewSales) tabs.push("sales")
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
@@ -378,92 +324,6 @@ export default function useAppData() {
       return [{ id: activeUser.id, username: activeUser.username }]
     })
   }, [activeUser])
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      localStorage.setItem(DELIVERY_NOTES_STORAGE_KEY, JSON.stringify(deliveryNotes))
-    } catch (error) {
-      console.warn("Could not persist delivery notes", error)
-    }
-  }, [deliveryNotes])
-
-  const handleDeliverySearch = useCallback(() => {
-    setDeliverySearchQuery(deliverySearchInput.trim().toLowerCase())
-  }, [deliverySearchInput])
-
-  const handleDeliveryClearSearch = useCallback(() => {
-    setDeliverySearchInput("")
-    setDeliverySearchQuery("")
-  }, [])
-
-  const handleDeliveryTagSelect = useCallback((tag) => {
-    const value = String(tag ?? "").trim().toLowerCase()
-    setDeliverySearchInput(value)
-    setDeliverySearchQuery(value)
-  }, [])
-
-  const handleDeliveryNoteAdd = useCallback(() => {
-    const title = deliveryDraft.title.trim()
-    const body = deliveryDraft.body.trim()
-    const tags = normalizeDeliveryTags(deliveryDraft.tags)
-    if (!title && !body) {
-      toast.error("Baslik veya icerik ekleyin.")
-      return
-    }
-    const now = new Date().toISOString()
-    setDeliveryNotes((prev) => {
-      const accentIndex = prev.length % deliveryAccentPool.length
-      const nextNote = {
-        id: createDeliveryId(),
-        title: title || "Basliksiz not",
-        body,
-        tags,
-        createdAt: now,
-        updatedAt: now,
-        color: deliveryAccentPool[accentIndex],
-      }
-      return [nextNote, ...prev]
-    })
-    setDeliveryDraft({ title: "", body: "", tags: "" })
-    toast.success("Not eklendi")
-  }, [deliveryDraft])
-
-  const handleDeliveryNoteDelete = useCallback((noteId) => {
-    setDeliveryNotes((prev) => prev.filter((note) => note.id !== noteId))
-  }, [])
-
-  const filteredDeliveryNotes = useMemo(() => {
-    const query = deliverySearchQuery.trim().toLowerCase()
-    if (!query) return deliveryNotes
-    return deliveryNotes.filter((note) => {
-      const titleMatch = (note.title || "").toLowerCase().includes(query)
-      const tagMatch = (note.tags || []).some((tag) => tag.includes(query))
-      return titleMatch || tagMatch
-    })
-  }, [deliveryNotes, deliverySearchQuery])
-
-  const deliveryTagCloud = useMemo(() => {
-    const counts = {}
-    deliveryNotes.forEach((note) => {
-      (note.tags || []).forEach((tag) => {
-        counts[tag] = (counts[tag] || 0) + 1
-      })
-    })
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 12)
-      .map(([tag, count]) => ({ tag, count }))
-  }, [deliveryNotes])
-
-  const deliveryStats = useMemo(
-    () => ({
-      total: deliveryNotes.length,
-      filtered: filteredDeliveryNotes.length,
-      tags: deliveryTagCloud.length,
-    }),
-    [deliveryNotes.length, filteredDeliveryNotes.length, deliveryTagCloud],
-  )
 
   const apiFetch = useCallback(
     async (input, init = {}) => {
@@ -3906,20 +3766,6 @@ export default function useAppData() {
     problemIssue,
     setProblemIssue,
     handleProblemAdd,
-    deliveryNotes,
-    filteredDeliveryNotes,
-    deliveryDraft,
-    setDeliveryDraft,
-    deliverySearchInput,
-    setDeliverySearchInput,
-    deliverySearchQuery,
-    handleDeliverySearch,
-    handleDeliveryClearSearch,
-    handleDeliveryTagSelect,
-    handleDeliveryNoteAdd,
-    handleDeliveryNoteDelete,
-    deliveryTagCloud,
-    deliveryStats,
     roles,
     users,
     isAdminLoading,
