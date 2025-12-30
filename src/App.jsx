@@ -14,7 +14,6 @@ import TasksTab from "./components/tabs/TasksTab"
 import SalesTab from "./components/tabs/SalesTab"
 import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
-import DeliveryTab from "./components/tabs/DeliveryTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
 
@@ -366,7 +365,6 @@ function App() {
     PERMISSIONS.listsEdit,
   ])
   const canViewStock = hasPermission(PERMISSIONS.stockView)
-  const canViewDelivery = isAuthed
   const canCreateProducts = hasAnyPermission([PERMISSIONS.stockProductCreate, PERMISSIONS.stockManage])
   const canEditProducts = hasAnyPermission([PERMISSIONS.stockProductEdit, PERMISSIONS.stockManage])
   const canDeleteProducts = hasAnyPermission([PERMISSIONS.stockProductDelete, PERMISSIONS.stockManage])
@@ -394,13 +392,11 @@ function App() {
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "stock", label: "Stok", canView: canViewStock },
-      { key: "delivery", label: "Not", canView: canViewDelivery },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
       canViewAdmin,
       canViewDashboard,
-      canViewDelivery,
       canViewLists,
       canViewMessages,
       canViewProblems,
@@ -1004,12 +1000,6 @@ function App() {
               handleStockAdd={handleStockAdd}
               resetStockForm={resetStockForm}
             />
-          </div>
-        )}
-
-        {activeTab === "delivery" && canViewDelivery && (
-          <div className={getTabSlideClass("delivery")}>
-            <DeliveryTab panelClass={panelClass} />
           </div>
         )}
 
