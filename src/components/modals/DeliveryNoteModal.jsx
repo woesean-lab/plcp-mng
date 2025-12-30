@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom"
+
 export default function DeliveryNoteModal({
   isOpen,
   onClose,
@@ -7,12 +9,13 @@ export default function DeliveryNoteModal({
   canSave,
 }) {
   if (!isOpen) return null
+  if (typeof document === "undefined") return null
   const safeDraft = draft || { title: "", body: "", tags: "" }
   const hasDraft = Boolean(
     safeDraft.title.trim() || safeDraft.body.trim() || safeDraft.tags.trim(),
   )
 
-  return (
+  const modal = (
     <div
       className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-6 backdrop-blur-sm sm:items-center"
       onClick={onClose}
@@ -118,4 +121,6 @@ export default function DeliveryNoteModal({
       </div>
     </div>
   )
+
+  return createPortal(modal, document.body)
 }
