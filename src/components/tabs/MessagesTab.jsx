@@ -302,15 +302,6 @@ export default function MessagesTab({
                   />
                 </div>
               </div>
-              {templateQuery.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setTemplateQuery("")}
-                  className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                >
-                  Temizle
-                </button>
-              )}
             </div>
 
             <div className="mt-4 space-y-3">

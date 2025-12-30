@@ -145,7 +145,7 @@ export default function TaskDetailModal({
           </span>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-inner">
+        <div className="mt-4 overflow-hidden rounded-[3px] border border-white/10 bg-ink-900 shadow-inner">
           <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-2">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Notlar</p>
             <span className="text-xs text-slate-400">{detailNoteText.length} karakter</span>
@@ -196,7 +196,7 @@ export default function TaskDetailModal({
           )}
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-inner">
+        <div className="mt-4 overflow-hidden rounded-[3px] border border-white/10 bg-ink-900 shadow-inner">
           <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-2">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Görevi detaylandır (yorum)</p>
             <span className="text-xs text-slate-400">{detailDraft.length} karakter</span>
@@ -353,4 +353,5 @@ export default function TaskDetailModal({
     </div>
   )
 }
+
 
