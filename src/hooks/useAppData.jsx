@@ -11,6 +11,7 @@ import {
   PERMISSIONS,
   PRODUCT_ORDER_STORAGE_KEY,
   STOCK_STATUS,
+  TEMPLATE_STARS_STORAGE_KEY,
   THEME_STORAGE_KEY,
   categoryPalette,
   panelClass,
@@ -76,6 +77,19 @@ export default function useAppData() {
   const [newCategory, setNewCategory] = useState("")
   const [categories, setCategories] = useState([])
   const [templates, setTemplates] = useState([])
+  const [templateStars, setTemplateStars] = useState(() => {
+    if (typeof window === "undefined") return {}
+    try {
+      const stored = localStorage.getItem(TEMPLATE_STARS_STORAGE_KEY)
+      if (!stored) return {}
+      const parsed = JSON.parse(stored)
+      if (!parsed || typeof parsed !== "object") return {}
+      return parsed
+    } catch (error) {
+      console.warn("Could not read template stars", error)
+      return {}
+    }
+  })
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [lists, setLists] = useState([])
   const [activeListId, setActiveListId] = useState("")
@@ -235,6 +249,28 @@ export default function useAppData() {
       console.warn("Could not persist theme preference", error)
     }
   }, [theme])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      localStorage.setItem(TEMPLATE_STARS_STORAGE_KEY, JSON.stringify(templateStars))
+    } catch (error) {
+      console.warn("Could not persist template stars", error)
+    }
+  }, [templateStars])
+
+  useEffect(() => {
+    if (templates.length === 0) return
+    setTemplateStars((prev) => {
+      const next = {}
+      templates.forEach((tpl) => {
+        if (prev[tpl.label]) {
+          next[tpl.label] = true
+        }
+      })
+      return Object.keys(prev).length === Object.keys(next).length ? prev : next
+    })
+  }, [templates])
 
   useEffect(() => {
     let isMounted = true
@@ -751,13 +787,28 @@ export default function useAppData() {
   }
 
   const groupedTemplates = useMemo(() => {
-    return templates.reduce((acc, tpl) => {
+    const grouped = templates.reduce((acc, tpl) => {
       const cat = tpl.category || "Genel"
       if (!acc[cat]) acc[cat] = []
       acc[cat].push(tpl)
       return acc
     }, {})
-  }, [templates])
+    Object.keys(grouped).forEach((cat) => {
+      const list = grouped[cat]
+      if (!list || list.length <= 1) return
+      const starred = []
+      const normal = []
+      list.forEach((tpl) => {
+        if (templateStars[tpl.label]) {
+          starred.push(tpl)
+        } else {
+          normal.push(tpl)
+        }
+      })
+      grouped[cat] = [...starred, ...normal]
+    })
+    return grouped
+  }, [templates, templateStars])
 
   const stockSummary = useMemo(() => {
     let total = 0
@@ -2204,6 +2255,20 @@ export default function useAppData() {
     }
   }
 
+  const handleTemplateStarToggle = (label) => {
+    const safeLabel = String(label || "").trim()
+    if (!safeLabel) return
+    setTemplateStars((prev) => {
+      const next = { ...prev }
+      if (next[safeLabel]) {
+        delete next[safeLabel]
+      } else {
+        next[safeLabel] = true
+      }
+      return next
+    })
+  }
+
   const handleActiveTemplateEditStart = () => {
     if (!activeTemplate || showLoading) return
     setActiveTemplateDraft(activeTemplate.value || "")
@@ -2316,6 +2381,12 @@ export default function useAppData() {
       const nextTemplates = templates.filter((tpl) => tpl.label !== targetLabel)
       const fallback = nextTemplates[0]
       setTemplates(nextTemplates)
+      setTemplateStars((prev) => {
+        if (!prev[targetLabel]) return prev
+        const next = { ...prev }
+        delete next[targetLabel]
+        return next
+      })
       const nextSelected = selectedTemplate === targetLabel ? fallback?.label ?? selectedTemplate : selectedTemplate
       if (nextSelected) {
         setSelectedTemplate(nextSelected)
@@ -3600,6 +3671,8 @@ export default function useAppData() {
     handleActiveTemplateEditSave,
     categories,
     groupedTemplates,
+    templateStars,
+    handleTemplateStarToggle,
     openCategories,
     setOpenCategories,
     handleTemplateChange,

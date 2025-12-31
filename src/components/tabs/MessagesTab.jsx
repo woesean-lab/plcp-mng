@@ -78,6 +78,8 @@ export default function MessagesTab({
   handleActiveTemplateEditSave,
   categories,
   groupedTemplates,
+  templateStars,
+  handleTemplateStarToggle,
   openCategories,
   setOpenCategories,
   handleTemplateChange,
@@ -367,21 +369,51 @@ export default function MessagesTab({
                               Bu kategoride şablon yok.
                             </div>
                           )}
-                          {filteredList.map((tpl) => (
-                            <div key={tpl.label} className="relative">
-                              <button
-                                type="button"
-                                onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
-                                className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
-                                  tpl.label === selectedTemplate
-                                    ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                                    : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
-                                }`}
-                              >
-                                <p className="font-display text-lg">{tpl.label}</p>
-                              </button>
-                            </div>
-                          ))}
+                          {filteredList.map((tpl) => {
+                            const isStarred = Boolean(templateStars?.[tpl.label])
+                            return (
+                              <div key={tpl.label} className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => handleTemplateChange(tpl.label, { shouldCopy: true })}
+                                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
+                                    tpl.label === selectedTemplate
+                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                      : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                                  }`}
+                                >
+                                  <p className="font-display text-lg">{tpl.label}</p>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    handleTemplateStarToggle(tpl.label)
+                                  }}
+                                  aria-label={isStarred ? "Yildizi kaldir" : "Yildiz ekle"}
+                                  aria-pressed={isStarred}
+                                  className={`absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
+                                    isStarred
+                                      ? "border-amber-300/70 bg-amber-500/20 text-amber-100"
+                                      : "border-white/10 bg-white/5 text-slate-400 hover:border-amber-300/60 hover:text-amber-100"
+                                  }`}
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    viewBox="0 0 24 24"
+                                    className="h-4 w-4"
+                                    fill={isStarred ? "currentColor" : "none"}
+                                    stroke="currentColor"
+                                    strokeWidth="1.6"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M12 3.5l2.9 5.88 6.5.94-4.7 4.58 1.1 6.45L12 18.7l-5.8 3.05 1.1-6.45-4.7-4.58 6.5-.94L12 3.5z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
