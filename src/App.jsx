@@ -735,33 +735,6 @@ function App() {
           )}
         </div>
 
-        {isAuthed && nonAdminTabs.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setIsTabMenuOpen((prev) => !prev)}
-            className={`fixed bottom-5 right-4 z-40 inline-flex items-center gap-2 border border-white/10 bg-ink-900/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-200 shadow-card backdrop-blur transition hover:bg-white/10 sm:hidden ${
-              isTabMenuOpen ? "bg-white/10" : ""
-            }`}
-            aria-label="Sekme menusu"
-            aria-expanded={isTabMenuOpen}
-            aria-controls="mobile-tab-menu"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            Sekmeler
-          </button>
-        )}
-
         {activeTab === "dashboard" && canViewDashboard && (
           <div className={getTabSlideClass("dashboard")}>
             <DashboardTab
