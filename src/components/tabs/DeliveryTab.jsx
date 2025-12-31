@@ -191,11 +191,11 @@ export default function DeliveryTab() {
 
   return (
     <div className="space-y-6">
-      <header className="border border-white/10 bg-ink-900/60 px-6 py-5">
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-3">
+      <header className="border border-white/10 bg-ink-900/60 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex flex-col gap-4 sm:gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2 sm:space-y-3">
             <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">Not</p>
-            <h1 className="font-display text-3xl font-semibold text-white">Notlar</h1>
+            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Notlar</h1>
             <p className="max-w-2xl text-sm text-slate-300/80">
               Evernote tarzinda not tut, etiketle ve baslik/etiket ile ara. Tum notlar lokal
               calisir.

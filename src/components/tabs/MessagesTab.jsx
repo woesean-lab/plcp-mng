@@ -7,7 +7,7 @@ function SkeletonBlock({ className = "" }) {
 function MessagesSkeleton({ panelClass }) {
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-card">
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-4 shadow-card sm:p-6">
         <SkeletonBlock className="h-4 w-32 rounded-full" />
         <SkeletonBlock className="mt-4 h-8 w-64" />
         <SkeletonBlock className="mt-3 h-4 w-2/3" />
@@ -126,14 +126,14 @@ export default function MessagesTab({
 
   return (
     <div className="space-y-6">
-      <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-6 shadow-card">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
+      <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
+        <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2 sm:space-y-3">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
               Mesajlar
             </span>
             <div className="space-y-1.5">
-              <h1 className="font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
+              <h1 className="font-display text-2xl font-semibold leading-tight text-white sm:text-3xl md:text-4xl">
                 Mesajlar
               </h1>
               <p className="max-w-2xl text-sm text-slate-200/80 md:text-base">
@@ -157,15 +157,15 @@ export default function MessagesTab({
           </div>
 
           <div className="relative w-full max-w-sm">
-            <div className="absolute inset-x-6 -bottom-16 h-40 rounded-full bg-accent-400/30 blur-3xl" />
-            <div className="relative rounded-2xl border border-white/10 bg-white/10 p-6 shadow-glow backdrop-blur-md">
+            <div className="absolute inset-x-4 -bottom-12 h-32 rounded-full bg-accent-400/30 blur-3xl sm:inset-x-6 sm:-bottom-16 sm:h-40" />
+            <div className="relative rounded-2xl border border-white/10 bg-white/10 p-4 shadow-glow backdrop-blur-md sm:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200/70">
                     Aktif şablon
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display text-2xl font-semibold text-white">
+                    <h3 className="font-display text-xl font-semibold text-white sm:text-2xl">
                       {activeTemplate?.label || (showLoading ? "Yükleniyor..." : "Yeni şablon")}
                     </h3>
                     <span
