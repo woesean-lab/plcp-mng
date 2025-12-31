@@ -319,13 +319,6 @@ export default function KnowledgeBaseTab({ panelClass }) {
     return ["Hepsi", ...unique]
   }, [docs])
 
-  const categoryCounts = useMemo(() => {
-    return docs.reduce((acc, entry) => {
-      acc[entry.category] = (acc[entry.category] || 0) + 1
-      return acc
-    }, {})
-  }, [docs])
-
   const sortedDocs = useMemo(() => {
     return [...docs].sort((a, b) => {
       const aTime = new Date(a.updatedAt || 0).getTime()
@@ -335,26 +328,60 @@ export default function KnowledgeBaseTab({ panelClass }) {
   }, [docs])
 
   const normalizedQuery = query.trim().toLowerCase()
-  const filteredDocs = useMemo(() => {
+  const docsByQuery = useMemo(() => {
     return sortedDocs.filter((entry) => {
-      if (activeCategory !== "Hepsi" && entry.category !== activeCategory) return false
       if (!normalizedQuery) return true
       const haystack = [entry.title, entry.summary, entry.tags.join(" "), entry.category]
         .join(" ")
         .toLowerCase()
       return haystack.includes(normalizedQuery)
     })
-  }, [activeCategory, normalizedQuery, sortedDocs])
+  }, [normalizedQuery, sortedDocs])
+
+  const visibleDocs = useMemo(() => {
+    if (activeCategory === "Hepsi") return docsByQuery
+    return docsByQuery.filter((entry) => entry.category === activeCategory)
+  }, [activeCategory, docsByQuery])
+
+  const categoryCounts = useMemo(() => {
+    return docsByQuery.reduce((acc, entry) => {
+      acc[entry.category] = (acc[entry.category] || 0) + 1
+      return acc
+    }, {})
+  }, [docsByQuery])
+
+  const visibleCategories = useMemo(() => {
+    if (!normalizedQuery) return categories
+    const filtered = categories.filter(
+      (category) => category === "Hepsi" || categoryCounts[category],
+    )
+    return filtered.length > 0 ? filtered : categories
+  }, [categories, categoryCounts, normalizedQuery])
+
+  const groupedDocs = useMemo(() => {
+    const groups = []
+    const index = new Map()
+    visibleDocs.forEach((doc) => {
+      const key = doc.category || "Genel"
+      if (!index.has(key)) {
+        const list = []
+        index.set(key, list)
+        groups.push([key, list])
+      }
+      index.get(key).push(doc)
+    })
+    return groups
+  }, [visibleDocs])
 
   useEffect(() => {
-    if (!filteredDocs.some((doc) => doc.id === activeDocId)) {
-      setActiveDocId(filteredDocs[0]?.id ?? "")
+    if (!visibleDocs.some((doc) => doc.id === activeDocId)) {
+      setActiveDocId(visibleDocs[0]?.id ?? "")
     }
-  }, [activeDocId, filteredDocs])
+  }, [activeDocId, visibleDocs])
 
   const activeDoc = useMemo(
-    () => docs.find((doc) => doc.id === activeDocId) || filteredDocs[0],
-    [activeDocId, docs, filteredDocs],
+    () => docs.find((doc) => doc.id === activeDocId) || visibleDocs[0],
+    [activeDocId, docs, visibleDocs],
   )
   const activeSections = Array.isArray(activeDoc?.sections) ? activeDoc.sections : []
   const isEditing = Boolean(editingDocId)
@@ -451,9 +478,13 @@ export default function KnowledgeBaseTab({ panelClass }) {
   return (
     <div className="space-y-6">
       <header className="border border-white/10 bg-ink-900/60 px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-4 sm:gap-6 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-2 sm:space-y-3">
-            <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">Docs</p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.32em] text-slate-400">
+              <span>Docs</span>
+              <span className="h-1 w-1 rounded-full bg-slate-500" />
+              <span>Bilgi bankasi</span>
+            </div>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
               Bilgi bankasi
             </h1>
@@ -461,22 +492,19 @@ export default function KnowledgeBaseTab({ panelClass }) {
               Surecler, ipuclari ve module ozel notlar. Icerikler lokal calisir, veritabani yoktur.
             </p>
           </div>
-          <div className="flex w-full flex-col gap-3 md:w-auto">
-            <div className="grid w-full max-w-[320px] grid-cols-3 gap-3 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-              <div className="border border-white/10 bg-white/5 px-3 py-2">
-                <span className="block text-[10px] text-slate-500">Dokuman</span>
-                <span className="text-sm font-semibold text-slate-100">{docs.length}</span>
-              </div>
-              <div className="border border-white/10 bg-white/5 px-3 py-2">
-                <span className="block text-[10px] text-slate-500">Kategori</span>
-                <span className="text-sm font-semibold text-slate-100">
-                  {Math.max(0, categories.length - 1)}
-                </span>
-              </div>
-              <div className="border border-white/10 bg-white/5 px-3 py-2">
-                <span className="block text-[10px] text-slate-500">Sonuc</span>
-                <span className="text-sm font-semibold text-slate-100">{filteredDocs.length}</span>
-              </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-slate-400">
+              <span>
+                Dokuman <span className="text-slate-100">{docs.length}</span>
+              </span>
+              <span className="h-3 w-px bg-white/10" />
+              <span>
+                Kategori <span className="text-slate-100">{Math.max(0, categories.length - 1)}</span>
+              </span>
+              <span className="h-3 w-px bg-white/10" />
+              <span>
+                Sonuc <span className="text-slate-100">{visibleDocs.length}</span>
+              </span>
             </div>
             <button
               type="button"
@@ -489,45 +517,42 @@ export default function KnowledgeBaseTab({ panelClass }) {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <div className={`${panelClass} bg-ink-900/60`}>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] xl:grid-cols-[minmax(0,0.9fr)_minmax(0,2fr)_minmax(0,0.85fr)]">
+        <aside className={`${panelClass} bg-ink-900/60 px-4 py-4 lg:sticky lg:top-6`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                Dokumanlar
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                Gezinti
               </p>
-              <p className="text-sm text-slate-400">Baslik, kategori veya etiket ile filtrele.</p>
+              <p className="text-sm text-slate-400">Bolumler ve dokumanlar.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
-              {filteredDocs.length} kayit
+              {visibleDocs.length} kayit
             </span>
           </div>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex h-11 flex-1 items-center gap-3 border border-white/10 bg-ink-900/80 px-4">
-              <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
-              <div className="flex flex-1 items-center gap-2">
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4 text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="16.5" y1="16.5" x2="21" y2="21" />
-                </svg>
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Arama yap"
-                  className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                />
-              </div>
+            <div className="flex h-10 flex-1 items-center gap-2 border border-white/10 bg-ink-900/80 px-3">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-4 w-4 text-slate-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <line x1="16.5" y1="16.5" x2="21" y2="21" />
+              </svg>
+              <input
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Dokuman ara"
+                className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
+              />
             </div>
             {query.trim() && (
               <button
@@ -541,9 +566,10 @@ export default function KnowledgeBaseTab({ panelClass }) {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {categories.map((category) => {
+            {visibleCategories.map((category) => {
               const isActive = activeCategory === category
-              const count = category === "Hepsi" ? docs.length : categoryCounts[category] || 0
+              const count =
+                category === "Hepsi" ? docsByQuery.length : categoryCounts[category] || 0
               return (
                 <button
                   key={category}
@@ -564,72 +590,71 @@ export default function KnowledgeBaseTab({ panelClass }) {
             })}
           </div>
 
-          <div className="mt-5 space-y-3">
-            {filteredDocs.length === 0 ? (
+          <div className="mt-5 space-y-4">
+            {visibleDocs.length === 0 ? (
               <div className="border border-dashed border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-400">
                 Eslesen dokuman bulunamadi.
               </div>
             ) : (
-              filteredDocs.map((doc, index) => {
-                const isActive = doc.id === activeDoc?.id
-                const orderLabel = String(index + 1).padStart(2, "0")
-                const displayDate = formatDocDate(doc.updatedAt) || "Tarih yok"
-                return (
-                  <button
-                    key={doc.id}
-                    type="button"
-                    onClick={() => handleDocSelect(doc.id)}
-                    className={`group w-full border px-4 py-3 text-left transition hover:border-white/15 hover:bg-white/5 ${
-                      isActive ? "border-accent-300/60 bg-white/10" : "border-white/10 bg-transparent"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex w-16 shrink-0 flex-col gap-1 border border-white/10 bg-ink-900 px-2 py-2 text-[10px] uppercase text-slate-500">
-                        <span className="text-slate-300 tracking-[0.32em]">{orderLabel}</span>
-                        <span className="tracking-[0.2em]">{displayDate}</span>
-                      </div>
-                      <div className="min-w-0 flex-1 space-y-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">
-                            {doc.title || "Basliksiz dokuman"}
-                          </p>
+              groupedDocs.map(([category, group]) => (
+                <div key={category} className="space-y-2">
+                  <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                    <span>{category}</span>
+                    <span>{group.length}</span>
+                  </div>
+                  <div className="space-y-1">
+                    {group.map((doc) => {
+                      const isActive = doc.id === activeDoc?.id
+                      return (
+                        <button
+                          key={doc.id}
+                          type="button"
+                          onClick={() => handleDocSelect(doc.id)}
+                          className={`flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left text-sm transition ${
+                            isActive
+                              ? "border-accent-300 bg-white/10 text-white"
+                              : "border-transparent text-slate-300 hover:bg-white/5 hover:text-slate-100"
+                          }`}
+                        >
                           <span
-                            className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${getCategoryClass(
-                              doc.category,
-                            )}`}
-                          >
-                            {doc.category}
+                            className={`h-2 w-2 rounded-full ${
+                              isActive ? "bg-accent-300" : "bg-white/10"
+                            }`}
+                          />
+                          <span className="min-w-0 flex-1 truncate">
+                            {doc.title || "Basliksiz dokuman"}
                           </span>
-                        </div>
-                        <p className="text-xs text-slate-400">{doc.summary}</p>
-                        <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                          {doc.tags.map((tag) => (
-                            <span key={`${doc.id}-tag-${tag}`}>#{tag}</span>
-                          ))}
-                          {doc.isCustom && <span>Lokal</span>}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                )
-              })
+                          {doc.isCustom && (
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                              Lokal
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))
             )}
           </div>
-        </div>
+        </aside>
 
-        <div className={`space-y-6 ${panelClass} bg-ink-900/60 lg:sticky lg:top-6`}>
+        <section className={`${panelClass} bg-ink-900/60`}>
           {isEditorOpen ? (
             <div>
-              <div className="flex flex-col gap-4 border-b border-white/10 pb-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                    {isEditing ? "Dokuman duzenle" : "Yeni dokuman"}
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-4">
+                <div className="space-y-2">
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                    Dokuman editoru
                   </p>
+                  <h2 className="font-display text-xl font-semibold text-white">
+                    {isEditing ? "Dokuman duzenle" : "Yeni dokuman"}
+                  </h2>
                   <p className="text-sm text-slate-400">
                     Baslik, kategori, ozet ve icerik bilgilerini gir.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={handleSave}
@@ -663,8 +688,8 @@ export default function KnowledgeBaseTab({ panelClass }) {
                 </div>
               </div>
 
-              <div className="mt-4 space-y-4">
-                <div className="grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-200" htmlFor="doc-title">
                       Baslik
@@ -699,35 +724,33 @@ export default function KnowledgeBaseTab({ panelClass }) {
                         ))}
                     </datalist>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-200" htmlFor="doc-summary">
-                    Ozet
-                  </label>
-                  <textarea
-                    id="doc-summary"
-                    rows={2}
-                    value={draft.summary}
-                    onChange={(event) => setDraft((prev) => ({ ...prev, summary: event.target.value }))}
-                    placeholder="Kisa aciklama"
-                    className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-200" htmlFor="doc-tags">
-                    Etiketler
-                  </label>
-                  <input
-                    id="doc-tags"
-                    type="text"
-                    value={draft.tags}
-                    onChange={(event) => setDraft((prev) => ({ ...prev, tags: event.target.value }))}
-                    placeholder="Orn: onemli, ipucu"
-                    className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
-                  />
-                  <p className="text-xs text-slate-500">Etiketleri virgul ile ayir.</p>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-200" htmlFor="doc-tags">
+                      Etiketler
+                    </label>
+                    <input
+                      id="doc-tags"
+                      type="text"
+                      value={draft.tags}
+                      onChange={(event) => setDraft((prev) => ({ ...prev, tags: event.target.value }))}
+                      placeholder="Orn: onemli, ipucu"
+                      className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                    />
+                    <p className="text-xs text-slate-500">Etiketleri virgul ile ayir.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-200" htmlFor="doc-summary">
+                      Ozet
+                    </label>
+                    <textarea
+                      id="doc-summary"
+                      rows={3}
+                      value={draft.summary}
+                      onChange={(event) => setDraft((prev) => ({ ...prev, summary: event.target.value }))}
+                      placeholder="Kisa aciklama"
+                      className="w-full resize-none border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -739,7 +762,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
                     </div>
                   </div>
                   <div className="overflow-hidden border border-white/10 bg-ink-900/80">
-                    <div className="flex max-h-[360px] min-h-[220px] overflow-hidden">
+                    <div className="flex max-h-[360px] min-h-[260px] overflow-hidden">
                       <div
                         ref={lineRef}
                         className="w-12 shrink-0 overflow-hidden border-r border-white/10 bg-ink-900 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
@@ -761,46 +784,34 @@ export default function KnowledgeBaseTab({ panelClass }) {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2 border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                    <span>Madde satirlari</span>
+                    <span>Her satir = madde</span>
                     <span>Otomatik liste</span>
                   </div>
                 </div>
               </div>
             </div>
           ) : activeDoc ? (
-            <>
-              <div className="flex flex-col gap-3 border-b border-white/10 pb-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-xl font-semibold text-white">{activeDoc.title}</h2>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${getCategoryClass(
-                      activeDoc.category,
-                    )}`}
-                  >
-                    {activeDoc.category}
-                  </span>
-                </div>
-                <p className="text-sm text-slate-300/80">{activeDoc.summary}</p>
-                <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                  {activeDoc.tags.map((tag) => (
-                    <span key={`${activeDoc.id}-tag-main-${tag}`}>#{tag}</span>
-                  ))}
-                  <span>Guncelleme: {formatDocDate(activeDoc.updatedAt)}</span>
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-4">
+                <div className="space-y-2">
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Dokuman</p>
+                  <h2 className="font-display text-2xl font-semibold text-white">{activeDoc.title}</h2>
+                  <p className="text-sm text-slate-300/80">{activeDoc.summary}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {canEditActive && (
+                  {canEditActive ? (
                     <>
                       <button
                         type="button"
                         onClick={handleEditOpen}
-                        className="border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
+                        className="border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
                       >
                         Duzenle
                       </button>
                       <button
                         type="button"
                         onClick={handleDeleteRequest}
-                        className={`border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+                        className={`border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
                           deleteConfirmId === activeDoc.id
                             ? "border-rose-300 bg-rose-500/25 text-rose-50"
                             : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
@@ -809,26 +820,46 @@ export default function KnowledgeBaseTab({ panelClass }) {
                         {deleteConfirmId === activeDoc.id ? "Emin misin?" : "Sil"}
                       </button>
                     </>
-                  )}
-                  {!canEditActive && (
-                    <span className="border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300">
+                  ) : (
+                    <span className="border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
                       Ornek dokuman
                     </span>
                   )}
                 </div>
-                <div className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
-                  Bu dokumanlar lokal orneklerdir, veritabani baglantisi yoktur.
-                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${getCategoryClass(
+                    activeDoc.category,
+                  )}`}
+                >
+                  {activeDoc.category}
+                </span>
+                {activeDoc.tags.map((tag) => (
+                  <span
+                    key={`${activeDoc.id}-tag-${tag}`}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+                <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                  Guncelleme: {formatDocDate(activeDoc.updatedAt)}
+                </span>
               </div>
 
               {activeSections.length > 0 ? (
                 <div className="space-y-4">
                   {activeSections.map((section) => (
-                    <div key={`${activeDoc.id}-${section.title}`} className="space-y-2">
-                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300/80">
+                    <div
+                      key={`${activeDoc.id}-${section.title}`}
+                      className="border border-white/10 bg-ink-900/60 px-4 py-4"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                         {section.title}
                       </p>
-                      <ul className="space-y-2 text-sm text-slate-300">
+                      <ul className="mt-3 space-y-2 text-sm text-slate-200">
                         {section.bullets.map((item) => (
                           <li key={item} className="flex items-start gap-2">
                             <span className="mt-2 h-1.5 w-1.5 rounded-full bg-accent-300" />
@@ -844,13 +875,91 @@ export default function KnowledgeBaseTab({ panelClass }) {
                   Bu dokuman icin detay bulunmuyor.
                 </div>
               )}
-            </>
+            </div>
           ) : (
             <div className="border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
               Dokuman secimi yapilmadi.
             </div>
           )}
-        </div>
+        </section>
+
+        <aside className={`${panelClass} bg-ink-900/60 px-4 py-4 hidden xl:block xl:sticky xl:top-6`}>
+          {isEditorOpen ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                  Editor ipuclari
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  <li>Baslik zorunludur, bos kayit olmaz.</li>
+                  <li>Her satir bir madde olarak kaydedilir.</li>
+                  <li>Etiketleri virgul ile ayirabilirsin.</li>
+                </ul>
+              </div>
+              <div className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+                Dokumanlar tarayicida saklanir, veritabani yoktur.
+              </div>
+            </div>
+          ) : activeDoc ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                  Icindekiler
+                </p>
+                {activeSections.length > 0 ? (
+                  <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                    {activeSections.map((section) => (
+                      <li key={`${activeDoc.id}-toc-${section.title}`} className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent-300" />
+                        <span>{section.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="mt-3 text-sm text-slate-400">Detay bulunmuyor.</div>
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                  Meta
+                </p>
+                <div className="mt-3 space-y-2 text-sm text-slate-300">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Kategori</span>
+                    <span className="text-slate-100">{activeDoc.category}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Guncelleme</span>
+                    <span className="text-slate-100">{formatDocDate(activeDoc.updatedAt)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Durum</span>
+                    <span className="text-slate-100">{activeDoc.isCustom ? "Lokal" : "Ornek"}</span>
+                  </div>
+                </div>
+                {activeDoc.tags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {activeDoc.tags.map((tag) => (
+                      <span
+                        key={`${activeDoc.id}-meta-${tag}`}
+                        className="border border-white/10 bg-white/5 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+                Icerikler tarayicida saklanir, paylasim yoktur.
+              </div>
+            </div>
+          ) : (
+            <div className="border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+              Dokuman secimi yapilmadi.
+            </div>
+          )}
+        </aside>
       </div>
     </div>
   )
