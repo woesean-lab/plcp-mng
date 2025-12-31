@@ -1,6 +1,65 @@
 import { useEffect, useMemo, useState } from "react"
+import { KNOWLEDGE_DOCS_STORAGE_KEY } from "../../constants/appConstants"
 
-const DOC_ENTRIES = [
+const createDocId = () => `doc-${Date.now()}-${Math.random().toString(16).slice(2)}`
+
+const parseTags = (raw) => {
+  if (!raw) return []
+  return String(raw)
+    .split(",")
+    .map((tag) => tag.replace(/#/g, "").trim())
+    .filter(Boolean)
+}
+
+const toIsoDate = (value) => {
+  if (!value) return new Date().toISOString()
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return new Date().toISOString()
+  return date.toISOString()
+}
+
+const formatDocDate = (value) => {
+  if (!value) return ""
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toISOString().slice(0, 10)
+}
+
+const normalizeDocs = (raw) => {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((entry) => {
+      const title = String(entry?.title ?? "").trim()
+      const category = String(entry?.category ?? "Genel").trim() || "Genel"
+      const summary = String(entry?.summary ?? "").trim()
+      const tags = Array.isArray(entry?.tags) ? entry.tags.map((tag) => String(tag ?? "").trim()) : []
+      const updatedAt = toIsoDate(entry?.updatedAt)
+      const sections = Array.isArray(entry?.sections)
+        ? entry.sections
+            .map((section) => {
+              const sectionTitle = String(section?.title ?? "").trim() || "Detaylar"
+              const bullets = Array.isArray(section?.bullets)
+                ? section.bullets.map((item) => String(item ?? "").trim()).filter(Boolean)
+                : []
+              return { title: sectionTitle, bullets }
+            })
+            .filter((section) => section.bullets.length > 0)
+        : []
+      return {
+        id: String(entry?.id ?? createDocId()),
+        title,
+        category,
+        summary,
+        tags: tags.filter(Boolean),
+        updatedAt,
+        sections,
+        isCustom: Boolean(entry?.isCustom),
+      }
+    })
+    .filter((entry) => entry.title || entry.summary || entry.sections.length > 0)
+}
+
+const DEFAULT_DOCS = [
   {
     id: "baslangic",
     title: "Baslangic",
@@ -184,39 +243,106 @@ const CATEGORY_STYLES = {
 const getCategoryClass = (category) =>
   CATEGORY_STYLES[category] || "border-white/10 bg-white/5 text-slate-200"
 
+const getInitialDocs = () => {
+  if (typeof window === "undefined") return DEFAULT_DOCS
+  try {
+    const stored = localStorage.getItem(KNOWLEDGE_DOCS_STORAGE_KEY)
+    if (!stored) return DEFAULT_DOCS
+    const parsed = JSON.parse(stored)
+    const normalized = normalizeDocs(parsed)
+    return normalized.length > 0 ? normalized : DEFAULT_DOCS
+  } catch (error) {
+    console.warn("Could not read knowledge docs", error)
+    return DEFAULT_DOCS
+  }
+}
+
+const buildDraftFromDoc = (doc) => {
+  if (!doc) {
+    return { title: "", category: "Genel", summary: "", tags: "", body: "" }
+  }
+  const body = Array.isArray(doc.sections)
+    ? doc.sections.flatMap((section) => section.bullets || []).join("\n")
+    : ""
+  return {
+    title: doc.title || "",
+    category: doc.category || "Genel",
+    summary: doc.summary || "",
+    tags: Array.isArray(doc.tags) ? doc.tags.join(", ") : "",
+    body,
+  }
+}
+
+const buildDocFromDraft = (draft, now) => {
+  const title = draft.title.trim()
+  const category = draft.category.trim() || "Genel"
+  const summary = draft.summary.trim()
+  const tags = parseTags(draft.tags)
+  const bullets = draft.body
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const sections = bullets.length > 0 ? [{ title: "Detaylar", bullets }] : []
+  return {
+    title,
+    category,
+    summary,
+    tags,
+    updatedAt: now,
+    sections,
+  }
+}
+
 export default function KnowledgeBaseTab({ panelClass }) {
+  const [docs, setDocs] = useState(() => getInitialDocs())
   const [query, setQuery] = useState("")
   const [activeCategory, setActiveCategory] = useState("Hepsi")
-  const [activeDocId, setActiveDocId] = useState(DOC_ENTRIES[0]?.id ?? "")
+  const [activeDocId, setActiveDocId] = useState(() => getInitialDocs()[0]?.id ?? "")
+  const [isEditorOpen, setIsEditorOpen] = useState(false)
+  const [editingDocId, setEditingDocId] = useState(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+  const [draft, setDraft] = useState(() => buildDraftFromDoc(null))
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      localStorage.setItem(KNOWLEDGE_DOCS_STORAGE_KEY, JSON.stringify(docs))
+    } catch (error) {
+      console.warn("Could not persist knowledge docs", error)
+    }
+  }, [docs])
 
   const categories = useMemo(() => {
-    const unique = Array.from(new Set(DOC_ENTRIES.map((entry) => entry.category)))
+    const unique = Array.from(new Set(docs.map((entry) => entry.category).filter(Boolean)))
     return ["Hepsi", ...unique]
-  }, [])
+  }, [docs])
 
   const categoryCounts = useMemo(() => {
-    return DOC_ENTRIES.reduce((acc, entry) => {
+    return docs.reduce((acc, entry) => {
       acc[entry.category] = (acc[entry.category] || 0) + 1
       return acc
     }, {})
-  }, [])
+  }, [docs])
+
+  const sortedDocs = useMemo(() => {
+    return [...docs].sort((a, b) => {
+      const aTime = new Date(a.updatedAt || 0).getTime()
+      const bTime = new Date(b.updatedAt || 0).getTime()
+      return bTime - aTime
+    })
+  }, [docs])
 
   const normalizedQuery = query.trim().toLowerCase()
   const filteredDocs = useMemo(() => {
-    return DOC_ENTRIES.filter((entry) => {
+    return sortedDocs.filter((entry) => {
       if (activeCategory !== "Hepsi" && entry.category !== activeCategory) return false
       if (!normalizedQuery) return true
-      const haystack = [
-        entry.title,
-        entry.summary,
-        entry.tags.join(" "),
-        entry.category,
-      ]
+      const haystack = [entry.title, entry.summary, entry.tags.join(" "), entry.category]
         .join(" ")
         .toLowerCase()
       return haystack.includes(normalizedQuery)
     })
-  }, [activeCategory, normalizedQuery])
+  }, [activeCategory, normalizedQuery, sortedDocs])
 
   useEffect(() => {
     if (!filteredDocs.some((doc) => doc.id === activeDocId)) {
@@ -224,10 +350,92 @@ export default function KnowledgeBaseTab({ panelClass }) {
     }
   }, [activeDocId, filteredDocs])
 
-  const activeDoc =
-    filteredDocs.find((doc) => doc.id === activeDocId) ||
-    DOC_ENTRIES.find((doc) => doc.id === activeDocId) ||
-    filteredDocs[0]
+  const activeDoc = useMemo(
+    () => docs.find((doc) => doc.id === activeDocId) || filteredDocs[0],
+    [activeDocId, docs, filteredDocs],
+  )
+  const activeSections = Array.isArray(activeDoc?.sections) ? activeDoc.sections : []
+  const isEditing = Boolean(editingDocId)
+  const canEditActive = Boolean(activeDoc?.isCustom)
+  const canSaveDoc = Boolean(draft.title.trim())
+  const lineCount = useMemo(() => Math.max(1, draft.body.split("\n").length), [draft.body])
+
+  const handleDocSelect = (docId) => {
+    setActiveDocId(docId)
+    setIsEditorOpen(false)
+    setEditingDocId(null)
+    setDeleteConfirmId(null)
+  }
+
+  const handleCreateOpen = () => {
+    const defaultCategory = activeCategory !== "Hepsi" ? activeCategory : "Genel"
+    setDraft({ title: "", category: defaultCategory, summary: "", tags: "", body: "" })
+    setIsEditorOpen(true)
+    setEditingDocId(null)
+    setDeleteConfirmId(null)
+  }
+
+  const handleEditOpen = () => {
+    if (!activeDoc || !activeDoc.isCustom) return
+    setDraft(buildDraftFromDoc(activeDoc))
+    setIsEditorOpen(true)
+    setEditingDocId(activeDoc.id)
+    setDeleteConfirmId(null)
+  }
+
+  const handleEditorClose = () => {
+    setIsEditorOpen(false)
+    setEditingDocId(null)
+    setDeleteConfirmId(null)
+  }
+
+  const handleSave = () => {
+    if (!canSaveDoc) return
+    const now = new Date().toISOString()
+    const payload = buildDocFromDraft(draft, now)
+    if (isEditing) {
+      setDocs((prev) =>
+        prev.map((doc) =>
+          doc.id === editingDocId
+            ? {
+              ...doc,
+              ...payload,
+              id: doc.id,
+              isCustom: doc.isCustom ?? true,
+            }
+            : doc,
+        ),
+      )
+      setActiveDocId(editingDocId)
+    } else {
+      const nextDoc = {
+        id: createDocId(),
+        ...payload,
+        isCustom: true,
+      }
+      setDocs((prev) => [nextDoc, ...prev])
+      setActiveDocId(nextDoc.id)
+    }
+    setIsEditorOpen(false)
+    setEditingDocId(null)
+    setDeleteConfirmId(null)
+  }
+
+  const handleDeleteRequest = () => {
+    if (!activeDoc || !activeDoc.isCustom) return
+    if (deleteConfirmId === activeDoc.id) {
+      setDocs((prev) => {
+        const next = prev.filter((doc) => doc.id !== activeDoc.id)
+        setActiveDocId(next[0]?.id ?? "")
+        return next
+      })
+      setIsEditorOpen(false)
+      setEditingDocId(null)
+      setDeleteConfirmId(null)
+      return
+    }
+    setDeleteConfirmId(activeDoc.id)
+  }
 
   return (
     <div className="space-y-6">
@@ -242,21 +450,30 @@ export default function KnowledgeBaseTab({ panelClass }) {
               Surecler, ipuclari ve module ozel notlar. Icerikler lokal calisir, veritabani yoktur.
             </p>
           </div>
-          <div className="grid w-full max-w-[280px] grid-cols-3 gap-3 text-[10px] uppercase tracking-[0.2em] text-slate-400 md:w-auto">
-            <div className="border border-white/10 bg-white/5 px-3 py-2">
-              <span className="block text-[10px] text-slate-500">Dokuman</span>
-              <span className="text-sm font-semibold text-slate-100">{DOC_ENTRIES.length}</span>
+          <div className="flex w-full flex-col gap-3 md:w-auto">
+            <div className="grid w-full max-w-[320px] grid-cols-3 gap-3 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+              <div className="border border-white/10 bg-white/5 px-3 py-2">
+                <span className="block text-[10px] text-slate-500">Dokuman</span>
+                <span className="text-sm font-semibold text-slate-100">{docs.length}</span>
+              </div>
+              <div className="border border-white/10 bg-white/5 px-3 py-2">
+                <span className="block text-[10px] text-slate-500">Kategori</span>
+                <span className="text-sm font-semibold text-slate-100">
+                  {Math.max(0, categories.length - 1)}
+                </span>
+              </div>
+              <div className="border border-white/10 bg-white/5 px-3 py-2">
+                <span className="block text-[10px] text-slate-500">Sonuc</span>
+                <span className="text-sm font-semibold text-slate-100">{filteredDocs.length}</span>
+              </div>
             </div>
-            <div className="border border-white/10 bg-white/5 px-3 py-2">
-              <span className="block text-[10px] text-slate-500">Kategori</span>
-              <span className="text-sm font-semibold text-slate-100">
-                {categories.length - 1}
-              </span>
-            </div>
-            <div className="border border-white/10 bg-white/5 px-3 py-2">
-              <span className="block text-[10px] text-slate-500">Sonuc</span>
-              <span className="text-sm font-semibold text-slate-100">{filteredDocs.length}</span>
-            </div>
+            <button
+              type="button"
+              onClick={handleCreateOpen}
+              className="border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
+            >
+              Yeni dokuman
+            </button>
           </div>
         </div>
       </header>
@@ -268,9 +485,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                 Dokumanlar
               </p>
-              <p className="text-sm text-slate-400">
-                Baslik, kategori veya etiket ile filtrele.
-              </p>
+              <p className="text-sm text-slate-400">Baslik, kategori veya etiket ile filtrele.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
               {filteredDocs.length} kayit
@@ -317,7 +532,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
           <div className="mt-4 flex flex-wrap gap-2">
             {categories.map((category) => {
               const isActive = activeCategory === category
-              const count = category === "Hepsi" ? DOC_ENTRIES.length : categoryCounts[category]
+              const count = category === "Hepsi" ? docs.length : categoryCounts[category] || 0
               return (
                 <button
                   key={category}
@@ -347,24 +562,25 @@ export default function KnowledgeBaseTab({ panelClass }) {
               filteredDocs.map((doc, index) => {
                 const isActive = doc.id === activeDoc?.id
                 const orderLabel = String(index + 1).padStart(2, "0")
+                const displayDate = formatDocDate(doc.updatedAt) || "Tarih yok"
                 return (
                   <button
                     key={doc.id}
                     type="button"
-                    onClick={() => setActiveDocId(doc.id)}
+                    onClick={() => handleDocSelect(doc.id)}
                     className={`group w-full border px-4 py-3 text-left transition hover:border-white/15 hover:bg-white/5 ${
                       isActive ? "border-accent-300/60 bg-white/10" : "border-white/10 bg-transparent"
                     }`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="flex w-14 shrink-0 flex-col gap-1 border border-white/10 bg-ink-900 px-2 py-2 text-[10px] uppercase text-slate-500">
+                      <div className="flex w-16 shrink-0 flex-col gap-1 border border-white/10 bg-ink-900 px-2 py-2 text-[10px] uppercase text-slate-500">
                         <span className="text-slate-300 tracking-[0.32em]">{orderLabel}</span>
-                        <span className="tracking-[0.2em]">DOC</span>
+                        <span className="tracking-[0.2em]">{displayDate}</span>
                       </div>
                       <div className="min-w-0 flex-1 space-y-2">
                         <div className="flex items-center justify-between gap-3">
                           <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">
-                            {doc.title}
+                            {doc.title || "Basliksiz dokuman"}
                           </p>
                           <span
                             className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${getCategoryClass(
@@ -379,7 +595,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
                           {doc.tags.map((tag) => (
                             <span key={`${doc.id}-tag-${tag}`}>#{tag}</span>
                           ))}
-                          <span>Guncel: {doc.updatedAt}</span>
+                          {doc.isCustom && <span>Lokal</span>}
                         </div>
                       </div>
                     </div>
@@ -391,7 +607,137 @@ export default function KnowledgeBaseTab({ panelClass }) {
         </div>
 
         <div className={`space-y-6 ${panelClass} bg-ink-900/60 lg:sticky lg:top-6`}>
-          {activeDoc ? (
+          {isEditorOpen ? (
+            <div>
+              <div className="flex flex-col gap-4 border-b border-white/10 pb-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                    {isEditing ? "Dokuman duzenle" : "Yeni dokuman"}
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    Baslik, kategori, ozet ve icerik bilgilerini gir.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={!canSaveDoc}
+                    className="min-w-[140px] border border-accent-400/70 bg-accent-500/10 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isEditing ? "Guncelle" : "Kaydet"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        title: "",
+                        summary: "",
+                        tags: "",
+                        body: "",
+                      }))
+                    }
+                    className="min-w-[120px] border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
+                  >
+                    Temizle
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEditorClose}
+                    className="min-w-[120px] border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
+                  >
+                    Vazgec
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-200" htmlFor="doc-title">
+                      Baslik
+                    </label>
+                    <input
+                      id="doc-title"
+                      type="text"
+                      value={draft.title}
+                      onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
+                      placeholder="Orn: Yeni baslik"
+                      className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-200" htmlFor="doc-category">
+                      Kategori
+                    </label>
+                    <input
+                      id="doc-category"
+                      type="text"
+                      list="knowledge-categories"
+                      value={draft.category}
+                      onChange={(event) => setDraft((prev) => ({ ...prev, category: event.target.value }))}
+                      placeholder="Orn: Temel"
+                      className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                    />
+                    <datalist id="knowledge-categories">
+                      {categories
+                        .filter((category) => category !== "Hepsi")
+                        .map((category) => (
+                          <option key={`category-${category}`} value={category} />
+                        ))}
+                    </datalist>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-200" htmlFor="doc-summary">
+                    Ozet
+                  </label>
+                  <textarea
+                    id="doc-summary"
+                    rows={2}
+                    value={draft.summary}
+                    onChange={(event) => setDraft((prev) => ({ ...prev, summary: event.target.value }))}
+                    placeholder="Kisa aciklama"
+                    className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-200" htmlFor="doc-tags">
+                    Etiketler
+                  </label>
+                  <input
+                    id="doc-tags"
+                    type="text"
+                    value={draft.tags}
+                    onChange={(event) => setDraft((prev) => ({ ...prev, tags: event.target.value }))}
+                    placeholder="Orn: onemli, ipucu"
+                    className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                  />
+                  <p className="text-xs text-slate-500">Etiketleri virgul ile ayir.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
+                    <label htmlFor="doc-body">Icerik</label>
+                    <span className="text-[11px] font-medium text-slate-500">
+                      {lineCount} satir / {draft.body.length} karakter
+                    </span>
+                  </div>
+                  <textarea
+                    id="doc-body"
+                    rows={8}
+                    value={draft.body}
+                    onChange={(event) => setDraft((prev) => ({ ...prev, body: event.target.value }))}
+                    placeholder="Her satir yeni madde olarak kaydedilir."
+                    className="w-full resize-none border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : activeDoc ? (
             <>
               <div className="flex flex-col gap-3 border-b border-white/10 pb-4">
                 <div className="flex flex-wrap items-center gap-3">
@@ -409,30 +755,65 @@ export default function KnowledgeBaseTab({ panelClass }) {
                   {activeDoc.tags.map((tag) => (
                     <span key={`${activeDoc.id}-tag-main-${tag}`}>#{tag}</span>
                   ))}
-                  <span>Guncelleme: {activeDoc.updatedAt}</span>
+                  <span>Guncelleme: {formatDocDate(activeDoc.updatedAt)}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {canEditActive && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleEditOpen}
+                        className="border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
+                      >
+                        Duzenle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeleteRequest}
+                        className={`border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+                          deleteConfirmId === activeDoc.id
+                            ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                            : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                        }`}
+                      >
+                        {deleteConfirmId === activeDoc.id ? "Emin misin?" : "Sil"}
+                      </button>
+                    </>
+                  )}
+                  {!canEditActive && (
+                    <span className="border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300">
+                      Ornek dokuman
+                    </span>
+                  )}
                 </div>
                 <div className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
                   Bu dokumanlar lokal orneklerdir, veritabani baglantisi yoktur.
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {activeDoc.sections.map((section) => (
-                  <div key={`${activeDoc.id}-${section.title}`} className="space-y-2">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300/80">
-                      {section.title}
-                    </p>
-                    <ul className="space-y-2 text-sm text-slate-300">
-                      {section.bullets.map((item) => (
-                        <li key={item} className="flex items-start gap-2">
-                          <span className="mt-2 h-1.5 w-1.5 rounded-full bg-accent-300" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              {activeSections.length > 0 ? (
+                <div className="space-y-4">
+                  {activeSections.map((section) => (
+                    <div key={`${activeDoc.id}-${section.title}`} className="space-y-2">
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300/80">
+                        {section.title}
+                      </p>
+                      <ul className="space-y-2 text-sm text-slate-300">
+                        {section.bullets.map((item) => (
+                          <li key={item} className="flex items-start gap-2">
+                            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-accent-300" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+                  Bu dokuman icin detay bulunmuyor.
+                </div>
+              )}
             </>
           ) : (
             <div className="border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
