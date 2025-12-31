@@ -216,6 +216,7 @@ export default function useAppData() {
     const tabs = []
     if (isAuthed) tabs.push("dashboard")
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
+    if (isAuthed) tabs.push("knowledge")
     if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
     if (canViewSales) tabs.push("sales")
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")

@@ -14,6 +14,7 @@ import TasksTab from "./components/tabs/TasksTab"
 import SalesTab from "./components/tabs/SalesTab"
 import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
+import KnowledgeBaseTab from "./components/tabs/KnowledgeBaseTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
 
@@ -332,6 +333,7 @@ function App() {
   }, [])
 
   const canViewDashboard = isAuthed
+  const canViewKnowledgeBase = isAuthed
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
   const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
   const canEditMessages = hasAnyPermission([PERMISSIONS.messagesTemplateEdit, PERMISSIONS.messagesEdit])
@@ -387,6 +389,7 @@ function App() {
   const tabItems = useMemo(
     () => [
       { key: "messages", label: "Mesaj", canView: canViewMessages },
+      { key: "knowledge", label: "Bilgi Bankasi", canView: canViewKnowledgeBase },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
       { key: "problems", label: "Problem", canView: canViewProblems },
@@ -397,6 +400,7 @@ function App() {
     [
       canViewAdmin,
       canViewDashboard,
+      canViewKnowledgeBase,
       canViewLists,
       canViewMessages,
       canViewProblems,
@@ -805,6 +809,12 @@ function App() {
               handleAdd={handleAdd}
               setSelectedCategory={setSelectedCategory}
             />
+          </div>
+        )}
+
+        {activeTab === "knowledge" && canViewKnowledgeBase && (
+          <div className={getTabSlideClass("knowledge")}>
+            <KnowledgeBaseTab panelClass={panelClass} />
           </div>
         )}
 
