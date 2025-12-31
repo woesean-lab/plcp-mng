@@ -231,13 +231,13 @@ const DEFAULT_DOCS = [
 ]
 
 const CATEGORY_STYLES = {
-  Temel: "border-emerald-300/60 bg-emerald-500/15 text-emerald-50",
-  Mesaj: "border-indigo-300/60 bg-indigo-500/15 text-indigo-50",
-  Gorev: "border-sky-300/60 bg-sky-500/15 text-sky-50",
-  Liste: "border-slate-300/60 bg-slate-500/15 text-slate-100",
-  Stok: "border-amber-300/60 bg-amber-500/15 text-amber-50",
-  Problem: "border-rose-300/60 bg-rose-500/15 text-rose-50",
-  Satis: "border-emerald-300/60 bg-emerald-500/15 text-emerald-50",
+  Temel: "border-emerald-300/40 bg-emerald-500/5 text-emerald-100",
+  Mesaj: "border-indigo-300/40 bg-indigo-500/5 text-indigo-100",
+  Gorev: "border-sky-300/40 bg-sky-500/5 text-sky-100",
+  Liste: "border-slate-300/40 bg-slate-500/5 text-slate-100",
+  Stok: "border-amber-300/40 bg-amber-500/5 text-amber-100",
+  Problem: "border-rose-300/40 bg-rose-500/5 text-rose-100",
+  Satis: "border-emerald-300/40 bg-emerald-500/5 text-emerald-100",
 }
 
 const getCategoryClass = (category) =>
@@ -350,29 +350,6 @@ export default function KnowledgeBaseTab({ panelClass }) {
     }, {})
   }, [docsByQuery])
 
-  const visibleCategories = useMemo(() => {
-    if (!normalizedQuery) return categories
-    const filtered = categories.filter(
-      (category) => category === "Hepsi" || categoryCounts[category],
-    )
-    return filtered.length > 0 ? filtered : categories
-  }, [categories, categoryCounts, normalizedQuery])
-
-  const groupedDocs = useMemo(() => {
-    const groups = []
-    const index = new Map()
-    visibleDocs.forEach((doc) => {
-      const key = doc.category || "Genel"
-      if (!index.has(key)) {
-        const list = []
-        index.set(key, list)
-        groups.push([key, list])
-      }
-      index.get(key).push(doc)
-    })
-    return groups
-  }, [visibleDocs])
-
   useEffect(() => {
     if (!visibleDocs.some((doc) => doc.id === activeDocId)) {
       setActiveDocId(visibleDocs[0]?.id ?? "")
@@ -476,32 +453,28 @@ export default function KnowledgeBaseTab({ panelClass }) {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="border border-white/10 bg-ink-900/60 px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.32em] text-slate-400">
-              <span>Docs</span>
-              <span className="h-1 w-1 rounded-full bg-slate-500" />
-              <span>Bilgi bankasi</span>
-            </div>
-            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
+    <div className="space-y-5">
+      <header className="border border-white/10 bg-ink-900/50 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-xs text-slate-400">Bilgi bankasi</p>
+            <h1 className="font-display text-xl font-semibold text-white sm:text-2xl">
               Bilgi bankasi
             </h1>
-            <p className="max-w-2xl text-sm text-slate-300/80">
+            <p className="max-w-2xl text-xs text-slate-400">
               Surecler, ipuclari ve module ozel notlar. Icerikler lokal calisir, veritabani yoktur.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex flex-wrap items-center gap-3 border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-slate-400">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
               <span>
                 Dokuman <span className="text-slate-100">{docs.length}</span>
               </span>
-              <span className="h-3 w-px bg-white/10" />
+              <span className="h-4 w-px bg-white/10" />
               <span>
                 Kategori <span className="text-slate-100">{Math.max(0, categories.length - 1)}</span>
               </span>
-              <span className="h-3 w-px bg-white/10" />
+              <span className="h-4 w-px bg-white/10" />
               <span>
                 Sonuc <span className="text-slate-100">{visibleDocs.length}</span>
               </span>
@@ -509,7 +482,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
             <button
               type="button"
               onClick={handleCreateOpen}
-              className="border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
+              className="border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
             >
               Yeni dokuman
             </button>
@@ -517,22 +490,18 @@ export default function KnowledgeBaseTab({ panelClass }) {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] xl:grid-cols-[minmax(0,0.9fr)_minmax(0,2fr)_minmax(0,0.85fr)]">
-        <aside className={`${panelClass} bg-ink-900/60 px-4 py-4 lg:sticky lg:top-6`}>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.6fr)] xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.9fr)_minmax(0,0.7fr)]">
+        <aside className={`${panelClass} bg-ink-900/50 px-4 py-4 lg:sticky lg:top-6`}>
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                Gezinti
-              </p>
-              <p className="text-sm text-slate-400">Bolumler ve dokumanlar.</p>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-slate-100">Dokumanlar</p>
+              <p className="text-xs text-slate-400">Ara ve filtrele.</p>
             </div>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
-              {visibleDocs.length} kayit
-            </span>
+            <span className="text-xs text-slate-400">{visibleDocs.length} sonuc</span>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex h-10 flex-1 items-center gap-2 border border-white/10 bg-ink-900/80 px-3">
+          <div className="mt-3 space-y-2">
+            <div className="flex h-9 items-center gap-2 rounded border border-white/10 bg-ink-900 px-3">
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
@@ -553,104 +522,86 @@ export default function KnowledgeBaseTab({ panelClass }) {
                 placeholder="Dokuman ara"
                 className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
               />
-            </div>
-            {query.trim() && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="min-w-[110px] border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
-              >
-                Temizle
-              </button>
-            )}
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {visibleCategories.map((category) => {
-              const isActive = activeCategory === category
-              const count =
-                category === "Hepsi" ? docsByQuery.length : categoryCounts[category] || 0
-              return (
+              {query.trim() && (
                 <button
-                  key={category}
                   type="button"
-                  onClick={() => setActiveCategory(category)}
-                  className={`inline-flex items-center gap-2 border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
-                    isActive
-                      ? "border-accent-300/60 bg-accent-500/15 text-accent-50"
-                      : "border-white/10 bg-white/5 text-slate-200 hover:border-white/20"
-                  }`}
+                  onClick={() => setQuery("")}
+                  className="text-[11px] font-medium text-slate-400 transition hover:text-slate-200"
                 >
-                  {category}
-                  <span className="border border-white/10 bg-white/10 px-2 py-0.5 text-[10px] text-slate-300">
-                    {count}
-                  </span>
+                  Temizle
                 </button>
-              )
-            })}
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-slate-400" htmlFor="knowledge-category-filter">
+                Kategori
+              </label>
+              <select
+                id="knowledge-category-filter"
+                value={activeCategory}
+                onChange={(event) => setActiveCategory(event.target.value)}
+                className="h-9 flex-1 rounded border border-white/10 bg-ink-900 px-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none"
+              >
+                {categories.map((category) => {
+                  const count =
+                    category === "Hepsi" ? docsByQuery.length : categoryCounts[category] || 0
+                  return (
+                    <option key={`kb-category-${category}`} value={category}>
+                      {category} ({count})
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
           </div>
 
-          <div className="mt-5 space-y-4">
+          <div className="mt-4 space-y-1">
             {visibleDocs.length === 0 ? (
-              <div className="border border-dashed border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-400">
+              <div className="border border-dashed border-white/10 bg-white/5 px-3 py-3 text-xs text-slate-400">
                 Eslesen dokuman bulunamadi.
               </div>
             ) : (
-              groupedDocs.map(([category, group]) => (
-                <div key={category} className="space-y-2">
-                  <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                    <span>{category}</span>
-                    <span>{group.length}</span>
-                  </div>
-                  <div className="space-y-1">
-                    {group.map((doc) => {
-                      const isActive = doc.id === activeDoc?.id
-                      return (
-                        <button
-                          key={doc.id}
-                          type="button"
-                          onClick={() => handleDocSelect(doc.id)}
-                          className={`flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left text-sm transition ${
-                            isActive
-                              ? "border-accent-300 bg-white/10 text-white"
-                              : "border-transparent text-slate-300 hover:bg-white/5 hover:text-slate-100"
-                          }`}
-                        >
-                          <span
-                            className={`h-2 w-2 rounded-full ${
-                              isActive ? "bg-accent-300" : "bg-white/10"
-                            }`}
-                          />
-                          <span className="min-w-0 flex-1 truncate">
-                            {doc.title || "Basliksiz dokuman"}
-                          </span>
-                          {doc.isCustom && (
-                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                              Lokal
-                            </span>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))
+              visibleDocs.map((doc) => {
+                const isActive = doc.id === activeDoc?.id
+                return (
+                  <button
+                    key={doc.id}
+                    type="button"
+                    onClick={() => handleDocSelect(doc.id)}
+                    className={`w-full rounded border px-3 py-2 text-left text-sm transition ${
+                      isActive
+                        ? "border-accent-300/60 bg-white/10 text-white"
+                        : "border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-slate-100"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 flex-1 truncate font-medium">
+                        {doc.title || "Basliksiz dokuman"}
+                      </span>
+                      {doc.isCustom && <span className="text-[10px] text-slate-500">Lokal</span>}
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
+                      <span>{doc.category}</span>
+                      <span className="h-3 w-px bg-white/10" />
+                      <span>{formatDocDate(doc.updatedAt)}</span>
+                    </div>
+                  </button>
+                )
+              })
             )}
           </div>
         </aside>
 
-        <section className={`${panelClass} bg-ink-900/60`}>
+        <section className={`${panelClass} bg-ink-900/50 px-4 py-4`}>
           {isEditorOpen ? (
             <div>
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-4">
-                <div className="space-y-2">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                    Dokuman editoru
-                  </p>
-                  <h2 className="font-display text-xl font-semibold text-white">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-3">
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-400">Dokuman editoru</p>
+                  <h2 className="text-lg font-semibold text-white">
                     {isEditing ? "Dokuman duzenle" : "Yeni dokuman"}
                   </h2>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-xs text-slate-400">
                     Baslik, kategori, ozet ve icerik bilgilerini gir.
                   </p>
                 </div>
@@ -659,7 +610,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
                     type="button"
                     onClick={handleSave}
                     disabled={!canSaveDoc}
-                    className="min-w-[140px] border border-accent-400/70 bg-accent-500/10 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-w-[120px] border border-accent-400/70 bg-accent-500/10 px-3 py-2 text-center text-xs font-semibold text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isEditing ? "Guncelle" : "Kaydet"}
                   </button>
@@ -674,22 +625,22 @@ export default function KnowledgeBaseTab({ panelClass }) {
                         body: "",
                       }))
                     }
-                    className="min-w-[120px] border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
+                    className="min-w-[100px] border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
                   >
                     Temizle
                   </button>
                   <button
                     type="button"
                     onClick={handleEditorClose}
-                    className="min-w-[120px] border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
+                    className="min-w-[100px] border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
                   >
                     Vazgec
                   </button>
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <div className="space-y-4">
+              <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <div className="space-y-3">
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-200" htmlFor="doc-title">
                       Baslik
@@ -700,7 +651,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
                       value={draft.title}
                       onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
                       placeholder="Orn: Yeni baslik"
-                      className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                      className="w-full rounded border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
                     />
                   </div>
                   <div className="space-y-2">
@@ -714,7 +665,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
                       value={draft.category}
                       onChange={(event) => setDraft((prev) => ({ ...prev, category: event.target.value }))}
                       placeholder="Orn: Temel"
-                      className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                      className="w-full rounded border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
                     />
                     <datalist id="knowledge-categories">
                       {categories
@@ -734,9 +685,9 @@ export default function KnowledgeBaseTab({ panelClass }) {
                       value={draft.tags}
                       onChange={(event) => setDraft((prev) => ({ ...prev, tags: event.target.value }))}
                       placeholder="Orn: onemli, ipucu"
-                      className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                      className="w-full rounded border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
                     />
-                    <p className="text-xs text-slate-500">Etiketleri virgul ile ayir.</p>
+                    <p className="text-[11px] text-slate-500">Etiketleri virgul ile ayir.</p>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-200" htmlFor="doc-summary">
@@ -748,7 +699,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
                       value={draft.summary}
                       onChange={(event) => setDraft((prev) => ({ ...prev, summary: event.target.value }))}
                       placeholder="Kisa aciklama"
-                      className="w-full resize-none border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
+                      className="w-full resize-none rounded border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -761,11 +712,11 @@ export default function KnowledgeBaseTab({ panelClass }) {
                       <span>{draft.body.length} karakter</span>
                     </div>
                   </div>
-                  <div className="overflow-hidden border border-white/10 bg-ink-900/80">
-                    <div className="flex max-h-[360px] min-h-[260px] overflow-hidden">
+                  <div className="overflow-hidden rounded border border-white/10 bg-ink-900/80">
+                    <div className="flex max-h-[320px] min-h-[220px] overflow-hidden">
                       <div
                         ref={lineRef}
-                        className="w-12 shrink-0 overflow-hidden border-r border-white/10 bg-ink-900 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
+                        className="w-10 shrink-0 overflow-hidden border-r border-white/10 bg-ink-900 px-2 py-2 text-right font-mono text-[10px] leading-5 text-slate-500"
                       >
                         {lineNumbers.map((line) => (
                           <div key={line}>{line}</div>
@@ -779,11 +730,11 @@ export default function KnowledgeBaseTab({ panelClass }) {
                         onChange={(event) => setDraft((prev) => ({ ...prev, body: event.target.value }))}
                         onScroll={handleEditorScroll}
                         placeholder="Her satir yeni madde olarak kaydedilir."
-                        className="flex-1 resize-none overflow-auto bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                        className="flex-1 resize-none overflow-auto bg-ink-900 px-3 py-2 font-mono text-[12px] leading-5 text-slate-100 placeholder:text-slate-500 focus:outline-none"
                       />
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center justify-between gap-2 border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-slate-400">
                     <span>Her satir = madde</span>
                     <span>Otomatik liste</span>
                   </div>
@@ -791,12 +742,14 @@ export default function KnowledgeBaseTab({ panelClass }) {
               </div>
             </div>
           ) : activeDoc ? (
-            <div className="space-y-6">
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-4">
-                <div className="space-y-2">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Dokuman</p>
-                  <h2 className="font-display text-2xl font-semibold text-white">{activeDoc.title}</h2>
-                  <p className="text-sm text-slate-300/80">{activeDoc.summary}</p>
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-3">
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-400">Dokuman</p>
+                  <h2 className="text-xl font-semibold text-white">{activeDoc.title}</h2>
+                  {activeDoc.summary ? (
+                    <p className="text-sm text-slate-400">{activeDoc.summary}</p>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {canEditActive ? (
@@ -804,14 +757,14 @@ export default function KnowledgeBaseTab({ panelClass }) {
                       <button
                         type="button"
                         onClick={handleEditOpen}
-                        className="border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
+                        className="border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
                       >
                         Duzenle
                       </button>
                       <button
                         type="button"
                         onClick={handleDeleteRequest}
-                        className={`border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+                        className={`border px-3 py-2 text-xs font-semibold transition ${
                           deleteConfirmId === activeDoc.id
                             ? "border-rose-300 bg-rose-500/25 text-rose-50"
                             : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
@@ -821,16 +774,16 @@ export default function KnowledgeBaseTab({ panelClass }) {
                       </button>
                     </>
                   ) : (
-                    <span className="border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+                    <span className="border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold text-slate-300">
                       Ornek dokuman
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                 <span
-                  className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${getCategoryClass(
+                  className={`rounded border px-2 py-0.5 text-[11px] font-medium ${getCategoryClass(
                     activeDoc.category,
                   )}`}
                 >
@@ -839,31 +792,29 @@ export default function KnowledgeBaseTab({ panelClass }) {
                 {activeDoc.tags.map((tag) => (
                   <span
                     key={`${activeDoc.id}-tag-${tag}`}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200"
+                    className="rounded border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300"
                   >
                     #{tag}
                   </span>
                 ))}
-                <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                <span className="text-[11px] text-slate-500">
                   Guncelleme: {formatDocDate(activeDoc.updatedAt)}
                 </span>
               </div>
 
               {activeSections.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {activeSections.map((section) => (
                     <div
                       key={`${activeDoc.id}-${section.title}`}
-                      className="border border-white/10 bg-ink-900/60 px-4 py-4"
+                      className="border border-white/10 bg-ink-900/50 px-3 py-3"
                     >
-                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                        {section.title}
-                      </p>
-                      <ul className="mt-3 space-y-2 text-sm text-slate-200">
+                      <p className="text-sm font-semibold text-slate-100">{section.title}</p>
+                      <ul className="mt-2 space-y-1.5 text-sm text-slate-300">
                         {section.bullets.map((item) => (
                           <li key={item} className="flex items-start gap-2">
-                            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-accent-300" />
-                            <span>{item}</span>
+                            <span className="mt-2 h-1 w-1 rounded-full bg-slate-400" />
+                            <span className="leading-relaxed">{item}</span>
                           </li>
                         ))}
                       </ul>
@@ -871,26 +822,24 @@ export default function KnowledgeBaseTab({ panelClass }) {
                   ))}
                 </div>
               ) : (
-                <div className="border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+                <div className="border border-dashed border-white/10 bg-white/5 px-3 py-3 text-xs text-slate-400">
                   Bu dokuman icin detay bulunmuyor.
                 </div>
               )}
             </div>
           ) : (
-            <div className="border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+            <div className="border border-dashed border-white/10 bg-white/5 px-3 py-3 text-xs text-slate-400">
               Dokuman secimi yapilmadi.
             </div>
           )}
         </section>
 
-        <aside className={`${panelClass} bg-ink-900/60 px-4 py-4 hidden xl:block xl:sticky xl:top-6`}>
+        <aside className={`${panelClass} bg-ink-900/50 px-4 py-4 hidden xl:block xl:sticky xl:top-6`}>
           {isEditorOpen ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  Editor ipuclari
-                </p>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                <p className="text-sm font-semibold text-slate-100">Editor ipuclari</p>
+                <ul className="mt-2 space-y-1 text-xs text-slate-400">
                   <li>Baslik zorunludur, bos kayit olmaz.</li>
                   <li>Her satir bir madde olarak kaydedilir.</li>
                   <li>Etiketleri virgul ile ayirabilirsin.</li>
@@ -901,29 +850,25 @@ export default function KnowledgeBaseTab({ panelClass }) {
               </div>
             </div>
           ) : activeDoc ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  Icindekiler
-                </p>
+                <p className="text-sm font-semibold text-slate-100">Icindekiler</p>
                 {activeSections.length > 0 ? (
-                  <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  <ul className="mt-2 space-y-1 text-xs text-slate-400">
                     {activeSections.map((section) => (
                       <li key={`${activeDoc.id}-toc-${section.title}`} className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-accent-300" />
+                        <span className="h-1 w-1 rounded-full bg-slate-400" />
                         <span>{section.title}</span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <div className="mt-3 text-sm text-slate-400">Detay bulunmuyor.</div>
+                  <div className="mt-2 text-xs text-slate-400">Detay bulunmuyor.</div>
                 )}
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  Meta
-                </p>
-                <div className="mt-3 space-y-2 text-sm text-slate-300">
+                <p className="text-sm font-semibold text-slate-100">Meta</p>
+                <div className="mt-2 space-y-1 text-xs text-slate-400">
                   <div className="flex items-center justify-between gap-3">
                     <span>Kategori</span>
                     <span className="text-slate-100">{activeDoc.category}</span>
@@ -938,11 +883,11 @@ export default function KnowledgeBaseTab({ panelClass }) {
                   </div>
                 </div>
                 {activeDoc.tags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {activeDoc.tags.map((tag) => (
                       <span
                         key={`${activeDoc.id}-meta-${tag}`}
-                        className="border border-white/10 bg-white/5 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
+                        className="border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300"
                       >
                         #{tag}
                       </span>
@@ -955,7 +900,7 @@ export default function KnowledgeBaseTab({ panelClass }) {
               </div>
             </div>
           ) : (
-            <div className="border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+            <div className="border border-dashed border-white/10 bg-white/5 px-3 py-3 text-xs text-slate-400">
               Dokuman secimi yapilmadi.
             </div>
           )}
