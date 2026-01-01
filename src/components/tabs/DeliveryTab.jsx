@@ -129,10 +129,12 @@ export default function DeliveryTab({ panelClass }) {
 
   return (
     <div className="space-y-6">
-      <header className="border border-white/10 bg-ink-900/60 px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <p className="text-[11px] uppercase tracking-[0.32em] text-slate-400">Teslimat</p>
+      <header className="relative overflow-hidden border border-white/10 bg-ink-900/50 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(14,165,233,0.18),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_120%_at_90%_0%,rgba(56,189,248,0.15),transparent)]" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2 border-l-2 border-cyan-300/70 pl-4">
+            <p className="text-[10px] uppercase tracking-[0.42em] text-slate-400">Teslimat</p>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
               Teslimat Nasil Yapilir?
             </h1>
@@ -140,12 +142,11 @@ export default function DeliveryTab({ panelClass }) {
               Urun bazli teslimat haritalari olustur, adim adim takip et.
             </p>
           </div>
-          <div className="flex items-center gap-3 text-xs text-slate-400">
-            <span>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+            <span className="border border-white/10 bg-ink-900/70 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-300">
               Harita <span className="text-slate-100">{maps.length}</span>
             </span>
-            <span className="h-4 w-px bg-white/10" />
-            <span>
+            <span className="border border-white/10 bg-ink-900/70 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-300">
               Secili <span className="text-slate-100">{activeMap ? "1" : "0"}</span>
             </span>
           </div>
@@ -153,10 +154,12 @@ export default function DeliveryTab({ panelClass }) {
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)_minmax(0,0.9fr)]">
-        <div className={`${panelClass} bg-ink-900/60`}>
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className={`${panelClass} rounded-none border-dashed border-white/15 bg-ink-900/45 shadow-none backdrop-blur-none`}>
+          <div className="flex items-center justify-between border-b border-dashed border-white/15 pb-3">
             <div>
-              <p className="text-sm font-semibold text-slate-100">Urunler</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400">
+                Urunler
+              </p>
               <p className="text-xs text-slate-400">Eklenen haritalar</p>
             </div>
           </div>
@@ -178,13 +181,15 @@ export default function DeliveryTab({ panelClass }) {
                     }}
                     className={`w-full border px-3 py-2 text-left text-sm transition ${
                       isActive
-                        ? "border-accent-300/60 bg-white/10 text-white"
-                        : "border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5"
+                        ? "border-cyan-300/70 bg-cyan-500/10 text-white"
+                        : "border-white/10 bg-ink-900/60 text-slate-300 hover:border-white/20 hover:bg-white/5"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="min-w-0 flex-1 truncate font-medium">{item.title}</span>
-                      <span className="text-[10px] text-slate-500">{index + 1}</span>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
                     </div>
                     <div className="mt-1 text-[11px] text-slate-500">
                       {item.steps.length} adim
@@ -196,10 +201,12 @@ export default function DeliveryTab({ panelClass }) {
           </div>
         </div>
 
-        <div className={`${panelClass} bg-ink-900/70`}>
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className={`${panelClass} rounded-none border-white/15 bg-ink-900/55 shadow-none backdrop-blur-none`}>
+          <div className="flex items-center justify-between border-b border-dashed border-white/15 pb-3">
             <div>
-              <p className="text-sm font-semibold text-slate-100">Teslimat haritasi</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400">
+                Teslimat haritasi
+              </p>
               <p className="text-xs text-slate-400">
                 {activeMap ? activeMap.title : "Secili urun yok"}
               </p>
@@ -208,7 +215,7 @@ export default function DeliveryTab({ panelClass }) {
               <button
                 type="button"
                 onClick={handleEditStart}
-                className="border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:border-accent-300/60 hover:bg-white/10"
+                className="border border-cyan-300/60 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-50 transition hover:border-cyan-200 hover:bg-cyan-500/20"
               >
                 Duzenle
               </button>
@@ -233,7 +240,7 @@ export default function DeliveryTab({ panelClass }) {
                     onChange={(event) =>
                       setEditDraft((prev) => ({ ...prev, title: event.target.value }))
                     }
-                    className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none"
+                    className="w-full border border-white/15 bg-ink-900/70 px-3 py-2 text-sm text-slate-100 focus:border-cyan-300 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-2">
@@ -248,7 +255,7 @@ export default function DeliveryTab({ panelClass }) {
                       setEditDraft((prev) => ({ ...prev, steps: event.target.value }))
                     }
                     placeholder="Her satir yeni adim"
-                    className="w-full resize-none border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none"
+                    className="w-full resize-none border border-white/15 bg-ink-900/70 px-3 py-2 text-sm text-slate-100 focus:border-cyan-300 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -256,14 +263,14 @@ export default function DeliveryTab({ panelClass }) {
                     type="button"
                     onClick={handleEditSave}
                     disabled={!canSave}
-                    className="min-w-[120px] border border-accent-400/70 bg-accent-500/10 px-4 py-2 text-xs font-semibold text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-w-[120px] border border-cyan-300/70 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-50 transition hover:border-cyan-200 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Kaydet
                   </button>
                   <button
                     type="button"
                     onClick={handleEditCancel}
-                    className="min-w-[120px] border border-white/10 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-accent-300/60 hover:text-slate-100"
+                    className="min-w-[120px] border border-white/15 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:border-cyan-300/60 hover:text-slate-100"
                   >
                     Vazgec
                   </button>
@@ -276,26 +283,31 @@ export default function DeliveryTab({ panelClass }) {
                     Bu harita icin adim yok.
                   </div>
                 ) : (
-                  <ol className="space-y-2 text-sm text-slate-200">
-                    {activeMap.steps.map((step, index) => (
-                      <li key={`${activeMap.id}-step-${index}`} className="flex gap-3">
-                        <span className="h-6 w-6 shrink-0 border border-white/10 bg-white/5 text-center text-xs leading-6 text-slate-300">
-                          {index + 1}
-                        </span>
-                        <span className="leading-relaxed">{step}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  <div className="relative pl-6">
+                    <div className="absolute left-2 top-1 bottom-1 w-px bg-white/10" />
+                    <ol className="space-y-3 text-sm text-slate-200">
+                      {activeMap.steps.map((step, index) => (
+                        <li key={`${activeMap.id}-step-${index}`} className="flex gap-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-white/10 bg-ink-900/70 text-[11px] font-semibold text-slate-200">
+                            {index + 1}
+                          </span>
+                          <span className="leading-relaxed">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 )}
               </div>
             )}
           </div>
         </div>
 
-        <div className={`${panelClass} bg-ink-900/60`}>
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className={`${panelClass} rounded-none border-dashed border-white/15 bg-ink-900/45 shadow-none backdrop-blur-none`}>
+          <div className="flex items-center justify-between border-b border-dashed border-white/15 pb-3">
             <div>
-              <p className="text-sm font-semibold text-slate-100">Yeni urun haritasi</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400">
+                Yeni urun haritasi
+              </p>
               <p className="text-xs text-slate-400">Sag panelden ekle</p>
             </div>
           </div>
@@ -312,7 +324,7 @@ export default function DeliveryTab({ panelClass }) {
                   setCreateDraft((prev) => ({ ...prev, title: event.target.value }))
                 }
                 placeholder="Orn: Pro surum teslimat"
-                className="w-full border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none"
+                className="w-full border border-white/15 bg-ink-900/70 px-3 py-2 text-sm text-slate-100 focus:border-cyan-300 focus:outline-none"
               />
             </div>
             <div className="space-y-2">
@@ -327,14 +339,14 @@ export default function DeliveryTab({ panelClass }) {
                   setCreateDraft((prev) => ({ ...prev, steps: event.target.value }))
                 }
                 placeholder="Her satir yeni adim"
-                className="w-full resize-none border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none"
+                className="w-full resize-none border border-white/15 bg-ink-900/70 px-3 py-2 text-sm text-slate-100 focus:border-cyan-300 focus:outline-none"
               />
             </div>
             <button
               type="button"
               onClick={handleCreate}
               disabled={!canCreate}
-              className="w-full border border-accent-400/70 bg-accent-500/10 px-4 py-2 text-xs font-semibold text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full border border-cyan-300/70 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-50 transition hover:border-cyan-200 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Harita ekle
             </button>
