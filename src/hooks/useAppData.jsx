@@ -2200,8 +2200,8 @@ export default function useAppData() {
       targets
         .filter((tpl) => tpl.id)
         .map((tpl) =>
-          apiFetch(`/api/templates/${tpl.id}`, {
-            method: "PUT",
+          apiFetch(`/api/templates/${tpl.id}/star`, {
+            method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ starred: true }),
           }),
@@ -2311,14 +2311,18 @@ export default function useAppData() {
     if (!target.id) return
 
     try {
-      const res = await apiFetch(`/api/templates/${target.id}`, {
-        method: "PUT",
+      const res = await apiFetch(`/api/templates/${target.id}/star`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ starred: nextStarred }),
       })
       if (!res.ok) throw new Error("template_star_failed")
       const updated = await res.json()
-      setTemplates((prev) => prev.map((tpl) => (tpl.id === updated.id ? updated : tpl)))
+      setTemplates((prev) =>
+        prev.map((tpl) =>
+          tpl.id === updated.templateId ? { ...tpl, starred: updated.starred } : tpl,
+        ),
+      )
     } catch (error) {
       console.error(error)
       setTemplates((prev) =>

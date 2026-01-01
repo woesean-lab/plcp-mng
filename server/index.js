@@ -266,22 +266,25 @@ app.get("/api/auth/verify", async (req, res) => {
 
 app.use("/api", requireAuth)
 
-app.get("/api/templates", async (_req, res) => {
+app.get("/api/templates", async (req, res) => {
   const templates = await prisma.template.findMany({ orderBy: { id: "asc" } })
-  res.json(templates)
+  const stars = await prisma.templateStar.findMany({
+    where: { userId: req.user.id },
+    select: { templateId: true },
+  })
+  const starredIds = new Set(stars.map((entry) => entry.templateId))
+  res.json(
+    templates.map((tpl) => ({
+      ...tpl,
+      starred: starredIds.has(tpl.id),
+    })),
+  )
 })
 
 app.post("/api/templates", async (req, res) => {
   const label = String(req.body?.label ?? "").trim()
   const value = String(req.body?.value ?? "").trim()
   const category = String(req.body?.category ?? "Genel").trim() || "Genel"
-  const starredRaw = req.body?.starred
-  const starred =
-    starredRaw === undefined
-      ? undefined
-      : typeof starredRaw === "boolean"
-        ? starredRaw
-        : String(starredRaw).toLowerCase() === "true"
 
   if (!label || !value) {
     res.status(400).json({ error: "label and value are required" })
@@ -300,7 +303,6 @@ app.post("/api/templates", async (req, res) => {
         label,
         value,
         category,
-        ...(starred === undefined ? {} : { starred }),
       },
     })
     res.status(201).json(created)
@@ -324,13 +326,6 @@ app.put("/api/templates/:id", async (req, res) => {
   const value = req.body?.value === undefined ? undefined : String(req.body.value).trim()
   const categoryRaw = req.body?.category === undefined ? undefined : String(req.body.category).trim()
   const category = categoryRaw === undefined ? undefined : categoryRaw || "Genel"
-  const starredRaw = req.body?.starred
-  const starred =
-    starredRaw === undefined
-      ? undefined
-      : typeof starredRaw === "boolean"
-        ? starredRaw
-        : String(starredRaw).toLowerCase() === "true"
 
   if (label !== undefined && !label) {
     res.status(400).json({ error: "label cannot be empty" })
@@ -356,7 +351,6 @@ app.put("/api/templates/:id", async (req, res) => {
         ...(label === undefined ? {} : { label }),
         ...(value === undefined ? {} : { value }),
         ...(category === undefined ? {} : { category }),
-        ...(starred === undefined ? {} : { starred }),
       },
     })
     res.json(updated)
@@ -371,6 +365,44 @@ app.put("/api/templates/:id", async (req, res) => {
     }
     throw error
   }
+})
+
+app.post("/api/templates/:id/star", async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+
+  const starredRaw = req.body?.starred
+  if (starredRaw === undefined) {
+    res.status(400).json({ error: "starred is required" })
+    return
+  }
+  const starred =
+    typeof starredRaw === "boolean"
+      ? starredRaw
+      : String(starredRaw).toLowerCase() === "true"
+
+  const template = await prisma.template.findUnique({ where: { id } })
+  if (!template) {
+    res.status(404).json({ error: "Template not found" })
+    return
+  }
+
+  if (starred) {
+    await prisma.templateStar.upsert({
+      where: { templateId_userId: { templateId: id, userId: req.user.id } },
+      update: {},
+      create: { templateId: id, userId: req.user.id },
+    })
+  } else {
+    await prisma.templateStar.deleteMany({
+      where: { templateId: id, userId: req.user.id },
+    })
+  }
+
+  res.json({ templateId: id, starred })
 })
 
 app.post("/api/templates/:id/click", async (req, res) => {
