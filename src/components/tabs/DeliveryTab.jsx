@@ -254,42 +254,44 @@ export default function DeliveryTab({ panelClass }) {
                 ) : filteredMaps.length === 0 ? (
                   <div className="px-3 py-3 text-xs text-slate-400">Eslesme bulunamadi.</div>
                 ) : (
-                  filteredMaps.map((item, index) => {
-                  const isActive = item.id === activeId
-                  const displayDate = formatMapDate(item.updatedAt || item.createdAt) || "-"
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveId(item.id)
-                        setIsEditing(false)
-                      }}
-                      className={`group flex w-full items-start gap-3 border-b border-white/10 px-3 py-2 text-left text-sm transition last:border-b-0 ${
-                        isActive ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5"
-                      }`}
-                    >
-                      <span
-                        className={`mt-1.5 h-1.5 w-1.5 rounded-full ${
-                          isActive ? "bg-slate-200" : "bg-slate-600"
-                        }`}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="min-w-0 flex-1 truncate font-medium">{item.title}</span>
-                          <span className="text-[10px] font-mono text-slate-500">
-                            {String(index + 1).padStart(2, "0")}
+                  <div className="max-h-[420px] overflow-y-auto pr-1 sm:max-h-[520px]">
+                    {filteredMaps.map((item) => {
+                      const isActive = item.id === activeId
+                      const displayDate = formatMapDate(item.updatedAt || item.createdAt) || "-"
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveId(item.id)
+                            setIsEditing(false)
+                          }}
+                          className={`group flex w-full items-center justify-between gap-3 border-b border-white/10 px-3 py-2 text-left text-sm transition last:border-b-0 ${
+                            isActive ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5"
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  isActive ? "bg-slate-200" : "bg-slate-600"
+                                }`}
+                              />
+                              <span className="min-w-0 flex-1 truncate font-medium">{item.title}</span>
+                            </div>
+                            {isActive && (
+                              <div className="mt-1 text-[11px] text-slate-500">
+                                Guncelleme: {displayDate}
+                              </div>
+                            )}
+                          </div>
+                          <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                            {item.steps.length} adim
                           </span>
-                        </div>
-                        <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
-                          <span className="uppercase tracking-[0.2em]">{item.steps.length} adim</span>
-                          <span className="h-3 w-px bg-white/10" />
-                          <span>{displayDate}</span>
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })
+                        </button>
+                      )
+                    })}
+                  </div>
                 )}
               </div>
             </div>
