@@ -65,7 +65,7 @@ export default function ProductsTab({ panelClass = "" }) {
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)]">
-          <div className="flex h-11 items-center rounded-xl border border-white/10 bg-gradient-to-b from-ink-900/80 to-ink-900/40 px-2 shadow-inner">
+          <div className="flex h-11 items-center rounded-xl border border-white/10 bg-ink-900/60 px-2 shadow-inner">
             <div className="flex w-full items-center gap-1 overflow-x-auto">
               {categories.map((category) => (
                 <button
@@ -92,7 +92,7 @@ export default function ProductsTab({ panelClass = "" }) {
               ))}
             </div>
           </div>
-          <div className="flex h-11 items-center rounded-xl border border-white/10 bg-gradient-to-b from-ink-900/80 to-ink-900/40 px-3 shadow-inner">
+          <div className="flex h-11 items-center rounded-xl border border-white/10 bg-ink-900/60 px-3 shadow-inner">
             <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
               Ara
             </span>
