@@ -62,6 +62,9 @@ export default function ProductsTab({ panelClass = "" }) {
             </p>
             <p className="text-sm text-slate-400">Urun adlarini gor.</p>
           </div>
+        </div>
+
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
               {categories.map((category) => (
@@ -80,10 +83,7 @@ export default function ProductsTab({ panelClass = "" }) {
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex w-full max-w-md flex-col gap-2 sm:ml-auto">
+          <div className="flex w-full max-w-md flex-col gap-2">
             <div className="flex h-11 w-full items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
               <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
               <div className="flex flex-1 items-center gap-2">
