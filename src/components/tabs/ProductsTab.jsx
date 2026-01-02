@@ -64,28 +64,30 @@ export default function ProductsTab({ panelClass = "" }) {
           </div>
         </div>
 
-        <div className="mt-3 flex items-center gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="flex w-full items-center gap-1 overflow-x-auto rounded-full border border-white/10 bg-ink-900/60 p-1">
-              {categories.map((category) => (
-                <button
-                  key={category.key}
-                  type="button"
-                  onClick={() => setActiveCategoryKey(category.key)}
-                  className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
-                    activeCategoryKey === category.key
-                      ? "bg-accent-400 text-ink-900 shadow-glow"
-                      : "text-slate-300 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  {category.label}
-                </button>
-              ))}
+        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+          <div className="flex w-full flex-1">
+            <div className="flex w-full items-center gap-2 rounded-xl border border-white/10 bg-ink-900/70 px-2 py-1.5 shadow-inner">
+              <div className="flex w-full items-center gap-1 overflow-x-auto">
+                {categories.map((category) => (
+                  <button
+                    key={category.key}
+                    type="button"
+                    onClick={() => setActiveCategoryKey(category.key)}
+                    className={`rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
+                      activeCategoryKey === category.key
+                        ? "bg-accent-400 text-ink-900 shadow-glow"
+                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    {category.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="flex w-full max-w-md flex-col gap-2">
-            <div className="flex h-11 w-full items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
-              <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
+          <div className="flex w-full lg:max-w-[360px]">
+            <div className="flex h-10 w-full items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 shadow-inner">
+              <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Ara</span>
               <div className="flex flex-1 items-center gap-2">
                 <svg
                   aria-hidden="true"
