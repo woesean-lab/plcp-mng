@@ -78,12 +78,7 @@ export default function ProductsTab({ panelClass = "" }) {
                       : "text-slate-300 hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <span>
-                    {category.label}
-                    <span className="ml-2 text-[10px] font-semibold text-slate-400">
-                      ({category.items.length})
-                    </span>
-                  </span>
+                  <span>{`${category.label} (${category.items.length})`}</span>
                 </button>
               ))}
             </div>
