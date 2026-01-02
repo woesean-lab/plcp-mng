@@ -12,7 +12,6 @@ export default function ProductsTab({ panelClass = "" }) {
       id: "sample-2",
       name: "Galaxy Pass",
       note: "Deneme surumu",
-      deliveryMessage: "Teslimat 24 saat icinde.",
     },
     {
       id: "sample-3",
@@ -23,7 +22,6 @@ export default function ProductsTab({ panelClass = "" }) {
       id: "sample-4",
       name: "Support Plus",
       note: "Oncelikli destek",
-      deliveryMessage: "Islem tamamlaninca bilgi verilir.",
     },
   ]
   const list = sampleProducts
@@ -33,12 +31,7 @@ export default function ProductsTab({ panelClass = "" }) {
     return list.filter((product) => {
       const name = String(product?.name ?? "").toLowerCase()
       const note = String(product?.note ?? "").toLowerCase()
-      const deliveryMessage = String(product?.deliveryMessage ?? "").toLowerCase()
-      return (
-        name.includes(normalizedQuery) ||
-        note.includes(normalizedQuery) ||
-        deliveryMessage.includes(normalizedQuery)
-      )
+      return name.includes(normalizedQuery) || note.includes(normalizedQuery)
     })
   }, [list, normalizedQuery])
 
@@ -114,7 +107,6 @@ export default function ProductsTab({ panelClass = "" }) {
             filteredList.map((product, index) => {
               const name = String(product?.name ?? "").trim() || "Isimsiz urun"
               const note = String(product?.note ?? "").trim() || "Not eklenmedi."
-              const deliveryMessage = String(product?.deliveryMessage ?? "").trim()
               const key = product?.id ?? `${name}-${index}`
               return (
                 <div
@@ -130,16 +122,6 @@ export default function ProductsTab({ panelClass = "" }) {
                     </div>
                   </div>
                   <p className="text-sm text-slate-300/80">{note}</p>
-                  {deliveryMessage && (
-                    <div className="grid gap-2 text-xs text-slate-400">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="uppercase tracking-[0.18em] text-slate-500">
-                          Teslimat mesaji
-                        </span>
-                        <span className="text-slate-200">{deliveryMessage}</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )
             })
