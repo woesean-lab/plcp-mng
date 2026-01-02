@@ -220,6 +220,7 @@ export default function useAppData() {
     if (canViewSales) tabs.push("sales")
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
+    if (permissions.includes(PERMISSIONS.stockView)) tabs.push("products")
     if (permissions.includes(PERMISSIONS.stockView)) tabs.push("stock")
     if (canManageAdmin) tabs.push("admin")
     return tabs
