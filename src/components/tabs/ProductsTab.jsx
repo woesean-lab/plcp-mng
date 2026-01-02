@@ -65,7 +65,7 @@ export default function ProductsTab({ panelClass = "" }) {
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)]">
-          <div className="flex h-11 items-center rounded-xl border border-white/10 bg-ink-900/60 px-2 shadow-inner">
+          <div className="flex h-11 items-center rounded border border-white/10 bg-ink-900 px-2 shadow-inner">
             <div className="flex w-full items-center gap-1 overflow-x-auto">
               {categories.map((category) => (
                 <button
@@ -80,10 +80,10 @@ export default function ProductsTab({ panelClass = "" }) {
                 >
                   <span>{category.label}</span>
                   <span
-                    className={`rounded-md px-2 py-0.5 text-[9px] font-semibold ${
+                    className={`inline-flex min-w-[24px] items-center justify-center rounded-md px-2 py-0.5 text-[9px] font-semibold leading-none ${
                       activeCategoryKey === category.key
-                        ? "bg-ink-900/80 text-accent-100"
-                        : "bg-ink-950/60 text-slate-300"
+                        ? "bg-ink-950/90 text-accent-100"
+                        : "bg-ink-950/80 text-slate-300"
                     }`}
                   >
                     {category.items.length}
