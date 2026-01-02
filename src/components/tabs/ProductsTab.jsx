@@ -101,7 +101,7 @@ export default function ProductsTab({
                 className={`ml-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition ${
                   isRefreshing
                     ? "cursor-not-allowed text-slate-600"
-                    : "hover:bg-accent-400 hover:text-ink-900 focus-visible:bg-accent-400 focus-visible:text-ink-900"
+                    : "hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white"
                 }`}
                 title="Urunleri yenile"
                 aria-label="Urunleri yenile"
