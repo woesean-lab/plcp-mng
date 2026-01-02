@@ -78,15 +78,11 @@ export default function ProductsTab({ panelClass = "" }) {
                       : "text-slate-300 hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <span>{category.label}</span>
-                  <span
-                    className={`inline-flex min-w-[24px] items-center justify-center rounded-md px-2 py-0.5 text-[9px] font-semibold leading-none ${
-                      activeCategoryKey === category.key
-                        ? "bg-ink-950/90 text-accent-100"
-                        : "bg-ink-950/80 text-slate-300"
-                    }`}
-                  >
-                    {category.items.length}
+                  <span>
+                    {category.label}
+                    <span className="ml-2 text-[10px] font-semibold text-slate-400">
+                      ({category.items.length})
+                    </span>
                   </span>
                 </button>
               ))}
