@@ -61,34 +61,6 @@ export default function ProductsTab({
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
               Kategori: {activeCategory?.label ?? "Items"}
             </span>
-            {canRefresh && (
-              <button
-                type="button"
-                onClick={onRefresh}
-                disabled={isRefreshing}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] transition ${
-                  isRefreshing
-                    ? "cursor-not-allowed border-white/10 bg-white/5 text-slate-500"
-                    : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60 hover:text-accent-100"
-                }`}
-                title="Urunleri yenile"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 12a8 8 0 1 0 2.35-5.65" />
-                  <path d="M4 4v4h4" />
-                </svg>
-                {isRefreshing ? "Yenileniyor" : "Yenile"}
-              </button>
-            )}
           </div>
         </div>
       </header>
@@ -105,7 +77,7 @@ export default function ProductsTab({
 
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
           <div className="flex h-11 items-center rounded border border-white/10 bg-ink-900 px-2 shadow-inner">
-            <div className="flex w-full items-center gap-1 overflow-x-auto">
+            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
               {categories.map((category) => (
                 <button
                   key={category.key}
@@ -121,6 +93,32 @@ export default function ProductsTab({
                 </button>
               ))}
             </div>
+            {canRefresh && (
+              <button
+                type="button"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className={`ml-2 inline-flex h-7 w-7 items-center justify-center text-slate-400 transition ${
+                  isRefreshing ? "cursor-not-allowed text-slate-600" : "hover:text-white"
+                }`}
+                title="Urunleri yenile"
+                aria-label="Urunleri yenile"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 12a8 8 0 1 0 2.35-5.65" />
+                  <path d="M4 4v4h4" />
+                </svg>
+              </button>
+            )}
           </div>
           <div className="flex w-full items-center gap-2">
             <div className="flex h-11 w-full items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
