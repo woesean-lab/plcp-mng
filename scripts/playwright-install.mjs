@@ -51,6 +51,26 @@ if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
   process.env.PLAYWRIGHT_BROWSERS_PATH = path.resolve(process.cwd(), ".cache", "ms-playwright")
 }
 
+const browsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH
+const depsMarkerPath = path.join(browsersPath, ".deps-installed")
+const shouldInstallDeps = process.env.PLAYWRIGHT_WITH_DEPS === "1"
+
+const runPlaywright = (args) =>
+  new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, args, { stdio: "inherit", env: process.env })
+    child.on("error", (error) => reject(error))
+    child.on("exit", (code) => {
+      if (code === 0) resolve()
+      else reject(new Error(`Playwright install failed with code ${code}`))
+    })
+  })
+
+if (shouldInstallDeps && !fs.existsSync(depsMarkerPath)) {
+  fs.mkdirSync(browsersPath, { recursive: true })
+  await runPlaywright([cliPath, "install-deps", "chromium"])
+  fs.writeFileSync(depsMarkerPath, "ok")
+}
+
 try {
   const { chromium } = require("playwright")
   const executablePath = chromium.executablePath()
@@ -61,16 +81,9 @@ try {
   console.warn("Playwright not available for precheck, continuing with install.")
 }
 
-const args = [cliPath, "install", "chromium"]
-if (process.env.PLAYWRIGHT_WITH_DEPS === "1") {
-  args.push("--with-deps")
-}
-
-const child = spawn(process.execPath, args, { stdio: "inherit", env: process.env })
-child.on("error", (error) => {
+try {
+  await runPlaywright([cliPath, "install", "chromium"])
+} catch (error) {
   console.error("Playwright install failed", error)
   process.exitCode = 1
-})
-child.on("exit", (code) => {
-  process.exitCode = code ?? 1
-})
+}
