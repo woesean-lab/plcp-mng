@@ -51,6 +51,16 @@ if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
   process.env.PLAYWRIGHT_BROWSERS_PATH = path.resolve(process.cwd(), ".cache", "ms-playwright")
 }
 
+try {
+  const { chromium } = require("playwright")
+  const executablePath = chromium.executablePath()
+  if (executablePath && fs.existsSync(executablePath)) {
+    process.exit(0)
+  }
+} catch (error) {
+  console.warn("Playwright not available for precheck, continuing with install.")
+}
+
 const args = [cliPath, "install", "chromium"]
 if (process.env.PLAYWRIGHT_WITH_DEPS === "1") {
   args.push("--with-deps")
