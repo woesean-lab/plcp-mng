@@ -167,7 +167,7 @@ export default function ProductsTab({
               return (
                 <div
                   key={key}
-                  className="flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner"
+                  className="flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-ink-900/80 p-4 shadow-inner"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
