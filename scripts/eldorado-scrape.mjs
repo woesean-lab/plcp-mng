@@ -140,6 +140,29 @@ const buildPageUrl = (url, pageIndex) => {
   return nextUrl.toString()
 }
 
+const waitForStableSelectorCount = async (page, selector, options = {}) => {
+  const timeoutMs = Number(options.timeoutMs ?? 12000)
+  const idleMs = Number(options.idleMs ?? 700)
+  const pollMs = Number(options.pollMs ?? 250)
+  const start = Date.now()
+  let lastCount = -1
+  let stableFor = 0
+
+  while (Date.now() - start < timeoutMs) {
+    const count = await page.locator(selector).count()
+    if (count > 0 && count === lastCount) {
+      stableFor += pollMs
+      if (stableFor >= idleMs) {
+        return
+      }
+    } else {
+      stableFor = 0
+      lastCount = count
+    }
+    await page.waitForTimeout(pollMs)
+  }
+}
+
 const run = async () => {
   if (!Number.isFinite(TOTAL_PAGES) || TOTAL_PAGES <= 0) {
     throw new Error("ELDORADO_PAGES must be a positive number")
@@ -172,23 +195,35 @@ const run = async () => {
     const pageUrl = buildPageUrl(START_URL, pageIndex)
     console.log(`[eldorado] page ${pageIndex}/${TOTAL_PAGES}: ${pageUrl}`)
     await page.goto(pageUrl, { waitUntil: "domcontentloaded" })
+    await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {})
     await page.waitForSelector(TITLE_SELECTOR, { timeout: 30000 })
-    await page.waitForTimeout(300)
+    await waitForStableSelectorCount(page, TITLE_SELECTOR)
 
-    const pageItems = await page.$$eval(TITLE_SELECTOR, (nodes) =>
-      nodes
+    const pageItems = await page.$$eval(TITLE_SELECTOR, (nodes) => {
+      const findHref = (node) => {
+        const direct = node.closest?.("a[href]")
+        if (direct) {
+          return direct.getAttribute("href") ?? ""
+        }
+        let current = node.parentElement
+        for (let depth = 0; depth < 6 && current; depth += 1) {
+          const link = current.querySelector?.("a[href]")
+          if (link) {
+            return link.getAttribute("href") ?? ""
+          }
+          current = current.parentElement
+        }
+        return ""
+      }
+
+      return nodes
         .map((node) => {
           const name = node.textContent?.trim() ?? ""
-          const direct = node.closest("a[href]")
-          const parent = node.parentElement
-          const parentLink = parent ? parent.querySelector("a[href]") : null
-          const grandLink = parent?.parentElement ? parent.parentElement.querySelector("a[href]") : null
-          const link = direct || parentLink || grandLink
-          const href = link?.getAttribute("href") ?? ""
+          const href = findHref(node)
           return { name, href }
         })
-        .filter((item) => item.name),
-    )
+        .filter((item) => item.name)
+    })
     console.log(`[eldorado] found ${pageItems.length} items`)
     scraped.push(...pageItems)
   }
@@ -223,11 +258,20 @@ const run = async () => {
     seenIds.add(derivedId)
   })
 
+  const scrapedUniqueCount = seenIds.size
+  const shouldKeepLegacy =
+    existing.length > 0 && scrapedUniqueCount < Math.max(10, Math.floor(existing.length * 0.9))
+  if (shouldKeepLegacy) {
+    console.warn(
+      `[eldorado] scrape appears incomplete (${scrapedUniqueCount}/${existing.length}), keeping legacy items`,
+    )
+  }
+
   existing.forEach((item) => {
     if (usedExisting.has(item)) return
     if (item.id && seenIds.has(item.id)) return
     const isLegacy = !item.href && String(item.id ?? "").startsWith("eld-")
-    if (isLegacy) return
+    if (isLegacy && !shouldKeepLegacy) return
     merged.push(item)
   })
 
