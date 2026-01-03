@@ -65,6 +65,8 @@ export default function ProductsTab({
   const canRefresh = typeof onRefresh === "function"
   const list = activeCategory?.items ?? []
   const normalizedQuery = query.trim().toLowerCase()
+  const [page, setPage] = useState(1)
+  const pageSize = 10
   const filteredList = useMemo(() => {
     if (!normalizedQuery) return list
     return list.filter((product) => {
@@ -72,12 +74,27 @@ export default function ProductsTab({
       return name.includes(normalizedQuery)
     })
   }, [list, normalizedQuery])
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / pageSize))
+  const paginatedList = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filteredList.slice(start, start + pageSize)
+  }, [filteredList, page, pageSize])
 
   useEffect(() => {
     if (!categories.some((category) => category.key === activeCategoryKey)) {
       setActiveCategoryKey(categories[0]?.key ?? "items")
     }
   }, [activeCategoryKey, categories])
+
+  useEffect(() => {
+    setPage(1)
+  }, [activeCategoryKey, normalizedQuery])
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   if (isLoading) {
     return <ProductsSkeleton panelClass={panelClass} />
@@ -166,7 +183,7 @@ export default function ProductsTab({
                   Toplam: {list.length}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2 text-xs text-slate-200">
-                  Gosterilen: {filteredList.length}
+                  Gosterilen: {paginatedList.length}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2 text-xs text-slate-200">
                   Kategori: {activeCategory?.label ?? "Items"}
@@ -208,7 +225,7 @@ export default function ProductsTab({
                 Gosterilecek urun bulunamadi.
               </div>
             ) : (
-              filteredList.map((product, index) => {
+              paginatedList.map((product, index) => {
                 const name = String(product?.name ?? "").trim() || "Isimsiz urun"
                 const key = product?.id ?? `${name}-${index}`
                 return (
@@ -229,6 +246,45 @@ export default function ProductsTab({
               })
             )}
           </div>
+          {filteredList.length > 0 && totalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-ink-900/60 px-4 py-3 text-xs text-slate-400">
+              <span>Sayfa {page} / {totalPages}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  className="rounded-xl border border-white/10 bg-ink-900/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Ilk
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  disabled={page === 1}
+                  className="rounded-xl border border-white/10 bg-ink-900/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Geri
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  disabled={page === totalPages}
+                  className="rounded-xl border border-white/10 bg-ink-900/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Ileri
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                  className="rounded-xl border border-white/10 bg-ink-900/80 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Son
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
