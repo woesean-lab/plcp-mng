@@ -156,10 +156,10 @@ export default function ProductsTab({
               Urun listesi
             </span>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-              {activeCategory?.label ?? "Tumu"}
+              Urun listesi
             </h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Secili kategori urunlerini gor ve filtrele.
+              Urun adlarini gor ve filtrele.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -247,9 +247,25 @@ export default function ProductsTab({
 
         <div className="space-y-4">
           <div className="rounded-3xl border border-white/10 bg-ink-900/60 p-5 shadow-card">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Arama</p>
-              <p className="mt-1 text-sm text-slate-400">Urun adina gore filtrele.</p>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                  Urunler
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-white">Urun listesi</h2>
+                <p className="mt-1 text-sm text-slate-400">Urun adlarini gor.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2 text-xs text-slate-200">
+                  Toplam: {list.length}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2 text-xs text-slate-200">
+                  Gosterilen: {paginatedList.length}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2 text-xs text-slate-200">
+                  Kategori: {activeCategory?.label ?? "Tumu"}
+                </span>
+              </div>
             </div>
             <div className="mt-4">
               <div className="flex h-11 w-full items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
