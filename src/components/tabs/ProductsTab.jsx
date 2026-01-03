@@ -83,7 +83,7 @@ export default function ProductsTab({
                   key={category.key}
                   type="button"
                   onClick={() => setActiveCategoryKey(category.key)}
-                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] transition ${
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition ${
                     activeCategoryKey === category.key
                       ? "bg-accent-400 text-ink-900 shadow-glow"
                       : "text-slate-300 hover:bg-white/5 hover:text-white"
