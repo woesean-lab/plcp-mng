@@ -13,6 +13,9 @@ const TITLE_SELECTOR = process.env.ELDORADO_TITLE_SELECTOR ?? ".offer-title"
 const DEFAULT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH ?? path.resolve(process.cwd(), ".cache", "ms-playwright")
 const SKIP_BROWSER_DOWNLOAD = process.env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD === "1"
 const SKIP_PLAYWRIGHT_INSTALL = process.env.SKIP_PLAYWRIGHT_INSTALL === "1"
+const MAX_SCRAPE_RETRIES = Number(process.env.ELDORADO_RETRY_MAX ?? 1)
+const MIN_EXISTING_RATIO = Number(process.env.ELDORADO_MIN_EXISTING_RATIO ?? 0.95)
+const MIN_EXISTING_DELTA = Number(process.env.ELDORADO_MIN_EXISTING_DELTA ?? 5)
 
 if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
   process.env.PLAYWRIGHT_BROWSERS_PATH = DEFAULT_BROWSERS_PATH
@@ -54,6 +57,8 @@ const slugifyName = (value) => {
     .replace(/(^-|-$)/g, "")
   return slug ? `name-${slug}` : ""
 }
+
+const buildDerivedId = (name, href) => extractIdFromHref(href) || slugifyName(name)
 
 const readExistingProducts = async () => {
   try {
@@ -140,6 +145,18 @@ const buildPageUrl = (url, pageIndex) => {
   return nextUrl.toString()
 }
 
+const countUniqueScraped = (scraped) => {
+  const seen = new Set()
+  scraped.forEach((item) => {
+    const name = String(item?.name ?? "").trim()
+    const href = normalizeHref(item?.href ?? "")
+    const derivedId = buildDerivedId(name, href)
+    if (!derivedId) return
+    seen.add(derivedId)
+  })
+  return seen.size
+}
+
 const waitForStableSelectorCount = async (page, selector, options = {}) => {
   const timeoutMs = Number(options.timeoutMs ?? 12000)
   const idleMs = Number(options.idleMs ?? 700)
@@ -163,30 +180,7 @@ const waitForStableSelectorCount = async (page, selector, options = {}) => {
   }
 }
 
-const run = async () => {
-  if (!Number.isFinite(TOTAL_PAGES) || TOTAL_PAGES <= 0) {
-    throw new Error("ELDORADO_PAGES must be a positive number")
-  }
-
-  await ensurePlaywrightChromium()
-
-  const existing = (await readExistingProducts())
-    .map((item) => ({
-      id: String(item?.id ?? "").trim(),
-      name: String(item?.name ?? "").trim(),
-      href: normalizeHref(item?.href ?? ""),
-      category: String(item?.category ?? "").trim(),
-    }))
-    .filter((item) => item.id || item.name)
-  const existingById = new Map()
-  const legacyByName = new Map()
-  existing.forEach((item) => {
-    if (item.id) existingById.set(item.id, item)
-    if (!item.href && item.name) {
-      legacyByName.set(item.name.toLowerCase(), item)
-    }
-  })
-
+const scrapeAllPages = async () => {
   const browser = await chromium.launch({ headless: true })
   const page = await browser.newPage()
   const scraped = []
@@ -229,6 +223,65 @@ const run = async () => {
   }
 
   await browser.close()
+  return scraped
+}
+
+const normalizeMinRatio = (value) => {
+  if (!Number.isFinite(value)) return 0.95
+  if (value <= 0) return 0
+  if (value > 1) return 1
+  return value
+}
+
+const run = async () => {
+  if (!Number.isFinite(TOTAL_PAGES) || TOTAL_PAGES <= 0) {
+    throw new Error("ELDORADO_PAGES must be a positive number")
+  }
+
+  await ensurePlaywrightChromium()
+
+  const minExistingRatio = normalizeMinRatio(MIN_EXISTING_RATIO)
+  const maxRetries =
+    Number.isFinite(MAX_SCRAPE_RETRIES) && MAX_SCRAPE_RETRIES > 0
+      ? Math.floor(MAX_SCRAPE_RETRIES)
+      : 0
+  const minExistingDelta =
+    Number.isFinite(MIN_EXISTING_DELTA) && MIN_EXISTING_DELTA > 0
+      ? Math.floor(MIN_EXISTING_DELTA)
+      : 0
+
+  const existing = (await readExistingProducts())
+    .map((item) => ({
+      id: String(item?.id ?? "").trim(),
+      name: String(item?.name ?? "").trim(),
+      href: normalizeHref(item?.href ?? ""),
+      category: String(item?.category ?? "").trim(),
+    }))
+    .filter((item) => item.id || item.name)
+  const existingById = new Map()
+  const legacyByName = new Map()
+  existing.forEach((item) => {
+    if (item.id) existingById.set(item.id, item)
+    if (!item.href && item.name) {
+      legacyByName.set(item.name.toLowerCase(), item)
+    }
+  })
+
+  const minExpected =
+    existing.length > 0
+      ? Math.max(10, Math.floor(existing.length * minExistingRatio), existing.length - minExistingDelta)
+      : 0
+  let scraped = []
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    scraped = await scrapeAllPages()
+    const scrapedUniqueCount = countUniqueScraped(scraped)
+    if (minExpected === 0 || scrapedUniqueCount >= minExpected || attempt === maxRetries) {
+      break
+    }
+    console.warn(
+      `[eldorado] scraped ${scrapedUniqueCount} items; expected at least ${minExpected}. Retrying (${attempt + 1}/${maxRetries})`,
+    )
+  }
 
   const merged = []
   const usedExisting = new Set()
@@ -237,7 +290,7 @@ const run = async () => {
   scraped.forEach((item) => {
     const name = String(item?.name ?? "").trim()
     const href = normalizeHref(item?.href ?? "")
-    const derivedId = extractIdFromHref(href) || slugifyName(name)
+    const derivedId = buildDerivedId(name, href)
     if (!derivedId) return
     if (seenIds.has(derivedId)) return
     const category = extractCategoryFromHref(href)
