@@ -11,6 +11,31 @@ const formatCategoryLabel = (value) =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ")
 
+const normalizeCategoryKey = (value) => String(value ?? "").trim().toLowerCase()
+
+const getCategoryKeyFromHref = (href) => {
+  if (!href) return ""
+  const raw = String(href).trim()
+  if (!raw) return ""
+  let path = raw
+  if (raw.startsWith("http://") || raw.startsWith("https://")) {
+    try {
+      path = new URL(raw).pathname
+    } catch (error) {
+      path = raw
+    }
+  }
+  const segment = path.split("?")[0].split("#")[0].split("/").filter(Boolean)[0]
+  return normalizeCategoryKey(segment)
+}
+
+const getCategoryKey = (product) => {
+  const direct = normalizeCategoryKey(product?.category)
+  if (direct) return direct
+  const derived = getCategoryKeyFromHref(product?.href)
+  return derived || "diger"
+}
+
 function ProductsSkeleton({ panelClass }) {
   return (
     <div className="space-y-6">
@@ -58,26 +83,31 @@ export default function ProductsTab({
   const items = Array.isArray(catalog?.items) ? catalog.items : []
   const topups = Array.isArray(catalog?.topups) ? catalog.topups : []
   const allProducts = useMemo(() => [...items, ...topups], [items, topups])
-  const categories = useMemo(() => {
+  const categoryMap = useMemo(() => {
     const bucket = new Map()
     allProducts.forEach((product) => {
-      const rawCategory = String(product?.category ?? "").trim().toLowerCase()
-      const key = rawCategory || "diger"
+      const key = getCategoryKey(product)
       if (!bucket.has(key)) bucket.set(key, [])
       bucket.get(key).push(product)
     })
-    const list = Array.from(bucket.entries()).map(([key, bucketItems]) => ({
+    return bucket
+  }, [allProducts])
+  const categories = useMemo(() => {
+    const list = Array.from(categoryMap.entries()).map(([key, bucketItems]) => ({
       key,
       label: key === "diger" ? "Diger" : formatCategoryLabel(key),
       items: bucketItems,
     }))
     list.sort((a, b) => a.label.localeCompare(b.label, "tr"))
     return [{ key: "all", label: "Tumu", items: allProducts }, ...list]
-  }, [allProducts])
+  }, [allProducts, categoryMap])
   const [activeCategoryKey, setActiveCategoryKey] = useState("all")
   const activeCategory = categories.find((category) => category.key === activeCategoryKey) ?? categories[0]
   const canRefresh = typeof onRefresh === "function"
-  const list = activeCategory?.items ?? []
+  const list =
+    activeCategoryKey === "all"
+      ? allProducts
+      : categoryMap.get(activeCategoryKey) ?? activeCategory?.items ?? []
   const normalizedQuery = query.trim().toLowerCase()
   const [page, setPage] = useState(1)
   const pageSize = 12
@@ -164,7 +194,10 @@ export default function ProductsTab({
                 <button
                   key={category.key}
                   type="button"
-                  onClick={() => setActiveCategoryKey(category.key)}
+                  onClick={() => {
+                    setActiveCategoryKey(category.key)
+                    setPage(1)
+                  }}
                   className={`group flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] transition ${
                     isActive
                       ? "border-accent-400/60 bg-accent-500/15 text-accent-50 shadow-glow"
@@ -236,7 +269,7 @@ export default function ProductsTab({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div key={activeCategoryKey} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredList.length === 0 ? (
               <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
                 Gosterilecek urun bulunamadi.

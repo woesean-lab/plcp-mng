@@ -12,7 +12,8 @@ const prisma = new PrismaClient()
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const distDir = path.resolve(__dirname, "..", "dist")
+const appRoot = path.resolve(__dirname, "..")
+const distDir = path.resolve(appRoot, "dist")
 const eldoradoItemsUrl =
   process.env.ELDORADO_ITEMS_URL ??
   "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=CustomItem&pageIndex=1"
@@ -26,10 +27,12 @@ const eldoradoItemsPages =
 const eldoradoTopupsPages =
   Number.isFinite(eldoradoTopupsPagesRaw) && eldoradoTopupsPagesRaw > 0 ? eldoradoTopupsPagesRaw : 1
 const eldoradoTitleSelector = process.env.ELDORADO_TITLE_SELECTOR ?? ".offer-title"
-const eldoradoDataDir = path.resolve(__dirname, "..", "src", "data")
+const eldoradoDataDir = path.resolve(appRoot, "src", "data")
 const eldoradoItemsPath = path.join(eldoradoDataDir, "eldorado-products.json")
 const eldoradoTopupsPath = path.join(eldoradoDataDir, "eldorado-topups.json")
-const eldoradoScriptPath = path.resolve(__dirname, "..", "scripts", "eldorado-scrape.mjs")
+const eldoradoScriptPath = path.resolve(appRoot, "scripts", "eldorado-scrape.mjs")
+const playwrightBrowsersPath =
+  process.env.PLAYWRIGHT_BROWSERS_PATH ?? path.resolve(appRoot, ".cache", "ms-playwright")
 let eldoradoRefreshInFlight = false
 
 const port = Number(process.env.PORT ?? 3000)
@@ -139,8 +142,9 @@ const runEldoradoScrape = ({ url, pages, outputPath }) => {
       ELDORADO_PAGES: String(pages),
       ELDORADO_OUTPUT: outputPath,
       ELDORADO_TITLE_SELECTOR: eldoradoTitleSelector,
+      PLAYWRIGHT_BROWSERS_PATH: playwrightBrowsersPath,
     }
-    const child = spawn(process.execPath, [eldoradoScriptPath], { env })
+    const child = spawn(process.execPath, [eldoradoScriptPath], { env, cwd: appRoot })
     let stdout = ""
     let stderr = ""
     child.stdout.on("data", (chunk) => {

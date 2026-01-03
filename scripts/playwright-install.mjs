@@ -2,6 +2,7 @@ import { spawn } from "node:child_process"
 import { createRequire } from "node:module"
 import os from "node:os"
 import process from "node:process"
+import path from "node:path"
 
 const isLinux = os.platform() === "linux"
 const shouldSkip =
@@ -22,12 +23,16 @@ try {
   process.exit(0)
 }
 
+if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
+  process.env.PLAYWRIGHT_BROWSERS_PATH = path.resolve(process.cwd(), ".cache", "ms-playwright")
+}
+
 const args = [cliPath, "install", "chromium"]
 if (process.env.PLAYWRIGHT_WITH_DEPS === "1") {
   args.push("--with-deps")
 }
 
-const child = spawn(process.execPath, args, { stdio: "inherit" })
+const child = spawn(process.execPath, args, { stdio: "inherit", env: process.env })
 child.on("error", (error) => {
   console.error("Playwright install failed", error)
   process.exitCode = 1

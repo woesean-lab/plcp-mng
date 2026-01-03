@@ -1,5 +1,7 @@
+import { spawn } from "node:child_process"
 import fs from "node:fs/promises"
 import path from "node:path"
+import { createRequire } from "node:module"
 import { chromium } from "playwright"
 
 const START_URL =
@@ -8,6 +10,13 @@ const START_URL =
 const TOTAL_PAGES = Number(process.env.ELDORADO_PAGES ?? 15)
 const OUTPUT_PATH = process.env.ELDORADO_OUTPUT ?? "src/data/eldorado-products.json"
 const TITLE_SELECTOR = process.env.ELDORADO_TITLE_SELECTOR ?? ".offer-title"
+const DEFAULT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH ?? path.resolve(process.cwd(), ".cache", "ms-playwright")
+const SKIP_BROWSER_DOWNLOAD = process.env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD === "1"
+const SKIP_PLAYWRIGHT_INSTALL = process.env.SKIP_PLAYWRIGHT_INSTALL === "1"
+
+if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
+  process.env.PLAYWRIGHT_BROWSERS_PATH = DEFAULT_BROWSERS_PATH
+}
 
 const normalizeHref = (href) => {
   if (!href) return ""
@@ -59,6 +68,45 @@ const readExistingProducts = async () => {
   }
 }
 
+const installPlaywrightChromium = () =>
+  new Promise((resolve, reject) => {
+    const require = createRequire(import.meta.url)
+    let cliPath = ""
+    try {
+      cliPath = require.resolve("playwright/cli")
+    } catch (error) {
+      reject(new Error("Playwright CLI not found."))
+      return
+    }
+    const args = [cliPath, "install", "chromium"]
+    if (process.env.PLAYWRIGHT_WITH_DEPS === "1") {
+      args.push("--with-deps")
+    }
+    const child = spawn(process.execPath, args, { stdio: "inherit", env: process.env })
+    child.on("error", (error) => reject(error))
+    child.on("exit", (code) => {
+      if (code === 0) {
+        resolve()
+      } else {
+        reject(new Error(`Playwright install failed with code ${code}`))
+      }
+    })
+  })
+
+const ensurePlaywrightChromium = async () => {
+  const executablePath = chromium.executablePath()
+  try {
+    await fs.access(executablePath)
+    return
+  } catch (error) {
+    if (SKIP_PLAYWRIGHT_INSTALL || SKIP_BROWSER_DOWNLOAD) {
+      throw new Error(`Playwright browser missing at ${executablePath}`)
+    }
+  }
+  console.log("[eldorado] Playwright browser missing, installing chromium...")
+  await installPlaywrightChromium()
+}
+
 const buildPageUrl = (url, pageIndex) => {
   const nextUrl = new URL(url)
   nextUrl.searchParams.set("pageIndex", String(pageIndex))
@@ -69,6 +117,8 @@ const run = async () => {
   if (!Number.isFinite(TOTAL_PAGES) || TOTAL_PAGES <= 0) {
     throw new Error("ELDORADO_PAGES must be a positive number")
   }
+
+  await ensurePlaywrightChromium()
 
   const existing = (await readExistingProducts())
     .map((item) => ({
