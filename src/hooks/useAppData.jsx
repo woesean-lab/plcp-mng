@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import LoadingIndicator from "../components/LoadingIndicator"
 import {
@@ -301,7 +301,7 @@ export default function useAppData() {
     return () => window.clearTimeout(timer)
   }, [isAuthChecking])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setIsTabLoading(true)
     if (tabLoadingTimerRef.current) {
       window.clearTimeout(tabLoadingTimerRef.current)
