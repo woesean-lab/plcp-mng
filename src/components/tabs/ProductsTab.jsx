@@ -66,7 +66,7 @@ export default function ProductsTab({
   const list = activeCategory?.items ?? []
   const normalizedQuery = query.trim().toLowerCase()
   const [page, setPage] = useState(1)
-  const pageSize = 10
+  const pageSize = 12
   const filteredList = useMemo(() => {
     if (!normalizedQuery) return list
     return list.filter((product) => {
