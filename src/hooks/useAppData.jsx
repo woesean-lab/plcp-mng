@@ -2994,6 +2994,7 @@ export default function useAppData() {
   const isSalesTabLoading = isSalesLoading || (activeTab === "sales" && isTabLoading)
   const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
   const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
+  const isProductsTabLoading = isEldoradoLoading || (activeTab === "products" && isTabLoading)
   const isProblemsTabLoading = isProblemsLoading || (activeTab === "problems" && isTabLoading)
   const isAdminTabLoading = isAdminLoading || (activeTab === "admin" && isTabLoading)
 
@@ -3915,6 +3916,7 @@ export default function useAppData() {
     handleListInsertColumn,
     handleListDeleteColumn,
     isStockTabLoading,
+    isProductsTabLoading,
     stockSummary,
     eldoradoCatalog,
     isEldoradoLoading,

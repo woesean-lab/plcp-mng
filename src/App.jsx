@@ -174,6 +174,7 @@ function App() {
     handleListInsertColumn,
     handleListDeleteColumn,
     isStockTabLoading,
+    isProductsTabLoading,
     stockSummary,
     eldoradoCatalog,
     isEldoradoLoading,
@@ -943,7 +944,7 @@ function App() {
             <ProductsTab
               panelClass={panelClass}
               catalog={eldoradoCatalog}
-              isLoading={isEldoradoLoading}
+              isLoading={isProductsTabLoading}
               isRefreshing={isEldoradoRefreshing}
               onRefresh={refreshEldoradoCatalog}
             />
