@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom"
+
 export default function DeliveryMapModal({
   isOpen,
   onClose,
@@ -44,10 +46,13 @@ export default function DeliveryMapModal({
     event.target.value = ""
   }
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4" onClick={onClose}>
+  const modal = (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 py-6"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-card"
+        className="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-card"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-3">
@@ -66,14 +71,14 @@ export default function DeliveryMapModal({
           </button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto p-4">
+        <div className="max-h-[65vh] overflow-y-auto p-4">
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
                 Not
               </p>
               <textarea
-                rows={8}
+                rows={7}
                 value={draft.note}
                 onChange={handleChange("note")}
                 placeholder="Teslimat notu yaz..."
@@ -107,7 +112,7 @@ export default function DeliveryMapModal({
                 </button>
               </div>
               <textarea
-                rows={8}
+                rows={7}
                 value={draft.message}
                 onChange={handleChange("message")}
                 placeholder="Mesaj icerigi..."
@@ -130,7 +135,7 @@ export default function DeliveryMapModal({
               <p className="text-xs text-slate-500">TXT dosyasi secip stok ekleyebilirsin.</p>
             </div>
             <textarea
-              rows={6}
+              rows={5}
               value={draft.stock}
               onChange={handleChange("stock")}
               placeholder="Her satir bir stok kodu"
@@ -162,4 +167,6 @@ export default function DeliveryMapModal({
       </div>
     </div>
   )
+
+  return createPortal(modal, document.body)
 }
