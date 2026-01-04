@@ -355,7 +355,7 @@ const run = async () => {
     if (item.id && seenIds.has(item.id)) return
     const isLegacy = !item.href && String(item.id ?? "").startsWith("eld-")
     if (isLegacy && !shouldKeepLegacy) return
-    if (!shouldKeepLegacy) {
+    if (item.href) {
       item.missing = true
     }
     merged.push(item)
