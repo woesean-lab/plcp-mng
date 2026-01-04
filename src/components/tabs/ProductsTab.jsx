@@ -310,8 +310,8 @@ export default function ProductsTab({
                 Gosterilecek urun bulunamadi.
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl bg-ink-900/60 shadow-inner">
-                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,140px)] items-center gap-4 border-b border-white/5 bg-ink-950/70 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 sm:grid">
+              <div className="overflow-hidden rounded-2xl bg-ink-950/70 shadow-inner">
+                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,140px)] items-center gap-4 border-b border-white/5 bg-ink-900/70 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 sm:grid">
                   <span>Urun</span>
                   <span className="text-right">Fiyat</span>
                 </div>
