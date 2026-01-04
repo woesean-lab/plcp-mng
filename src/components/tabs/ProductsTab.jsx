@@ -310,12 +310,12 @@ export default function ProductsTab({
                 Gosterilecek urun bulunamadi.
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl bg-slate-800/40 shadow-inner">
-                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,140px)] items-center gap-4 border-b border-white/5 bg-slate-800/60 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 sm:grid">
+              <div className="overflow-hidden rounded-2xl bg-slate-700/25 shadow-inner ring-1 ring-white/5">
+                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,140px)] items-center gap-4 border-b border-white/10 bg-slate-700/35 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400 sm:grid">
                   <span>Urun</span>
                   <span className="text-right">Fiyat</span>
                 </div>
-                <div className="divide-y divide-white/5">
+                <div className="divide-y divide-white/10">
                   {paginatedList.map((product, index) => {
                     const name = String(product?.name ?? "").trim() || "Isimsiz urun"
                     const price = String(product?.price ?? "").trim()
@@ -326,8 +326,8 @@ export default function ProductsTab({
                         key={key}
                         className={`grid gap-3 px-5 py-3 transition sm:grid-cols-[minmax(0,1fr)_minmax(0,140px)] sm:items-center ${
                           isMissing
-                            ? "bg-rose-950/35 hover:bg-rose-950/45"
-                            : "odd:bg-ink-900/45 even:bg-ink-900/60 hover:bg-ink-900/70"
+                            ? "bg-rose-500/10 hover:bg-rose-500/15"
+                            : "odd:bg-white/0 even:bg-white/5 hover:bg-white/10"
                         }`}
                       >
                         <div className="min-w-0">
@@ -338,11 +338,16 @@ export default function ProductsTab({
                           >
                             {name}
                           </p>
+                          {isMissing ? (
+                            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-rose-300/80">
+                              Eksik urun
+                            </p>
+                          ) : null}
                         </div>
                         <div className="flex items-center justify-between sm:justify-end">
                           <span
                             className={`text-[10px] font-semibold uppercase tracking-[0.2em] sm:hidden ${
-                              isMissing ? "text-rose-300/80" : "text-slate-500"
+                              isMissing ? "text-rose-300/80" : "text-slate-400"
                             }`}
                           >
                             Fiyat
