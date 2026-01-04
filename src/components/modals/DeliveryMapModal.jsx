@@ -39,6 +39,7 @@ export default function DeliveryMapModal({
   const hydratedRef = useRef(false)
   const draggingTokenRef = useRef(null)
   const [editorEmpty, setEditorEmpty] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
   const [showStockPicker, setShowStockPicker] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState("")
@@ -81,14 +82,27 @@ export default function DeliveryMapModal({
   useEffect(() => {
     if (!isOpen) {
       hydratedRef.current = false
+      setIsEditing(false)
       return
     }
-    if (hydratedRef.current) return
-    hydrateEditor()
-    hydratedRef.current = true
+    if (!hydratedRef.current) {
+      hydrateEditor()
+      hydratedRef.current = true
+      if (!draft.note?.trim()) {
+        setIsEditing(true)
+      }
+    }
   }, [draft.note, isOpen])
 
+  useEffect(() => {
+    if (!isEditing) {
+      setShowTemplatePicker(false)
+      setShowStockPicker(false)
+    }
+  }, [isEditing])
+
   const handleEditorInput = () => {
+    if (!isEditing) return
     const editor = editorRef.current
     if (!editor) return
     setDraft((prev) => ({ ...prev, note: editor.innerHTML }))
@@ -117,7 +131,16 @@ export default function DeliveryMapModal({
     }
   }
 
+  const handleEnableEditing = () => {
+    setIsEditing(true)
+    requestAnimationFrame(() => editorRef.current?.focus())
+  }
+
   const insertTokenAtCursor = (node) => {
+    if (!isEditing) {
+      toast.error("Once duzenlemeyi ac.")
+      return
+    }
     const editor = editorRef.current
     if (!editor) return
     editor.focus()
@@ -147,6 +170,10 @@ export default function DeliveryMapModal({
   }
 
   const handleTemplateInsert = () => {
+    if (!isEditing) {
+      toast.error("Once duzenlemeyi ac.")
+      return
+    }
     if (!selectedTemplate?.value) return
     const token = createTokenNode({
       type: "message",
@@ -158,6 +185,10 @@ export default function DeliveryMapModal({
   }
 
   const handleStockInsert = () => {
+    if (!isEditing) {
+      toast.error("Once duzenlemeyi ac.")
+      return
+    }
     const target = safeProducts.find((item) => item.id === selectedProductId)
     if (!target) {
       toast.error("Stok urunu secmelisin.")
@@ -173,6 +204,7 @@ export default function DeliveryMapModal({
   }
 
   const handleEditorDragStart = (event) => {
+    if (!isEditing) return
     const token = event.target?.closest?.("[data-token]")
     if (!token) return
     draggingTokenRef.current = token
@@ -186,6 +218,7 @@ export default function DeliveryMapModal({
   }
 
   const handleEditorDrop = (event) => {
+    if (!isEditing) return
     event.preventDefault()
     const payload = event.dataTransfer?.getData("text/plain")
     if (!payload) return
@@ -238,24 +271,32 @@ export default function DeliveryMapModal({
         </div>
 
         <div className="max-h-[65vh] overflow-y-auto p-4">
-          <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-inner">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                  Ozel islev ekle
-                </p>
-                <p className="text-xs text-slate-500">
-                  Mesaj ve stok butonlarini editor icine yerlestirebilirsin.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
+          <div className="rounded-2xl border border-white/12 bg-ink-950/60 p-4 shadow-inner">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                Ozel islevler
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleEnableEditing}
+                  disabled={isEditing}
+                  className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] transition disabled:cursor-not-allowed ${
+                    isEditing
+                      ? "border-accent-400/60 bg-accent-500/15 text-accent-100"
+                      : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300 hover:text-accent-100"
+                  }`}
+                >
+                  {isEditing ? "Duzenleme acik" : "Duzenle"}
+                </button>
                 <button
                   type="button"
                   onClick={() => {
                     setShowTemplatePicker((prev) => !prev)
                     setShowStockPicker(false)
                   }}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
+                  disabled={!isEditing}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Mesaj ekle
                 </button>
@@ -265,7 +306,8 @@ export default function DeliveryMapModal({
                     setShowStockPicker((prev) => !prev)
                     setShowTemplatePicker(false)
                   }}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
+                  disabled={!isEditing}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Stok goster
                 </button>
@@ -328,28 +370,35 @@ export default function DeliveryMapModal({
             )}
 
             <div className="mt-4 space-y-3">
-              <div className="relative">
-                {editorEmpty && (
-                  <div className="pointer-events-none absolute left-4 top-3 text-sm text-slate-500">
-                    Teslimat notunu buraya yaz...
-                  </div>
-                )}
-                <div
-                  ref={editorRef}
-                  role="textbox"
-                  contentEditable
-                  onInput={handleEditorInput}
-                  onClick={handleEditorClick}
-                  onDragStart={handleEditorDragStart}
-                  onDragEnd={handleEditorDragEnd}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={handleEditorDrop}
-                  className="min-h-[240px] rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 outline-none focus:border-accent-400 focus:ring-1 focus:ring-accent-500/30"
-                />
+              <div className="rounded-2xl border border-white/10 bg-ink-900/80 p-3 shadow-inner focus-within:border-accent-400/60 focus-within:ring-1 focus-within:ring-accent-500/20">
+                <div className="relative">
+                  {editorEmpty && (
+                    <div className="pointer-events-none absolute left-5 top-4 text-sm text-slate-500">
+                      Teslimat notunu buraya yaz...
+                    </div>
+                  )}
+                  <div
+                    ref={editorRef}
+                    role="textbox"
+                    contentEditable={isEditing}
+                    aria-readonly={!isEditing}
+                    onInput={handleEditorInput}
+                    onClick={handleEditorClick}
+                    onDragStart={handleEditorDragStart}
+                    onDragEnd={handleEditorDragEnd}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={handleEditorDrop}
+                    className={`min-h-[240px] rounded-xl px-4 py-3 text-sm leading-relaxed outline-none transition ${
+                      isEditing
+                        ? "bg-ink-900/70 text-slate-100"
+                        : "bg-ink-900/40 text-slate-300"
+                    }`}
+                  />
+                </div>
               </div>
 
               {stockPreview && (
-                <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3">
+                <div className="rounded-xl border border-white/10 bg-ink-900/80 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
                       {stockPreview.label}
@@ -362,7 +411,7 @@ export default function DeliveryMapModal({
                       Kapat
                     </button>
                   </div>
-                  <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-200">
+                  <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-ink-950/70 px-3 py-2 text-xs text-slate-200">
                     {stockPreview.codes.length > 0 ? (
                       <ul className="space-y-1">
                         {stockPreview.codes.map((code, index) => (
