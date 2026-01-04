@@ -30,6 +30,7 @@ const eldoradoTitleSelector = process.env.ELDORADO_TITLE_SELECTOR ?? ".offer-tit
 const eldoradoDataDir = path.resolve(appRoot, "src", "data")
 const eldoradoItemsPath = path.join(eldoradoDataDir, "eldorado-products.json")
 const eldoradoTopupsPath = path.join(eldoradoDataDir, "eldorado-topups.json")
+const eldoradoDeliveryPath = path.join(eldoradoDataDir, "eldorado-delivery.json")
 const eldoradoScriptPath = path.resolve(appRoot, "scripts", "eldorado-scrape.mjs")
 const playwrightBrowsersPath =
   process.env.PLAYWRIGHT_BROWSERS_PATH ?? path.resolve(appRoot, ".cache", "ms-playwright")
@@ -111,6 +112,71 @@ const readJsonFile = async (filePath) => {
   }
 }
 
+const readJsonValue = async (filePath, fallback) => {
+  try {
+    const raw = await fs.readFile(filePath, "utf8")
+    return JSON.parse(raw)
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      console.warn("Failed to read json data", error)
+    }
+    return fallback
+  }
+}
+
+const normalizeDeliveryEntry = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null
+  const note = String(value.deliveryNote ?? value.note ?? "").trim()
+  const message = String(value.deliveryMessage ?? value.message ?? "").trim()
+  const template = String(value.deliveryTemplate ?? value.template ?? "").trim()
+  const stock = String(value.deliveryStock ?? value.stock ?? "").trim()
+  return {
+    deliveryNote: note,
+    deliveryMessage: message,
+    deliveryTemplate: template,
+    deliveryStock: stock,
+  }
+}
+
+const readDeliveryMap = async () => {
+  const parsed = await readJsonValue(eldoradoDeliveryPath, {})
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {}
+  const normalized = {}
+  Object.entries(parsed).forEach(([id, entry]) => {
+    const key = String(id ?? "").trim()
+    if (!key) return
+    const normalizedEntry = normalizeDeliveryEntry(entry)
+    if (!normalizedEntry) return
+    normalized[key] = normalizedEntry
+  })
+  return normalized
+}
+
+const writeDeliveryMap = async (map) => {
+  await fs.mkdir(eldoradoDataDir, { recursive: true })
+  await fs.writeFile(eldoradoDeliveryPath, `${JSON.stringify(map, null, 2)}\n`, "utf8")
+}
+
+const applyDeliveryMap = (catalog, deliveryMap) => {
+  if (!deliveryMap || Object.keys(deliveryMap).length === 0) return catalog
+  const applyList = (list) =>
+    Array.isArray(list)
+      ? list.map((item) => {
+        const entry = deliveryMap[item.id]
+        if (!entry) return item
+        return { ...item, ...entry }
+      })
+      : []
+  return {
+    ...catalog,
+    items: applyList(catalog?.items),
+    topups: applyList(catalog?.topups),
+    currency: catalog?.currency ?? [],
+    accounts: catalog?.accounts ?? [],
+    giftCards: catalog?.giftCards ?? [],
+  }
+}
+
 const normalizeEldoradoOffer = (item) => {
   const id = String(item?.id ?? "").trim()
   const name = String(item?.name ?? "").trim()
@@ -187,6 +253,7 @@ const mapEldoradoOffersToCatalog = (offers, syncByKind) => {
 }
 
 const loadEldoradoCatalog = async () => {
+  const deliveryMap = await readDeliveryMap()
   try {
     const [offers, syncs] = await Promise.all([
       prisma.eldoradoOffer.findMany({ orderBy: { name: "asc" } }),
@@ -199,7 +266,8 @@ const loadEldoradoCatalog = async () => {
           syncByKind.set(entry.kind, entry.lastSyncAt)
         }
       })
-      return mapEldoradoOffersToCatalog(offers, syncByKind)
+      const catalog = mapEldoradoOffersToCatalog(offers, syncByKind)
+      return applyDeliveryMap(catalog, deliveryMap)
     }
   } catch (error) {
     console.warn("Failed to load Eldorado offers from database, falling back to JSON.", error)
@@ -210,13 +278,14 @@ const loadEldoradoCatalog = async () => {
     readJsonFile(eldoradoItemsPath),
     readJsonFile(eldoradoTopupsPath),
   ])
-  return normalizeEldoradoCatalog({
+  const catalog = normalizeEldoradoCatalog({
     items: normalizeEldoradoList(items),
     topups: normalizeEldoradoList(topups),
     currency: [],
     accounts: [],
     giftCards: [],
   })
+  return applyDeliveryMap(catalog, deliveryMap)
 }
 
 const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
@@ -1727,26 +1796,22 @@ app.put("/api/eldorado/offers/:id/delivery-map", async (req, res) => {
   const template = templateRaw === undefined ? undefined : String(templateRaw ?? "").trim()
   const stock = stockRaw === undefined ? undefined : String(stockRaw ?? "").trim()
 
-  const data = {
-    ...(note === undefined ? {} : { deliveryNote: note || null }),
-    ...(message === undefined ? {} : { deliveryMessage: message || null }),
-    ...(template === undefined ? {} : { deliveryTemplate: template || null }),
-    ...(stock === undefined ? {} : { deliveryStock: stock || null }),
+  const deliveryMap = await readDeliveryMap()
+  const existing = normalizeDeliveryEntry(deliveryMap[id]) ?? {
+    deliveryNote: "",
+    deliveryMessage: "",
+    deliveryTemplate: "",
+    deliveryStock: "",
   }
-
-  try {
-    const updated = await prisma.eldoradoOffer.update({
-      where: { id },
-      data,
-    })
-    res.json({ offer: normalizeEldoradoOffer(updated) })
-  } catch (error) {
-    if (error?.code === "P2025") {
-      res.status(404).json({ error: "offer_not_found" })
-      return
-    }
-    throw error
+  const next = {
+    deliveryNote: note === undefined ? existing.deliveryNote : note,
+    deliveryMessage: message === undefined ? existing.deliveryMessage : message,
+    deliveryTemplate: template === undefined ? existing.deliveryTemplate : template,
+    deliveryStock: stock === undefined ? existing.deliveryStock : stock,
   }
+  deliveryMap[id] = next
+  await writeDeliveryMap(deliveryMap)
+  res.json({ offer: { id, ...next } })
 })
 
 app.post("/api/eldorado/refresh", async (_req, res, next) => {
