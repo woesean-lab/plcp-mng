@@ -53,6 +53,17 @@ model Stock {
   createdAt DateTime @default(now())
 }
 
+model EldoradoOffer {
+  id        String   @id
+  name      String
+  price     String?
+  category  String?
+  href      String?
+  kind      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model List {
   id        String   @id @default(cuid())
   name      String

@@ -111,6 +111,24 @@ const readJsonFile = async (filePath) => {
   }
 }
 
+const normalizeEldoradoOffer = (item) => {
+  const id = String(item?.id ?? "").trim()
+  const name = String(item?.name ?? "").trim()
+  if (!id || !name) return null
+  const priceRaw = item?.price
+  const price = priceRaw === undefined || priceRaw === null ? "" : String(priceRaw).trim()
+  const hrefRaw = item?.href
+  const href = hrefRaw === undefined || hrefRaw === null ? "" : String(hrefRaw).trim()
+  const categoryRaw = item?.category
+  const category = categoryRaw === undefined || categoryRaw === null ? "" : String(categoryRaw).trim()
+  return { id, name, price, href, category }
+}
+
+const normalizeEldoradoList = (value) => {
+  if (!Array.isArray(value)) return []
+  return value.map(normalizeEldoradoOffer).filter(Boolean)
+}
+
 const normalizeEldoradoCatalog = (value) => ({
   items: Array.isArray(value?.items) ? value.items : [],
   topups: Array.isArray(value?.topups) ? value.topups : [],
@@ -119,12 +137,18 @@ const normalizeEldoradoCatalog = (value) => ({
   giftCards: Array.isArray(value?.giftCards) ? value.giftCards : [],
 })
 
-const loadEldoradoCatalog = async () => {
-  await fs.mkdir(eldoradoDataDir, { recursive: true })
-  const [items, topups] = await Promise.all([
-    readJsonFile(eldoradoItemsPath),
-    readJsonFile(eldoradoTopupsPath),
-  ])
+const mapEldoradoOffersToCatalog = (offers) => {
+  const items = []
+  const topups = []
+  offers.forEach((offer) => {
+    const normalized = normalizeEldoradoOffer(offer)
+    if (!normalized) return
+    if (offer.kind === "topups") {
+      topups.push(normalized)
+    } else {
+      items.push(normalized)
+    }
+  })
   return normalizeEldoradoCatalog({
     items,
     topups,
@@ -132,6 +156,55 @@ const loadEldoradoCatalog = async () => {
     accounts: [],
     giftCards: [],
   })
+}
+
+const loadEldoradoCatalog = async () => {
+  try {
+    const offers = await prisma.eldoradoOffer.findMany({ orderBy: { name: "asc" } })
+    if (offers.length > 0) {
+      return mapEldoradoOffersToCatalog(offers)
+    }
+  } catch (error) {
+    console.warn("Failed to load Eldorado offers from database, falling back to JSON.", error)
+  }
+
+  await fs.mkdir(eldoradoDataDir, { recursive: true })
+  const [items, topups] = await Promise.all([
+    readJsonFile(eldoradoItemsPath),
+    readJsonFile(eldoradoTopupsPath),
+  ])
+  return normalizeEldoradoCatalog({
+    items: normalizeEldoradoList(items),
+    topups: normalizeEldoradoList(topups),
+    currency: [],
+    accounts: [],
+    giftCards: [],
+  })
+}
+
+const syncEldoradoOffers = async (kind, offers) => {
+  const normalized = normalizeEldoradoList(offers)
+  if (normalized.length === 0) return 0
+  const operations = normalized.map((offer) => {
+    const update = { name: offer.name, kind }
+    if (offer.href) update.href = offer.href
+    if (offer.category) update.category = offer.category
+    if (offer.price) update.price = offer.price
+    return prisma.eldoradoOffer.upsert({
+      where: { id: offer.id },
+      update,
+      create: {
+        id: offer.id,
+        name: offer.name,
+        price: offer.price || null,
+        category: offer.category || null,
+        href: offer.href || null,
+        kind,
+      },
+    })
+  })
+  await prisma.$transaction(operations)
+  return normalized.length
 }
 
 const runEldoradoScrape = ({ url, pages, outputPath }) => {
@@ -1606,6 +1679,16 @@ app.post("/api/eldorado/refresh", async (_req, res, next) => {
       pages: eldoradoTopupsPages,
       outputPath: eldoradoTopupsPath,
     })
+    try {
+      const [items, topups] = await Promise.all([
+        readJsonFile(eldoradoItemsPath),
+        readJsonFile(eldoradoTopupsPath),
+      ])
+      await syncEldoradoOffers("items", items)
+      await syncEldoradoOffers("topups", topups)
+    } catch (error) {
+      console.warn("Failed to persist Eldorado offers to database.", error)
+    }
     const catalog = await loadEldoradoCatalog()
     res.json({ ok: true, catalog })
   } catch (error) {
