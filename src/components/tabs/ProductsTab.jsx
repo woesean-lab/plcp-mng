@@ -80,6 +80,8 @@ export default function ProductsTab({
   isRefreshing = false,
   onRefresh,
   templates = [],
+  products = [],
+  splitStocks,
   onSaveDeliveryMap,
 }) {
   const [query, setQuery] = useState("")
@@ -492,6 +494,8 @@ export default function ProductsTab({
         onClose={handleDeliveryClose}
         productName={deliveryTarget?.name ?? ""}
         templates={templates}
+        products={products}
+        splitStocks={splitStocks}
         draft={deliveryDraft}
         setDraft={setDeliveryDraft}
         onSave={handleDeliverySave}

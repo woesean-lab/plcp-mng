@@ -949,6 +949,8 @@ function App() {
               isRefreshing={isEldoradoRefreshing}
               onRefresh={refreshEldoradoCatalog}
               templates={templates}
+              products={products}
+              splitStocks={splitStocks}
               onSaveDeliveryMap={saveEldoradoDeliveryMap}
             />
           </div>
