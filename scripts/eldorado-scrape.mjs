@@ -210,11 +210,34 @@ const scrapeAllPages = async () => {
         return ""
       }
 
+      const findPrice = (node) => {
+        const selectors = [
+          "eld-offer-price strong[aria-label='amount-price']",
+          "strong[aria-label='amount-price']",
+          "eld-offer-price strong",
+          ".offer-price strong",
+          "strong.font-size-18",
+        ]
+        let current = node
+        for (let depth = 0; depth < 6 && current; depth += 1) {
+          for (const selector of selectors) {
+            const target = current.querySelector?.(selector)
+            const text = target?.textContent?.trim() ?? ""
+            if (text && /[0-9]/.test(text)) {
+              return text
+            }
+          }
+          current = current.parentElement
+        }
+        return ""
+      }
+
       return nodes
         .map((node) => {
           const name = node.textContent?.trim() ?? ""
           const href = findHref(node)
-          return { name, href }
+          const price = findPrice(node)
+          return { name, href, price }
         })
         .filter((item) => item.name)
     })
@@ -256,6 +279,7 @@ const run = async () => {
       name: String(item?.name ?? "").trim(),
       href: normalizeHref(item?.href ?? ""),
       category: String(item?.category ?? "").trim(),
+      price: String(item?.price ?? "").trim(),
     }))
     .filter((item) => item.id || item.name)
   const existingById = new Map()
@@ -290,6 +314,7 @@ const run = async () => {
   scraped.forEach((item) => {
     const name = String(item?.name ?? "").trim()
     const href = normalizeHref(item?.href ?? "")
+    const price = String(item?.price ?? "").trim()
     const derivedId = buildDerivedId(name, href)
     if (!derivedId) return
     if (seenIds.has(derivedId)) return
@@ -303,10 +328,13 @@ const run = async () => {
       existingItem.name = name
       existingItem.href = href
       existingItem.category = category
+      if (price) {
+        existingItem.price = price
+      }
       usedExisting.add(existingItem)
       merged.push(existingItem)
     } else {
-      merged.push({ id: derivedId, name, href, category })
+      merged.push({ id: derivedId, name, href, category, price })
     }
     seenIds.add(derivedId)
   })

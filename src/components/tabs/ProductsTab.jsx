@@ -310,6 +310,7 @@ export default function ProductsTab({
             ) : (
               paginatedList.map((product, index) => {
                 const name = String(product?.name ?? "").trim() || "Isimsiz urun"
+                const price = String(product?.price ?? "").trim()
                 const key = product?.id ?? `${name}-${index}`
                 return (
                   <div
@@ -322,6 +323,14 @@ export default function ProductsTab({
                           Urun
                         </p>
                         <p className="mt-2 text-base font-semibold text-white">{name}</p>
+                        {price ? (
+                          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-950/80 px-2.5 py-1 text-xs text-slate-200">
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                              Fiyat
+                            </span>
+                            <span className="text-sm font-semibold text-white">{price}</span>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </div>
