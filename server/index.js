@@ -121,7 +121,14 @@ const normalizeEldoradoOffer = (item) => {
   const href = hrefRaw === undefined || hrefRaw === null ? "" : String(hrefRaw).trim()
   const categoryRaw = item?.category
   const category = categoryRaw === undefined || categoryRaw === null ? "" : String(categoryRaw).trim()
-  return { id, name, price, href, category }
+  return {
+    id,
+    name,
+    price,
+    href,
+    category,
+    missing: Boolean(item?.missing),
+  }
 }
 
 const normalizeEldoradoList = (value) => {
@@ -140,15 +147,32 @@ const normalizeEldoradoCatalog = (value) => ({
 const mapEldoradoOffersToCatalog = (offers) => {
   const items = []
   const topups = []
+  const latestSeenByKind = new Map()
+
+  offers.forEach((offer) => {
+    const kind = String(offer.kind ?? "items")
+    const seenAt = offer.lastSeenAt instanceof Date ? offer.lastSeenAt : null
+    if (!seenAt) return
+    const current = latestSeenByKind.get(kind)
+    if (!current || seenAt > current) {
+      latestSeenByKind.set(kind, seenAt)
+    }
+  })
+
   offers.forEach((offer) => {
     const normalized = normalizeEldoradoOffer(offer)
     if (!normalized) return
-    if (offer.kind === "topups") {
+    const kind = String(offer.kind ?? "items")
+    const latestSeen = latestSeenByKind.get(kind)
+    const seenAt = offer.lastSeenAt instanceof Date ? offer.lastSeenAt : null
+    normalized.missing = Boolean(latestSeen && (!seenAt || seenAt < latestSeen))
+    if (kind === "topups") {
       topups.push(normalized)
     } else {
       items.push(normalized)
     }
   })
+
   return normalizeEldoradoCatalog({
     items,
     topups,
@@ -185,8 +209,9 @@ const loadEldoradoCatalog = async () => {
 const syncEldoradoOffers = async (kind, offers) => {
   const normalized = normalizeEldoradoList(offers)
   if (normalized.length === 0) return 0
+  const seenAt = new Date()
   const operations = normalized.map((offer) => {
-    const update = { name: offer.name, kind }
+    const update = { name: offer.name, kind, lastSeenAt: seenAt }
     if (offer.href) update.href = offer.href
     if (offer.category) update.category = offer.category
     if (offer.price) update.price = offer.price
@@ -200,6 +225,7 @@ const syncEldoradoOffers = async (kind, offers) => {
         category: offer.category || null,
         href: offer.href || null,
         kind,
+        lastSeenAt: seenAt,
       },
     })
   })

@@ -314,26 +314,54 @@ export default function ProductsTab({
                 const name = String(product?.name ?? "").trim() || "Isimsiz urun"
                 const price = String(product?.price ?? "").trim()
                 const cardCategory = formatCategoryLabel(getCategoryKey(product))
+                const isMissing = Boolean(product?.missing)
                 const key = product?.id ?? `${name}-${index}`
                 return (
                   <div
                     key={key}
-                    className="flex h-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner transition hover:border-white/20 hover:bg-ink-900/80"
+                    className={`flex h-full items-center justify-between gap-4 rounded-2xl border px-4 py-3 shadow-inner transition ${
+                      isMissing
+                        ? "border-rose-500/50 bg-rose-950/40 hover:border-rose-400/60 hover:bg-rose-950/50"
+                        : "border-white/10 bg-ink-900/70 hover:border-white/20 hover:bg-ink-900/80"
+                    }`}
                   >
                     <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <p
+                        className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${
+                          isMissing ? "text-rose-300/80" : "text-slate-500"
+                        }`}
+                      >
                         {cardCategory}
                       </p>
-                      <p className="mt-1 line-clamp-2 text-sm font-semibold text-white">{name}</p>
+                      <p
+                        className={`mt-1 line-clamp-2 text-sm font-semibold ${
+                          isMissing ? "text-rose-100" : "text-white"
+                        }`}
+                      >
+                        {name}
+                      </p>
                     </div>
                     {price ? (
                       <div className="flex items-center gap-4">
-                        <div className="h-9 w-px bg-white/10" aria-hidden="true" />
+                        <div
+                          className={`h-9 w-px ${isMissing ? "bg-rose-500/30" : "bg-white/10"}`}
+                          aria-hidden="true"
+                        />
                         <div className="text-right">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          <p
+                            className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                              isMissing ? "text-rose-300/80" : "text-slate-500"
+                            }`}
+                          >
                             Fiyat
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-white">{price}</p>
+                          <p
+                            className={`mt-1 text-sm font-semibold ${
+                              isMissing ? "text-rose-100" : "text-white"
+                            }`}
+                          >
+                            {price}
+                          </p>
                         </div>
                       </div>
                     ) : null}

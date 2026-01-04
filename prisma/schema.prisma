@@ -60,6 +60,7 @@ model EldoradoOffer {
   category  String?
   href      String?
   kind      String
+  lastSeenAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
