@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import DeliveryMapModal from "../modals/DeliveryMapModal"
 
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -78,6 +79,8 @@ export default function ProductsTab({
   isLoading = false,
   isRefreshing = false,
   onRefresh,
+  templates = [],
+  onSaveDeliveryMap,
 }) {
   const [query, setQuery] = useState("")
   const items = Array.isArray(catalog?.items) ? catalog.items : []
@@ -111,6 +114,14 @@ export default function ProductsTab({
   const normalizedQuery = query.trim().toLowerCase()
   const [page, setPage] = useState(1)
   const pageSize = 12
+  const [deliveryTarget, setDeliveryTarget] = useState(null)
+  const [deliveryDraft, setDeliveryDraft] = useState({
+    note: "",
+    message: "",
+    template: "",
+    stock: "",
+  })
+  const [isDeliverySaving, setIsDeliverySaving] = useState(false)
   const filteredList = useMemo(() => {
     if (!normalizedQuery) return list
     return list.filter((product) => {
@@ -142,6 +153,44 @@ export default function ProductsTab({
       setPage(totalPages)
     }
   }, [page, totalPages])
+
+  useEffect(() => {
+    if (!deliveryTarget) return
+    setDeliveryDraft({
+      note: String(deliveryTarget?.deliveryNote ?? ""),
+      message: String(deliveryTarget?.deliveryMessage ?? ""),
+      template: String(deliveryTarget?.deliveryTemplate ?? ""),
+      stock: String(deliveryTarget?.deliveryStock ?? ""),
+    })
+  }, [deliveryTarget])
+
+  const handleDeliveryOpen = (product) => {
+    if (!product) return
+    setDeliveryTarget(product)
+  }
+
+  const handleDeliveryClose = () => {
+    setDeliveryTarget(null)
+  }
+
+  const handleDeliverySave = async () => {
+    if (!deliveryTarget || typeof onSaveDeliveryMap !== "function") {
+      setDeliveryTarget(null)
+      return
+    }
+    setIsDeliverySaving(true)
+    try {
+      await onSaveDeliveryMap(deliveryTarget.id, {
+        note: deliveryDraft.note,
+        message: deliveryDraft.message,
+        template: deliveryDraft.template,
+        stock: deliveryDraft.stock,
+      })
+      setDeliveryTarget(null)
+    } finally {
+      setIsDeliverySaving(false)
+    }
+  }
 
   if (isLoading) {
     return <ProductsSkeleton panelClass={panelClass} />
@@ -311,8 +360,9 @@ export default function ProductsTab({
               </div>
             ) : (
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 shadow-card">
-                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,140px)] items-center gap-4 border-b border-white/10 bg-ink-900/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400 sm:grid">
+                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,180px)_minmax(0,140px)] items-center gap-4 border-b border-white/10 bg-ink-900/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400 sm:grid">
                   <span>Urun</span>
+                  <span>Teslimat haritasi</span>
                   <span className="text-right">Fiyat</span>
                 </div>
                 <div className="divide-y divide-white/10">
@@ -324,7 +374,7 @@ export default function ProductsTab({
                     return (
                       <div
                         key={key}
-                        className={`grid gap-3 px-5 py-3 transition sm:grid-cols-[minmax(0,1fr)_minmax(0,140px)] sm:items-center ${
+                        className={`grid gap-3 px-5 py-3 transition sm:grid-cols-[minmax(0,1fr)_minmax(0,180px)_minmax(0,140px)] sm:items-center ${
                           isMissing
                             ? "bg-rose-950/40 hover:bg-rose-950/55"
                             : "odd:bg-ink-900/40 even:bg-ink-900/60 hover:bg-ink-800/70"
@@ -343,6 +393,19 @@ export default function ProductsTab({
                               Eksik urun
                             </p>
                           ) : null}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDeliveryOpen(product)}
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] transition ${
+                              isMissing
+                                ? "border-rose-400/50 bg-rose-950/50 text-rose-100 hover:border-rose-300/70"
+                                : "border-white/10 bg-ink-950/60 text-slate-200 hover:border-accent-300/60 hover:text-accent-100"
+                            }`}
+                          >
+                            Teslimat haritasi
+                          </button>
                         </div>
                         <div className="flex items-center justify-between sm:justify-end">
                           <span
@@ -423,6 +486,17 @@ export default function ProductsTab({
           )}
         </div>
       </div>
+
+      <DeliveryMapModal
+        isOpen={Boolean(deliveryTarget)}
+        onClose={handleDeliveryClose}
+        productName={deliveryTarget?.name ?? ""}
+        templates={templates}
+        draft={deliveryDraft}
+        setDraft={setDeliveryDraft}
+        onSave={handleDeliverySave}
+        isSaving={isDeliverySaving}
+      />
     </div>
   )
 }

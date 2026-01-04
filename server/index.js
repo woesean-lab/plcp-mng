@@ -121,6 +121,14 @@ const normalizeEldoradoOffer = (item) => {
   const href = hrefRaw === undefined || hrefRaw === null ? "" : String(hrefRaw).trim()
   const categoryRaw = item?.category
   const category = categoryRaw === undefined || categoryRaw === null ? "" : String(categoryRaw).trim()
+  const noteRaw = item?.deliveryNote
+  const deliveryNote = noteRaw === undefined || noteRaw === null ? "" : String(noteRaw).trim()
+  const messageRaw = item?.deliveryMessage
+  const deliveryMessage = messageRaw === undefined || messageRaw === null ? "" : String(messageRaw).trim()
+  const templateRaw = item?.deliveryTemplate
+  const deliveryTemplate = templateRaw === undefined || templateRaw === null ? "" : String(templateRaw).trim()
+  const stockRaw = item?.deliveryStock
+  const deliveryStock = stockRaw === undefined || stockRaw === null ? "" : String(stockRaw).trim()
   const missing = Boolean(item?.missing)
   return {
     id,
@@ -129,6 +137,10 @@ const normalizeEldoradoOffer = (item) => {
     href,
     category,
     missing,
+    deliveryNote,
+    deliveryMessage,
+    deliveryTemplate,
+    deliveryStock,
   }
 }
 
@@ -1695,6 +1707,45 @@ app.get("/api/eldorado/products", async (_req, res, next) => {
     res.json({ catalog })
   } catch (error) {
     next(error)
+  }
+})
+
+app.put("/api/eldorado/offers/:id/delivery-map", async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid_id" })
+    return
+  }
+
+  const noteRaw = req.body?.note
+  const messageRaw = req.body?.message
+  const templateRaw = req.body?.template
+  const stockRaw = req.body?.stock
+
+  const note = noteRaw === undefined ? undefined : String(noteRaw ?? "").trim()
+  const message = messageRaw === undefined ? undefined : String(messageRaw ?? "").trim()
+  const template = templateRaw === undefined ? undefined : String(templateRaw ?? "").trim()
+  const stock = stockRaw === undefined ? undefined : String(stockRaw ?? "").trim()
+
+  const data = {
+    ...(note === undefined ? {} : { deliveryNote: note || null }),
+    ...(message === undefined ? {} : { deliveryMessage: message || null }),
+    ...(template === undefined ? {} : { deliveryTemplate: template || null }),
+    ...(stock === undefined ? {} : { deliveryStock: stock || null }),
+  }
+
+  try {
+    const updated = await prisma.eldoradoOffer.update({
+      where: { id },
+      data,
+    })
+    res.json({ offer: normalizeEldoradoOffer(updated) })
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "offer_not_found" })
+      return
+    }
+    throw error
   }
 })
 
