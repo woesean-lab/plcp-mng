@@ -85,6 +85,7 @@ export default function ProductsTab({
   onLoadKeys,
   onAddKeys,
   onDeleteKey,
+  onUpdateKeyStatus,
   onCopyKey,
   canAddKeys = false,
   canDeleteKeys = false,
@@ -94,6 +95,7 @@ export default function ProductsTab({
   const [openOffers, setOpenOffers] = useState({})
   const [keyDrafts, setKeyDrafts] = useState({})
   const [confirmKeyTarget, setConfirmKeyTarget] = useState(null)
+  const canUpdateKeys = typeof onUpdateKeyStatus === "function" && canCopyKeys
   const items = Array.isArray(catalog?.items) ? catalog.items : []
   const topups = Array.isArray(catalog?.topups) ? catalog.topups : []
   const allProducts = useMemo(() => [...items, ...topups], [items, topups])
@@ -180,6 +182,14 @@ export default function ProductsTab({
       return
     }
     setConfirmKeyTarget(target)
+  }
+
+  const handleKeyStatusUpdate = (offerId, keyId, nextStatus) => {
+    if (typeof onUpdateKeyStatus !== "function") return
+    const normalizedOfferId = String(offerId ?? "").trim()
+    const normalizedKeyId = String(keyId ?? "").trim()
+    if (!normalizedOfferId || !normalizedKeyId) return
+    onUpdateKeyStatus(normalizedOfferId, normalizedKeyId, nextStatus)
   }
 
   const handleKeyCopy = (code) => {
@@ -389,7 +399,14 @@ export default function ProductsTab({
                     const offerId = String(product?.id ?? "").trim()
                     const keyList = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : []
                     const stockCountRaw = Number(product?.stockCount)
-                    const stockCount = Number.isFinite(stockCountRaw) ? stockCountRaw : keyList.length
+                    const stockUsedRaw = Number(product?.stockUsedCount)
+                    const stockTotalRaw = Number(product?.stockTotalCount)
+                    const usedCountFallback = keyList.filter((item) => item?.status === "used").length
+                    const totalCount = Number.isFinite(stockTotalRaw) ? stockTotalRaw : keyList.length
+                    const usedCount = Number.isFinite(stockUsedRaw) ? stockUsedRaw : usedCountFallback
+                    const availableCount = Number.isFinite(stockCountRaw)
+                      ? stockCountRaw
+                      : Math.max(0, totalCount - usedCount)
                     const isOpen = Boolean(openOffers[offerId])
                     const isKeysLoading = Boolean(keysLoading?.[offerId])
                     const isKeysSaving = Boolean(keysSaving?.[offerId])
@@ -419,20 +436,43 @@ export default function ProductsTab({
                               ) : null}
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="rounded-full border border-emerald-300/40 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-100">
-                                {stockCount} anahtar
+                              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-transparent px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-100 shadow-glow">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-glow" />
+                                Stok
+                                <span className="text-emerald-50">{availableCount}</span>
                               </span>
+                              {usedCount > 0 && (
+                                <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-100">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+                                  Kullanildi
+                                  <span className="text-amber-50">{usedCount}</span>
+                                </span>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleToggleOffer(offerId)}
                                 disabled={!offerId}
-                                className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
                                   isOpen
                                     ? "border-accent-300/60 bg-accent-500/15 text-accent-50"
                                     : "border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10"
                                 } ${!offerId ? "cursor-not-allowed opacity-60" : ""}`}
                               >
-                                {isOpen ? "Kapat" : "Stoklar"}
+                                <svg
+                                  aria-hidden="true"
+                                  viewBox="0 0 24 24"
+                                  className="h-3.5 w-3.5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M4 6h16" />
+                                  <path d="M4 12h16" />
+                                  <path d="M4 18h16" />
+                                </svg>
+                                {isOpen ? "Gizle" : "Detay"}
                               </button>
                             </div>
                           </div>
@@ -442,9 +482,9 @@ export default function ProductsTab({
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div>
                                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                                    Anahtarlar
+                                    Stoklar
                                   </p>
-                                  <p className="text-xs text-slate-500">Dijital anahtar stoklari.</p>
+                                  <p className="text-xs text-slate-500">Dijital stok kayitlari.</p>
                                 </div>
                                 <button
                                   type="button"
@@ -462,14 +502,14 @@ export default function ProductsTab({
                                     className="text-xs font-semibold text-slate-200"
                                     htmlFor={`eldorado-key-${offerId}`}
                                   >
-                                    Anahtar / Kod
+                                    Stok / Kod
                                   </label>
                                   <textarea
                                     id={`eldorado-key-${offerId}`}
                                     rows={3}
                                     value={keyDrafts[offerId] ?? ""}
                                     onChange={(event) => handleKeyDraftChange(offerId, event.target.value)}
-                                    placeholder="Her satir bir anahtar"
+                                    placeholder="Her satir bir stok kodu"
                                     className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                                   />
                                   <div className="flex flex-wrap gap-2">
@@ -479,7 +519,7 @@ export default function ProductsTab({
                                       disabled={isKeysSaving}
                                       className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      Anahtar ekle
+                                      Stok ekle
                                     </button>
                                     <button
                                       type="button"
@@ -499,25 +539,40 @@ export default function ProductsTab({
                                   </div>
                                 ) : keyList.length === 0 ? (
                                   <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
-                                    Stok anahtari yok.
+                                    Stok kaydi yok.
                                   </div>
                                 ) : (
                                   <div className="space-y-2">
                                     {keyList.map((keyItem, keyIndex) => {
                                       const keyId = String(keyItem?.id ?? `${offerId}-${keyIndex}`)
                                       const keyCode = String(keyItem?.code ?? "").trim()
+                                      const keyStatus = keyItem?.status === "used" ? "used" : "available"
+                                      const isUsed = keyStatus === "used"
                                       const isDeleting = Boolean(keysDeleting?.[keyId])
                                       const isConfirming = confirmKeyTarget === `${offerId}-${keyId}`
                                       return (
                                         <div
                                           key={keyId}
-                                          className={`flex flex-col gap-3 rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2 sm:flex-row sm:items-center ${
-                                            isDeleting ? "opacity-60" : ""
-                                          }`}
+                                          className={`flex flex-col gap-3 rounded-xl border px-3 py-2 sm:flex-row sm:items-center ${
+                                            isUsed
+                                              ? "border-amber-300/40 bg-amber-500/10"
+                                              : "border-white/10 bg-ink-900/60"
+                                          } ${isDeleting ? "opacity-60" : ""}`}
                                         >
-                                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300">
-                                            #{keyIndex + 1}
-                                          </span>
+                                          <div className="flex items-center gap-2">
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300">
+                                              #{keyIndex + 1}
+                                            </span>
+                                            <span
+                                              className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                                                isUsed
+                                                  ? "border-amber-300/40 bg-amber-500/20 text-amber-100"
+                                                  : "border-emerald-300/40 bg-emerald-500/15 text-emerald-100"
+                                              }`}
+                                            >
+                                              {isUsed ? "Kullanildi" : "Stokta"}
+                                            </span>
+                                          </div>
                                           <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
                                             {keyCode || "-"}
                                           </p>
@@ -531,10 +586,29 @@ export default function ProductsTab({
                                                 Kopyala
                                               </button>
                                             )}
-                                            {canDeleteKeys && keyItem?.id && (
+                                            {canUpdateKeys && (
                                               <button
                                                 type="button"
-                                                onClick={() => handleKeyDelete(offerId, keyItem.id)}
+                                                onClick={() =>
+                                                  handleKeyStatusUpdate(
+                                                    offerId,
+                                                    keyId,
+                                                    isUsed ? "available" : "used",
+                                                  )
+                                                }
+                                                className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
+                                                  isUsed
+                                                    ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-50 hover:border-emerald-200 hover:bg-emerald-500/25"
+                                                    : "border-amber-300/60 bg-amber-500/15 text-amber-50 hover:border-amber-200 hover:bg-amber-500/25"
+                                                }`}
+                                              >
+                                                {isUsed ? "Geri al" : "Kullanildi"}
+                                              </button>
+                                            )}
+                                            {canDeleteKeys && keyId && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleKeyDelete(offerId, keyId)}
                                                 disabled={isDeleting}
                                                 className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60 ${
                                                   isConfirming

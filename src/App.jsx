@@ -186,6 +186,7 @@ function App() {
     loadEldoradoKeys,
     handleEldoradoKeysAdd,
     handleEldoradoKeyDelete,
+    handleEldoradoKeyStatusUpdate,
     handleEldoradoKeyCopy,
     products,
     productSearch,
@@ -961,6 +962,7 @@ function App() {
               onLoadKeys={loadEldoradoKeys}
               onAddKeys={handleEldoradoKeysAdd}
               onDeleteKey={handleEldoradoKeyDelete}
+              onUpdateKeyStatus={handleEldoradoKeyStatusUpdate}
               onCopyKey={handleEldoradoKeyCopy}
               canAddKeys={canAddStocks}
               canDeleteKeys={canDeleteStocks}

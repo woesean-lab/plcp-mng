@@ -2145,12 +2145,14 @@ export default function useAppData() {
         const code = String(entry?.code ?? entry ?? "").trim()
         if (!code || seen.has(code)) return
         seen.add(code)
+        const statusRaw = String(entry?.status ?? "").trim().toLowerCase()
+        const status = statusRaw === "used" ? "used" : "available"
         let id = String(entry?.id ?? "").trim()
         if (!id) {
           id = normalizedOfferId ? `${normalizedOfferId}-${index}` : createLocalEldoradoKeyId()
         }
         const createdAt = entry?.createdAt ? String(entry.createdAt) : new Date().toISOString()
-        normalized.push({ id, code, createdAt })
+        normalized.push({ id, code, status, createdAt })
       })
       return normalized
     },
@@ -2183,7 +2185,7 @@ export default function useAppData() {
       return true
     } catch (error) {
       console.warn("Could not save local Eldorado keys", error)
-      toast.error("Anahtarlar kaydedilemedi (local storage).")
+      toast.error("Stoklar kaydedilemedi (local storage).")
       return false
     }
   }, [])
@@ -2192,15 +2194,17 @@ export default function useAppData() {
     (catalog) => {
       const safeCatalog = normalizeEldoradoCatalog(catalog)
       const store = readEldoradoKeyStore()
-      const countMap = new Map(
-        Object.entries(store).map(([offerId, list]) => [offerId, list.length]),
-      )
       const withCounts = (list) =>
         Array.isArray(list)
-          ? list.map((offer) => ({
-            ...offer,
-            stockCount: countMap.get(offer.id) ?? 0,
-          }))
+          ? list.map((offer) => {
+            const counts = getEldoradoKeyCounts(store[offer.id])
+            return {
+              ...offer,
+              stockCount: counts.available,
+              stockUsedCount: counts.used,
+              stockTotalCount: counts.total,
+            }
+          })
           : []
       return {
         ...safeCatalog,
@@ -2208,17 +2212,38 @@ export default function useAppData() {
         topups: withCounts(safeCatalog.topups),
       }
     },
-    [readEldoradoKeyStore],
+    [getEldoradoKeyCounts, readEldoradoKeyStore],
   )
 
-  const updateEldoradoStockCount = useCallback((offerId, count) => {
+  const getEldoradoKeyCounts = useCallback((list) => {
+    const safeList = Array.isArray(list) ? list : []
+    const used = safeList.reduce(
+      (acc, item) => acc + (item?.status === "used" ? 1 : 0),
+      0,
+    )
+    const total = safeList.length
+    const available = Math.max(0, total - used)
+    return { available, used, total }
+  }, [])
+
+  const updateEldoradoStockCounts = useCallback((offerId, counts) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
+    const available = Number.isFinite(counts?.available) ? counts.available : 0
+    const used = Number.isFinite(counts?.used) ? counts.used : 0
+    const total = Number.isFinite(counts?.total) ? counts.total : available + used
     setEldoradoCatalog((prev) => {
       const updateList = (list) =>
         Array.isArray(list)
           ? list.map((item) =>
-            item?.id === normalizedId ? { ...item, stockCount: count } : item,
+            item?.id === normalizedId
+              ? {
+                ...item,
+                stockCount: available,
+                stockUsedCount: used,
+                stockTotalCount: total,
+              }
+              : item,
           )
           : list
       return {
@@ -2300,10 +2325,10 @@ export default function useAppData() {
         const store = readEldoradoKeyStore()
         const list = Array.isArray(store[normalizedId]) ? store[normalizedId] : []
         setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedId]: list }))
-        updateEldoradoStockCount(normalizedId, list.length)
+        updateEldoradoStockCounts(normalizedId, getEldoradoKeyCounts(list))
       } catch (error) {
         console.error(error)
-        toast.error("Urun anahtarlari alinamadi (local storage).")
+        toast.error("Urun stoklari alinamadi (local storage).")
       } finally {
         setEldoradoKeysLoading((prev) => {
           const next = { ...prev }
@@ -2312,7 +2337,7 @@ export default function useAppData() {
         })
       }
     },
-    [eldoradoKeysByOffer, readEldoradoKeyStore, updateEldoradoStockCount],
+    [eldoradoKeysByOffer, getEldoradoKeyCounts, readEldoradoKeyStore, updateEldoradoStockCounts],
   )
 
   const handleEldoradoKeysAdd = useCallback(
@@ -2324,7 +2349,7 @@ export default function useAppData() {
       }
       const codes = normalizeEldoradoKeyCodes(codesInput)
       if (codes.length === 0) {
-        toast.error("Anahtar girin.")
+        toast.error("Stok girin.")
         return false
       }
 
@@ -2339,7 +2364,7 @@ export default function useAppData() {
         codes.forEach((code) => {
           if (existingCodes.has(code)) return
           existingCodes.add(code)
-          added.push({ id: createLocalEldoradoKeyId(), code, createdAt })
+          added.push({ id: createLocalEldoradoKeyId(), code, status: "available", createdAt })
         })
 
         const nextList = [...currentList, ...added]
@@ -2348,20 +2373,20 @@ export default function useAppData() {
         if (!saved) return false
 
         setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedId]: nextList }))
-        updateEldoradoStockCount(normalizedId, nextList.length)
+        updateEldoradoStockCounts(normalizedId, getEldoradoKeyCounts(nextList))
 
         const addedCount = added.length
         const skippedCount = Math.max(0, codes.length - addedCount)
         if (addedCount > 0) {
           const note = skippedCount > 0 ? `, ${skippedCount} tekrar eden atlandi` : ""
-          toast.success(`${addedCount} anahtar eklendi${note}`, { duration: 1600, position: "top-right" })
+          toast.success(`${addedCount} stok eklendi${note}`, { duration: 1600, position: "top-right" })
         } else {
-          toast.error("Yeni anahtar eklenmedi.")
+          toast.error("Yeni stok eklenmedi.")
         }
         return addedCount > 0
       } catch (error) {
         console.error(error)
-        toast.error("Anahtar eklenemedi (local storage).")
+        toast.error("Stok eklenemedi (local storage).")
         return false
       } finally {
         setEldoradoKeysSaving((prev) => {
@@ -2371,7 +2396,13 @@ export default function useAppData() {
         })
       }
     },
-    [createLocalEldoradoKeyId, readEldoradoKeyStore, updateEldoradoStockCount, writeEldoradoKeyStore],
+    [
+      createLocalEldoradoKeyId,
+      getEldoradoKeyCounts,
+      readEldoradoKeyStore,
+      updateEldoradoStockCounts,
+      writeEldoradoKeyStore,
+    ],
   )
 
   const handleEldoradoKeyDelete = useCallback(
@@ -2391,11 +2422,11 @@ export default function useAppData() {
         if (!saved) return
 
         setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
-        updateEldoradoStockCount(normalizedOfferId, nextList.length)
-        toast.success("Anahtar silindi")
+        updateEldoradoStockCounts(normalizedOfferId, getEldoradoKeyCounts(nextList))
+        toast.success("Stok silindi")
       } catch (error) {
         console.error(error)
-        toast.error("Anahtar silinemedi (local storage).")
+        toast.error("Stok silinemedi (local storage).")
       } finally {
         setEldoradoKeysDeleting((prev) => {
           const next = { ...prev }
@@ -2404,18 +2435,55 @@ export default function useAppData() {
         })
       }
     },
-    [readEldoradoKeyStore, updateEldoradoStockCount, writeEldoradoKeyStore],
+    [getEldoradoKeyCounts, readEldoradoKeyStore, updateEldoradoStockCounts, writeEldoradoKeyStore],
+  )
+
+  const handleEldoradoKeyStatusUpdate = useCallback(
+    (offerId, keyId, nextStatus) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      const normalizedKeyId = String(keyId ?? "").trim()
+      if (!normalizedOfferId || !normalizedKeyId) return
+
+      const status = nextStatus === "used" ? "used" : "available"
+      try {
+        const store = readEldoradoKeyStore()
+        const list = Array.isArray(store[normalizedOfferId]) ? store[normalizedOfferId] : []
+        let didUpdate = false
+
+        const nextList = list.map((item) => {
+          if (item.id !== normalizedKeyId) return item
+          const currentStatus = item?.status === "used" ? "used" : "available"
+          if (currentStatus === status) return item
+          didUpdate = true
+          return { ...item, status }
+        })
+
+        if (!didUpdate) return
+
+        store[normalizedOfferId] = nextList
+        const saved = writeEldoradoKeyStore(store)
+        if (!saved) return
+
+        setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
+        updateEldoradoStockCounts(normalizedOfferId, getEldoradoKeyCounts(nextList))
+        toast.success(status === "used" ? "Stok kullanildi" : "Stok geri alindi")
+      } catch (error) {
+        console.error(error)
+        toast.error("Stok durumu guncellenemedi (local storage).")
+      }
+    },
+    [getEldoradoKeyCounts, readEldoradoKeyStore, updateEldoradoStockCounts, writeEldoradoKeyStore],
   )
 
   const handleEldoradoKeyCopy = async (code) => {
     const value = String(code ?? "").trim()
     if (!value) {
-      toast.error("Anahtar bulunamadi.")
+      toast.error("Stok bulunamadi.")
       return
     }
     try {
       await navigator.clipboard.writeText(value)
-      toast.success("Anahtar kopyalandi", { duration: 1500, position: "top-right" })
+      toast.success("Stok kopyalandi", { duration: 1500, position: "top-right" })
     } catch (error) {
       console.error(error)
       toast.error("Kopyalanamadi", { duration: 1500, position: "top-right" })
@@ -4199,6 +4267,7 @@ export default function useAppData() {
     loadEldoradoKeys,
     handleEldoradoKeysAdd,
     handleEldoradoKeyDelete,
+    handleEldoradoKeyStatusUpdate,
     handleEldoradoKeyCopy,
     products,
     productSearch,
