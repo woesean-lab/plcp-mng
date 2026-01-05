@@ -311,20 +311,18 @@ export default function ProductsTab({
               </div>
             ) : (
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 shadow-card">
-                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,140px)] items-center gap-4 border-b border-white/10 bg-ink-900/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400 sm:grid">
+                <div className="hidden grid-cols-[minmax(0,1fr)] items-center gap-4 border-b border-white/10 bg-ink-900/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400 sm:grid">
                   <span>Urun</span>
-                  <span className="text-right">Fiyat</span>
                 </div>
                 <div className="divide-y divide-white/10">
                   {paginatedList.map((product, index) => {
                     const name = String(product?.name ?? "").trim() || "Isimsiz urun"
-                    const price = String(product?.price ?? "").trim()
                     const isMissing = Boolean(product?.missing)
                     const key = product?.id ?? `${name}-${index}`
                     return (
                       <div
                         key={key}
-                        className={`grid gap-3 px-5 py-3 transition sm:grid-cols-[minmax(0,1fr)_minmax(0,140px)] sm:items-center ${
+                        className={`grid gap-3 px-5 py-3 transition sm:grid-cols-[minmax(0,1fr)] sm:items-center ${
                           isMissing
                             ? "bg-rose-950/40 hover:bg-rose-950/55"
                             : "odd:bg-ink-900/40 even:bg-ink-900/60 hover:bg-ink-800/70"
@@ -343,22 +341,6 @@ export default function ProductsTab({
                               Eksik urun
                             </p>
                           ) : null}
-                        </div>
-                        <div className="flex items-center justify-between sm:justify-end">
-                          <span
-                            className={`text-[10px] font-semibold uppercase tracking-[0.2em] sm:hidden ${
-                              isMissing ? "text-rose-200/80" : "text-slate-400"
-                            }`}
-                          >
-                            Fiyat
-                          </span>
-                          <span
-                            className={`text-sm font-semibold ${
-                              isMissing ? "text-rose-100" : "text-white"
-                            }`}
-                          >
-                            {price || "-"}
-                          </span>
                         </div>
                       </div>
                     )

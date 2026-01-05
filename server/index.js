@@ -115,8 +115,6 @@ const normalizeEldoradoOffer = (item) => {
   const id = String(item?.id ?? "").trim()
   const name = String(item?.name ?? "").trim()
   if (!id || !name) return null
-  const priceRaw = item?.price
-  const price = priceRaw === undefined || priceRaw === null ? "" : String(priceRaw).trim()
   const hrefRaw = item?.href
   const href = hrefRaw === undefined || hrefRaw === null ? "" : String(hrefRaw).trim()
   const categoryRaw = item?.category
@@ -125,7 +123,6 @@ const normalizeEldoradoOffer = (item) => {
   return {
     id,
     name,
-    price,
     href,
     category,
     missing,
@@ -214,17 +211,21 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
   if (normalized.length === 0) return 0
   const seenAt = seenAtOverride instanceof Date ? seenAtOverride : new Date()
   const operations = normalized.map((offer) => {
-    const update = { name: offer.name, kind, lastSeenAt: seenAt, missing: offer.missing === true }
-    if (offer.href) update.href = offer.href
-    if (offer.category) update.category = offer.category
-    if (offer.price) update.price = offer.price
+    const update = {
+      name: offer.name,
+      kind,
+      lastSeenAt: seenAt,
+      missing: offer.missing === true,
+      href: offer.href || null,
+      category: offer.category || null,
+      price: null,
+    }
     return prisma.eldoradoOffer.upsert({
       where: { id: offer.id },
       update,
       create: {
         id: offer.id,
         name: offer.name,
-        price: offer.price || null,
         category: offer.category || null,
         href: offer.href || null,
         kind,
@@ -1717,22 +1718,18 @@ app.post("/api/eldorado/refresh", async (_req, res, next) => {
       pages: eldoradoTopupsPages,
       outputPath: eldoradoTopupsPath,
     })
-    try {
-      const [items, topups] = await Promise.all([
-        readJsonFile(eldoradoItemsPath),
-        readJsonFile(eldoradoTopupsPath),
-      ])
-      const itemsSyncedAt = new Date()
-      const topupsSyncedAt = new Date()
-      await syncEldoradoOffers("items", items, itemsSyncedAt)
-      await syncEldoradoOffers("topups", topups, topupsSyncedAt)
-      await Promise.all([
-        markEldoradoSync("items", itemsSyncedAt),
-        markEldoradoSync("topups", topupsSyncedAt),
-      ])
-    } catch (error) {
-      console.warn("Failed to persist Eldorado offers to database.", error)
-    }
+    const [items, topups] = await Promise.all([
+      readJsonFile(eldoradoItemsPath),
+      readJsonFile(eldoradoTopupsPath),
+    ])
+    const itemsSyncedAt = new Date()
+    const topupsSyncedAt = new Date()
+    await syncEldoradoOffers("items", items, itemsSyncedAt)
+    await syncEldoradoOffers("topups", topups, topupsSyncedAt)
+    await Promise.all([
+      markEldoradoSync("items", itemsSyncedAt),
+      markEldoradoSync("topups", topupsSyncedAt),
+    ])
     const catalog = await loadEldoradoCatalog()
     res.json({ ok: true, catalog })
   } catch (error) {
