@@ -180,7 +180,6 @@ function App() {
     isEldoradoLoading,
     isEldoradoRefreshing,
     refreshEldoradoCatalog,
-    saveEldoradoDeliveryMap,
     products,
     productSearch,
     setProductSearch,
@@ -948,10 +947,6 @@ function App() {
               isLoading={isProductsTabLoading}
               isRefreshing={isEldoradoRefreshing}
               onRefresh={refreshEldoradoCatalog}
-              templates={templates}
-              products={products}
-              splitStocks={splitStocks}
-              onSaveDeliveryMap={saveEldoradoDeliveryMap}
             />
           </div>
         )}

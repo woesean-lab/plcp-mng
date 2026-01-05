@@ -2164,49 +2164,6 @@ export default function useAppData() {
     }
   }, [apiFetch, isEldoradoRefreshing])
 
-  const saveEldoradoDeliveryMap = useCallback(
-    async (offerId, payload) => {
-      const safeId = String(offerId ?? "").trim()
-      if (!safeId) throw new Error("invalid_offer")
-      const toastId = toast.loading("Teslimat haritasi kaydediliyor...")
-      try {
-        const res = await apiFetch(`/api/eldorado/offers/${safeId}/delivery-map`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload ?? {}),
-        })
-        if (!res.ok) {
-          if (res.status === 404) throw new Error("Urun bulunamadi.")
-          throw new Error("Kayit basarisiz (API/Server kontrol edin).")
-        }
-        const data = await res.json()
-        const updated = data?.offer
-        if (updated?.id) {
-          setEldoradoCatalog((prev) => {
-            const apply = (list) =>
-              Array.isArray(list)
-                ? list.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
-                : []
-            return {
-              ...prev,
-              items: apply(prev?.items),
-              topups: apply(prev?.topups),
-              currency: prev?.currency ?? [],
-              accounts: prev?.accounts ?? [],
-              giftCards: prev?.giftCards ?? [],
-            }
-          })
-        }
-        toast.success("Teslimat haritasi kaydedildi.", { id: toastId })
-        return updated
-      } catch (error) {
-        toast.error(error?.message || "Teslimat haritasi kaydedilemedi.", { id: toastId })
-        throw error
-      }
-    },
-    [apiFetch],
-  )
-
   useEffect(() => {
     if (!isAuthed || !permissions.includes(PERMISSIONS.stockView)) {
       setEldoradoCatalog(normalizeEldoradoCatalog(null))
@@ -3977,7 +3934,6 @@ export default function useAppData() {
     isEldoradoLoading,
     isEldoradoRefreshing,
     refreshEldoradoCatalog,
-    saveEldoradoDeliveryMap,
     products,
     productSearch,
     setProductSearch,
