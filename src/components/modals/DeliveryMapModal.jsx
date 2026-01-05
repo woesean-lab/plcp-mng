@@ -5,11 +5,8 @@ import { toast } from "react-hot-toast"
 const tokenBaseClass =
   "inline-flex items-center gap-2 rounded-md border border-white/10 bg-ink-900/80 px-2.5 py-1 text-[11px] font-medium text-slate-200 transition hover:border-white/30 hover:text-white"
 const tokenNodeClass = tokenBaseClass
-const tokenButtonClass = tokenBaseClass
 const actionButtonClass =
   "inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-const selectTriggerClass =
-  "flex w-full flex-col items-start gap-1 rounded-md border border-white/10 bg-ink-900 px-3 py-2 text-left transition hover:border-white/30 hover:bg-ink-900/90 disabled:cursor-not-allowed disabled:opacity-50"
 
 const createTokenNode = ({ type, label, value, productId }) => {
   const node = document.createElement("span")
@@ -50,8 +47,6 @@ export default function DeliveryMapModal({
   const [lineCount, setLineCount] = useState(1)
   const [charCount, setCharCount] = useState(0)
   const [isEditing, setIsEditing] = useState(false)
-  const [showTemplatePicker, setShowTemplatePicker] = useState(false)
-  const [showStockPicker, setShowStockPicker] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState("")
 
   const stockOptions = useMemo(
@@ -64,9 +59,6 @@ export default function DeliveryMapModal({
         .filter((item) => item.id && item.name),
     [safeProducts],
   )
-  const selectedStockLabel =
-    stockOptions.find((option) => option.id === selectedProductId)?.name || "Urun sec"
-
   const getAvailableStockCodes = (productId) => {
     const target = safeProducts.find((item) => item.id === productId)
     if (!target) return []
@@ -116,13 +108,6 @@ export default function DeliveryMapModal({
       }
     }
   }, [draft.note, isOpen])
-
-  useEffect(() => {
-    if (!isEditing) {
-      setShowTemplatePicker(false)
-      setShowStockPicker(false)
-    }
-  }, [isEditing])
 
   const handleEditorInput = () => {
     if (!isEditing) return
@@ -211,7 +196,6 @@ export default function DeliveryMapModal({
       value: template.value,
     })
     insertTokenAtCursor(token)
-    setShowTemplatePicker(false)
   }
 
   const handleStockInsert = () => {
@@ -231,7 +215,6 @@ export default function DeliveryMapModal({
     })
     insertTokenAtCursor(token)
     setSelectedProductId("")
-    setShowStockPicker(false)
   }
 
   const handleEditorDragStart = (event) => {
@@ -327,141 +310,73 @@ export default function DeliveryMapModal({
         </div>
 
         <div className="max-h-[70vh] overflow-y-auto">
-          <div className="grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
-            <div className="space-y-4">
+          <div className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,180px)_minmax(0,1fr)]">
+            <div className="space-y-3">
               <div className="rounded-lg border border-white/10 bg-ink-900/70 p-3">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
                   Mesaj sablonu
                 </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowTemplatePicker((prev) => !prev)
-                    setShowStockPicker(false)
-                  }}
-                  disabled={!isEditing}
-                  aria-expanded={showTemplatePicker}
-                  className={`${selectTriggerClass} mt-2 ${showTemplatePicker ? "border-white/30" : ""}`}
-                >
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                    Sablon
-                  </span>
-                  <span className="flex w-full items-center justify-between gap-2 text-xs font-semibold text-slate-100">
-                    <span className="truncate">{draft.template || "Sec"}</span>
-                    <svg
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                      className="h-3 w-3 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </span>
-                </button>
-
-                {showTemplatePicker && (
-                  <div className="mt-2 rounded-md border border-white/10 bg-ink-900 p-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                        Sablonlar
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowTemplatePicker(false)}
-                        className="text-[10px] font-semibold text-slate-400 transition hover:text-slate-200"
-                      >
-                        Kapat
-                      </button>
-                    </div>
-                    <div className="mt-2 flex max-h-40 flex-wrap gap-2 overflow-auto">
-                      {safeTemplates.length > 0 ? (
-                        safeTemplates.map((tpl) => (
-                          <button
-                            key={tpl.id ?? tpl.label}
-                            type="button"
-                            onClick={() => handleTemplateInsert(tpl)}
-                            className={tokenButtonClass}
-                          >
-                            {tpl.label}
-                          </button>
-                        ))
-                      ) : (
-                        <p className="text-xs text-slate-500">Sablon bulunamadi.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <div className="mt-2 space-y-2">
+                  <select
+                    value={draft.template || ""}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, template: event.target.value }))
+                    }
+                    disabled={!isEditing}
+                    className="w-full rounded-md border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Sablon sec</option>
+                    {safeTemplates.map((tpl) => (
+                      <option key={tpl.id ?? tpl.label} value={tpl.label}>
+                        {tpl.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const selectedTemplate = safeTemplates.find(
+                        (tpl) => tpl.label === draft.template,
+                      )
+                      if (!selectedTemplate) {
+                        toast.error("Sablon secmelisin.")
+                        return
+                      }
+                      handleTemplateInsert(selectedTemplate)
+                    }}
+                    disabled={!isEditing}
+                    className={`${actionButtonClass} w-full`}
+                  >
+                    Ekle
+                  </button>
+                </div>
               </div>
 
               <div className="rounded-lg border border-white/10 bg-ink-900/70 p-3">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Stok</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowStockPicker((prev) => !prev)
-                    setShowTemplatePicker(false)
-                  }}
-                  disabled={!isEditing}
-                  aria-expanded={showStockPicker}
-                  className={`${selectTriggerClass} mt-2 ${showStockPicker ? "border-white/30" : ""}`}
-                >
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                    Urun sec
-                  </span>
-                  <span className="flex w-full items-center justify-between gap-2 text-xs font-semibold text-slate-100">
-                    <span className="truncate">{selectedStockLabel}</span>
-                    <svg
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                      className="h-3 w-3 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </span>
-                </button>
-
-                {showStockPicker && (
-                  <div className="mt-2 rounded-md border border-white/10 bg-ink-900 p-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                        Stok secimi
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowStockPicker(false)}
-                        className="text-[10px] font-semibold text-slate-400 transition hover:text-slate-200"
-                      >
-                        Kapat
-                      </button>
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <select
-                        value={selectedProductId}
-                        onChange={(event) => setSelectedProductId(event.target.value)}
-                        className="min-w-[200px] flex-1 rounded-md border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/10"
-                      >
-                        <option value="">Urun sec</option>
-                        {stockOptions.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="button" onClick={handleStockInsert} className={actionButtonClass}>
-                        Ekle
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <div className="mt-2 space-y-2">
+                  <select
+                    value={selectedProductId}
+                    onChange={(event) => setSelectedProductId(event.target.value)}
+                    disabled={!isEditing}
+                    className="w-full rounded-md border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Urun sec</option>
+                    {stockOptions.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleStockInsert}
+                    disabled={!isEditing}
+                    className={`${actionButtonClass} w-full`}
+                  >
+                    Ekle
+                  </button>
+                </div>
               </div>
 
               <p className="text-[11px] text-slate-500">
@@ -478,10 +393,10 @@ export default function DeliveryMapModal({
                   {charCount} karakter | {lineCount} satir
                 </span>
               </div>
-              <div className="flex max-h-[420px] overflow-hidden">
+              <div className="flex max-h-[480px] overflow-hidden">
                 <div
                   ref={lineRef}
-                  className="w-10 shrink-0 overflow-hidden border-r border-white/10 bg-ink-900 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
+                  className="w-8 shrink-0 overflow-hidden border-r border-white/10 bg-ink-900 px-2 py-3 text-right font-mono text-[11px] leading-6 text-slate-500"
                 >
                   {Array.from({ length: lineCount }, (_, index) => (
                     <div key={index}>{index + 1}</div>
@@ -505,7 +420,7 @@ export default function DeliveryMapModal({
                     onDragEnd={handleEditorDragEnd}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={handleEditorDrop}
-                    className={`h-full min-h-[360px] overflow-auto bg-ink-900/60 px-4 py-3 font-mono text-[13px] leading-6 outline-none transition ${
+                    className={`h-full min-h-[420px] overflow-auto bg-ink-900/60 px-4 py-3 font-mono text-[13px] leading-6 outline-none transition ${
                       isEditing ? "text-slate-100" : "text-slate-300"
                     }`}
                   />
