@@ -87,6 +87,7 @@ export default function ProductsTab({
   keysDeleting = {},
   groups = [],
   groupAssignments = {},
+  notesByOffer = {},
   onLoadKeys,
   onAddKeys,
   onDeleteKey,
@@ -95,6 +96,7 @@ export default function ProductsTab({
   onCopyKey,
   onCreateGroup,
   onAssignGroup,
+  onSaveNote,
   canAddKeys = false,
   canDeleteKeys = false,
   canCopyKeys = false,
@@ -105,7 +107,10 @@ export default function ProductsTab({
   const [confirmKeyTarget, setConfirmKeyTarget] = useState(null)
   const [groupDrafts, setGroupDrafts] = useState({})
   const [bulkCounts, setBulkCounts] = useState({})
+  const [noteDrafts, setNoteDrafts] = useState({})
+  const [noteTargets, setNoteTargets] = useState({})
   const canManageGroups = canAddKeys
+  const canManageNotes = canAddKeys && typeof onSaveNote === "function"
   const canUpdateKeys = typeof onUpdateKeyStatus === "function" && canCopyKeys
   const items = Array.isArray(catalog?.items) ? catalog.items : []
   const topups = Array.isArray(catalog?.topups) ? catalog.topups : []
@@ -128,6 +133,20 @@ export default function ProductsTab({
     list.sort((a, b) => a.label.localeCompare(b.label, "tr"))
     return [{ key: "all", label: "Tumu", items: allProducts }, ...list]
   }, [allProducts, categoryMap])
+  const noteTargetOptions = useMemo(() => {
+    const seen = new Set()
+    return allProducts
+      .map((product, index) => {
+        const id = String(product?.id ?? "").trim()
+        if (!id || seen.has(id)) return null
+        seen.add(id)
+        const name = String(product?.name ?? "").trim() || `Urun ${index + 1}`
+        const categoryKey = getCategoryKey(product)
+        const categoryLabel = categoryKey === "diger" ? "Diger" : formatCategoryLabel(categoryKey)
+        return { id, label: `${name} (${categoryLabel})` }
+      })
+      .filter(Boolean)
+  }, [allProducts])
   const [activeCategoryKey, setActiveCategoryKey] = useState("all")
   const activeCategory = categories.find((category) => category.key === activeCategoryKey) ?? categories[0]
   const canRefresh = typeof onRefresh === "function"
@@ -221,6 +240,52 @@ export default function ProductsTab({
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     onAssignGroup(normalizedId, groupId)
+  }
+
+  const handleNoteDraftChange = (offerId, value) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setNoteDrafts((prev) => ({ ...prev, [normalizedId]: value }))
+  }
+
+  const handleNoteTargetChange = (offerId, value) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setNoteTargets((prev) => ({ ...prev, [normalizedId]: value }))
+  }
+
+  const handleNoteReset = (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setNoteDrafts((prev) => {
+      const next = { ...prev }
+      delete next[normalizedId]
+      return next
+    })
+  }
+
+  const handleNoteSave = (offerId) => {
+    if (!canManageNotes) return
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    const draft = noteDrafts[normalizedId]
+    const stored = notesByOffer?.[normalizedId] ?? ""
+    const value = draft !== undefined ? draft : stored
+    onSaveNote(normalizedId, value)
+    handleNoteReset(normalizedId)
+  }
+
+  const handleNoteApply = (offerId) => {
+    if (!canManageNotes) return
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    const targetId = String(noteTargets?.[normalizedId] ?? "").trim()
+    if (!targetId || targetId === normalizedId) return
+    const draft = noteDrafts[normalizedId]
+    const stored = notesByOffer?.[normalizedId] ?? ""
+    const value = draft !== undefined ? draft : stored
+    if (!String(value ?? "").trim()) return
+    onSaveNote(targetId, value)
   }
 
   const handleKeyDelete = (offerId, keyId) => {
@@ -474,6 +539,17 @@ export default function ProductsTab({
                   const isKeysSaving = Boolean(keysSaving?.[offerId])
                   const keyDraftValue = keyDrafts[offerId] ?? ""
                   const groupDraftValue = groupDrafts[offerId] ?? ""
+                  const storedNote = String(notesByOffer?.[offerId] ?? "").trim()
+                  const noteDraftValue = noteDrafts[offerId]
+                  const noteInputValue = noteDraftValue !== undefined ? noteDraftValue : storedNote
+                  const noteTargetValue = String(noteTargets?.[offerId] ?? "").trim()
+                  const noteHasChanges = String(noteInputValue ?? "").trim() !== storedNote
+                  const canSaveNote = Boolean(offerId) && canManageNotes && noteHasChanges
+                  const canApplyNote =
+                    Boolean(offerId) && canManageNotes && noteTargetValue && String(noteInputValue ?? "").trim()
+                  const availableNoteTargets = noteTargetOptions.filter(
+                    (option) => option.id !== offerId,
+                  )
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -849,6 +925,68 @@ export default function ProductsTab({
                                       </button>
                                     </div>
                                   )}
+                                </div>
+                              </div>
+                              <div className="rounded-xl border border-white/10 bg-ink-900/60 p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-[11px] font-semibold text-slate-400">Urun notu</p>
+                                    <p className="text-xs text-slate-500">Not urun bazinda saklanir.</p>
+                                  </div>
+                                  {storedNote && !noteHasChanges && (
+                                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+                                      Kayitli
+                                    </span>
+                                  )}
+                                </div>
+                                <textarea
+                                  rows={3}
+                                  value={noteInputValue ?? ""}
+                                  onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
+                                  placeholder="Urun notu ekle"
+                                  disabled={!canManageNotes}
+                                  className="mt-3 w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                />
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleNoteSave(offerId)}
+                                    disabled={!canSaveNote}
+                                    className="rounded-lg border border-accent-300/70 bg-accent-500/15 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Kaydet
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleNoteReset(offerId)}
+                                    disabled={noteDraftValue === undefined}
+                                    className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Sifirla
+                                  </button>
+                                </div>
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                  <select
+                                    value={noteTargetValue}
+                                    onChange={(event) => handleNoteTargetChange(offerId, event.target.value)}
+                                    disabled={!canManageNotes || availableNoteTargets.length === 0}
+                                    className="min-w-[180px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    <option value="">Notu baska urune uygula</option>
+                                    {availableNoteTargets.map((option) => (
+                                      <option key={option.id} value={option.id}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleNoteApply(offerId)}
+                                    disabled={!canApplyNote}
+                                    className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Uygula
+                                  </button>
                                 </div>
                               </div>
                             </div>

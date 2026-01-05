@@ -7,6 +7,7 @@ import {
   DEFAULT_LIST_ROWS,
   ELDORADO_KEYS_STORAGE_KEY,
   ELDORADO_GROUPS_STORAGE_KEY,
+  ELDORADO_NOTES_STORAGE_KEY,
   FORMULA_ERRORS,
   LIST_AUTO_SAVE_DELAY_MS,
   LIST_CELL_TONE_CLASSES,
@@ -165,6 +166,26 @@ export default function useAppData() {
   const [eldoradoKeysDeleting, setEldoradoKeysDeleting] = useState({})
   const [eldoradoGroups, setEldoradoGroups] = useState([])
   const [eldoradoGroupAssignments, setEldoradoGroupAssignments] = useState({})
+  const [eldoradoNotesByOffer, setEldoradoNotesByOffer] = useState(() => {
+    if (typeof window === "undefined") return {}
+    try {
+      const raw = localStorage.getItem(ELDORADO_NOTES_STORAGE_KEY)
+      if (!raw) return {}
+      const parsed = JSON.parse(raw)
+      if (!parsed || typeof parsed !== "object") return {}
+      const normalized = {}
+      Object.entries(parsed).forEach(([offerId, note]) => {
+        const safeOfferId = String(offerId ?? "").trim()
+        const safeNote = String(note ?? "").trim()
+        if (!safeOfferId || !safeNote) return
+        normalized[safeOfferId] = safeNote
+      })
+      return normalized
+    } catch (error) {
+      console.warn("Could not read local Eldorado notes", error)
+      return {}
+    }
+  })
   const stockModalTextareaRef = useRef(null)
   const stockModalLineRef = useRef(null)
   const isStockTextSelectingRef = useRef(false)
@@ -2232,6 +2253,18 @@ export default function useAppData() {
     }
   }, [])
 
+  const writeEldoradoNoteStore = useCallback((store) => {
+    if (typeof window === "undefined") return false
+    try {
+      localStorage.setItem(ELDORADO_NOTES_STORAGE_KEY, JSON.stringify(store))
+      return true
+    } catch (error) {
+      console.warn("Could not save local Eldorado notes", error)
+      toast.error("Urun notlari kaydedilemedi (local storage).")
+      return false
+    }
+  }, [])
+
   const readEldoradoGroupStore = useCallback(() => {
     if (typeof window === "undefined") return { groups: [], assignments: {} }
     try {
@@ -2276,6 +2309,10 @@ export default function useAppData() {
       return { groups: [], assignments: {} }
     }
   }, [normalizeEldoradoGroupList, readEldoradoKeyStore, writeEldoradoGroupStore])
+
+  useEffect(() => {
+    writeEldoradoNoteStore(eldoradoNotesByOffer)
+  }, [eldoradoNotesByOffer, writeEldoradoNoteStore])
 
   const getEldoradoKeyCounts = useCallback((list) => {
     const safeList = Array.isArray(list) ? list : []
@@ -2533,6 +2570,22 @@ export default function useAppData() {
       writeEldoradoKeyStore,
     ],
   )
+
+  const handleEldoradoNoteSave = useCallback((offerId, rawNote) => {
+    const normalizedOfferId = String(offerId ?? "").trim()
+    if (!normalizedOfferId) return false
+    const trimmedNote = String(rawNote ?? "").trim()
+    setEldoradoNotesByOffer((prev) => {
+      const next = { ...prev }
+      if (trimmedNote) {
+        next[normalizedOfferId] = trimmedNote
+      } else {
+        delete next[normalizedOfferId]
+      }
+      return next
+    })
+    return true
+  }, [])
 
   const loadEldoradoKeys = useCallback(
     async (offerId, options = {}) => {
@@ -4606,6 +4659,7 @@ export default function useAppData() {
     eldoradoKeysDeleting,
     eldoradoGroups,
     eldoradoGroupAssignments,
+    eldoradoNotesByOffer,
     isEldoradoLoading,
     isEldoradoRefreshing,
     refreshEldoradoCatalog,
@@ -4617,6 +4671,7 @@ export default function useAppData() {
     handleEldoradoKeyCopy,
     handleEldoradoGroupCreate,
     handleEldoradoGroupAssign,
+    handleEldoradoNoteSave,
     products,
     productSearch,
     setProductSearch,
