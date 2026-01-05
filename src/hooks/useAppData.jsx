@@ -2190,6 +2190,17 @@ export default function useAppData() {
     }
   }, [])
 
+  const getEldoradoKeyCounts = useCallback((list) => {
+    const safeList = Array.isArray(list) ? list : []
+    const used = safeList.reduce(
+      (acc, item) => acc + (item?.status === "used" ? 1 : 0),
+      0,
+    )
+    const total = safeList.length
+    const available = Math.max(0, total - used)
+    return { available, used, total }
+  }, [])
+
   const applyEldoradoKeyCounts = useCallback(
     (catalog) => {
       const safeCatalog = normalizeEldoradoCatalog(catalog)
@@ -2214,17 +2225,6 @@ export default function useAppData() {
     },
     [getEldoradoKeyCounts, readEldoradoKeyStore],
   )
-
-  const getEldoradoKeyCounts = useCallback((list) => {
-    const safeList = Array.isArray(list) ? list : []
-    const used = safeList.reduce(
-      (acc, item) => acc + (item?.status === "used" ? 1 : 0),
-      0,
-    )
-    const total = safeList.length
-    const available = Math.max(0, total - used)
-    return { available, used, total }
-  }, [])
 
   const updateEldoradoStockCounts = useCallback((offerId, counts) => {
     const normalizedId = String(offerId ?? "").trim()
