@@ -177,7 +177,6 @@ export default function ProductsTab({
 
   const handleDeliverySave = async () => {
     if (!deliveryTarget || typeof onSaveDeliveryMap !== "function") {
-      setDeliveryTarget(null)
       return
     }
     setIsDeliverySaving(true)
@@ -188,7 +187,6 @@ export default function ProductsTab({
         template: "",
         stock: "",
       })
-      setDeliveryTarget(null)
     } finally {
       setIsDeliverySaving(false)
     }
@@ -400,10 +398,10 @@ export default function ProductsTab({
                           <button
                             type="button"
                             onClick={() => handleDeliveryOpen(product)}
-                            className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] transition ${
+                            className={`inline-flex items-center rounded-lg border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] transition hover:-translate-y-0.5 ${
                               isMissing
-                                ? "border-rose-400/50 bg-rose-950/50 text-rose-100 hover:border-rose-300/70"
-                                : "border-white/10 bg-ink-950/60 text-slate-200 hover:border-accent-300/60 hover:text-accent-100"
+                                ? "border-rose-400/50 bg-rose-950/50 text-rose-100 hover:border-rose-300/70 hover:bg-rose-500/10"
+                                : "border-white/15 bg-white/5 text-slate-200 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
                             }`}
                           >
                             Teslimat haritasi

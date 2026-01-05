@@ -2,6 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 
+const tokenBaseClass =
+  "inline-flex items-center gap-2 rounded-lg border border-white/12 bg-ink-900/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200 shadow-inner transition hover:border-accent-300/60 hover:text-accent-100"
+const tokenNodeClass = `${tokenBaseClass} cursor-move`
+const tokenButtonClass = `${tokenBaseClass} cursor-pointer`
+const actionButtonClass =
+  "inline-flex items-center justify-center rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-50"
+
 const createTokenNode = ({ type, label, value, productId }) => {
   const node = document.createElement("span")
   node.dataset.token = type
@@ -10,8 +17,7 @@ const createTokenNode = ({ type, label, value, productId }) => {
   if (productId) node.dataset.productId = productId
   node.setAttribute("contenteditable", "false")
   node.setAttribute("draggable", "true")
-  node.className =
-    "inline-flex cursor-move items-center gap-2 rounded-lg border border-white/15 bg-ink-900/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-100 shadow-inner transition hover:border-accent-300/60 hover:text-accent-100"
+  node.className = tokenNodeClass
   node.textContent = label || "Islev"
   return node
 }
@@ -31,8 +37,6 @@ export default function DeliveryMapModal({
   if (!isOpen) return null
 
   const safeTemplates = Array.isArray(templates) ? templates : []
-  const selectedTemplate = safeTemplates.find((tpl) => tpl.label === draft.template)
-  const hasTemplate = Boolean(selectedTemplate?.value)
   const safeProducts = Array.isArray(products) ? products : []
 
   const editorRef = useRef(null)
@@ -43,7 +47,6 @@ export default function DeliveryMapModal({
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
   const [showStockPicker, setShowStockPicker] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState("")
-  const [stockPreview, setStockPreview] = useState(null)
 
   const stockOptions = useMemo(
     () =>
@@ -124,10 +127,16 @@ export default function DeliveryMapModal({
     }
     if (type === "stock") {
       const productId = token.dataset.productId || ""
-      const productLabel = token.dataset.label || "Stok"
       if (!productId) return
       const codes = getAvailableStockCodes(productId)
-      setStockPreview({ productId, label: productLabel, codes })
+      if (codes.length === 0) {
+        toast.error("Kullanilabilir stok yok.")
+        return
+      }
+      navigator.clipboard
+        .writeText(codes.join("\n"))
+        .then(() => toast.success(`${codes.length} stok kopyalandi.`))
+        .catch(() => toast.error("Kopyalanamadi."))
     }
   }
 
@@ -169,16 +178,17 @@ export default function DeliveryMapModal({
     handleEditorInput()
   }
 
-  const handleTemplateInsert = () => {
+  const handleTemplateInsert = (template) => {
     if (!isEditing) {
       toast.error("Once duzenlemeyi ac.")
       return
     }
-    if (!selectedTemplate?.value) return
+    if (!template?.value) return
+    setDraft((prev) => ({ ...prev, template: template.label }))
     const token = createTokenNode({
       type: "message",
-      label: selectedTemplate.label,
-      value: selectedTemplate.value,
+      label: template.label,
+      value: template.value,
     })
     insertTokenAtCursor(token)
     setShowTemplatePicker(false)
@@ -200,6 +210,7 @@ export default function DeliveryMapModal({
       productId: target.id,
     })
     insertTokenAtCursor(token)
+    setSelectedProductId("")
     setShowStockPicker(false)
   }
 
@@ -271,218 +282,157 @@ export default function DeliveryMapModal({
         </div>
 
         <div className="max-h-[70vh] overflow-y-auto p-4">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
-            <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 shadow-inner">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-ink-900/80 px-4 py-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Teslimat notu
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Mesaj ve stok butonlarini notun icine yerlestir.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
-                      isEditing
-                        ? "border-accent-400/60 bg-accent-500/15 text-accent-100"
-                        : "border-white/10 bg-white/5 text-slate-300"
-                    }`}
-                  >
-                    {isEditing ? "Duzenleme acik" : "Salt okuma"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleEnableEditing}
-                    disabled={isEditing}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Duzenle
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-3 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowTemplatePicker((prev) => !prev)
-                      setShowStockPicker(false)
-                    }}
-                    disabled={!isEditing}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Mesaj ekle
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowStockPicker((prev) => !prev)
-                      setShowTemplatePicker(false)
-                    }}
-                    disabled={!isEditing}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Stok goster
-                  </button>
-                </div>
-
-                {showTemplatePicker && (
-                  <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={draft.template}
-                        onChange={(event) =>
-                          setDraft((prev) => ({ ...prev, template: event.target.value }))
-                        }
-                        className="min-w-[200px] flex-1 rounded-xl border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
-                      >
-                        <option value="">Sablon sec</option>
-                        {safeTemplates.map((tpl) => (
-                          <option key={tpl.id ?? tpl.label} value={tpl.label}>
-                            {tpl.label}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={handleTemplateInsert}
-                        disabled={!hasTemplate}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Ekle
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {showStockPicker && (
-                  <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={selectedProductId}
-                        onChange={(event) => setSelectedProductId(event.target.value)}
-                        className="min-w-[200px] flex-1 rounded-xl border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
-                      >
-                        <option value="">Urun sec</option>
-                        {stockOptions.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={handleStockInsert}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-                      >
-                        Ekle
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="rounded-2xl border border-white/10 bg-ink-950/50 p-2">
-                  <div className="relative rounded-xl border border-white/10 bg-ink-900/80 px-3 py-3 shadow-inner focus-within:border-accent-400/60 focus-within:ring-1 focus-within:ring-accent-500/20">
-                    {editorEmpty && (
-                      <div className="pointer-events-none absolute left-4 top-3 text-sm text-slate-500">
-                        Teslimat notunu buraya yaz...
-                      </div>
-                    )}
-                    <div
-                      ref={editorRef}
-                      role="textbox"
-                      contentEditable={isEditing}
-                      aria-readonly={!isEditing}
-                      onInput={handleEditorInput}
-                      onClick={handleEditorClick}
-                      onDragStart={handleEditorDragStart}
-                      onDragEnd={handleEditorDragEnd}
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={handleEditorDrop}
-                      className={`min-h-[240px] rounded-lg px-3 py-2 font-mono text-[13px] leading-6 outline-none transition ${
-                        isEditing
-                          ? "bg-ink-900/70 text-slate-100"
-                          : "bg-ink-900/40 text-slate-300"
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <aside className="space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-3">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 shadow-inner">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-ink-900/80 px-4 py-3">
+              <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                  Ipuclari
+                  Teslimat notu
                 </p>
-                <ul className="mt-2 space-y-1 text-xs text-slate-400">
-                  <li>Mesaj ekle ile sablonu notun icine koy.</li>
-                  <li>Stok goster tokenine tiklayinca liste acilir.</li>
-                  <li>Tokenlari editor icinde surukleyip konumlandir.</li>
-                </ul>
+                <p className="text-xs text-slate-500">
+                  Mesaj ve stok butonlarini notun icine yerlestir.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                    isEditing
+                      ? "border-accent-400/60 bg-accent-500/15 text-accent-100"
+                      : "border-white/10 bg-white/5 text-slate-300"
+                  }`}
+                >
+                  {isEditing ? "Duzenleme acik" : "Salt okuma"}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleEnableEditing}
+                  disabled={isEditing}
+                  className={actionButtonClass}
+                >
+                  Duzenle
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTemplatePicker((prev) => !prev)
+                    setShowStockPicker(false)
+                  }}
+                  disabled={!isEditing}
+                  className={actionButtonClass}
+                >
+                  Mesaj ekle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStockPicker((prev) => !prev)
+                    setShowTemplatePicker(false)
+                  }}
+                  disabled={!isEditing}
+                  className={actionButtonClass}
+                >
+                  Stok goster
+                </button>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Stok onizleme
-                  </p>
-                  {stockPreview && (
+              {showTemplatePicker && (
+                <div className="rounded-2xl border border-white/10 bg-ink-900/80 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                      Mesaj sablonlari
+                    </p>
                     <button
                       type="button"
-                      onClick={() => setStockPreview(null)}
-                      className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400"
+                      onClick={() => setShowTemplatePicker(false)}
+                      className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 transition hover:text-slate-200"
                     >
-                      Temizle
+                      Kapat
                     </button>
-                  )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {safeTemplates.length > 0 ? (
+                      safeTemplates.map((tpl) => (
+                        <button
+                          key={tpl.id ?? tpl.label}
+                          type="button"
+                          onClick={() => handleTemplateInsert(tpl)}
+                          className={tokenButtonClass}
+                        >
+                          {tpl.label}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-500">Sablon bulunamadi.</p>
+                    )}
+                  </div>
                 </div>
-                {!stockPreview && (
-                  <p className="mt-2 text-xs text-slate-500">
-                    Henuz stok secilmedi. Not icindeki stok tokenine tikla.
-                  </p>
-                )}
-                {stockPreview && (
-                  <>
-                    <p className="mt-2 text-xs text-slate-300">{stockPreview.label}</p>
-                    <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-ink-950/70 px-3 py-2 text-xs text-slate-200">
-                      {stockPreview.codes.length > 0 ? (
-                        <ul className="space-y-1">
-                          {stockPreview.codes.map((code, index) => (
-                            <li
-                              key={`${code}-${index}`}
-                              className="font-mono text-[11px] text-slate-200"
-                            >
-                              {code}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-slate-500">Kullanilabilir stok yok.</p>
-                      )}
+              )}
+
+              {showStockPicker && (
+                <div className="rounded-2xl border border-white/10 bg-ink-900/80 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                      Stok urunu sec
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowStockPicker(false)}
+                      className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 transition hover:text-slate-200"
+                    >
+                      Kapat
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <select
+                      value={selectedProductId}
+                      onChange={(event) => setSelectedProductId(event.target.value)}
+                      className="min-w-[200px] flex-1 rounded-xl border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+                    >
+                      <option value="">Urun sec</option>
+                      {stockOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={handleStockInsert} className={actionButtonClass}>
+                      Ekle
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-white/10 bg-ink-950/50 p-2">
+                <div className="relative rounded-xl border border-white/10 bg-ink-900/80 px-3 py-3 shadow-inner focus-within:border-accent-400/60 focus-within:ring-1 focus-within:ring-accent-500/20">
+                  {editorEmpty && (
+                    <div className="pointer-events-none absolute left-4 top-3 text-sm text-slate-500">
+                      Teslimat notunu buraya yaz...
                     </div>
-                    <div className="mt-2 flex items-center justify-end">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (stockPreview.codes.length === 0) return
-                          navigator.clipboard
-                            .writeText(stockPreview.codes.join("\n"))
-                            .then(() => toast.success("Stok kopyalandi."))
-                            .catch(() => toast.error("Kopyalanamadi."))
-                        }}
-                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-                      >
-                        Kopyala
-                      </button>
-                    </div>
-                  </>
-                )}
+                  )}
+                  <div
+                    ref={editorRef}
+                    role="textbox"
+                    contentEditable={isEditing}
+                    aria-readonly={!isEditing}
+                    onInput={handleEditorInput}
+                    onClick={handleEditorClick}
+                    onDragStart={handleEditorDragStart}
+                    onDragEnd={handleEditorDragEnd}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={handleEditorDrop}
+                    className={`min-h-[240px] rounded-lg px-3 py-2 font-mono text-[13px] leading-6 outline-none transition ${
+                      isEditing
+                        ? "bg-ink-900/70 text-slate-100"
+                        : "bg-ink-900/40 text-slate-300"
+                    }`}
+                  />
+                </div>
               </div>
-            </aside>
+            </div>
           </div>
         </div>
 
