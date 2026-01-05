@@ -61,10 +61,6 @@ model EldoradoOffer {
   href      String?
   kind      String
   missing   Boolean  @default(false)
-  deliveryNote String?
-  deliveryMessage String?
-  deliveryTemplate String?
-  deliveryStock String?
   lastSeenAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
