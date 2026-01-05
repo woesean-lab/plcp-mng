@@ -184,6 +184,7 @@ function App() {
     eldoradoGroups,
     eldoradoGroupAssignments,
     eldoradoNotesByOffer,
+    eldoradoStockEnabledByOffer,
     isEldoradoRefreshing,
     refreshEldoradoCatalog,
     loadEldoradoKeys,
@@ -195,6 +196,7 @@ function App() {
     handleEldoradoGroupCreate,
     handleEldoradoGroupAssign,
     handleEldoradoNoteSave,
+    handleEldoradoStockToggle,
     products,
     productSearch,
     setProductSearch,
@@ -969,6 +971,7 @@ function App() {
               groups={eldoradoGroups}
               groupAssignments={eldoradoGroupAssignments}
               notesByOffer={eldoradoNotesByOffer}
+              stockEnabledByOffer={eldoradoStockEnabledByOffer}
               onLoadKeys={loadEldoradoKeys}
               onAddKeys={handleEldoradoKeysAdd}
               onDeleteKey={handleEldoradoKeyDelete}
@@ -978,6 +981,7 @@ function App() {
               onCreateGroup={handleEldoradoGroupCreate}
               onAssignGroup={handleEldoradoGroupAssign}
               onSaveNote={handleEldoradoNoteSave}
+              onToggleStock={handleEldoradoStockToggle}
               canAddKeys={canAddStocks}
               canDeleteKeys={canDeleteStocks}
               canCopyKeys={canCopyStocks}

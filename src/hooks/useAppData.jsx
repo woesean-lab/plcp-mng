@@ -8,6 +8,7 @@ import {
   ELDORADO_KEYS_STORAGE_KEY,
   ELDORADO_GROUPS_STORAGE_KEY,
   ELDORADO_NOTES_STORAGE_KEY,
+  ELDORADO_STOCK_ENABLED_STORAGE_KEY,
   FORMULA_ERRORS,
   LIST_AUTO_SAVE_DELAY_MS,
   LIST_CELL_TONE_CLASSES,
@@ -183,6 +184,35 @@ export default function useAppData() {
       return normalized
     } catch (error) {
       console.warn("Could not read local Eldorado notes", error)
+      return {}
+    }
+  })
+  const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState(() => {
+    if (typeof window === "undefined") return {}
+    try {
+      const raw = localStorage.getItem(ELDORADO_STOCK_ENABLED_STORAGE_KEY)
+      if (!raw) return {}
+      const parsed = JSON.parse(raw)
+      if (!parsed || typeof parsed !== "object") return {}
+      const normalized = {}
+      Object.entries(parsed).forEach(([offerId, enabled]) => {
+        const safeOfferId = String(offerId ?? "").trim()
+        if (!safeOfferId) return
+        let nextEnabled = false
+        if (enabled === true || enabled === false) {
+          nextEnabled = enabled
+        } else if (enabled === "true") {
+          nextEnabled = true
+        } else if (enabled === "false") {
+          nextEnabled = false
+        } else {
+          nextEnabled = Boolean(enabled)
+        }
+        normalized[safeOfferId] = nextEnabled
+      })
+      return normalized
+    } catch (error) {
+      console.warn("Could not read local Eldorado stock selection", error)
       return {}
     }
   })
@@ -2265,6 +2295,18 @@ export default function useAppData() {
     }
   }, [])
 
+  const writeEldoradoStockEnabledStore = useCallback((store) => {
+    if (typeof window === "undefined") return false
+    try {
+      localStorage.setItem(ELDORADO_STOCK_ENABLED_STORAGE_KEY, JSON.stringify(store))
+      return true
+    } catch (error) {
+      console.warn("Could not save local Eldorado stock selection", error)
+      toast.error("Stok secimleri kaydedilemedi (local storage).")
+      return false
+    }
+  }, [])
+
   const readEldoradoGroupStore = useCallback(() => {
     if (typeof window === "undefined") return { groups: [], assignments: {} }
     try {
@@ -2313,6 +2355,40 @@ export default function useAppData() {
   useEffect(() => {
     writeEldoradoNoteStore(eldoradoNotesByOffer)
   }, [eldoradoNotesByOffer, writeEldoradoNoteStore])
+
+  useEffect(() => {
+    writeEldoradoStockEnabledStore(eldoradoStockEnabledByOffer)
+  }, [eldoradoStockEnabledByOffer, writeEldoradoStockEnabledStore])
+
+  useEffect(() => {
+    const catalogItems = [
+      ...(Array.isArray(eldoradoCatalog?.items) ? eldoradoCatalog.items : []),
+      ...(Array.isArray(eldoradoCatalog?.topups) ? eldoradoCatalog.topups : []),
+    ]
+    if (catalogItems.length === 0) return
+    setEldoradoStockEnabledByOffer((prev) => {
+      const keyStore = readEldoradoKeyStore()
+      const groupStore = readEldoradoGroupStore()
+      const assignments = groupStore.assignments ?? {}
+      let didChange = false
+      const next = { ...prev }
+
+      catalogItems.forEach((offer) => {
+        const offerId = String(offer?.id ?? "").trim()
+        if (!offerId) return
+        if (Object.prototype.hasOwnProperty.call(next, offerId)) return
+        const assignedGroupId = String(assignments[offerId] ?? "").trim()
+        const groupId = assignedGroupId || offerId
+        const list = Array.isArray(keyStore[groupId]) ? keyStore[groupId] : []
+        if (list.length > 0 || assignedGroupId) {
+          next[offerId] = true
+          didChange = true
+        }
+      })
+
+      return didChange ? next : prev
+    })
+  }, [eldoradoCatalog, readEldoradoGroupStore, readEldoradoKeyStore])
 
   const getEldoradoKeyCounts = useCallback((list) => {
     const safeList = Array.isArray(list) ? list : []
@@ -2584,6 +2660,17 @@ export default function useAppData() {
       }
       return next
     })
+    return true
+  }, [])
+
+  const handleEldoradoStockToggle = useCallback((offerId, enabled) => {
+    const normalizedOfferId = String(offerId ?? "").trim()
+    if (!normalizedOfferId) return false
+    const nextEnabled = Boolean(enabled)
+    setEldoradoStockEnabledByOffer((prev) => ({
+      ...prev,
+      [normalizedOfferId]: nextEnabled,
+    }))
     return true
   }, [])
 
@@ -4660,6 +4747,7 @@ export default function useAppData() {
     eldoradoGroups,
     eldoradoGroupAssignments,
     eldoradoNotesByOffer,
+    eldoradoStockEnabledByOffer,
     isEldoradoLoading,
     isEldoradoRefreshing,
     refreshEldoradoCatalog,
@@ -4672,6 +4760,7 @@ export default function useAppData() {
     handleEldoradoGroupCreate,
     handleEldoradoGroupAssign,
     handleEldoradoNoteSave,
+    handleEldoradoStockToggle,
     products,
     productSearch,
     setProductSearch,

@@ -88,6 +88,7 @@ export default function ProductsTab({
   groups = [],
   groupAssignments = {},
   notesByOffer = {},
+  stockEnabledByOffer = {},
   onLoadKeys,
   onAddKeys,
   onDeleteKey,
@@ -97,6 +98,7 @@ export default function ProductsTab({
   onCreateGroup,
   onAssignGroup,
   onSaveNote,
+  onToggleStock,
   canAddKeys = false,
   canDeleteKeys = false,
   canCopyKeys = false,
@@ -111,6 +113,7 @@ export default function ProductsTab({
   const [noteTargets, setNoteTargets] = useState({})
   const canManageGroups = canAddKeys
   const canManageNotes = canAddKeys && typeof onSaveNote === "function"
+  const canManageStock = canAddKeys && typeof onToggleStock === "function"
   const canUpdateKeys = typeof onUpdateKeyStatus === "function" && canCopyKeys
   const items = Array.isArray(catalog?.items) ? catalog.items : []
   const topups = Array.isArray(catalog?.topups) ? catalog.topups : []
@@ -179,7 +182,8 @@ export default function ProductsTab({
     setConfirmKeyTarget(null)
     setOpenOffers((prev) => {
       const nextOpen = !prev[normalizedId]
-      if (nextOpen && typeof onLoadKeys === "function") {
+      const isStockEnabled = Boolean(stockEnabledByOffer?.[normalizedId])
+      if (nextOpen && isStockEnabled && typeof onLoadKeys === "function") {
         onLoadKeys(normalizedId)
       }
       return { ...prev, [normalizedId]: nextOpen }
@@ -286,6 +290,17 @@ export default function ProductsTab({
     const value = draft !== undefined ? draft : stored
     if (!String(value ?? "").trim()) return
     onSaveNote(targetId, value)
+  }
+
+  const handleStockToggle = (offerId) => {
+    if (!canManageStock) return
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    const nextEnabled = !Boolean(stockEnabledByOffer?.[normalizedId])
+    onToggleStock(normalizedId, nextEnabled)
+    if (nextEnabled && openOffers[normalizedId] && typeof onLoadKeys === "function") {
+      onLoadKeys(normalizedId)
+    }
   }
 
   const handleKeyDelete = (offerId, keyId) => {
@@ -535,6 +550,7 @@ export default function ProductsTab({
                   const categoryLabel =
                     categoryKey === "diger" ? "Diger" : formatCategoryLabel(categoryKey)
                   const isOpen = Boolean(openOffers[offerId])
+                  const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
                   const isKeysSaving = Boolean(keysSaving?.[offerId])
                   const keyDraftValue = keyDrafts[offerId] ?? ""
@@ -581,18 +597,26 @@ export default function ProductsTab({
                               >
                                 {name}
                               </span>
-                              <span
-                                className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                  availableCount === 0
-                                    ? "border border-rose-300/60 bg-rose-500/15 text-rose-50"
-                                    : "border border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
-                                }`}
-                              >
-                                {availableCount} stok
-                              </span>
-                              {usedCount > 0 && (
-                                <span className="rounded-full border border-amber-300/60 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50">
-                                  Kullanildi: {usedCount}
+                              {isStockEnabled ? (
+                                <>
+                                  <span
+                                    className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                                      availableCount === 0
+                                        ? "border border-rose-300/60 bg-rose-500/15 text-rose-50"
+                                        : "border border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
+                                    }`}
+                                  >
+                                    {availableCount} stok
+                                  </span>
+                                  {usedCount > 0 && (
+                                    <span className="rounded-full border border-amber-300/60 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50">
+                                      Kullanildi: {usedCount}
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
+                                  Stok kapali
                                 </span>
                               )}
                               {groupName && (
@@ -653,19 +677,22 @@ export default function ProductsTab({
                             <div className="flex flex-wrap items-center gap-3">
                               <span>Kategori: {categoryLabel}</span>
                               <span>Grup: {groupName || "Yok"}</span>
+                              <span>Stok: {isStockEnabled ? "Acik" : "Kapali"}</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleKeysRefresh(offerId)}
-                              disabled={!offerId || isKeysLoading}
+                              disabled={!offerId || isKeysLoading || !isStockEnabled}
                               className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              {isKeysLoading ? "Yukleniyor..." : "Yenile"}
+                              {!isStockEnabled ? "Stok kapali" : isKeysLoading ? "Yukleniyor..." : "Yenile"}
                             </button>
                           </div>
 
                           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.6fr)]">
                             <div className="space-y-4">
+                              {isStockEnabled ? (
+                                <>
                               {isKeysLoading && (
                                 <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
                                   Stoklar yukleniyor...
@@ -869,9 +896,37 @@ export default function ProductsTab({
                                   </div>
                                 </div>
                               )}
+                              </>
+                            ) : (
+                              <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                                Bu urunde stok kapali. Aktif etmek icin sagdan stok ayarini acin.
+                              </div>
+                            )}
                             </div>
 
                             <div className="space-y-3">
+                              <div className="rounded-xl border border-white/10 bg-ink-900/60 p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-[11px] font-semibold text-slate-400">Stok ayari</p>
+                                    <p className="text-xs text-slate-500">
+                                      Sadece secilen urunlerde stok yonet.
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStockToggle(offerId)}
+                                    disabled={!canManageStock || !offerId}
+                                    className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
+                                      isStockEnabled
+                                        ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
+                                        : "border-white/10 bg-white/5 text-slate-200"
+                                    } ${!canManageStock || !offerId ? "cursor-not-allowed opacity-60" : ""}`}
+                                  >
+                                    {isStockEnabled ? "Acik" : "Kapali"}
+                                  </button>
+                                </div>
+                              </div>
                               <div className="rounded-xl border border-white/10 bg-ink-900/60 p-3">
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
@@ -879,10 +934,12 @@ export default function ProductsTab({
                                       Stok grubu (opsiyonel)
                                     </p>
                                     <p className="text-xs text-slate-500">
-                                      Grup secmezsen stoklar urune ozeldir.
+                                      {isStockEnabled
+                                        ? "Grup secmezsen stoklar urune ozeldir."
+                                        : "Stok acilinca grup secilebilir."}
                                     </p>
                                   </div>
-                                  {groupId && canManageGroups && (
+                                  {groupId && canManageGroups && isStockEnabled && (
                                     <button
                                       type="button"
                                       onClick={() => handleGroupAssign(offerId, "")}
@@ -893,12 +950,12 @@ export default function ProductsTab({
                                   )}
                                 </div>
                                 <div className="mt-3 space-y-2">
-                                  <select
-                                    value={groupId}
-                                    onChange={(event) => handleGroupAssign(offerId, event.target.value)}
-                                    disabled={!canManageGroups}
-                                    className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
+                                    <select
+                                      value={groupId}
+                                      onChange={(event) => handleGroupAssign(offerId, event.target.value)}
+                                      disabled={!canManageGroups || !isStockEnabled}
+                                      className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
                                     <option value="">Grup sec</option>
                                     {groups.map((groupOption) => (
                                       <option key={groupOption.id} value={groupOption.id}>
@@ -913,12 +970,13 @@ export default function ProductsTab({
                                         value={groupDraftValue}
                                         onChange={(event) => handleGroupDraftChange(offerId, event.target.value)}
                                         placeholder="Yeni grup adi"
-                                        className="min-w-[140px] flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                        disabled={!isStockEnabled}
+                                        className="min-w-[140px] flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       />
                                       <button
                                         type="button"
                                         onClick={() => handleGroupCreate(offerId)}
-                                        disabled={!groupDraftValue.trim()}
+                                        disabled={!groupDraftValue.trim() || !isStockEnabled}
                                         className="rounded-lg border border-accent-300/70 bg-accent-500/15 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         Grup olustur
