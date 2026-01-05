@@ -151,19 +151,6 @@ export default function ProductsTab({
   const pageStart = totalItems === 0 ? 0 : (page - 1) * pageSize + 1
   const pageEnd = totalItems === 0 ? 0 : Math.min(totalItems, page * pageSize)
 
-  const openOfferDetails = (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setConfirmKeyTarget(null)
-    setOpenOffers((prev) => {
-      if (prev[normalizedId]) return prev
-      if (typeof onLoadKeys === "function") {
-        onLoadKeys(normalizedId)
-      }
-      return { ...prev, [normalizedId]: true }
-    })
-  }
-
   const toggleOfferOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
@@ -487,7 +474,6 @@ export default function ProductsTab({
                   const isKeysSaving = Boolean(keysSaving?.[offerId])
                   const keyDraftValue = keyDrafts[offerId] ?? ""
                   const groupDraftValue = groupDrafts[offerId] ?? ""
-                  const bulkCountValue = bulkCounts[offerId] ?? ""
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -499,8 +485,8 @@ export default function ProductsTab({
                       key={key}
                       className={`rounded-2xl border p-4 shadow-inner transition ${
                         isMissing
-                          ? "border-rose-300/40 bg-rose-500/10 hover:border-rose-300/70"
-                          : "border-white/10 bg-ink-900/70 hover:border-accent-400/60 hover:bg-ink-800/80 hover:shadow-card"
+                          ? "border-rose-300/30 bg-rose-500/5 hover:border-rose-300/50"
+                          : "border-white/10 bg-ink-900/70 hover:border-white/20 hover:bg-ink-900/80"
                       }`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -513,7 +499,7 @@ export default function ProductsTab({
                           <div className="space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <span
-                                className={`text-base font-semibold ${
+                                className={`text-sm font-semibold ${
                                   isMissing ? "text-rose-100" : "text-white"
                                 }`}
                               >
@@ -544,26 +530,39 @@ export default function ProductsTab({
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                              {categoryLabel}
-                            </p>
+                            <p className="text-xs text-slate-400">{categoryLabel}</p>
                           </div>
                         </button>
                         <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => openOfferDetails(offerId)}
-                            disabled={!offerId}
-                            className="inline-flex h-8 items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/15 hover:text-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Envanter
-                          </button>
+                          {href && (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                              aria-label="Urun linki"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L10.5 5.5" />
+                                <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13.5 18.5" />
+                              </svg>
+                            </a>
+                          )}
                           <button
                             type="button"
                             onClick={() => toggleOfferOpen(offerId)}
                             disabled={!offerId}
                             className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
-                              isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
+                              isOpen ? "rotate-180 border-white/20 bg-white/10 text-white" : ""
                             } ${!offerId ? "cursor-not-allowed opacity-60" : ""}`}
                             aria-label="Urun detaylarini ac/kapat"
                           >
@@ -574,208 +573,199 @@ export default function ProductsTab({
 
                       {isOpen && (
                         <div className="mt-4 space-y-4">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2 text-xs text-slate-300">
-                              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
-                                Kategori: {categoryLabel}
-                              </span>
-                              {groupName ? (
-                                <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-50">
-                                  Grup: {groupName}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400">Grup secilmedi.</span>
-                              )}
-                              {href && (
-                                <a
-                                  href={href}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-                                >
-                                  Urun linki
-                                </a>
-                              )}
+                          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span>Kategori: {categoryLabel}</span>
+                              <span>Grup: {groupName || "Yok"}</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleKeysRefresh(offerId)}
                               disabled={!offerId || isKeysLoading}
-                              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isKeysLoading ? "Yukleniyor..." : "Yenile"}
                             </button>
                           </div>
 
-                          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.6fr)]">
                             <div className="space-y-4">
-                              <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                  <div>
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                                      Stok listesi
-                                    </p>
-                                    <p className="text-sm text-slate-300">
-                                      {groupId ? "Secili stok grubunun kayitlari." : "Stok grubu secilmedi."}
-                                    </p>
-                                  </div>
-                                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
-                                    {hasLoadedKeys ? keyList.length : totalCount} kayit
-                                  </span>
+                              {isKeysLoading && (
+                                <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                                  Stoklar yukleniyor...
                                 </div>
-
-                                {!groupId && (
-                                  <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
-                                    Stok eklemek ve gormek icin once bir grup sec.
-                                  </div>
-                                )}
-
-                                {groupId && (
-                                  <div className="mt-4 space-y-3">
-                                    {isKeysLoading && (
-                                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
-                                        Stoklar yukleniyor...
-                                      </div>
-                                    )}
-                                    {!isKeysLoading && keyList.length === 0 && (
-                                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
-                                        Bu grupta stok yok.
-                                      </div>
-                                    )}
-                                    {!isKeysLoading && keyList.length > 0 && (
-                                      <div className="space-y-2">
-                                        {availableKeys.map((item, index) => {
-                                          const isDeleting = Boolean(keysDeleting?.[item.id])
-                                          return (
-                                            <div
-                                              key={item.id}
-                                              className={`flex flex-col gap-3 rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-3 py-2 shadow-inner sm:flex-row sm:items-center ${
-                                                isDeleting ? "opacity-60" : ""
-                                              }`}
-                                            >
-                                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-200">
-                                                #{index + 1}
-                                              </span>
-                                              <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
-                                                {item.code}
-                                              </p>
-                                              <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                                                {canCopyKeys && (
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => handleKeyCopy(item.code)}
-                                                    className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-slate-200 transition hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
-                                                  >
-                                                    Kopyala
-                                                  </button>
-                                                )}
-                                                {canUpdateKeys && (
-                                                  <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                      handleKeyStatusUpdate(offerId, item.id, "used")
-                                                    }
-                                                    className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 py-1 text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25"
-                                                  >
-                                                    Kullanildi
-                                                  </button>
-                                                )}
-                                                {canDeleteKeys && (
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => handleKeyDelete(offerId, item.id)}
-                                                    disabled={isDeleting}
-                                                    className={`rounded-md border px-2 py-1 text-rose-50 transition ${
-                                                      confirmKeyTarget === `${offerId}-${item.id}`
-                                                        ? "border-rose-300 bg-rose-500/25"
-                                                        : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
-                                                    }`}
-                                                  >
-                                                    {confirmKeyTarget === `${offerId}-${item.id}` ? "Onayla" : "Sil"}
-                                                  </button>
-                                                )}
-                                              </div>
-                                            </div>
-                                          )
-                                        })}
-                                        {usedKeys.length > 0 && (
-                                          <div className="mt-4 space-y-2">
-                                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                                              Kullanilanlar
-                                            </p>
-                                            {usedKeys.map((item, index) => {
-                                              const isDeleting = Boolean(keysDeleting?.[item.id])
-                                              return (
-                                                <div
-                                                  key={item.id}
-                                                  className={`flex flex-col gap-3 rounded-xl border border-amber-300/40 bg-amber-500/10 px-3 py-2 shadow-inner sm:flex-row sm:items-center ${
-                                                    isDeleting ? "opacity-60" : ""
-                                                  }`}
-                                                >
-                                                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-200">
-                                                    #{availableKeys.length + index + 1}
-                                                  </span>
-                                                  <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
-                                                    {item.code}
-                                                  </p>
-                                                  <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                                                    {canCopyKeys && (
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => handleKeyCopy(item.code)}
-                                                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-slate-200 transition hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50"
-                                                      >
-                                                        Kopyala
-                                                      </button>
-                                                    )}
-                                                    {canUpdateKeys && (
-                                                      <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                          handleKeyStatusUpdate(
-                                                            offerId,
-                                                            item.id,
-                                                            "available",
-                                                          )
-                                                        }
-                                                        className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 py-1 text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25"
-                                                      >
-                                                        Geri al
-                                                      </button>
-                                                    )}
-                                                    {canDeleteKeys && (
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => handleKeyDelete(offerId, item.id)}
-                                                        disabled={isDeleting}
-                                                        className={`rounded-md border px-2 py-1 text-rose-50 transition ${
-                                                          confirmKeyTarget === `${offerId}-${item.id}`
-                                                            ? "border-rose-300 bg-rose-500/25"
-                                                            : "border-rose-400/60 bg-rose-500/10 hover:border-rose-300 hover:bg-rose-500/20"
-                                                        }`}
-                                                      >
-                                                        {confirmKeyTarget === `${offerId}-${item.id}` ? "Onayla" : "Sil"}
-                                                      </button>
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              )
-                                            })}
-                                          </div>
+                              )}
+                              {!isKeysLoading && availableKeys.length === 0 && (
+                                <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                                  Bu urunde kullanilabilir stok yok.
+                                </div>
+                              )}
+                              {!isKeysLoading && availableKeys.length > 0 && (
+                                <div className="space-y-3 rounded-2xl border border-white/10 bg-ink-900/60 p-3">
+                                  {canCopyKeys && (
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                      <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                                        Toplu kopyala
+                                      </span>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-ink-900 px-2 py-1">
+                                          <input
+                                            id={`bulk-${offerId}`}
+                                            type="text"
+                                            value={bulkCounts[offerId] ?? availableCount}
+                                            onChange={(event) =>
+                                              handleBulkCountChange(offerId, event.target.value)
+                                            }
+                                            inputMode="numeric"
+                                            className="w-16 appearance-none bg-transparent text-xs text-slate-100 focus:outline-none"
+                                          />
+                                          <span className="text-[11px] text-slate-500">/ {availableCount}</span>
+                                        </div>
+                                        {canUpdateKeys && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleBulkCopy(offerId, true)}
+                                            className="rounded-md border border-amber-300/60 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/20"
+                                          >
+                                            Kopyala + kullanildi
+                                          </button>
                                         )}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleBulkCopy(offerId, false)}
+                                          className="rounded-md border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
+                                        >
+                                          Kopyala
+                                        </button>
                                       </div>
-                                    )}
+                                    </div>
+                                  )}
+                                  <div className="space-y-2">
+                                    {availableKeys.map((item, index) => {
+                                      const isDeleting = Boolean(keysDeleting?.[item.id])
+                                      return (
+                                        <div
+                                          key={item.id}
+                                          className={`group flex flex-col items-start gap-3 rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 transition-all duration-300 hover:border-emerald-200/70 hover:bg-emerald-500/15 sm:flex-row sm:items-center ${
+                                            isDeleting ? "opacity-60" : ""
+                                          }`}
+                                        >
+                                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-accent-300 group-hover:text-accent-100">
+                                            #{index + 1}
+                                          </span>
+                                          <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
+                                            {item.code}
+                                          </p>
+                                          <div className="flex w-full flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] sm:w-auto">
+                                            {canCopyKeys && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleKeyCopy(item.code)}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
+                                              >
+                                                Kopyala
+                                              </button>
+                                            )}
+                                            {canUpdateKeys && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleKeyStatusUpdate(offerId, item.id, "used")}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
+                                              >
+                                                Kullanildi
+                                              </button>
+                                            )}
+                                            {canDeleteKeys && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleKeyDelete(offerId, item.id)}
+                                                disabled={isDeleting}
+                                                className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
+                                                  confirmKeyTarget === `${offerId}-${item.id}`
+                                                    ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                    : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
+                                                }`}
+                                              >
+                                                {confirmKeyTarget === `${offerId}-${item.id}` ? "Onayla" : "Sil"}
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
                                   </div>
-                                )}
-                              </div>
-
-                              {canAddKeys && groupId && (
-                                <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-                                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                                </div>
+                              )}
+                              {!isKeysLoading && usedKeys.length > 0 && (
+                                <div className="space-y-3 rounded-2xl border border-white/10 bg-ink-900/60 p-3">
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                                      Kullanilan stoklar
+                                    </span>
+                                    <span className="rounded-full border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
+                                      {usedKeys.length} adet
+                                    </span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    {usedKeys.map((item, index) => {
+                                      const isDeleting = Boolean(keysDeleting?.[item.id])
+                                      return (
+                                        <div
+                                          key={item.id}
+                                          className={`group flex flex-col items-start gap-3 rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 transition-all duration-300 hover:border-rose-200/70 hover:bg-rose-500/15 sm:flex-row sm:items-center ${
+                                            isDeleting ? "opacity-60" : ""
+                                          }`}
+                                        >
+                                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-slate-300 transition group-hover:border-amber-300 group-hover:text-amber-100">
+                                            #{index + 1}
+                                          </span>
+                                          <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
+                                            {item.code}
+                                          </p>
+                                          <div className="flex w-full flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] sm:w-auto">
+                                            {canCopyKeys && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleKeyCopy(item.code)}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
+                                              >
+                                                Kopyala
+                                              </button>
+                                            )}
+                                            {canUpdateKeys && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleKeyStatusUpdate(offerId, item.id, "available")}
+                                                className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
+                                              >
+                                                Geri al
+                                              </button>
+                                            )}
+                                            {canDeleteKeys && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleKeyDelete(offerId, item.id)}
+                                                disabled={isDeleting}
+                                                className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
+                                                  confirmKeyTarget === `${offerId}-${item.id}`
+                                                    ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                    : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
+                                                }`}
+                                              >
+                                                {confirmKeyTarget === `${offerId}-${item.id}` ? "Onayla" : "Sil"}
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                              {canAddKeys && (
+                                <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-3">
+                                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                                     Stok ekle
-                                  </p>
-                                  <p className="text-sm text-slate-400">
-                                    Her satira bir stok yaz. Tekrar edenler eklenmez.
                                   </p>
                                   <textarea
                                     rows={4}
@@ -805,33 +795,33 @@ export default function ProductsTab({
                               )}
                             </div>
 
-                            <div className="space-y-4">
-                              <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+                            <div className="space-y-3">
+                              <div className="rounded-xl border border-white/10 bg-ink-900/60 p-3">
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                                      Stok grubu
+                                    <p className="text-[11px] font-semibold text-slate-400">
+                                      Stok grubu (opsiyonel)
                                     </p>
-                                    <p className="text-sm text-slate-200">
-                                      {groupName || "Grup secilmedi"}
+                                    <p className="text-xs text-slate-500">
+                                      Grup secmezsen stoklar urune ozeldir.
                                     </p>
                                   </div>
                                   {groupId && canManageGroups && (
                                     <button
                                       type="button"
                                       onClick={() => handleGroupAssign(offerId, "")}
-                                      className="rounded-lg border border-rose-400/60 bg-rose-500/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
+                                      className="rounded-md border border-rose-400/60 bg-rose-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
                                     >
-                                      Baglantiyi kaldir
+                                      Kaldir
                                     </button>
                                   )}
                                 </div>
-                                <div className="mt-3 space-y-3">
+                                <div className="mt-3 space-y-2">
                                   <select
                                     value={groupId}
                                     onChange={(event) => handleGroupAssign(offerId, event.target.value)}
                                     disabled={!canManageGroups}
-                                    className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     <option value="">Grup sec</option>
                                     {groups.map((groupOption) => (
@@ -845,17 +835,15 @@ export default function ProductsTab({
                                       <input
                                         type="text"
                                         value={groupDraftValue}
-                                        onChange={(event) =>
-                                          handleGroupDraftChange(offerId, event.target.value)
-                                        }
+                                        onChange={(event) => handleGroupDraftChange(offerId, event.target.value)}
                                         placeholder="Yeni grup adi"
-                                        className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                        className="min-w-[140px] flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                                       />
                                       <button
                                         type="button"
                                         onClick={() => handleGroupCreate(offerId)}
                                         disabled={!groupDraftValue.trim()}
-                                        className="rounded-lg border border-accent-300/70 bg-accent-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-lg border border-accent-300/70 bg-accent-500/15 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         Grup olustur
                                       </button>
@@ -863,47 +851,6 @@ export default function ProductsTab({
                                   )}
                                 </div>
                               </div>
-
-                              {canCopyKeys && groupId && (
-                                <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-                                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                                    Toplu kopyala
-                                  </p>
-                                  <p className="text-sm text-slate-400">
-                                    Adet bos ise tum kullanilabilir stoklari kopyalar.
-                                  </p>
-                                  <div className="mt-3 space-y-3">
-                                    <input
-                                      type="text"
-                                      inputMode="numeric"
-                                      value={bulkCountValue}
-                                      onChange={(event) => handleBulkCountChange(offerId, event.target.value)}
-                                      placeholder="Adet"
-                                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                                    />
-                                    <div className="flex flex-wrap gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleBulkCopy(offerId, false)}
-                                        disabled={isKeysLoading}
-                                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                      >
-                                        Toplu kopyala
-                                      </button>
-                                      {canUpdateKeys && (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleBulkCopy(offerId, true)}
-                                          disabled={isKeysLoading}
-                                          className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                          Kopyala + kullanildi
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -974,3 +921,4 @@ export default function ProductsTab({
     </div>
   )
 }
+

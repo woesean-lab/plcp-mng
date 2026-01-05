@@ -2298,12 +2298,13 @@ export default function useAppData() {
       const withCounts = (list) =>
         Array.isArray(list)
           ? list.map((offer) => {
-            const groupId = assignments[offer.id] ?? ""
-            const counts = groupId ? getEldoradoKeyCounts(keyStore[groupId]) : { available: 0, used: 0, total: 0 }
-            const groupName = groupId ? groupMap.get(groupId)?.name ?? "" : ""
+            const assignedGroupId = assignments[offer.id] ?? ""
+            const effectiveGroupId = assignedGroupId || offer.id
+            const counts = getEldoradoKeyCounts(keyStore[effectiveGroupId])
+            const groupName = assignedGroupId ? groupMap.get(assignedGroupId)?.name ?? "" : ""
             return {
               ...offer,
-              stockGroupId: groupId || null,
+              stockGroupId: assignedGroupId || null,
               stockGroupName: groupName,
               stockCount: counts.available,
               stockUsedCount: counts.used,
@@ -2444,6 +2445,7 @@ export default function useAppData() {
       const nextGroupId = String(groupId ?? "").trim()
 
       const store = readEldoradoGroupStore()
+      const currentGroupId = String(store.assignments[normalizedOfferId] ?? "").trim()
       if (nextGroupId && !store.groups.some((group) => group.id === nextGroupId)) {
         toast.error("Stok grubu bulunamadi.")
         return false
@@ -2458,17 +2460,78 @@ export default function useAppData() {
       const saved = writeEldoradoGroupStore(store)
       if (!saved) return false
 
+      const keyStore = readEldoradoKeyStore()
+      let nextList = []
+      let shouldWriteKeys = false
+
+      if (nextGroupId) {
+        if (!currentGroupId) {
+          const implicitList = Array.isArray(keyStore[normalizedOfferId])
+            ? keyStore[normalizedOfferId]
+            : []
+          if (implicitList.length > 0) {
+            const groupList = Array.isArray(keyStore[nextGroupId]) ? keyStore[nextGroupId] : []
+            const seen = new Set(groupList.map((item) => item.code))
+            const merged = [...groupList]
+            implicitList.forEach((item) => {
+              if (seen.has(item.code)) return
+              merged.push(item)
+              seen.add(item.code)
+            })
+            keyStore[nextGroupId] = merged
+            delete keyStore[normalizedOfferId]
+            nextList = merged
+            shouldWriteKeys = true
+          }
+        }
+        if (nextList.length === 0) {
+          nextList = Array.isArray(keyStore[nextGroupId]) ? keyStore[nextGroupId] : []
+        }
+      } else if (currentGroupId) {
+        const groupList = Array.isArray(keyStore[currentGroupId]) ? keyStore[currentGroupId] : []
+        const implicitList = Array.isArray(keyStore[normalizedOfferId]) ? keyStore[normalizedOfferId] : []
+        if (groupList.length > 0) {
+          const seen = new Set(implicitList.map((item) => item.code))
+          const merged = [...implicitList]
+          groupList.forEach((item) => {
+            if (seen.has(item.code)) return
+            merged.push(item)
+            seen.add(item.code)
+          })
+          keyStore[normalizedOfferId] = merged
+          nextList = merged
+          shouldWriteKeys = true
+        } else {
+          nextList = implicitList
+        }
+      } else {
+        nextList = Array.isArray(keyStore[normalizedOfferId]) ? keyStore[normalizedOfferId] : []
+      }
+
+      if (shouldWriteKeys) {
+        writeEldoradoKeyStore(keyStore)
+      }
+
       setEldoradoGroupAssignments(store.assignments)
       setEldoradoGroups(store.groups)
 
-      const keyStore = readEldoradoKeyStore()
-      const nextList = nextGroupId && Array.isArray(keyStore[nextGroupId]) ? keyStore[nextGroupId] : []
-      setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
+      if (nextGroupId) {
+        syncEldoradoKeysForGroup(nextGroupId, nextList, store.assignments)
+      } else {
+        setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
+      }
       setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
 
       return true
     },
-    [applyEldoradoKeyCounts, readEldoradoGroupStore, readEldoradoKeyStore, writeEldoradoGroupStore],
+    [
+      applyEldoradoKeyCounts,
+      readEldoradoGroupStore,
+      readEldoradoKeyStore,
+      syncEldoradoKeysForGroup,
+      writeEldoradoGroupStore,
+      writeEldoradoKeyStore,
+    ],
   )
 
   const loadEldoradoKeys = useCallback(
@@ -2480,14 +2543,15 @@ export default function useAppData() {
       setEldoradoKeysLoading((prev) => ({ ...prev, [normalizedId]: true }))
       try {
         const groupStore = readEldoradoGroupStore()
-        const groupId = groupStore.assignments[normalizedId]
-        if (!groupId) {
-          setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedId]: [] }))
-          return
-        }
+        const assignedGroupId = groupStore.assignments[normalizedId] ?? ""
+        const groupId = assignedGroupId || normalizedId
         const keyStore = readEldoradoKeyStore()
         const list = Array.isArray(keyStore[groupId]) ? keyStore[groupId] : []
-        syncEldoradoKeysForGroup(groupId, list, groupStore.assignments)
+        if (assignedGroupId) {
+          syncEldoradoKeysForGroup(groupId, list, groupStore.assignments)
+        } else {
+          setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedId]: list }))
+        }
         setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
       } catch (error) {
         console.error(error)
@@ -2525,11 +2589,8 @@ export default function useAppData() {
       setEldoradoKeysSaving((prev) => ({ ...prev, [normalizedId]: true }))
       try {
         const groupStore = readEldoradoGroupStore()
-        const groupId = groupStore.assignments[normalizedId]
-        if (!groupId) {
-          toast.error("Stok grubu secin.")
-          return false
-        }
+        const assignedGroupId = groupStore.assignments[normalizedId] ?? ""
+        const groupId = assignedGroupId || normalizedId
         const store = readEldoradoKeyStore()
         const currentList = Array.isArray(store[groupId]) ? store[groupId] : []
         const existingCodes = new Set(currentList.map((item) => item.code))
@@ -2547,7 +2608,11 @@ export default function useAppData() {
         const saved = writeEldoradoKeyStore(store)
         if (!saved) return false
 
-        syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        if (assignedGroupId) {
+          syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        } else {
+          setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedId]: nextList }))
+        }
         setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
 
         const addedCount = added.length
@@ -2590,11 +2655,8 @@ export default function useAppData() {
       setEldoradoKeysDeleting((prev) => ({ ...prev, [normalizedKeyId]: true }))
       try {
         const groupStore = readEldoradoGroupStore()
-        const groupId = groupStore.assignments[normalizedOfferId]
-        if (!groupId) {
-          toast.error("Stok grubu secin.")
-          return
-        }
+        const assignedGroupId = groupStore.assignments[normalizedOfferId] ?? ""
+        const groupId = assignedGroupId || normalizedOfferId
         const store = readEldoradoKeyStore()
         const list = Array.isArray(store[groupId]) ? store[groupId] : []
         const nextList = list.filter((item) => item.id !== normalizedKeyId)
@@ -2603,7 +2665,11 @@ export default function useAppData() {
         const saved = writeEldoradoKeyStore(store)
         if (!saved) return
 
-        syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        if (assignedGroupId) {
+          syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        } else {
+          setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
+        }
         setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
         toast.success("Stok silindi")
       } catch (error) {
@@ -2635,11 +2701,8 @@ export default function useAppData() {
       const status = nextStatus === "used" ? "used" : "available"
       try {
         const groupStore = readEldoradoGroupStore()
-        const groupId = groupStore.assignments[normalizedOfferId]
-        if (!groupId) {
-          toast.error("Stok grubu secin.")
-          return
-        }
+        const assignedGroupId = groupStore.assignments[normalizedOfferId] ?? ""
+        const groupId = assignedGroupId || normalizedOfferId
         const store = readEldoradoKeyStore()
         const list = Array.isArray(store[groupId]) ? store[groupId] : []
         let didUpdate = false
@@ -2658,7 +2721,11 @@ export default function useAppData() {
         const saved = writeEldoradoKeyStore(store)
         if (!saved) return
 
-        syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        if (assignedGroupId) {
+          syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        } else {
+          setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
+        }
         setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
         toast.success(status === "used" ? "Stok kullanildi" : "Stok geri alindi")
       } catch (error) {
@@ -2681,11 +2748,8 @@ export default function useAppData() {
       if (!normalizedOfferId) return false
 
       const groupStore = readEldoradoGroupStore()
-      const groupId = groupStore.assignments[normalizedOfferId]
-      if (!groupId) {
-        toast.error("Stok grubu secin.")
-        return false
-      }
+      const assignedGroupId = groupStore.assignments[normalizedOfferId] ?? ""
+      const groupId = assignedGroupId || normalizedOfferId
 
       const store = readEldoradoKeyStore()
       const list = Array.isArray(store[groupId]) ? store[groupId] : []
@@ -2717,7 +2781,11 @@ export default function useAppData() {
         const saved = writeEldoradoKeyStore(store)
         if (!saved) return false
 
-        syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        if (assignedGroupId) {
+          syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        } else {
+          setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
+        }
         setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
         toast.success(`${selected.length} stok kopyalandi ve kullanildi`, {
           duration: 1700,
