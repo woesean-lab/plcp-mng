@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+﻿import { useEffect, useMemo, useRef, useState } from "react"
 import { Toaster } from "react-hot-toast"
 import ProfileModal from "./components/modals/ProfileModal"
 import NoteModal from "./components/modals/NoteModal"
@@ -415,7 +415,6 @@ function App() {
       { key: "sales", label: "Satış", canView: canViewSales },
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
-      { key: "products", label: "Ürünler", canView: canViewStock },
       { key: "stock", label: "Stok", canView: canViewStock },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
@@ -1202,5 +1201,6 @@ function App() {
 }
 
 export default App
+
 
 
