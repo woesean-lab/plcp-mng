@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import StockModal from "../modals/StockModal"
 
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -83,7 +84,6 @@ export default function ProductsTab({
   onRefresh,
   keysByOffer = {},
   keysLoading = {},
-  keysSaving = {},
   keysDeleting = {},
   groups = [],
   groupAssignments = {},
@@ -105,11 +105,14 @@ export default function ProductsTab({
 }) {
   const [query, setQuery] = useState("")
   const [openOffers, setOpenOffers] = useState({})
-  const [keyDrafts, setKeyDrafts] = useState({})
   const [confirmKeyTarget, setConfirmKeyTarget] = useState(null)
   const [groupDrafts, setGroupDrafts] = useState({})
   const [bulkCounts, setBulkCounts] = useState({})
   const [noteDrafts, setNoteDrafts] = useState({})
+  const [stockModalDraft, setStockModalDraft] = useState("")
+  const [stockModalTarget, setStockModalTarget] = useState(null)
+  const stockModalLineRef = useRef(null)
+  const stockModalTextareaRef = useRef(null)
   const canManageGroups = canAddKeys
   const canManageNotes = canAddKeys && typeof onSaveNote === "function"
   const canManageStock = canAddKeys && typeof onToggleStock === "function"
@@ -160,6 +163,10 @@ export default function ProductsTab({
   }, [filteredList, page, pageSize])
   const pageStart = totalItems === 0 ? 0 : (page - 1) * pageSize + 1
   const pageEnd = totalItems === 0 ? 0 : Math.min(totalItems, page * pageSize)
+  const stockModalLineCount = useMemo(() => {
+    const count = stockModalDraft.split("\n").length
+    return Math.max(1, count)
+  }, [stockModalDraft])
 
   const toggleOfferOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -175,20 +182,28 @@ export default function ProductsTab({
     })
   }
 
-  const handleKeyDraftChange = (offerId, value) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setKeyDrafts((prev) => ({ ...prev, [normalizedId]: value }))
+  const handleStockModalScroll = (event) => {
+    if (!stockModalLineRef.current) return
+    stockModalLineRef.current.scrollTop = event.target.scrollTop
   }
 
-  const handleKeyAdd = async (offerId) => {
-    if (typeof onAddKeys !== "function") return
+  const openStockModal = (offerId, name) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    const draft = keyDrafts[normalizedId] ?? ""
-    const ok = await onAddKeys(normalizedId, draft)
+    setStockModalDraft("")
+    setStockModalTarget({ id: normalizedId, name: String(name ?? "").trim() })
+  }
+
+  const handleStockModalClose = () => {
+    setStockModalDraft("")
+    setStockModalTarget(null)
+  }
+
+  const handleStockModalSave = async () => {
+    if (!stockModalTarget || typeof onAddKeys !== "function") return
+    const ok = await onAddKeys(stockModalTarget.id, stockModalDraft)
     if (ok) {
-      setKeyDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
+      handleStockModalClose()
     }
   }
 
@@ -450,8 +465,6 @@ export default function ProductsTab({
                   const isOpen = Boolean(openOffers[offerId])
                   const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
-                  const isKeysSaving = Boolean(keysSaving?.[offerId])
-                  const keyDraftValue = keyDrafts[offerId] ?? ""
                   const groupDraftValue = groupDrafts[offerId] ?? ""
                   const storedNote = String(notesByOffer?.[offerId] ?? "").trim()
                   const noteDraftValue = noteDrafts[offerId]
@@ -564,6 +577,21 @@ export default function ProductsTab({
                                 <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13.5 18.5" />
                               </svg>
                             </a>
+                          )}
+                          {canAddKeys && (
+                            <button
+                              type="button"
+                              onClick={() => openStockModal(offerId, name)}
+                              disabled={!offerId || !isStockEnabled}
+                              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
+                                !offerId || !isStockEnabled
+                                  ? "cursor-not-allowed opacity-60"
+                                  : "hover:-translate-y-0.5 hover:border-accent-300/60 hover:bg-white/10 hover:text-accent-100"
+                              }`}
+                              aria-label="Stok ekle"
+                            >
+                              +
+                            </button>
                           )}
                           <button
                             type="button"
@@ -770,37 +798,6 @@ export default function ProductsTab({
                                         </div>
                                       )
                                     })}
-                                  </div>
-                                </div>
-                              )}
-                              {canAddKeys && (
-                                <div className="rounded-2xl border border-white/10 bg-ink-900/40 p-4 shadow-card">
-                                  <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                                    Stok ekle
-                                  </p>
-                                  <textarea
-                                    rows={4}
-                                    value={keyDraftValue}
-                                    onChange={(event) => handleKeyDraftChange(offerId, event.target.value)}
-                                    placeholder="XXXX-XXXX-XXXX-XXXX"
-                                    className="mt-3 w-full rounded-lg border border-white/10 bg-ink-950/60 px-3 py-2 font-mono text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                                  />
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleKeyAdd(offerId)}
-                                      disabled={!keyDraftValue.trim() || isKeysSaving || isKeysLoading}
-                                      className="rounded-lg border border-accent-300/70 bg-accent-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      {isKeysSaving ? "Kaydediliyor..." : "Stok ekle"}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleKeyDraftChange(offerId, "")}
-                                      className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-                                    >
-                                      Temizle
-                                    </button>
                                   </div>
                                 </div>
                               )}
@@ -1046,6 +1043,19 @@ export default function ProductsTab({
           </div>
         </aside>
       </div>
+
+      <StockModal
+        isOpen={Boolean(stockModalTarget)}
+        onClose={handleStockModalClose}
+        draft={stockModalDraft}
+        setDraft={setStockModalDraft}
+        targetName={stockModalTarget?.name}
+        lineRef={stockModalLineRef}
+        lineCount={stockModalLineCount}
+        textareaRef={stockModalTextareaRef}
+        onScroll={handleStockModalScroll}
+        onSave={handleStockModalSave}
+      />
 
     </div>
   )
