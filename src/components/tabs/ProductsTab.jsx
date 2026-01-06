@@ -527,11 +527,7 @@ export default function ProductsTab({
                             {groupName && <span>{groupName}</span>}
                             {isMissing && <span className="text-orange-200">Eksik</span>}
                           </div>
-                          {hasNote && (
-                            <p className="mt-1 line-clamp-1 text-xs text-slate-400">
-                              Not: {notePreview}
-                            </p>
-                          )}
+                          
                         </button>
 
                         <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
@@ -614,9 +610,7 @@ export default function ProductsTab({
                           </button>
                         </div>
                       </div>
-                      <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        ID: {offerId || "Yok"}
-                      </div>
+                      
 
                       {isOpen && (
                         <div className="mt-4 space-y-4">
