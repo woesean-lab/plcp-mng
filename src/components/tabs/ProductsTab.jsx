@@ -482,14 +482,7 @@ export default function ProductsTab({
                       : `https://www.eldorado.gg${rawHref.startsWith("/") ? "" : "/"}${rawHref}`
                     : ""
                   const totalCapacity = Math.max(totalCount || 0, availableCount + usedCount)
-                  const availabilityPercent =
-                    totalCapacity > 0 ? Math.round((availableCount / totalCapacity) * 100) : 0
-                  const usedPercent = totalCapacity > 0 ? Math.round((usedCount / totalCapacity) * 100) : 0
-                  const availableBarPercent = Math.min(100, Math.max(0, availabilityPercent))
-                  const usedBarPercent = Math.min(100, Math.max(0, usedPercent))
-                  const availableSegmentWidth = Math.max(0, Math.min(100 - usedBarPercent, availableBarPercent))
-                  const categoryInitial = categoryLabel.charAt(0).toUpperCase() || "U"
-                  const statusLabel = isStockEnabled ? (isOutOfStock ? "Stok tukendi" : "Stok acik") : "Stok kapali"
+                  const statusLabel = isStockEnabled ? (isOutOfStock ? "Tukendi" : "Acik") : "Kapali"
                   const statusClass = isStockEnabled
                     ? isOutOfStock
                       ? "border-rose-300/60 bg-rose-500/15 text-rose-50"
@@ -498,7 +491,7 @@ export default function ProductsTab({
                   return (
                     <div
                       key={key}
-                      className={`rounded-2xl border border-white/10 bg-ink-950/70 p-5 shadow-inner ring-1 ring-white/5 transition hover:-translate-y-0.5 hover:border-accent-400/60 hover:bg-ink-900 hover:shadow-card ${
+                      className={`rounded-xl border border-white/10 bg-ink-950/60 p-4 shadow-inner transition hover:border-accent-400/60 hover:bg-ink-900 ${
                         isMissing
                           ? "border-orange-300/30 bg-orange-500/5"
                           : isOutOfStock
@@ -506,72 +499,65 @@ export default function ProductsTab({
                             : "border-white/10 bg-ink-900/70"
                       }`}
                     >
-                      <div className="flex flex-wrap items-start gap-4">
+                      <div className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto] md:items-center">
                         <button
                           type="button"
                           onClick={() => toggleOfferOpen(offerId)}
                           disabled={!offerId}
-                          className="group flex min-w-0 flex-1 items-start gap-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                          className="min-w-0 text-left disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-base font-semibold text-accent-100">
-                            {categoryInitial}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`truncate text-sm font-semibold ${
+                                isMissing
+                                  ? "text-orange-50"
+                                  : isOutOfStock
+                                    ? "text-rose-50"
+                                    : "text-white"
+                              }`}
+                            >
+                              {name}
+                            </span>
+                            <span className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${statusClass}`}>
+                              {statusLabel}
+                            </span>
                           </div>
-                          <div className="min-w-0 space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span
-                                className={`text-base font-semibold ${
-                                  isMissing
-                                    ? "text-orange-50"
-                                    : isOutOfStock
-                                      ? "text-rose-50"
-                                      : "text-white"
-                                }`}
-                              >
-                                {name}
-                              </span>
-                              <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusClass}`}>
-                                {statusLabel}
-                              </span>
-                              <span className="rounded-full border border-white/10 bg-ink-950/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                                {categoryLabel}
-                              </span>
-                              {groupName && (
-                                <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-50">
-                                  {groupName}
-                                </span>
-                              )}
-                              {isMissing && (
-                                <span className="rounded-full border border-orange-300/60 bg-orange-500/20 px-2.5 py-1 text-[11px] font-semibold text-orange-50">
-                                  Eksik
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                              <span>Toplam {totalCount || "-"}</span>
-                              <span>Hazir {availableCount}</span>
-                              <span>Kullanilan {usedCount}</span>
-                              <span>ID: {offerId || "Yok"}</span>
-                              {hasNote && <span className="text-amber-200">Not kaydi</span>}
-                            </div>
-                            {hasNote && (
-                              <p className="line-clamp-1 text-sm text-slate-300/90">
-                                {notePreview}
-                              </p>
-                            )}
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            <span>{categoryLabel}</span>
+                            {groupName && <span>{groupName}</span>}
+                            {isMissing && <span className="text-orange-200">Eksik</span>}
                           </div>
+                          {hasNote && (
+                            <p className="mt-1 line-clamp-1 text-xs text-slate-400">
+                              Not: {notePreview}
+                            </p>
+                          )}
                         </button>
+
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                          <span className="rounded-md border border-white/10 bg-ink-950/70 px-2 py-1">
+                            Hazir {availableCount}
+                          </span>
+                          <span className="rounded-md border border-white/10 bg-ink-950/70 px-2 py-1">
+                            Kullanilan {usedCount}
+                          </span>
+                          <span className="rounded-md border border-white/10 bg-ink-950/70 px-2 py-1">
+                            Toplam {totalCapacity}
+                          </span>
+                        </div>
+
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => handleStockToggle(offerId)}
                             disabled={!canManageStock || !offerId}
-                            className={`inline-flex h-9 items-center gap-2 rounded-full border border-white/10 bg-ink-950/70 px-3 text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+                            className={`inline-flex h-8 items-center gap-2 rounded-full border border-white/10 bg-ink-950/70 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
                               isStockEnabled ? "text-emerald-100" : "text-rose-100"
                             } ${!canManageStock || !offerId ? "cursor-not-allowed opacity-60" : "hover:border-white/30"}`}
                             aria-label="Stok ac/kapat"
                           >
                             <span
-                              className={`h-2.5 w-2.5 rounded-full ${
+                              className={`h-2 w-2 rounded-full ${
                                 isStockEnabled ? "bg-emerald-400" : "bg-rose-400"
                               }`}
                             />
@@ -582,7 +568,7 @@ export default function ProductsTab({
                               href={href}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
                               aria-label="Urun linki"
                             >
                               <svg
@@ -605,7 +591,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => openStockModal(offerId, name)}
                               disabled={!offerId || !isStockEnabled}
-                              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm text-accent-100 transition ${
+                              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm text-accent-100 transition ${
                                 !offerId || !isStockEnabled
                                   ? "cursor-not-allowed opacity-60"
                                   : "hover:border-accent-300/60 hover:bg-white/10"
@@ -619,7 +605,7 @@ export default function ProductsTab({
                             type="button"
                             onClick={() => toggleOfferOpen(offerId)}
                             disabled={!offerId}
-                            className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm text-slate-200 transition ${
+                            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm text-slate-200 transition ${
                               isOpen ? "rotate-180 border-white/20 bg-white/10 text-white" : ""
                             } ${!offerId ? "cursor-not-allowed opacity-60" : "hover:border-accent-300/60 hover:text-white"}`}
                             aria-label="Urun detaylarini ac/kapat"
@@ -628,39 +614,8 @@ export default function ProductsTab({
                           </button>
                         </div>
                       </div>
-
-                      <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-slate-300">
-                        <div className="flex min-w-[120px] flex-1 items-center justify-between rounded-lg border border-white/10 bg-ink-950/70 px-3 py-2">
-                          <span className="text-slate-400">Hazir</span>
-                          <span className="text-sm font-semibold text-white">{availableCount}</span>
-                        </div>
-                        <div className="flex min-w-[120px] flex-1 items-center justify-between rounded-lg border border-white/10 bg-ink-950/70 px-3 py-2">
-                          <span className="text-slate-400">Kullanildi</span>
-                          <span className="text-sm font-semibold text-white">{usedCount}</span>
-                        </div>
-                        <div className="flex min-w-[120px] flex-1 items-center justify-between rounded-lg border border-white/10 bg-ink-950/70 px-3 py-2">
-                          <span className="text-slate-400">Toplam</span>
-                          <span className="text-sm font-semibold text-white">{totalCapacity}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-400">
-                        <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/10">
-                          <div
-                            className="absolute left-0 top-0 h-full bg-amber-400/80"
-                            style={{ width: `${usedBarPercent}%` }}
-                          />
-                          <div
-                            className="absolute top-0 h-full bg-emerald-400"
-                            style={{
-                              left: `${usedBarPercent}%`,
-                              width: `${availableSegmentWidth}%`,
-                            }}
-                          />
-                        </div>
-                        <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                          {availabilityPercent}% dolu
-                        </span>
+                      <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        ID: {offerId || "Yok"}
                       </div>
 
                       {isOpen && (
