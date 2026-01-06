@@ -498,7 +498,7 @@ export default function ProductsTab({
                   return (
                     <div
                       key={key}
-                      className={`rounded-xl border p-4 shadow-inner transition hover:border-accent-400/60 hover:bg-ink-900/80 ${
+                      className={`rounded-xl border border-white/10 bg-ink-950/60 p-4 shadow-inner transition hover:border-accent-400/60 hover:bg-ink-950 ${
                         isMissing
                           ? "border-orange-300/30 bg-orange-500/5"
                           : isOutOfStock
@@ -506,20 +506,20 @@ export default function ProductsTab({
                             : "border-white/10 bg-ink-900/70"
                       }`}
                     >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex flex-wrap items-start gap-3">
                         <button
                           type="button"
                           onClick={() => toggleOfferOpen(offerId)}
                           disabled={!offerId}
                           className="group flex min-w-0 flex-1 items-start gap-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-accent-100 shadow-inner">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm font-semibold text-accent-100">
                             {categoryInitial}
                           </div>
                           <div className="min-w-0 space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <span
-                                className={`text-sm font-semibold leading-tight ${
+                                className={`text-sm font-semibold ${
                                   isMissing
                                     ? "text-orange-50"
                                     : isOutOfStock
@@ -546,12 +546,12 @@ export default function ProductsTab({
                                 </span>
                               )}
                             </div>
-                            <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            <div className="flex flex-wrap items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                               <span>Toplam {totalCount || "-"}</span>
                               <span>Hazir {availableCount}</span>
                               <span>Kullanilan {usedCount}</span>
                               <span>ID: {offerId || "Yok"}</span>
-                              {hasNote && <span className="text-amber-200">Not</span>}
+                              {hasNote && <span className="text-amber-200">Not kaydi</span>}
                             </div>
                             {hasNote && (
                               <p className="line-clamp-1 text-xs text-slate-300/90">
@@ -630,17 +630,17 @@ export default function ProductsTab({
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-300">
-                        <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-ink-950/60 px-3 py-1">
+                        <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-ink-950/70 px-3 py-1">
                           <span className="h-2 w-2 rounded-full bg-emerald-400" />
                           <span className="font-semibold text-white">{availableCount}</span>
                           <span className="text-slate-400">hazir</span>
                         </div>
-                        <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-ink-950/60 px-3 py-1">
+                        <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-ink-950/70 px-3 py-1">
                           <span className="h-2 w-2 rounded-full bg-amber-400" />
                           <span className="font-semibold text-white">{usedCount}</span>
                           <span className="text-slate-400">kullanildi</span>
                         </div>
-                        <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-ink-950/60 px-3 py-1">
+                        <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-ink-950/70 px-3 py-1">
                           <span className="h-2 w-2 rounded-full bg-accent-400" />
                           <span className="font-semibold text-white">{totalCapacity}</span>
                           <span className="text-slate-400">toplam</span>
