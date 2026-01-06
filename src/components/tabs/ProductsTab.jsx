@@ -464,6 +464,7 @@ export default function ProductsTab({
                     categoryKey === "diger" ? "Diger" : formatCategoryLabel(categoryKey)
                   const isOpen = Boolean(openOffers[offerId])
                   const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
+                  const isOutOfStock = isStockEnabled && availableCount === 0
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
                   const groupDraftValue = groupDrafts[offerId] ?? ""
                   const storedNote = String(notesByOffer?.[offerId] ?? "").trim()
@@ -481,9 +482,11 @@ export default function ProductsTab({
                     <div
                       key={key}
                       className={`rounded-2xl border p-4 shadow-inner transition hover:border-accent-400/60 hover:bg-ink-800/80 hover:shadow-card ${
-                        isMissing || (isStockEnabled && availableCount === 0)
-                          ? "border-rose-300/30 bg-rose-500/5"
-                          : "border-white/10 bg-ink-900/70"
+                        isMissing
+                          ? "border-orange-300/30 bg-orange-500/5"
+                          : isOutOfStock
+                            ? "border-rose-300/30 bg-rose-500/5"
+                            : "border-white/10 bg-ink-900/70"
                       }`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -497,7 +500,11 @@ export default function ProductsTab({
                             <div className="flex flex-wrap items-center gap-2">
                               <span
                                 className={`text-sm font-semibold ${
-                                  isMissing ? "text-rose-100" : "text-white"
+                                  isMissing
+                                    ? "text-orange-100"
+                                    : isOutOfStock
+                                      ? "text-rose-100"
+                                      : "text-white"
                                 }`}
                               >
                                 {name}
@@ -506,7 +513,7 @@ export default function ProductsTab({
                                 <>
                                   <span
                                     className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                      availableCount === 0
+                                      isOutOfStock
                                         ? "border border-rose-300/60 bg-rose-500/15 text-rose-50"
                                         : "border border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
                                     }`}
@@ -529,8 +536,8 @@ export default function ProductsTab({
                                   Grup: {groupName}
                                 </span>
                               )}
-                              {(isMissing || (isStockEnabled && availableCount === 0)) && (
-                                <span className="rounded-full border border-rose-300/60 bg-rose-500/20 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
+                              {isMissing && (
+                                <span className="rounded-full border border-orange-300/60 bg-orange-500/20 px-2.5 py-1 text-[11px] font-semibold text-orange-50">
                                   Eksik urun
                                 </span>
                               )}
