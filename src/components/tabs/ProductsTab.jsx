@@ -472,7 +472,6 @@ export default function ProductsTab({
                   const noteInputValue = noteDraftValue !== undefined ? noteDraftValue : storedNote
                   const noteHasChanges = String(noteInputValue ?? "").trim() !== storedNote
                   const canSaveNote = Boolean(offerId) && canManageNotes && noteHasChanges
-                  const hasNote = Boolean(storedNote)
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -480,12 +479,10 @@ export default function ProductsTab({
                       : `https://www.eldorado.gg${rawHref.startsWith("/") ? "" : "/"}${rawHref}`
                     : ""
                   const totalCapacity = Math.max(totalCount || 0, availableCount + usedCount)
-                  const statusLabel = isStockEnabled ? (isOutOfStock ? "Tukendi" : "Acik") : "Kapali"
-                  const statusClass = isStockEnabled
-                    ? isOutOfStock
-                      ? "border-rose-300/60 bg-rose-500/15 text-rose-50"
-                      : "border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
-                    : "border-white/20 bg-white/5 text-slate-200"
+                  const stockBadgeClass = isOutOfStock
+                    ? "border-rose-300/60 bg-rose-500/15 text-rose-50"
+                    : "border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
+                  const stockBadgeDotClass = isOutOfStock ? "bg-rose-300" : "bg-emerald-300"
                   return (
                     <div
                       key={key}
@@ -502,7 +499,7 @@ export default function ProductsTab({
                         >
                           <div className="flex flex-wrap items-center gap-2">
                             <span
-                              className={`truncate text-sm font-semibold ${
+                              className={`break-words text-sm font-semibold leading-snug sm:text-base ${
                                 isMissing
                                   ? "text-orange-50"
                                   : isOutOfStock
@@ -512,11 +509,14 @@ export default function ProductsTab({
                             >
                               {name}
                             </span>
-                            <span
-                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${statusClass}`}
-                            >
-                              {statusLabel}
-                            </span>
+                            {isStockEnabled && (
+                              <span
+                                className={`inline-flex items-center gap-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${stockBadgeClass}`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full ${stockBadgeDotClass}`} />
+                                {isOutOfStock ? "Stok 0" : `Stok ${availableCount}`}
+                              </span>
+                            )}
                             {isMissing && (
                               <span className="rounded-full border border-orange-300/40 bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-100">
                                 Eksik
@@ -524,9 +524,14 @@ export default function ProductsTab({
                             )}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            <span>{categoryLabel}</span>
-                            {groupName && <span>{groupName}</span>}
-                            {hasNote && <span>Not</span>}
+                            <span className="rounded-full border border-accent-300/40 bg-accent-500/10 px-2 py-0.5 text-[10px] text-accent-100">
+                              {categoryLabel}
+                            </span>
+                            {groupName && (
+                              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-200">
+                                {groupName}
+                              </span>
+                            )}
                           </div>
                         </button>
 
