@@ -491,11 +491,11 @@ export default function ProductsTab({
                   return (
                     <div
                       key={key}
-                      className={`rounded-2xl border border-white/10 bg-gradient-to-br from-ink-950/80 via-ink-900/70 to-ink-900/50 p-4 shadow-card transition hover:border-white/20 ${
+                      className={`rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-card transition hover:border-white/20 ${
                         isMissing
-                          ? "border-orange-300/30 from-orange-500/10 via-ink-900/60 to-ink-900/60"
+                          ? "border-orange-300/30 bg-orange-500/5"
                           : isOutOfStock
-                            ? "border-rose-300/30 from-rose-500/10 via-ink-900/60 to-ink-900/60"
+                            ? "border-rose-300/30 bg-rose-500/5"
                             : "border-white/10"
                       }`}
                     >
