@@ -488,10 +488,26 @@ export default function ProductsTab({
                       ? "border-rose-300/60 bg-rose-500/15 text-rose-50"
                       : "border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
                     : "border-white/20 bg-white/5 text-slate-200"
+                  const stockPercent =
+                    totalCapacity > 0
+                      ? Math.min(100, Math.max(0, Math.round((availableCount / totalCapacity) * 100)))
+                      : 0
+                  const meterClass = isOutOfStock
+                    ? "from-rose-400 via-rose-300 to-amber-300"
+                    : isStockEnabled
+                      ? "from-emerald-400 via-teal-300 to-sky-300"
+                      : "from-slate-500 via-slate-400 to-slate-300"
+                  const accentBarClass = isMissing
+                    ? "from-orange-400 via-amber-300 to-orange-200"
+                    : isOutOfStock
+                      ? "from-rose-400 via-rose-300 to-rose-200"
+                      : isStockEnabled
+                        ? "from-accent-400 via-sky-400 to-emerald-300"
+                        : "from-slate-500 via-slate-400 to-slate-300"
                   return (
                     <div
                       key={key}
-                      className={`rounded-xl border border-white/10 bg-ink-950/60 p-4 shadow-inner transition hover:border-accent-400/60 hover:bg-ink-900 ${
+                      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-ink-950/60 shadow-card transition hover:border-accent-400/60 hover:bg-ink-900/80 ${
                         isMissing
                           ? "border-orange-300/30 bg-orange-500/5"
                           : isOutOfStock
@@ -499,16 +515,17 @@ export default function ProductsTab({
                             : "border-white/10 bg-ink-900/70"
                       }`}
                     >
-                      <div className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto] md:items-center">
+                      <div className={`absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b ${accentBarClass}`} />
+                      <div className="relative grid gap-4 px-4 py-3 md:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] md:items-center">
                         <button
                           type="button"
                           onClick={() => toggleOfferOpen(offerId)}
                           disabled={!offerId}
                           className="min-w-0 text-left disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-3">
                             <span
-                              className={`truncate text-sm font-semibold ${
+                              className={`truncate text-base font-semibold ${
                                 isMissing
                                   ? "text-orange-50"
                                   : isOutOfStock
@@ -518,28 +535,50 @@ export default function ProductsTab({
                             >
                               {name}
                             </span>
-                            <span className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${statusClass}`}>
+                            <span
+                              className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${statusClass}`}
+                            >
                               {statusLabel}
                             </span>
                           </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            <span>{categoryLabel}</span>
-                            {groupName && <span>{groupName}</span>}
-                            {isMissing && <span className="text-orange-200">Eksik</span>}
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-300">
+                            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300">
+                              {categoryLabel}
+                            </span>
+                            {groupName && (
+                              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-200">
+                                {groupName}
+                              </span>
+                            )}
+                            {hasNote && (
+                              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300">
+                                Not
+                              </span>
+                            )}
+                            {isMissing && (
+                              <span className="rounded-full border border-orange-300/40 bg-orange-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-orange-100">
+                                Eksik
+                              </span>
+                            )}
                           </div>
-                          
                         </button>
 
-                        <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
-                          <span className="rounded-md border border-emerald-300/40 bg-emerald-500/10 px-2 py-1 text-emerald-50">
-                            Stokta {availableCount}
-                          </span>
-                          <span className="rounded-md border border-amber-300/50 bg-amber-500/10 px-2 py-1 text-amber-50">
-                            Kullanilan {usedCount}
-                          </span>
-                          <span className="rounded-md border border-sky-300/40 bg-sky-500/10 px-2 py-1 text-sky-50">
-                            Toplam {totalCapacity}
-                          </span>
+                        <div className="min-w-[170px]">
+                          <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                            <span>Stok</span>
+                            <span>
+                              {availableCount}/{totalCapacity}
+                            </span>
+                          </div>
+                          <div className="mt-2 h-2 w-full rounded-full bg-white/10">
+                            <div
+                              className={`h-full rounded-full bg-gradient-to-r ${meterClass}`}
+                              style={{ width: `${stockPercent}%` }}
+                            />
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                            <span>{isStockEnabled ? `${usedCount} kullanilan` : "Stok kapali"}</span>
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -606,14 +645,26 @@ export default function ProductsTab({
                             } ${!offerId ? "cursor-not-allowed opacity-60" : "hover:border-accent-300/60 hover:text-white"}`}
                             aria-label="Urun detaylarini ac/kapat"
                           >
-                            &gt;
+                            <svg
+                              viewBox="0 0 24 24"
+                              aria-hidden="true"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m9 6 6 6-6 6" />
+                            </svg>
                           </button>
                         </div>
                       </div>
                       
 
                       {isOpen && (
-                        <div className="mt-4 space-y-4">
+                        <div className="border-t border-white/10 px-4 pb-4">
+                          <div className="mt-4 space-y-4">
                           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-ink-900/50 px-4 py-2 text-[11px] text-slate-400 shadow-inner">
                             <div className="flex flex-wrap items-center gap-3">
                               <span>Kategori: {categoryLabel}</span>
@@ -913,10 +964,11 @@ export default function ProductsTab({
                                     Sifirla
                                   </button>
                                 </div>
-                              </div>
                             </div>
                           </div>
                         </div>
+                      </div>
+                      </div>
                       )}
                     </div>
                   )
