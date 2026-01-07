@@ -520,13 +520,26 @@ export default function ProductsTab({
                         </button>
 
                         {isStockEnabled && (
-                          <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em]">
-                            <span className="rounded-lg border border-emerald-300/50 bg-emerald-500/10 px-2 py-1 text-emerald-100">
-                              Stokta {availableCount}
-                            </span>
-                            <span className="rounded-lg border border-amber-300/50 bg-amber-500/10 px-2 py-1 text-amber-100">
-                              Kullanildi {usedCount}
-                            </span>
+                          <div className="flex flex-wrap items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.2em]">
+                            <div className="flex items-center gap-2">
+                              <span className="text-emerald-100">Stokta {availableCount}</span>
+                              <span className="text-slate-500">/</span>
+                              <span className="text-amber-100">Kullanildi {usedCount}</span>
+                            </div>
+                            <div
+                              className="h-1.5 w-28 overflow-hidden rounded-full bg-white/10"
+                              role="presentation"
+                            >
+                              <div
+                                className="h-full bg-emerald-400/70"
+                                style={{
+                                  width:
+                                    totalCapacity > 0
+                                      ? `${Math.min(100, Math.max(0, Math.round((availableCount / totalCapacity) * 100)))}%`
+                                      : "0%",
+                                }}
+                              />
+                            </div>
                           </div>
                         )}
 
