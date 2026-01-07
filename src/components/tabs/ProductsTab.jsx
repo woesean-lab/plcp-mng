@@ -520,48 +520,22 @@ export default function ProductsTab({
                         </button>
 
                         {isStockEnabled && (
-                          <div className="flex flex-wrap items-center gap-4">
-                            <div className="relative flex h-9 w-9 items-center justify-center">
-                              <svg viewBox="0 0 36 36" className="h-9 w-9">
-                                <circle
-                                  cx="18"
-                                  cy="18"
-                                  r="15"
-                                  fill="none"
-                                  stroke="rgba(255,255,255,0.12)"
-                                  strokeWidth="3"
-                                />
-                                <circle
-                                  cx="18"
-                                  cy="18"
-                                  r="15"
-                                  fill="none"
-                                  stroke="rgba(52,211,153,0.9)"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                  strokeDasharray="94.2"
-                                  strokeDashoffset={
+                          <div className="flex flex-wrap items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.2em]">
+                            <div className="flex items-center gap-2">
+                              <span className="text-emerald-100">Stokta {availableCount}</span>
+                              <span className="text-slate-500">/</span>
+                              <span className="text-amber-100">Kullanildi {usedCount}</span>
+                            </div>
+                            <div className="h-1.5 w-28 overflow-hidden rounded-full bg-white/10">
+                              <div
+                                className="h-full bg-emerald-400/70"
+                                style={{
+                                  width:
                                     totalCapacity > 0
-                                      ? 94.2 - Math.min(94.2, (availableCount / totalCapacity) * 94.2)
-                                      : 94.2
-                                  }
-                                />
-                              </svg>
-                              <span className="absolute text-[9px] font-semibold text-emerald-100">
-                                {availableCount}
-                              </span>
-                            </div>
-                            <div className="flex items-baseline gap-2 text-emerald-100">
-                              <span className="text-[14px] font-semibold leading-none">{availableCount}</span>
-                              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                                Stokta
-                              </span>
-                            </div>
-                            <div className="flex items-baseline gap-2 text-amber-100">
-                              <span className="text-[14px] font-semibold leading-none">{usedCount}</span>
-                              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                                Kullanildi
-                              </span>
+                                      ? `${Math.min(100, Math.max(0, Math.round((availableCount / totalCapacity) * 100)))}%`
+                                      : "0%",
+                                }}
+                              />
                             </div>
                           </div>
                         )}
