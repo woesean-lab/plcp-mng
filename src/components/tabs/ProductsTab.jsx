@@ -965,9 +965,10 @@ export default function ProductsTab({
                                     Sifirla
                                   </button>
                                 </div>
-                            </div>
+                              </div>
                           </div>
                         </div>
+                      </div>
                       )}
                     </div>
                   )
