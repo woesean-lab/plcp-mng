@@ -541,27 +541,35 @@ export default function ProductsTab({
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleStockToggle(offerId)}
-                            disabled={!canManageStock || !offerId}
-                            className={`inline-flex h-7 items-center justify-center gap-2 rounded-full border border-white/10 bg-ink-950/60 px-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
-                              isStockEnabled ? "text-emerald-100" : "text-rose-100"
-                            } ${
-                              !canManageStock || !offerId
-                                ? "cursor-not-allowed opacity-60"
-                                : "hover:border-white/30 hover:bg-white/5"
-                            }`}
-                            aria-label="Stok ac/kapat"
-                          >
-                            <span
-                              className={`h-2 w-2 rounded-full ${
-                                isStockEnabled ? "bg-emerald-400" : "bg-rose-400"
-                              }`}
-                            />
-                            <span>{isStockEnabled ? "Acik" : "Kapali"}</span>
-                          </button>
                           <div className="flex items-center gap-1 rounded-full border border-white/10 bg-ink-950/60 p-1">
+                            <button
+                              type="button"
+                              onClick={() => handleStockToggle(offerId)}
+                              disabled={!canManageStock || !offerId}
+                              className={`inline-flex h-7 w-7 items-center justify-center rounded-full transition ${
+                                isStockEnabled ? "text-emerald-100" : "text-rose-100"
+                              } ${
+                                !canManageStock || !offerId
+                                  ? "cursor-not-allowed opacity-60"
+                                  : "hover:bg-white/10"
+                              }`}
+                              aria-label="Stok ac/kapat"
+                              title={isStockEnabled ? "Stok acik" : "Stok kapali"}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M12 2v6" />
+                                <path d="M6.4 6.4a8 8 0 1 0 11.2 0" />
+                              </svg>
+                            </button>
                             {href && (
                               <a
                                 href={href}
