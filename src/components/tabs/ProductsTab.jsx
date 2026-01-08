@@ -41,6 +41,23 @@ const getCategoryKey = (product) => {
 function ProductsSkeleton({ panelClass }) {
   return (
     <div className="space-y-6">
+      <header className="overflow-hidden rounded-3xl border border-white/10 bg-ink-900/70 p-4 shadow-card sm:p-6">
+        <SkeletonBlock className="h-3 w-24 rounded-full" />
+        <SkeletonBlock className="mt-4 h-8 w-56 rounded-full" />
+        <SkeletonBlock className="mt-3 h-4 w-2/3 rounded-full" />
+      </header>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div
+            key={`product-metric-${idx}`}
+            className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card"
+          >
+            <SkeletonBlock className="h-3 w-20 rounded-full" />
+            <SkeletonBlock className="mt-3 h-6 w-16 rounded-full" />
+            <SkeletonBlock className="mt-3 h-3 w-24 rounded-full" />
+          </div>
+        ))}
+      </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
         <aside className={`${panelClass} bg-ink-900/80`}>
           <SkeletonBlock className="h-3 w-24 rounded-full" />
