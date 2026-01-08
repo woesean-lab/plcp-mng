@@ -690,11 +690,6 @@ export default function ProductsTab({
                       ? rawHref
                       : `https://www.eldorado.gg${rawHref.startsWith("/") ? "" : "/"}${rawHref}`
                     : ""
-                  const totalCapacity = Math.max(totalCount || 0, availableCount + usedCount)
-                  const stockFillPercent =
-                    totalCapacity > 0
-                      ? Math.min(100, Math.max(0, Math.round((availableCount / totalCapacity) * 100)))
-                      : 0
                   return (
                     <div
                       key={key}
@@ -727,6 +722,24 @@ export default function ProductsTab({
                             >
                               {name}
                             </span>
+                            {isStockEnabled && (
+                              <>
+                                <span
+                                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                                    availableCount === 0
+                                      ? "border border-rose-300/60 bg-rose-500/15 text-rose-50"
+                                      : "border border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
+                                  }`}
+                                >
+                                  {availableCount} stok
+                                </span>
+                                {usedCount > 0 && (
+                                  <span className="rounded-full border border-amber-300/60 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50">
+                                    Kullanildi: {usedCount}
+                                  </span>
+                                )}
+                              </>
+                            )}
                             {isMissing && (
                               <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-200">
                                 Eksik
@@ -740,40 +753,6 @@ export default function ProductsTab({
                             )}
                           </div>
                         </button>
-
-                        {isStockEnabled && (
-                          <div className="inline-flex h-[36px] w-full max-w-[140px] items-center gap-2 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2 py-1 shadow-inner sm:w-[112px]">
-                            <div className="relative flex h-4 w-4 items-center justify-center">
-                              <svg viewBox="0 0 36 36" className="h-4 w-4">
-                                <circle
-                                  cx="18"
-                                  cy="18"
-                                  r="15"
-                                  fill="none"
-                                  stroke="rgba(148,163,184,0.45)"
-                                  strokeWidth="3"
-                                />
-                                <circle
-                                  cx="18"
-                                  cy="18"
-                                  r="15"
-                                  fill="none"
-                                  stroke="rgba(14,116,144,0.9)"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                  strokeDasharray="94.2"
-                                  strokeDashoffset={
-                                    94.2 - Math.min(94.2, (stockFillPercent / 100) * 94.2)
-                                  }
-                                />
-                              </svg>
-                            </div>
-                            <div className="flex items-center gap-1 text-[12px] font-semibold text-cyan-100">
-                              <span>Mevcut</span>
-                              <span className="text-cyan-50">{availableCount}</span>
-                            </div>
-                          </div>
-                        )}
 
                         <div className="flex flex-wrap items-stretch gap-1.5">
                           <div className="flex h-[40px] w-full items-center gap-1 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1.5 shadow-inner sm:w-[192px]">
