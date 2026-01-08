@@ -1136,17 +1136,6 @@ export default function ProductsTab({
                                   Grup: {noteGroupName || "Secili"}
                                 </span>
                               )}
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation()
-                                  handleNoteSave(offerId)
-                                }}
-                                disabled={!canSaveNote}
-                                className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                Kaydet
-                              </button>
                             </div>
                           </div>
                           {isNoteOpen && (
@@ -1210,6 +1199,16 @@ export default function ProductsTab({
                               disabled={!canManageNotes}
                               className="mt-4 min-h-[220px] w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                             />
+                            <div className="mt-3 flex flex-wrap justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleNoteSave(offerId)}
+                                disabled={!canSaveNote}
+                                className="flex h-8 items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Kaydet
+                              </button>
+                            </div>
                           </div>
                           )}
                         </div>
