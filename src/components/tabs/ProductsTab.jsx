@@ -1095,7 +1095,7 @@ export default function ProductsTab({
                           </div>
                         </div>
 
-                        <div className="rounded-2xl border border-white/10 bg-ink-900/50 p-4 shadow-card">
+                        <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/50 shadow-card">
                           <div
                             role="button"
                             tabIndex={0}
@@ -1106,11 +1106,12 @@ export default function ProductsTab({
                                 toggleNoteOpen(offerId)
                               }
                             }}
-                            className="flex flex-wrap items-center justify-between gap-3"
+                            className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3"
                             aria-expanded={isNoteOpen}
                           >
                             <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                              <span className="text-xs font-semibold text-slate-100">Urun notu</span>
+                              <span className="text-sm font-semibold text-slate-100">Urun notu</span>
+                              <span className="text-[11px] text-slate-400">Not urun bazinda saklanir.</span>
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
@@ -1142,7 +1143,7 @@ export default function ProductsTab({
                                   handleNoteSave(offerId)
                                 }}
                                 disabled={!canSaveNote}
-                                className="flex h-8 items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 Kaydet
                               </button>
@@ -1153,68 +1154,74 @@ export default function ProductsTab({
                                   handleNoteReset(offerId)
                                 }}
                                 disabled={noteDraftValue === undefined}
-                                className="flex h-8 items-center justify-center rounded-lg border border-white/10 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-400 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-md border border-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-400 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 Sifirla
                               </button>
                             </div>
                           </div>
-                          <p className="mt-1 text-[11px] text-slate-400">Not urun bazinda saklanir.</p>
                           {isNoteOpen && (
-                          <>
-                          <div className="mt-3 space-y-2">
-                            <label className="text-[11px] font-semibold text-slate-300">
-                              Not grubu
-                            </label>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <select
-                                value={noteGroupId}
-                                onChange={(event) => handleNoteGroupAssign(offerId, event.target.value)}
-                                disabled={!canManageNotes}
-                                className="min-w-[180px] flex-1 appearance-none rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                <option value="">Bagimsiz not</option>
-                                {noteGroups.map((groupOption) => (
-                                  <option key={groupOption.id} value={groupOption.id}>
-                                    {groupOption.name}
-                                  </option>
-                                ))}
-                              </select>
+                          <div className="px-4 pb-4 pt-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="space-y-2">
+                                <label className="text-[11px] font-semibold text-slate-300">
+                                  Not grubu
+                                </label>
+                                <select
+                                  value={noteGroupId}
+                                  onChange={(event) =>
+                                    handleNoteGroupAssign(offerId, event.target.value)
+                                  }
+                                  disabled={!canManageNotes}
+                                  className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  <option value="">Bagimsiz not</option>
+                                  {noteGroups.map((groupOption) => (
+                                    <option key={groupOption.id} value={groupOption.id}>
+                                      {groupOption.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
                               {canManageNotes && (
-                                <div className="flex min-w-[200px] flex-1 items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={noteGroupDraftValue}
-                                    onChange={(event) =>
-                                      handleNoteGroupDraftChange(offerId, event.target.value)
-                                    }
-                                    placeholder="Yeni not grubu"
-                                    className="w-full rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation()
-                                      handleNoteGroupCreate(offerId)
-                                    }}
-                                    disabled={!noteGroupDraftValue.trim()}
-                                    className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    Olustur
-                                  </button>
+                                <div className="space-y-2">
+                                  <label className="text-[11px] font-semibold text-slate-300">
+                                    Yeni not grubu
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="text"
+                                      value={noteGroupDraftValue}
+                                      onChange={(event) =>
+                                        handleNoteGroupDraftChange(offerId, event.target.value)
+                                      }
+                                      placeholder="Yeni not grubu"
+                                      className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation()
+                                        handleNoteGroupCreate(offerId)
+                                      }}
+                                      disabled={!noteGroupDraftValue.trim()}
+                                      className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      Olustur
+                                    </button>
+                                  </div>
                                 </div>
                               )}
                             </div>
+                            <textarea
+                              rows={9}
+                              value={noteInputValue ?? ""}
+                              onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
+                              placeholder="Urun notu ekle"
+                              disabled={!canManageNotes}
+                              className="mt-4 min-h-[220px] w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                            />
                           </div>
-                          <textarea
-                            rows={8}
-                            value={noteInputValue ?? ""}
-                            onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
-                            placeholder="Urun notu ekle"
-                            disabled={!canManageNotes}
-                            className="mt-4 min-h-[200px] w-full rounded-xl border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                          />
-                          </>
                           )}
                         </div>
 
