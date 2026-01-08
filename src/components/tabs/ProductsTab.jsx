@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { toast } from "react-hot-toast"
 import StockModal from "../modals/StockModal"
 
 function SkeletonBlock({ className = "" }) {
@@ -199,11 +200,16 @@ export default function ProductsTab({
     if (!normalizedId) return
     setStarredOffers((prev) => {
       const next = { ...prev }
-      if (next[normalizedId]) {
-        delete next[normalizedId]
-      } else {
+      const nextState = !next[normalizedId]
+      if (nextState) {
         next[normalizedId] = true
+      } else {
+        delete next[normalizedId]
       }
+      toast.success(nextState ? "Urun yildizlandi" : "Yildiz kaldirildi", {
+        duration: 1500,
+        position: "top-right",
+      })
       return next
     })
   }
@@ -342,6 +348,7 @@ export default function ProductsTab({
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     onLoadKeys(normalizedId, { force: true })
+    toast("Stoklar yenileniyor...", { duration: 1200, position: "top-right" })
   }
 
   useEffect(() => {
