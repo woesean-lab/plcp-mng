@@ -208,6 +208,46 @@ export default function ProductsTab({
     const count = stockModalDraft.split("\n").length
     return Math.max(1, count)
   }, [stockModalDraft])
+  const productStats = useMemo(() => {
+    const totals = {
+      totalOffers: allProducts.length,
+      stockEnabled: 0,
+      availableStock: 0,
+      usedStock: 0,
+    }
+
+    allProducts.forEach((product) => {
+      const offerId = String(product?.id ?? "").trim()
+      const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
+      if (isStockEnabled) totals.stockEnabled += 1
+
+      const keyList = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : []
+      const usedCountFromKeys = keyList.reduce(
+        (acc, item) => acc + (item?.status === "used" ? 1 : 0),
+        0,
+      )
+      const availableCountFromKeys = keyList.reduce(
+        (acc, item) => acc + (item?.status !== "used" ? 1 : 0),
+        0,
+      )
+      const stockCountRaw = Number(product?.stockCount)
+      const stockUsedRaw = Number(product?.stockUsedCount)
+      const stockTotalRaw = Number(product?.stockTotalCount)
+      const rawTotalCount = Number.isFinite(stockTotalRaw) ? stockTotalRaw : keyList.length
+      const rawUsedCount = Number.isFinite(stockUsedRaw) ? stockUsedRaw : usedCountFromKeys
+      const rawAvailableCount = Number.isFinite(stockCountRaw)
+        ? stockCountRaw
+        : Math.max(0, rawTotalCount - rawUsedCount)
+      const hasLoadedKeys = Object.prototype.hasOwnProperty.call(keysByOffer, offerId)
+      const usedCount = hasLoadedKeys ? usedCountFromKeys : rawUsedCount
+      const availableCount = hasLoadedKeys ? availableCountFromKeys : rawAvailableCount
+
+      totals.availableStock += Math.max(0, availableCount)
+      totals.usedStock += Math.max(0, usedCount)
+    })
+
+    return totals
+  }, [allProducts, keysByOffer, stockEnabledByOffer])
 
   const toggleOfferOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -433,6 +473,49 @@ export default function ProductsTab({
           </div>
         </div>
       </header>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
+          <div className="relative">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Toplam urun
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{productStats.totalOffers}</p>
+            <p className="mt-1 text-xs text-slate-400">Katalogdaki teklifler</p>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(59,130,246,0.18),transparent)]" />
+          <div className="relative">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Stok acik urun
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{productStats.stockEnabled}</p>
+            <p className="mt-1 text-xs text-slate-400">Stok takibi acik</p>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(16,185,129,0.18),transparent)]" />
+          <div className="relative">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Kullanilabilir stok
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{productStats.availableStock}</p>
+            <p className="mt-1 text-xs text-slate-400">Hazir anahtar</p>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(245,158,11,0.18),transparent)]" />
+          <div className="relative">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
+              Kullanilan stok
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{productStats.usedStock}</p>
+            <p className="mt-1 text-xs text-slate-400">Isaretlenen anahtar</p>
+          </div>
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
         <aside className={`${panelClass} bg-ink-900/80`}>
