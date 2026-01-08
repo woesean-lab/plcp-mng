@@ -50,7 +50,7 @@ function ProductsSkeleton({ panelClass }) {
         {Array.from({ length: 4 }).map((_, idx) => (
           <div
             key={`product-metric-${idx}`}
-            className="min-h-[88px] rounded-2xl border border-white/15 bg-white/5 p-4 shadow-card"
+            className="min-h-[88px] rounded-2xl border border-white/20 bg-ink-900/70 p-4 shadow-inner"
           >
             <SkeletonBlock className="h-3 w-20 rounded-full" />
             <SkeletonBlock className="mt-3 h-6 w-16 rounded-full" />
