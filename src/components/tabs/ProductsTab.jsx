@@ -145,7 +145,9 @@ export default function ProductsTab({
   onAddKeys,
   onDeleteKey,
   onUpdateKeyStatus,
+  onUpdateKeyCode,
   onBulkCopy,
+  onBulkDelete,
   onCopyKey,
   onCreateGroup,
   onAssignGroup,
@@ -164,12 +166,15 @@ export default function ProductsTab({
   const [noteDrafts, setNoteDrafts] = useState({})
   const [stockModalDraft, setStockModalDraft] = useState("")
   const [stockModalTarget, setStockModalTarget] = useState(null)
+  const [editingKeys, setEditingKeys] = useState({})
+  const [savingKeys, setSavingKeys] = useState({})
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const canManageGroups = canAddKeys
   const canManageNotes = canAddKeys && typeof onSaveNote === "function"
   const canManageStock = canAddKeys && typeof onToggleStock === "function"
   const canUpdateKeys = typeof onUpdateKeyStatus === "function" && canCopyKeys
+  const canEditKeys = canAddKeys && typeof onUpdateKeyCode === "function"
   const items = Array.isArray(catalog?.items) ? catalog.items : []
   const topups = Array.isArray(catalog?.topups) ? catalog.topups : []
   const allProducts = useMemo(() => [...items, ...topups], [items, topups])
@@ -356,6 +361,21 @@ export default function ProductsTab({
     onBulkCopy(normalizedId, rawCount, { markUsed })
   }
 
+  const handleBulkDelete = (offerId, list) => {
+    if (typeof onBulkDelete !== "function") return
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    const availableList = Array.isArray(list) ? list : []
+    const rawCount = bulkCounts[normalizedId]
+    const count = Math.max(1, Number(rawCount ?? availableList.length) || availableList.length)
+    const selected = availableList.slice(0, count)
+    if (selected.length === 0) {
+      toast.error("Silinecek stok yok.")
+      return
+    }
+    onBulkDelete(normalizedId, selected.map((item) => item.id))
+  }
+
   const handleGroupDraftChange = (offerId, value) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
@@ -443,6 +463,49 @@ export default function ProductsTab({
   const handleKeyCopy = (code) => {
     if (typeof onCopyKey !== "function") return
     onCopyKey(code)
+  }
+
+  const handleKeyEditStart = (keyId, code) => {
+    const normalizedKeyId = String(keyId ?? "").trim()
+    if (!normalizedKeyId) return
+    setEditingKeys((prev) => ({ ...prev, [normalizedKeyId]: String(code ?? "") }))
+  }
+
+  const handleKeyEditChange = (keyId, value) => {
+    const normalizedKeyId = String(keyId ?? "").trim()
+    if (!normalizedKeyId) return
+    setEditingKeys((prev) => ({ ...prev, [normalizedKeyId]: value }))
+  }
+
+  const handleKeyEditCancel = (keyId) => {
+    const normalizedKeyId = String(keyId ?? "").trim()
+    if (!normalizedKeyId) return
+    setEditingKeys((prev) => {
+      const next = { ...prev }
+      delete next[normalizedKeyId]
+      return next
+    })
+  }
+
+  const handleKeyEditSave = async (offerId, keyId) => {
+    if (typeof onUpdateKeyCode !== "function") return
+    const normalizedOfferId = String(offerId ?? "").trim()
+    const normalizedKeyId = String(keyId ?? "").trim()
+    if (!normalizedOfferId || !normalizedKeyId) return
+    const draft = editingKeys[normalizedKeyId]
+    const trimmed = String(draft ?? "").trim()
+    if (!trimmed) {
+      toast.error("Stok kodu bos olamaz.")
+      return
+    }
+    setSavingKeys((prev) => ({ ...prev, [normalizedKeyId]: true }))
+    const ok = await onUpdateKeyCode(normalizedOfferId, normalizedKeyId, trimmed)
+    setSavingKeys((prev) => {
+      const next = { ...prev }
+      delete next[normalizedKeyId]
+      return next
+    })
+    if (ok) handleKeyEditCancel(normalizedKeyId)
   }
 
   const handleKeysRefresh = (offerId) => {
@@ -974,10 +1037,10 @@ export default function ProductsTab({
                                 </div>
                               )}
                               {!isKeysLoading && availableKeys.length > 0 && (
-                                <div className="space-y-4 rounded-2xl border border-white/10 bg-ink-900/40 p-4 shadow-card">
+                                <div className="space-y-4 rounded-2xl border border-white/10 bg-ink-900/30 p-4 shadow-card">
                                   {canCopyKeys && (
                                     <div className="flex flex-wrap items-center justify-between gap-3">
-                                      <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                                      <span className="text-xs font-semibold text-slate-300">
                                         Toplu kopyala
                                       </span>
                                       <div className="flex flex-wrap items-center gap-2">
@@ -1010,12 +1073,27 @@ export default function ProductsTab({
                                         >
                                           Kopyala
                                         </button>
+                                        {canDeleteKeys && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleBulkDelete(offerId, availableKeys)}
+                                            className="rounded-md border border-rose-400/60 bg-rose-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/20"
+                                          >
+                                            Toplu sil
+                                          </button>
+                                        )}
                                       </div>
                                     </div>
                                   )}
                                   <div className="space-y-2">
                                     {availableKeys.map((item, index) => {
                                       const isDeleting = Boolean(keysDeleting?.[item.id])
+                                      const isEditing = Object.prototype.hasOwnProperty.call(
+                                        editingKeys,
+                                        item.id,
+                                      )
+                                      const isSaving = Boolean(savingKeys[item.id])
+                                      const draftValue = editingKeys[item.id] ?? ""
                                       return (
                                         <div
                                           key={item.id}
@@ -1026,41 +1104,102 @@ export default function ProductsTab({
                                           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-ink-950/60 text-[11px] font-semibold text-slate-300 transition group-hover:border-accent-300 group-hover:text-accent-100">
                                             #{index + 1}
                                           </span>
-                                          <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
-                                            {item.code}
-                                          </p>
+                                          {isEditing ? (
+                                            <div className="w-full flex-1">
+                                              <input
+                                                type="text"
+                                                value={draftValue}
+                                                onChange={(event) =>
+                                                  handleKeyEditChange(item.id, event.target.value)
+                                                }
+                                                onKeyDown={(event) => {
+                                                  if (event.key === "Enter") {
+                                                    event.preventDefault()
+                                                    handleKeyEditSave(offerId, item.id)
+                                                  }
+                                                  if (event.key === "Escape") {
+                                                    event.preventDefault()
+                                                    handleKeyEditCancel(item.id)
+                                                  }
+                                                }}
+                                                disabled={isSaving}
+                                                autoFocus
+                                                className="w-full rounded-md border border-white/10 bg-ink-900 px-2.5 py-1.5 font-mono text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                              />
+                                            </div>
+                                          ) : (
+                                            <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
+                                              {item.code}
+                                            </p>
+                                          )}
                                           <div className="flex w-full flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] sm:w-auto">
-                                            {canCopyKeys && (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleKeyCopy(item.code)}
-                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
-                                              >
-                                                Kopyala
-                                              </button>
-                                            )}
-                                            {canUpdateKeys && (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleKeyStatusUpdate(offerId, item.id, "used")}
-                                                className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
-                                              >
-                                                Kullanildi
-                                              </button>
-                                            )}
-                                            {canDeleteKeys && (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleKeyDelete(offerId, item.id)}
-                                                disabled={isDeleting}
-                                                className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
-                                                  confirmKeyTarget === `${offerId}-${item.id}`
-                                                    ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                                    : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
-                                                }`}
-                                              >
-                                                {confirmKeyTarget === `${offerId}-${item.id}` ? "Onayla" : "Sil"}
-                                              </button>
+                                            {isEditing ? (
+                                              <>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleKeyEditSave(offerId, item.id)}
+                                                  disabled={isSaving}
+                                                  className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                  Kaydet
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleKeyEditCancel(item.id)}
+                                                  disabled={isSaving}
+                                                  className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                  Iptal
+                                                </button>
+                                              </>
+                                            ) : (
+                                              <>
+                                                {canCopyKeys && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleKeyCopy(item.code)}
+                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
+                                                  >
+                                                    Kopyala
+                                                  </button>
+                                                )}
+                                                {canEditKeys && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleKeyEditStart(item.id, item.code)}
+                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 sm:w-auto"
+                                                  >
+                                                    Duzenle
+                                                  </button>
+                                                )}
+                                                {canUpdateKeys && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                      handleKeyStatusUpdate(offerId, item.id, "used")
+                                                    }
+                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
+                                                  >
+                                                    Kullanildi
+                                                  </button>
+                                                )}
+                                                {canDeleteKeys && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleKeyDelete(offerId, item.id)}
+                                                    disabled={isDeleting}
+                                                    className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
+                                                      confirmKeyTarget === `${offerId}-${item.id}`
+                                                        ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                        : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
+                                                    }`}
+                                                  >
+                                                    {confirmKeyTarget === `${offerId}-${item.id}`
+                                                      ? "Onayla"
+                                                      : "Sil"}
+                                                  </button>
+                                                )}
+                                              </>
                                             )}
                                           </div>
                                         </div>
@@ -1070,9 +1209,9 @@ export default function ProductsTab({
                                 </div>
                               )}
                               {!isKeysLoading && usedKeys.length > 0 && (
-                                <div className="space-y-4 rounded-2xl border border-white/10 bg-ink-900/40 p-4 shadow-card">
+                                <div className="space-y-4 rounded-2xl border border-white/10 bg-ink-900/30 p-4 shadow-card">
                                   <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                                    <span className="text-xs font-semibold text-slate-300">
                                       Kullanilan stoklar
                                     </span>
                                     <span className="rounded-full border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
@@ -1082,6 +1221,12 @@ export default function ProductsTab({
                                   <div className="space-y-2">
                                     {usedKeys.map((item, index) => {
                                       const isDeleting = Boolean(keysDeleting?.[item.id])
+                                      const isEditing = Object.prototype.hasOwnProperty.call(
+                                        editingKeys,
+                                        item.id,
+                                      )
+                                      const isSaving = Boolean(savingKeys[item.id])
+                                      const draftValue = editingKeys[item.id] ?? ""
                                       return (
                                         <div
                                           key={item.id}
@@ -1092,41 +1237,102 @@ export default function ProductsTab({
                                           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-ink-950/60 text-[11px] font-semibold text-slate-300 transition group-hover:border-amber-300 group-hover:text-amber-100">
                                             #{index + 1}
                                           </span>
-                                          <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
-                                            {item.code}
-                                          </p>
+                                          {isEditing ? (
+                                            <div className="w-full flex-1">
+                                              <input
+                                                type="text"
+                                                value={draftValue}
+                                                onChange={(event) =>
+                                                  handleKeyEditChange(item.id, event.target.value)
+                                                }
+                                                onKeyDown={(event) => {
+                                                  if (event.key === "Enter") {
+                                                    event.preventDefault()
+                                                    handleKeyEditSave(offerId, item.id)
+                                                  }
+                                                  if (event.key === "Escape") {
+                                                    event.preventDefault()
+                                                    handleKeyEditCancel(item.id)
+                                                  }
+                                                }}
+                                                disabled={isSaving}
+                                                autoFocus
+                                                className="w-full rounded-md border border-white/10 bg-ink-900 px-2.5 py-1.5 font-mono text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                              />
+                                            </div>
+                                          ) : (
+                                            <p className="w-full flex-1 select-text break-all font-mono text-sm text-slate-100">
+                                              {item.code}
+                                            </p>
+                                          )}
                                           <div className="flex w-full flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] sm:w-auto">
-                                            {canCopyKeys && (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleKeyCopy(item.code)}
-                                                className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
-                                              >
-                                                Kopyala
-                                              </button>
-                                            )}
-                                            {canUpdateKeys && (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleKeyStatusUpdate(offerId, item.id, "available")}
-                                                className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
-                                              >
-                                                Geri al
-                                              </button>
-                                            )}
-                                            {canDeleteKeys && (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleKeyDelete(offerId, item.id)}
-                                                disabled={isDeleting}
-                                                className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
-                                                  confirmKeyTarget === `${offerId}-${item.id}`
-                                                    ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                                    : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
-                                                }`}
-                                              >
-                                                {confirmKeyTarget === `${offerId}-${item.id}` ? "Onayla" : "Sil"}
-                                              </button>
+                                            {isEditing ? (
+                                              <>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleKeyEditSave(offerId, item.id)}
+                                                  disabled={isSaving}
+                                                  className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                  Kaydet
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleKeyEditCancel(item.id)}
+                                                  disabled={isSaving}
+                                                  className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                  Iptal
+                                                </button>
+                                              </>
+                                            ) : (
+                                              <>
+                                                {canCopyKeys && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleKeyCopy(item.code)}
+                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
+                                                  >
+                                                    Kopyala
+                                                  </button>
+                                                )}
+                                                {canEditKeys && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleKeyEditStart(item.id, item.code)}
+                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 sm:w-auto"
+                                                  >
+                                                    Duzenle
+                                                  </button>
+                                                )}
+                                                {canUpdateKeys && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                      handleKeyStatusUpdate(offerId, item.id, "available")
+                                                    }
+                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
+                                                  >
+                                                    Geri al
+                                                  </button>
+                                                )}
+                                                {canDeleteKeys && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleKeyDelete(offerId, item.id)}
+                                                    disabled={isDeleting}
+                                                    className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
+                                                      confirmKeyTarget === `${offerId}-${item.id}`
+                                                        ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                        : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
+                                                    }`}
+                                                  >
+                                                    {confirmKeyTarget === `${offerId}-${item.id}`
+                                                      ? "Onayla"
+                                                      : "Sil"}
+                                                  </button>
+                                                )}
+                                              </>
                                             )}
                                           </div>
                                         </div>

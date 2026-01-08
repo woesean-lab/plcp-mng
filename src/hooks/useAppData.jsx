@@ -2823,6 +2823,57 @@ export default function useAppData() {
     ],
   )
 
+  const handleEldoradoBulkDelete = useCallback(
+    async (offerId, ids) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      const idList = Array.isArray(ids)
+        ? ids.map((id) => String(id ?? "").trim()).filter(Boolean)
+        : []
+      if (!normalizedOfferId || idList.length === 0) return false
+
+      try {
+        const groupStore = readEldoradoGroupStore()
+        const assignedGroupId = groupStore.assignments[normalizedOfferId] ?? ""
+        const groupId = assignedGroupId || normalizedOfferId
+        const store = readEldoradoKeyStore()
+        const list = Array.isArray(store[groupId]) ? store[groupId] : []
+        const removeSet = new Set(idList)
+        const nextList = list.filter((item) => !removeSet.has(String(item.id ?? "")))
+        if (nextList.length === list.length) {
+          toast.error("Silinecek stok bulunamadi.")
+          return false
+        }
+        store[groupId] = nextList
+
+        const saved = writeEldoradoKeyStore(store)
+        if (!saved) return false
+
+        if (assignedGroupId) {
+          syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        } else {
+          setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
+        }
+        setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
+        toast.success(`${list.length - nextList.length} stok silindi`, {
+          duration: 1500,
+          position: "top-right",
+        })
+        return true
+      } catch (error) {
+        console.error(error)
+        toast.error("Stok silinemedi (local storage).")
+        return false
+      }
+    },
+    [
+      applyEldoradoKeyCounts,
+      readEldoradoGroupStore,
+      readEldoradoKeyStore,
+      syncEldoradoKeysForGroup,
+      writeEldoradoKeyStore,
+    ],
+  )
+
   const handleEldoradoKeyStatusUpdate = useCallback(
     (offerId, keyId, nextStatus) => {
       const normalizedOfferId = String(offerId ?? "").trim()
@@ -2862,6 +2913,56 @@ export default function useAppData() {
       } catch (error) {
         console.error(error)
         toast.error("Stok durumu guncellenemedi (local storage).")
+      }
+    },
+    [
+      applyEldoradoKeyCounts,
+      readEldoradoGroupStore,
+      readEldoradoKeyStore,
+      syncEldoradoKeysForGroup,
+      writeEldoradoKeyStore,
+    ],
+  )
+
+  const handleEldoradoKeyUpdate = useCallback(
+    async (offerId, keyId, nextCode) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      const normalizedKeyId = String(keyId ?? "").trim()
+      const trimmedCode = String(nextCode ?? "").trim()
+      if (!normalizedOfferId || !normalizedKeyId || !trimmedCode) return false
+
+      try {
+        const groupStore = readEldoradoGroupStore()
+        const assignedGroupId = groupStore.assignments[normalizedOfferId] ?? ""
+        const groupId = assignedGroupId || normalizedOfferId
+        const store = readEldoradoKeyStore()
+        const list = Array.isArray(store[groupId]) ? store[groupId] : []
+        let didUpdate = false
+        const nextList = list.map((item) => {
+          if (String(item.id ?? "").trim() !== normalizedKeyId) return item
+          didUpdate = true
+          return { ...item, code: trimmedCode }
+        })
+        if (!didUpdate) {
+          toast.error("Stok bulunamadi.")
+          return false
+        }
+        store[groupId] = nextList
+        const saved = writeEldoradoKeyStore(store)
+        if (!saved) return false
+
+        if (assignedGroupId) {
+          syncEldoradoKeysForGroup(groupId, nextList, groupStore.assignments)
+        } else {
+          setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
+        }
+        setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
+        toast.success("Stok guncellendi", { duration: 1500, position: "top-right" })
+        return true
+      } catch (error) {
+        console.error(error)
+        toast.error("Stok guncellenemedi (local storage).")
+        return false
       }
     },
     [
@@ -4744,8 +4845,10 @@ export default function useAppData() {
     refreshEldoradoCatalog,
     loadEldoradoKeys,
     handleEldoradoKeysAdd,
+    handleEldoradoBulkDelete,
     handleEldoradoKeyDelete,
     handleEldoradoKeyStatusUpdate,
+    handleEldoradoKeyUpdate,
     handleEldoradoBulkCopy,
     handleEldoradoKeyCopy,
     handleEldoradoGroupCreate,

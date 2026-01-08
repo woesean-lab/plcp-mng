@@ -189,8 +189,10 @@ function App() {
     refreshEldoradoCatalog,
     loadEldoradoKeys,
     handleEldoradoKeysAdd,
+    handleEldoradoBulkDelete,
     handleEldoradoKeyDelete,
     handleEldoradoKeyStatusUpdate,
+    handleEldoradoKeyUpdate,
     handleEldoradoBulkCopy,
     handleEldoradoKeyCopy,
     handleEldoradoGroupCreate,
@@ -974,8 +976,10 @@ function App() {
               stockEnabledByOffer={eldoradoStockEnabledByOffer}
               onLoadKeys={loadEldoradoKeys}
               onAddKeys={handleEldoradoKeysAdd}
+              onBulkDelete={handleEldoradoBulkDelete}
               onDeleteKey={handleEldoradoKeyDelete}
               onUpdateKeyStatus={handleEldoradoKeyStatusUpdate}
+              onUpdateKeyCode={handleEldoradoKeyUpdate}
               onBulkCopy={handleEldoradoBulkCopy}
               onCopyKey={handleEldoradoKeyCopy}
               onCreateGroup={handleEldoradoGroupCreate}
