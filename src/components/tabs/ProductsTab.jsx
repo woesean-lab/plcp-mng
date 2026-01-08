@@ -587,14 +587,6 @@ export default function ProductsTab({
                                   </p>
                                 </div>
                               </div>
-                              <div className="min-w-[56px] space-y-0.5 text-right">
-                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                  Kullanildi
-                                </p>
-                                <p className="text-sm font-semibold leading-none text-amber-100">
-                                  {usedCount}
-                                </p>
-                              </div>
                             </div>
                           </div>
                         )}
