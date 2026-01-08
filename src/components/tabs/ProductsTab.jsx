@@ -569,9 +569,9 @@ export default function ProductsTab({
                                 </p>
                               </div>
                             </div>
-                            <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/20 ring-1 ring-white/10">
+                            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
                               <div
-                                className="h-full bg-emerald-300/90"
+                                className="h-full bg-emerald-400"
                                 style={{
                                   width: `${stockFillPercent}%`,
                                 }}
