@@ -696,11 +696,9 @@ export default function ProductsTab({
                       className={`rounded-2xl border border-white/10 p-4 shadow-inner transition hover:border-accent-400/60 hover:shadow-card ${
                         isMissing
                           ? "border-rose-400/40 bg-rose-500/10"
-                          : starredOffers[offerId]
-                            ? "border-orange-400/60 bg-orange-500/20"
-                            : isOutOfStock
-                              ? "border-rose-300/30 bg-ink-900/70"
-                              : "bg-ink-900/70"
+                          : isOutOfStock
+                            ? "border-rose-300/30 bg-ink-900/70"
+                            : "bg-ink-900/70"
                       }`}
                     >
                       <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
@@ -710,9 +708,9 @@ export default function ProductsTab({
                           disabled={!offerId}
                           className="min-w-0 flex-1 text-left disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <div className="flex flex-wrap items-baseline gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span
-                              className={`break-words font-display text-[13px] font-semibold leading-snug text-white sm:text-sm ${
+                              className={`min-w-0 flex-1 break-words font-display text-[13px] font-semibold leading-snug text-white sm:text-sm ${
                                 isMissing
                                   ? "text-orange-50"
                                   : isOutOfStock
@@ -722,28 +720,30 @@ export default function ProductsTab({
                             >
                               {name}
                             </span>
-                            {isStockEnabled && (
-                              <>
-                                <span
-                                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                                    availableCount === 0
-                                      ? "border border-rose-300/60 bg-rose-500/15 text-rose-50"
-                                      : "border border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
-                                  }`}
-                                >
-                                  {availableCount} stok
-                                </span>
+                            {(isStockEnabled || usedCount > 0 || isMissing) && (
+                              <div className="flex shrink-0 flex-nowrap items-center gap-2">
+                                {isStockEnabled && (
+                                  <span
+                                    className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                                      availableCount === 0
+                                        ? "border border-rose-300/60 bg-rose-500/15 text-rose-50"
+                                        : "border border-emerald-300/60 bg-emerald-500/15 text-emerald-50"
+                                    }`}
+                                  >
+                                    {availableCount} stok
+                                  </span>
+                                )}
                                 {usedCount > 0 && (
                                   <span className="rounded-full border border-amber-300/60 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50">
                                     Kullanildi: {usedCount}
                                   </span>
                                 )}
-                              </>
-                            )}
-                            {isMissing && (
-                              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-200">
-                                Eksik
-                              </span>
+                                {isMissing && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-200">
+                                    Eksik
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em]">
@@ -793,7 +793,7 @@ export default function ProductsTab({
                               disabled={!offerId}
                               className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
                                 !offerId ? "cursor-not-allowed opacity-60" : ""
-                              } ${starredOffers[offerId] ? "text-amber-200" : ""}`}
+                              } ${starredOffers[offerId] ? "text-yellow-300" : ""}`}
                               aria-label="Urunu yildizla"
                               title={starredOffers[offerId] ? "Yildizi kaldir" : "Yildizla"}
                             >

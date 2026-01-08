@@ -2171,12 +2171,10 @@ export default function useAppData() {
       : typeof value === "string"
         ? value.split(/\r?\n/)
         : []
-    const seen = new Set()
     const normalized = []
     rawList.forEach((entry) => {
       const code = String(entry ?? "").trim()
-      if (!code || seen.has(code)) return
-      seen.add(code)
+      if (!code) return
       normalized.push(code)
     })
     return normalized
@@ -2193,12 +2191,10 @@ export default function useAppData() {
     (offerId, list) => {
       if (!Array.isArray(list)) return []
       const normalizedOfferId = String(offerId ?? "").trim()
-      const seen = new Set()
       const normalized = []
       list.forEach((entry, index) => {
         const code = String(entry?.code ?? entry ?? "").trim()
-        if (!code || seen.has(code)) return
-        seen.add(code)
+        if (!code) return
         const statusRaw = String(entry?.status ?? "").trim().toLowerCase()
         const status = statusRaw === "used" ? "used" : "available"
         let id = String(entry?.id ?? "").trim()
@@ -2733,13 +2729,10 @@ export default function useAppData() {
         const groupId = assignedGroupId || normalizedId
         const store = readEldoradoKeyStore()
         const currentList = Array.isArray(store[groupId]) ? store[groupId] : []
-        const existingCodes = new Set(currentList.map((item) => item.code))
         const createdAt = new Date().toISOString()
         const added = []
 
         codes.forEach((code) => {
-          if (existingCodes.has(code)) return
-          existingCodes.add(code)
           added.push({ id: createLocalEldoradoKeyId(), code, status: "available", createdAt })
         })
 
@@ -2756,10 +2749,8 @@ export default function useAppData() {
         setEldoradoCatalog((prev) => applyEldoradoKeyCounts(prev))
 
         const addedCount = added.length
-        const skippedCount = Math.max(0, codes.length - addedCount)
         if (addedCount > 0) {
-          const note = skippedCount > 0 ? `, ${skippedCount} tekrar eden atlandi` : ""
-          toast.success(`${addedCount} stok eklendi${note}`, { duration: 1600, position: "top-right" })
+          toast.success(`${addedCount} stok eklendi`, { duration: 1600, position: "top-right" })
         } else {
           toast.error("Yeni stok eklenmedi.")
         }
