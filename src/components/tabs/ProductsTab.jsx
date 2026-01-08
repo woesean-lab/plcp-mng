@@ -1073,15 +1073,6 @@ export default function ProductsTab({
                                         >
                                           Kopyala
                                         </button>
-                                        {canDeleteKeys && (
-                                          <button
-                                            type="button"
-                                            onClick={() => handleBulkDelete(offerId, availableKeys)}
-                                            className="rounded-md border border-rose-400/60 bg-rose-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/20"
-                                          >
-                                            Toplu sil
-                                          </button>
-                                        )}
                                       </div>
                                     </div>
                                   )}
@@ -1214,9 +1205,20 @@ export default function ProductsTab({
                                     <span className="text-xs font-semibold text-slate-300">
                                       Kullanilan stoklar
                                     </span>
-                                    <span className="rounded-full border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
-                                      {usedKeys.length} adet
-                                    </span>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="rounded-full border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
+                                        {usedKeys.length} adet
+                                      </span>
+                                      {canDeleteKeys && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleBulkDelete(offerId, usedKeys)}
+                                          className="rounded-md border border-rose-400/60 bg-rose-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/20"
+                                        >
+                                          Toplu sil
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                   <div className="space-y-2">
                                     {usedKeys.map((item, index) => {
