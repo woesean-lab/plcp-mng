@@ -176,6 +176,7 @@ export default function ProductsTab({
   const [savingKeys, setSavingKeys] = useState({})
   const [confirmGroupDelete, setConfirmGroupDelete] = useState(null)
   const [noteGroupDrafts, setNoteGroupDrafts] = useState({})
+  const [noteOpenByOffer, setNoteOpenByOffer] = useState({})
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const canManageGroups = canAddKeys
@@ -444,6 +445,12 @@ export default function ProductsTab({
       delete next[normalizedId]
       return next
     })
+  }
+
+  const toggleNoteOpen = (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setNoteOpenByOffer((prev) => ({ ...prev, [normalizedId]: !prev[normalizedId] }))
   }
 
   const handleNoteSave = (offerId) => {
@@ -848,6 +855,9 @@ export default function ProductsTab({
                   const noteHasChanges = String(noteInputValue ?? "").trim() !== storedNote
                   const canSaveNote = Boolean(offerId) && canManageNotes && noteHasChanges
                   const noteGroupDraftValue = noteGroupDrafts[offerId] ?? ""
+                  const isNoteOpen =
+                    noteOpenByOffer[offerId] ??
+                    Boolean((noteDraftValue ?? storedNote)?.toString().trim())
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -1089,10 +1099,26 @@ export default function ProductsTab({
 
                         <div className="rounded-2xl border border-white/10 bg-ink-950/40 p-4 shadow-card">
                           <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                              <p className="text-xs font-semibold text-slate-100">Urun notu</p>
-                              <p className="mt-1 text-[11px] text-slate-400">Not urun bazinda saklanir.</p>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => toggleNoteOpen(offerId)}
+                              className="flex items-center gap-2 text-left text-xs font-semibold text-slate-100"
+                              aria-expanded={isNoteOpen}
+                            >
+                              <span>Urun notu</span>
+                              <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                                className={`h-4 w-4 text-slate-400 transition ${isNoteOpen ? "rotate-180" : ""}`}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="m6 9 6 6 6-6" />
+                              </svg>
+                            </button>
                             <div className="flex flex-wrap items-center gap-2">
                               {storedNote && !noteHasChanges && (
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
@@ -1108,7 +1134,7 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => handleNoteSave(offerId)}
                                 disabled={!canSaveNote}
-                                className="rounded-full border border-accent-300/60 bg-accent-500/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-8 items-center justify-center rounded-md border border-accent-300/60 bg-accent-500/15 px-3 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 Kaydet
                               </button>
@@ -1116,12 +1142,15 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => handleNoteReset(offerId)}
                                 disabled={noteDraftValue === undefined}
-                                className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-8 items-center justify-center rounded-md border border-white/10 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 Sifirla
                               </button>
                             </div>
                           </div>
+                          <p className="mt-1 text-[11px] text-slate-400">Not urun bazinda saklanir.</p>
+                          {isNoteOpen && (
+                          <>
                           <div className="mt-3 space-y-2">
                             <label className="text-[11px] font-semibold text-slate-300">
                               Not grubu
@@ -1164,13 +1193,15 @@ export default function ProductsTab({
                             </div>
                           </div>
                           <textarea
-                            rows={3}
+                            rows={6}
                             value={noteInputValue ?? ""}
                             onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
                             placeholder="Urun notu ekle"
                             disabled={!canManageNotes}
-                            className="mt-4 w-full rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="mt-4 min-h-[160px] w-full rounded-xl border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                           />
+                          </>
+                          )}
                         </div>
 
                         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.6fr)]">
