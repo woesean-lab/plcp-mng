@@ -143,6 +143,9 @@ export default function ProductsTab({
   noteGroups = [],
   noteGroupAssignments = {},
   noteGroupNotes = {},
+  messageGroups = [],
+  messageGroupAssignments = {},
+  messageGroupTemplates = {},
   templates = [],
   stockEnabledByOffer = {},
   onLoadKeys,
@@ -160,6 +163,9 @@ export default function ProductsTab({
   onCreateNoteGroup,
   onAssignNoteGroup,
   onSaveNote,
+  onCreateMessageGroup,
+  onAssignMessageGroup,
+  onAddMessageGroupTemplate,
   onToggleStock,
   canAddKeys = false,
   canDeleteKeys = false,
@@ -182,15 +188,13 @@ export default function ProductsTab({
   const [confirmNoteGroupDelete, setConfirmNoteGroupDelete] = useState(null)
   const [noteEditingByOffer, setNoteEditingByOffer] = useState({})
   const [messageTemplateDrafts, setMessageTemplateDrafts] = useState({})
-  const [messageTemplatesByOffer, setMessageTemplatesByOffer] = useState({})
   const [messageGroupDrafts, setMessageGroupDrafts] = useState({})
-  const [messageGroupSelections, setMessageGroupSelections] = useState({})
-  const [messageGroupsByOffer, setMessageGroupsByOffer] = useState({})
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const canManageGroups = canAddKeys
   const canManageNotes = canAddKeys && typeof onSaveNote === "function"
   const canManageStock = canAddKeys && typeof onToggleStock === "function"
+  const canManageMessages = canAddKeys && typeof onAddMessageGroupTemplate === "function"
   const canUpdateKeys = typeof onUpdateKeyStatus === "function" && canCopyKeys
   const canEditKeys = canAddKeys && typeof onUpdateKeyCode === "function"
   const items = Array.isArray(catalog?.items) ? catalog.items : []
@@ -539,43 +543,39 @@ export default function ProductsTab({
   }
 
   const handleMessageGroupCreate = (offerId) => {
+    if (typeof onCreateMessageGroup !== "function" || typeof onAssignMessageGroup !== "function") {
+      return
+    }
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const draft = String(messageGroupDrafts[normalizedId] ?? "").trim()
     if (!draft) return
-    setMessageGroupsByOffer((prev) => {
-      const existing = Array.isArray(prev[normalizedId]) ? prev[normalizedId] : []
-      if (existing.includes(draft)) return prev
-      return { ...prev, [normalizedId]: [...existing, draft] }
-    })
-    setMessageGroupSelections((prev) => ({ ...prev, [normalizedId]: draft }))
+    const created = onCreateMessageGroup(draft)
+    if (!created) return
     setMessageGroupDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
+    onAssignMessageGroup(normalizedId, created.id)
   }
 
-  const handleMessageGroupSelect = (offerId, value) => {
+  const handleMessageGroupAssign = (offerId, value) => {
+    if (typeof onAssignMessageGroup !== "function") return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    setMessageGroupSelections((prev) => ({ ...prev, [normalizedId]: value }))
+    onAssignMessageGroup(normalizedId, value)
   }
 
   const handleMessageTemplateAdd = (offerId) => {
+    if (typeof onAddMessageGroupTemplate !== "function") return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const selected = String(messageTemplateDrafts[normalizedId] ?? "").trim()
     if (!selected) return
-    const fallbackGroup =
-      messageGroupsByOffer[normalizedId]?.[0] || String(messageGroupSelections[normalizedId] ?? "")
-    const groupName = String(fallbackGroup ?? "Genel").trim() || "Genel"
-    setMessageGroupsByOffer((prev) => {
-      const existing = Array.isArray(prev[normalizedId]) ? prev[normalizedId] : []
-      if (existing.includes(groupName)) return prev
-      return { ...prev, [normalizedId]: [...existing, groupName] }
-    })
-    setMessageTemplatesByOffer((prev) => {
-      const existing = Array.isArray(prev[normalizedId]) ? prev[normalizedId] : []
-      if (existing.some((item) => item.label === selected && item.group === groupName)) return prev
-      return { ...prev, [normalizedId]: [...existing, { label: selected, group: groupName }] }
-    })
+    const groupId = String(messageGroupAssignments?.[normalizedId] ?? "").trim()
+    if (!groupId) {
+      toast.error("Mesaj grubu seçmelisin.")
+      return
+    }
+    const ok = onAddMessageGroupTemplate(groupId, selected)
+    if (!ok) return
     setMessageTemplateDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
   }
 
@@ -968,39 +968,18 @@ export default function ProductsTab({
                     Boolean(offerId) && canManageNotes && noteHasChanges && isNoteEditing
                   const messageTemplateDraftValue = messageTemplateDrafts[offerId] ?? ""
                   const messageGroupDraftValue = messageGroupDrafts[offerId] ?? ""
-                  const selectedMessageTemplates = messageTemplatesByOffer[offerId] ?? []
-                  const messageGroupSet = new Set(
-                    messageGroupsByOffer[offerId]?.length
-                      ? messageGroupsByOffer[offerId]
-                      : ["Genel"],
-                  )
-                  selectedMessageTemplates.forEach((entry) => {
-                    const group =
-                      typeof entry === "string"
-                        ? "Genel"
-                        : String(entry?.group ?? "").trim() || "Genel"
-                    messageGroupSet.add(group)
-                  })
-                  const messageGroups = Array.from(messageGroupSet)
-                  const messageGroupValue = messageGroupSelections[offerId]
-                  const activeMessageGroup =
-                    messageGroupValue && messageGroups.includes(messageGroupValue)
-                      ? messageGroupValue
-                      : messageGroups[0]
-                  const groupedMessages = selectedMessageTemplates.reduce((acc, entry) => {
-                    const label = typeof entry === "string" ? entry : entry?.label
-                    if (!label) return acc
-                    const group =
-                      typeof entry === "string"
-                        ? "Genel"
-                        : String(entry?.group ?? "").trim() || "Genel"
-                    if (!acc[group]) acc[group] = []
-                    acc[group].push(label)
-                    return acc
-                  }, {})
-                  const groupedMessageEntries = Object.entries(groupedMessages).sort((a, b) =>
-                    a[0].localeCompare(b[0], "tr"),
-                  )
+                  const messageGroupId = String(
+                    messageGroupAssignments?.[offerId] ?? "",
+                  ).trim()
+                  const messageGroup = messageGroupId
+                    ? messageGroups.find((group) => group.id === messageGroupId)
+                    : null
+                  const messageGroupName = String(messageGroup?.name ?? "").trim()
+                  const messageGroupMessages = messageGroupId
+                    ? Array.isArray(messageGroupTemplates?.[messageGroupId])
+                      ? messageGroupTemplates[messageGroupId]
+                      : []
+                    : []
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -1741,30 +1720,41 @@ export default function ProductsTab({
                                     <div>
                                       <p className="text-sm font-semibold text-slate-100">Mesajlar</p>
                                       <p className="text-xs text-slate-400">
-                                        Mesaj şablonlarını gruplandırıp ürüne ekle.
+                                        Mesaj grubu oluşturup şablonları buraya ekle.
                                       </p>
                                     </div>
                                   </div>
-                                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
-                                    {selectedMessageTemplates.length} mesaj
-                                  </span>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
+                                      Seçili: {messageGroupName || "Yok"}
+                                    </span>
+                                    {messageGroupId && (
+                                      <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
+                                        {messageGroupMessages.length} mesaj
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="mt-4 flex flex-col gap-3 xl:flex-row">
-                                  <div className="w-full space-y-3 rounded-xl border border-white/10 bg-ink-900/50 p-3 xl:w-[260px]">
+                                <div className="mt-4 space-y-3">
+                                  <div className="grid gap-3 lg:grid-cols-2">
                                     <div className="space-y-2">
                                       <label className="text-[11px] font-semibold text-slate-300">
-                                        Grup
+                                        Mesaj grubu
                                       </label>
                                       <select
-                                        value={activeMessageGroup}
+                                        value={messageGroupId}
                                         onChange={(event) =>
-                                          handleMessageGroupSelect(offerId, event.target.value)
+                                          handleMessageGroupAssign(offerId, event.target.value)
                                         }
-                                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                        disabled={!canManageMessages}
+                                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
+                                        <option value="">
+                                          {messageGroups.length === 0 ? "Grup yok" : "Grup seç"}
+                                        </option>
                                         {messageGroups.map((group) => (
-                                          <option key={`${offerId}-msg-group-${group}`} value={group}>
-                                            {group}
+                                          <option key={group.id} value={group.id}>
+                                            {group.name}
                                           </option>
                                         ))}
                                       </select>
@@ -1781,85 +1771,79 @@ export default function ProductsTab({
                                             handleMessageGroupDraftChange(offerId, event.target.value)
                                           }
                                           placeholder="Yeni grup adı"
-                                          className="min-w-[140px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                          disabled={!canManageMessages}
+                                          className="min-w-[140px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         />
                                         <button
                                           type="button"
                                           onClick={() => handleMessageGroupCreate(offerId)}
-                                          disabled={!messageGroupDraftValue.trim()}
+                                          disabled={!canManageMessages || !messageGroupDraftValue.trim()}
                                           className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                           Oluştur
                                         </button>
                                       </div>
                                     </div>
-                                    <div className="space-y-2">
-                                      <label className="text-[11px] font-semibold text-slate-300">
-                                        Şablon
-                                      </label>
-                                      <select
-                                        value={messageTemplateDraftValue}
-                                        onChange={(event) =>
-                                          handleMessageTemplateDraftChange(offerId, event.target.value)
-                                        }
-                                        disabled={templates.length === 0}
-                                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                      >
-                                        <option value="">
-                                          {templates.length === 0 ? "Şablon yok" : "Şablon seç"}
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <select
+                                      value={messageTemplateDraftValue}
+                                      onChange={(event) =>
+                                        handleMessageTemplateDraftChange(offerId, event.target.value)
+                                      }
+                                      disabled={!canManageMessages || templates.length === 0}
+                                      className="min-w-[200px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      <option value="">
+                                        {templates.length === 0 ? "Şablon yok" : "Şablon seç"}
+                                      </option>
+                                      {templates.map((tpl) => (
+                                        <option key={`${offerId}-msg-${tpl.label}`} value={tpl.label}>
+                                          {tpl.label}
                                         </option>
-                                        {templates.map((tpl) => (
-                                          <option key={`${offerId}-msg-${tpl.label}`} value={tpl.label}>
-                                            {tpl.label}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
+                                      ))}
+                                    </select>
                                     <button
                                       type="button"
                                       onClick={() => handleMessageTemplateAdd(offerId)}
-                                      disabled={!messageTemplateDraftValue.trim()}
-                                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                      disabled={
+                                        !canManageMessages ||
+                                        !messageTemplateDraftValue.trim() ||
+                                        !messageGroupId
+                                      }
+                                      className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       Ekle
                                     </button>
                                   </div>
-                                  <div className="min-w-0 flex-1 space-y-3 rounded-xl border border-white/10 bg-ink-900/30 p-3">
-                                    {groupedMessageEntries.length === 0 ? (
-                                      <div className="rounded-lg border border-dashed border-white/10 bg-white/5 px-3 py-3 text-xs text-slate-400">
-                                        Henüz mesaj eklenmedi.
+                                  <div className="rounded-xl border border-white/10 bg-ink-900/30 p-3">
+                                    {!messageGroupId ? (
+                                      <div className="text-xs text-slate-400">
+                                        Mesaj grubu seçmelisin.
+                                      </div>
+                                    ) : messageGroupMessages.length === 0 ? (
+                                      <div className="text-xs text-slate-400">
+                                        Bu grupta mesaj yok.
                                       </div>
                                     ) : (
-                                      groupedMessageEntries.map(([category, labels]) => (
-                                        <div key={`${offerId}-msg-group-${category}`} className="space-y-2">
-                                          <div className="flex flex-wrap items-center justify-between gap-2">
-                                            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                                              {category}
-                                            </span>
-                                            <span className="text-[10px] text-slate-500">
-                                              {labels.length} mesaj
-                                            </span>
-                                          </div>
-                                          <div className="flex flex-wrap gap-2">
-                                            {labels.map((label) => (
-                                              <button
-                                                key={`${offerId}-msg-${category}-${label}`}
-                                                type="button"
-                                                onClick={() => handleMessageTemplateCopy(label)}
-                                                className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"
-                                              >
-                                                {label}
-                                              </button>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      ))
+                                      <div className="flex flex-wrap gap-2">
+                                        {messageGroupMessages.map((label) => (
+                                          <button
+                                            key={`${offerId}-msg-${messageGroupId}-${label}`}
+                                            type="button"
+                                            onClick={() => handleMessageTemplateCopy(label)}
+                                            className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"
+                                          >
+                                            {label}
+                                          </button>
+                                        ))}
+                                      </div>
                                     )}
                                   </div>
                                 </div>
                               </div>
-                              {isStockEnabled && (
-                                <div className="rounded-2xl border border-white/10 bg-ink-950/40 p-4 shadow-card">
+                                {isStockEnabled && (
+                                  <div className="rounded-2xl border border-white/10 bg-ink-950/40 p-4 shadow-card">
                                   <div className="flex flex-wrap items-start justify-between gap-3">
                                     <div>
                                       <p className="text-sm font-semibold text-slate-100">Stok grubu</p>
@@ -1919,7 +1903,7 @@ export default function ProductsTab({
                                           onChange={(event) =>
                                             handleGroupDraftChange(offerId, event.target.value)
                                           }
-                                          placeholder="Yeni grup adi"
+                                          placeholder="Yeni grup adı"
                                           className="min-w-[160px] flex-1 rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                                         />
                                         <button
@@ -2019,5 +2003,9 @@ export default function ProductsTab({
     </div>
   )
 }
+
+
+
+
 
 

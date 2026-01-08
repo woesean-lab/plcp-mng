@@ -187,6 +187,9 @@ function App() {
     eldoradoNoteGroups,
     eldoradoNoteGroupAssignments,
     eldoradoNoteGroupNotes,
+    eldoradoMessageGroups,
+    eldoradoMessageGroupAssignments,
+    eldoradoMessageGroupTemplates,
     eldoradoStockEnabledByOffer,
     isEldoradoRefreshing,
     refreshEldoradoCatalog,
@@ -204,6 +207,9 @@ function App() {
     handleEldoradoNoteGroupCreate,
     handleEldoradoNoteGroupAssign,
     handleEldoradoNoteGroupDelete,
+    handleEldoradoMessageGroupCreate,
+    handleEldoradoMessageGroupAssign,
+    handleEldoradoMessageGroupTemplateAdd,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
     products,
@@ -983,6 +989,9 @@ function App() {
               noteGroups={eldoradoNoteGroups}
               noteGroupAssignments={eldoradoNoteGroupAssignments}
               noteGroupNotes={eldoradoNoteGroupNotes}
+              messageGroups={eldoradoMessageGroups}
+              messageGroupAssignments={eldoradoMessageGroupAssignments}
+              messageGroupTemplates={eldoradoMessageGroupTemplates}
               templates={templates}
               stockEnabledByOffer={eldoradoStockEnabledByOffer}
               onLoadKeys={loadEldoradoKeys}
@@ -999,6 +1008,9 @@ function App() {
               onCreateNoteGroup={handleEldoradoNoteGroupCreate}
               onAssignNoteGroup={handleEldoradoNoteGroupAssign}
               onDeleteNoteGroup={handleEldoradoNoteGroupDelete}
+              onCreateMessageGroup={handleEldoradoMessageGroupCreate}
+              onAssignMessageGroup={handleEldoradoMessageGroupAssign}
+              onAddMessageGroupTemplate={handleEldoradoMessageGroupTemplateAdd}
               onSaveNote={handleEldoradoNoteSave}
               onToggleStock={handleEldoradoStockToggle}
               canAddKeys={canAddStocks}

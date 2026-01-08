@@ -6,6 +6,7 @@ export const ELDORADO_KEYS_STORAGE_KEY = "pulcipEldoradoKeys"
 export const ELDORADO_GROUPS_STORAGE_KEY = "pulcipEldoradoGroups"
 export const ELDORADO_NOTES_STORAGE_KEY = "pulcipEldoradoNotes"
 export const ELDORADO_NOTE_GROUPS_STORAGE_KEY = "pulcipEldoradoNoteGroups"
+export const ELDORADO_MESSAGE_GROUPS_STORAGE_KEY = "pulcipEldoradoMessageGroups"
 export const ELDORADO_STOCK_ENABLED_STORAGE_KEY = "pulcipEldoradoStockEnabled"
 
 export const DEFAULT_LIST_ROWS = 12
