@@ -1095,15 +1095,22 @@ export default function ProductsTab({
                           </div>
                         </div>
 
-                        <div className="rounded-2xl border border-white/10 bg-ink-950/40 p-4 shadow-card">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <button
-                              type="button"
-                              onClick={() => toggleNoteOpen(offerId)}
-                              className="flex items-center gap-2 text-left text-xs font-semibold text-slate-100"
-                              aria-expanded={isNoteOpen}
-                            >
-                              <span>Urun notu</span>
+                        <div className="rounded-2xl border border-white/10 bg-ink-900/50 p-4 shadow-card">
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleNoteOpen(offerId)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault()
+                                toggleNoteOpen(offerId)
+                              }
+                            }}
+                            className="flex flex-wrap items-center justify-between gap-3"
+                            aria-expanded={isNoteOpen}
+                          >
+                            <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                              <span className="text-xs font-semibold text-slate-100">Urun notu</span>
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
@@ -1116,7 +1123,7 @@ export default function ProductsTab({
                               >
                                 <path d="m6 9 6 6 6-6" />
                               </svg>
-                            </button>
+                            </div>
                             <div className="flex flex-wrap items-center gap-2">
                               {storedNote && !noteHasChanges && (
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
@@ -1130,7 +1137,10 @@ export default function ProductsTab({
                               )}
                               <button
                                 type="button"
-                                onClick={() => handleNoteSave(offerId)}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleNoteSave(offerId)
+                                }}
                                 disabled={!canSaveNote}
                                 className="flex h-8 items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                               >
@@ -1138,7 +1148,10 @@ export default function ProductsTab({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleNoteReset(offerId)}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleNoteReset(offerId)
+                                }}
                                 disabled={noteDraftValue === undefined}
                                 className="flex h-8 items-center justify-center rounded-lg border border-white/10 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-400 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
                               >
@@ -1180,7 +1193,10 @@ export default function ProductsTab({
                                   />
                                   <button
                                     type="button"
-                                    onClick={() => handleNoteGroupCreate(offerId)}
+                                    onClick={(event) => {
+                                      event.stopPropagation()
+                                      handleNoteGroupCreate(offerId)
+                                    }}
                                     disabled={!noteGroupDraftValue.trim()}
                                     className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
@@ -1191,12 +1207,12 @@ export default function ProductsTab({
                             </div>
                           </div>
                           <textarea
-                            rows={6}
+                            rows={8}
                             value={noteInputValue ?? ""}
                             onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
                             placeholder="Urun notu ekle"
                             disabled={!canManageNotes}
-                            className="mt-4 min-h-[160px] w-full rounded-xl border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="mt-4 min-h-[200px] w-full rounded-xl border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                           />
                           </>
                           )}
