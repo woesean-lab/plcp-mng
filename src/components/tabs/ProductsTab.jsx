@@ -737,35 +737,16 @@ export default function ProductsTab({
                         </button>
 
                         {isStockEnabled && (
-                          <div
-                            className={`relative inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] shadow-inner ${
-                              isOutOfStock
-                                ? "border-rose-300/40 bg-rose-500/10 text-rose-100"
-                                : "border-emerald-300/40 bg-emerald-500/10 text-emerald-100"
-                            }`}
-                          >
-                            <span className="relative flex h-2.5 w-2.5">
-                              <span
-                                className={`absolute inset-0 rounded-full blur-[2px] ${
-                                  isOutOfStock ? "bg-rose-300/60" : "bg-emerald-300/60"
-                                }`}
-                              />
-                              <span
-                                className={`relative h-2.5 w-2.5 rounded-full ${
-                                  isOutOfStock ? "bg-rose-300" : "bg-emerald-300"
-                                }`}
-                              />
-                            </span>
-                            <span>{isOutOfStock ? "Stok bitti" : "Stokta"}</span>
+                          <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-300">
                             <span
-                              className={`rounded-full border px-2 py-0.5 text-[11px] tracking-normal ${
-                                isOutOfStock
-                                  ? "border-rose-200/40 bg-rose-500/20 text-rose-50"
-                                  : "border-emerald-200/40 bg-emerald-500/20 text-emerald-50"
+                              className={`h-2 w-2 rounded-full ${
+                                isOutOfStock ? "bg-rose-300/80" : "bg-emerald-300/80"
                               }`}
-                            >
-                              {availableCount}
+                            />
+                            <span className="uppercase tracking-[0.18em]">
+                              {isOutOfStock ? "Stok yok" : "Stok"}
                             </span>
+                            <span className="text-slate-100">{availableCount}</span>
                           </div>
                         )}
 
