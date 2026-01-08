@@ -601,7 +601,7 @@ export default function ProductsTab({
                         isMissing
                           ? "border-rose-400/40 bg-rose-500/10"
                           : starredOffers[offerId]
-                            ? "border-orange-300/40 bg-orange-500/10"
+                            ? "border-orange-400/60 bg-orange-500/20"
                             : isOutOfStock
                               ? "border-rose-300/30 bg-ink-900/70"
                               : "bg-ink-900/70"
