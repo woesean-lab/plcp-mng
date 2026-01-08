@@ -1125,9 +1125,11 @@ export default function ProductsTab({
                             className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 transition hover:bg-white/5"
                             aria-expanded={isNoteOpen}
                           >
-                            <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                              <span className="text-sm font-semibold text-slate-100">Urun notu</span>
-                              <span className="text-[11px] text-slate-400">Not urun bazinda saklanir.</span>
+                            <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                              <div className="flex items-baseline gap-3">
+                                <span className="text-sm font-semibold text-slate-100">Ürün notu</span>
+                                <span className="text-[11px] text-slate-400">Not ürün bazında saklanır.</span>
+                              </div>
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
@@ -1144,12 +1146,12 @@ export default function ProductsTab({
                             <div className="flex flex-wrap items-center gap-2">
                               {storedNote && !noteHasChanges && (
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
-                                  Kayitli
+                                  Kayıtlı
                                 </span>
                               )}
                               {noteGroupId && (
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
-                                  Grup: {noteGroupName || "Secili"}
+                                  Grup: {noteGroupName || "Seçili"}
                                 </span>
                               )}
                             </div>
@@ -1162,20 +1164,20 @@ export default function ProductsTab({
                                   Not grubu
                                 </label>
                                 <div className="flex items-center gap-2">
-                                  <select
-                                    value={noteGroupId}
-                                    onChange={(event) =>
-                                      handleNoteGroupAssign(offerId, event.target.value)
-                                    }
-                                    disabled={!canManageNotes}
+                                <select
+                                  value={noteGroupId}
+                                  onChange={(event) =>
+                                    handleNoteGroupAssign(offerId, event.target.value)
+                                  }
+                                  disabled={!canManageNotes}
                                     className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    <option value="">Bagimsiz not</option>
-                                    {noteGroups.map((groupOption) => (
-                                      <option key={groupOption.id} value={groupOption.id}>
-                                        {groupOption.name}
-                                      </option>
-                                    ))}
+                                >
+                                  <option value="">Bağımsız not</option>
+                                  {noteGroups.map((groupOption) => (
+                                    <option key={groupOption.id} value={groupOption.id}>
+                                      {groupOption.name}
+                                    </option>
+                                  ))}
                                   </select>
                                   {noteGroupId && canManageNotes && (
                                     <button
@@ -1216,7 +1218,7 @@ export default function ProductsTab({
                                       disabled={!noteGroupDraftValue.trim()}
                                       className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      Olustur
+                                      Oluştur
                                     </button>
                                   </div>
                                 </div>
@@ -1226,7 +1228,7 @@ export default function ProductsTab({
                               rows={9}
                               value={noteInputValue ?? ""}
                               onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
-                              placeholder="Urun notu ekle"
+                              placeholder="Ürün notu ekle"
                               disabled={!canManageNotes}
                               className="mt-4 min-h-[220px] w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                             />
