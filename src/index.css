@@ -55,6 +55,12 @@
     }
   }
 
+  /* Hide datalist dropdown icon on inputs. */
+  input[list]::-webkit-calendar-picker-indicator,
+  input[list]::-webkit-list-button {
+    display: none !important;
+  }
+
   #app-preloader {
     background: var(--app-bg);
     color: var(--text-strong);
