@@ -546,18 +546,26 @@ export default function ProductsTab({
                         </button>
 
                         {isStockEnabled && (
-                          <div className="inline-flex flex-col rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 shadow-inner backdrop-blur-sm">
-                            <div className="flex flex-wrap items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                              <span className="inline-flex items-center gap-1 text-emerald-100">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                                {availableCount} Stokta
-                              </span>
-                              <span className="inline-flex items-center gap-1 text-amber-100">
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                                {usedCount} Kullanildi
-                              </span>
+                          <div className="inline-flex min-w-[160px] flex-col rounded-lg border border-white/15 bg-white/6 px-3 py-2 shadow-inner backdrop-blur-sm">
+                            <div className="flex items-end justify-between gap-4">
+                              <div className="space-y-0.5">
+                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                  Stokta
+                                </p>
+                                <p className="text-sm font-semibold text-emerald-100">
+                                  {availableCount}
+                                </p>
+                              </div>
+                              <div className="space-y-0.5 text-right">
+                                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                  Kullanildi
+                                </p>
+                                <p className="text-sm font-semibold text-amber-100">
+                                  {usedCount}
+                                </p>
+                              </div>
                             </div>
-                            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/15">
+                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
                               <div
                                 className="h-full bg-emerald-400/70"
                                 style={{
@@ -572,21 +580,24 @@ export default function ProductsTab({
                         )}
 
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <div className="flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 p-1 shadow-inner backdrop-blur-sm">
+                          <div className="flex items-center gap-1 rounded-lg border border-white/15 bg-white/6 p-1.5 shadow-inner backdrop-blur-sm">
                             <button
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
                               disabled={!canManageStock || !offerId}
-                              className={`inline-flex h-7 w-7 items-center justify-center rounded-full transition ${
-                                isStockEnabled ? "text-emerald-100" : "text-rose-100"
-                              } ${
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
                                 !canManageStock || !offerId
                                   ? "cursor-not-allowed opacity-60"
-                                  : "hover:bg-white/10"
+                                  : ""
                               }`}
                               aria-label="Stok ac/kapat"
                               title={isStockEnabled ? "Stok acik" : "Stok kapali"}
                             >
+                              <span
+                                className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
+                                  isStockEnabled ? "bg-emerald-400" : "bg-slate-500"
+                                }`}
+                              />
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
@@ -605,9 +616,9 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => toggleStarred(offerId)}
                               disabled={!offerId}
-                              className={`inline-flex h-7 w-7 items-center justify-center rounded-full transition ${
-                                !offerId ? "cursor-not-allowed opacity-60" : "hover:bg-white/10"
-                              } ${starredOffers[offerId] ? "text-amber-200" : "text-amber-200/70"}`}
+                              className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
+                                !offerId ? "cursor-not-allowed opacity-60" : ""
+                              } ${starredOffers[offerId] ? "text-amber-200" : ""}`}
                               aria-label="Urunu yildizla"
                               title={starredOffers[offerId] ? "Yildizi kaldir" : "Yildizla"}
                             >
@@ -629,7 +640,7 @@ export default function ProductsTab({
                                 href={href}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/10 hover:text-white"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white"
                                 aria-label="Urun linki"
                               >
                                 <svg
@@ -652,10 +663,10 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => openStockModal(offerId, name)}
                                 disabled={!offerId || !isStockEnabled}
-                                className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-accent-100 transition ${
+                                className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
                                   !offerId || !isStockEnabled
                                     ? "cursor-not-allowed opacity-60"
-                                    : "hover:bg-white/10"
+                                    : ""
                                 }`}
                                 aria-label="Stok ekle"
                               >
@@ -678,11 +689,9 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => toggleOfferOpen(offerId)}
                               disabled={!offerId}
-                              className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-200 transition ${
+                              className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
                                 isOpen ? "bg-white/10 text-white" : ""
-                              } ${
-                                !offerId ? "cursor-not-allowed opacity-60" : "hover:bg-white/10 hover:text-white"
-                              }`}
+                              } ${!offerId ? "cursor-not-allowed opacity-60" : ""}`}
                               aria-label="Urun detaylarini ac/kapat"
                             >
                               <svg
