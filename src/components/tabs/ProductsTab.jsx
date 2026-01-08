@@ -146,6 +146,7 @@ export default function ProductsTab({
   messageGroups = [],
   messageGroupAssignments = {},
   messageGroupTemplates = {},
+  messageTemplatesByOffer = {},
   templates = [],
   stockEnabledByOffer = {},
   onLoadKeys,
@@ -165,6 +166,7 @@ export default function ProductsTab({
   onSaveNote,
   onCreateMessageGroup,
   onAssignMessageGroup,
+  onAddMessageTemplate,
   onAddMessageGroupTemplate,
   onToggleStock,
   canAddKeys = false,
@@ -194,7 +196,9 @@ export default function ProductsTab({
   const canManageGroups = canAddKeys
   const canManageNotes = canAddKeys && typeof onSaveNote === "function"
   const canManageStock = canAddKeys && typeof onToggleStock === "function"
-  const canManageMessages = canAddKeys && typeof onAddMessageGroupTemplate === "function"
+  const canManageMessages =
+    canAddKeys &&
+    (typeof onAddMessageGroupTemplate === "function" || typeof onAddMessageTemplate === "function")
   const canUpdateKeys = typeof onUpdateKeyStatus === "function" && canCopyKeys
   const canEditKeys = canAddKeys && typeof onUpdateKeyCode === "function"
   const items = Array.isArray(catalog?.items) ? catalog.items : []
@@ -564,18 +568,20 @@ export default function ProductsTab({
   }
 
   const handleMessageTemplateAdd = (offerId) => {
-    if (typeof onAddMessageGroupTemplate !== "function") return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const selected = String(messageTemplateDrafts[normalizedId] ?? "").trim()
     if (!selected) return
     const groupId = String(messageGroupAssignments?.[normalizedId] ?? "").trim()
-    if (!groupId) {
-      toast.error("Mesaj grubu seçmelisin.")
-      return
+    if (groupId) {
+      if (typeof onAddMessageGroupTemplate !== "function") return
+      const ok = onAddMessageGroupTemplate(groupId, selected)
+      if (!ok) return
+    } else {
+      if (typeof onAddMessageTemplate !== "function") return
+      const ok = onAddMessageTemplate(normalizedId, selected)
+      if (!ok) return
     }
-    const ok = onAddMessageGroupTemplate(groupId, selected)
-    if (!ok) return
     setMessageTemplateDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
   }
 
@@ -979,11 +985,16 @@ export default function ProductsTab({
                     ? messageGroups.find((group) => group.id === messageGroupId)
                     : null
                   const messageGroupName = String(messageGroup?.name ?? "").trim()
+                  const independentMessages = Array.isArray(messageTemplatesByOffer?.[offerId])
+                    ? messageTemplatesByOffer[offerId]
+                    : []
                   const messageGroupMessages = messageGroupId
                     ? Array.isArray(messageGroupTemplates?.[messageGroupId])
                       ? messageGroupTemplates[messageGroupId]
                       : []
-                    : []
+                    : independentMessages
+                  const messageGroupLabel =
+                    messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -1730,9 +1741,9 @@ export default function ProductsTab({
                                   </div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
-                                      Seçili: {messageGroupName || "Yok"}
+                                      Seçili: {messageGroupLabel}
                                     </span>
-                                    {messageGroupId && (
+                                    {messageGroupMessages.length > 0 && (
                                       <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
                                         {messageGroupMessages.length} mesaj
                                       </span>
@@ -1754,7 +1765,7 @@ export default function ProductsTab({
                                         className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <option value="">
-                                          {messageGroups.length === 0 ? "Grup yok" : "Grup seç"}
+                                          {messageGroups.length === 0 ? "Bağımsız" : "Bağımsız"}
                                         </option>
                                         {messageGroups.map((group) => (
                                           <option key={group.id} value={group.id}>
@@ -1812,8 +1823,7 @@ export default function ProductsTab({
                                       onClick={() => handleMessageTemplateAdd(offerId)}
                                       disabled={
                                         !canManageMessages ||
-                                        !isMessageTemplateValid ||
-                                        !messageGroupId
+                                        !isMessageTemplateValid
                                       }
                                       className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
@@ -1821,19 +1831,15 @@ export default function ProductsTab({
                                     </button>
                                   </div>
                                   <div className="rounded-xl border border-white/10 bg-ink-900/30 p-3">
-                                    {!messageGroupId ? (
+                                    {messageGroupMessages.length === 0 ? (
                                       <div className="text-xs text-slate-400">
-                                        Mesaj grubu seçmelisin.
-                                      </div>
-                                    ) : messageGroupMessages.length === 0 ? (
-                                      <div className="text-xs text-slate-400">
-                                        Bu grupta mesaj yok.
+                                        {messageGroupId ? "Bu grupta mesaj yok." : "Bağımsız mesaj yok."}
                                       </div>
                                     ) : (
                                       <div className="flex flex-wrap gap-2">
                                         {messageGroupMessages.map((label) => (
                                           <button
-                                            key={`${offerId}-msg-${messageGroupId}-${label}`}
+                                            key={`${offerId}-msg-${messageGroupId || "independent"}-${label}`}
                                             type="button"
                                             onClick={() => handleMessageTemplateCopy(label)}
                                             className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"

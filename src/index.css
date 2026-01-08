@@ -55,6 +55,17 @@
     }
   }
 
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: none;
+  }
+
+  select::-ms-expand {
+    display: none;
+  }
+
   /* Hide datalist dropdown icon on inputs. */
   input[list]::-webkit-calendar-picker-indicator,
   input[list]::-webkit-list-button {

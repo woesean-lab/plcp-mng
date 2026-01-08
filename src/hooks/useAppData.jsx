@@ -319,6 +319,35 @@ export default function useAppData() {
       return {}
     }
   })
+  const [eldoradoMessageTemplatesByOffer, setEldoradoMessageTemplatesByOffer] = useState(() => {
+    if (typeof window === "undefined") return {}
+    try {
+      const raw = localStorage.getItem(ELDORADO_MESSAGE_GROUPS_STORAGE_KEY)
+      if (!raw) return {}
+      const parsed = JSON.parse(raw)
+      const independent = parsed?.independent
+      if (!independent || typeof independent !== "object") return {}
+      const normalized = {}
+      Object.entries(independent).forEach(([offerId, list]) => {
+        const safeOfferId = String(offerId ?? "").trim()
+        if (!safeOfferId) return
+        const safeList = Array.isArray(list) ? list : []
+        const unique = []
+        const seen = new Set()
+        safeList.forEach((label) => {
+          const value = String(label ?? "").trim()
+          if (!value || seen.has(value)) return
+          seen.add(value)
+          unique.push(value)
+        })
+        if (unique.length > 0) normalized[safeOfferId] = unique
+      })
+      return normalized
+    } catch (error) {
+      console.warn("Could not read local Eldorado message templates", error)
+      return {}
+    }
+  })
   const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState(() => {
     if (typeof window === "undefined") return {}
     try {
@@ -406,10 +435,12 @@ export default function useAppData() {
   }, [])
 
   const readEldoradoMessageGroupStore = useCallback(() => {
-    if (typeof window === "undefined") return { groups: [], assignments: {}, templates: {} }
+    if (typeof window === "undefined") {
+      return { groups: [], assignments: {}, templates: {}, independent: {} }
+    }
     try {
       const raw = localStorage.getItem(ELDORADO_MESSAGE_GROUPS_STORAGE_KEY)
-      if (!raw) return { groups: [], assignments: {}, templates: {} }
+      if (!raw) return { groups: [], assignments: {}, templates: {}, independent: {} }
       const parsed = JSON.parse(raw)
       const groups = Array.isArray(parsed?.groups) ? parsed.groups : []
       const assignments = parsed?.assignments && typeof parsed.assignments === "object"
@@ -417,6 +448,9 @@ export default function useAppData() {
         : {}
       const templates = parsed?.templates && typeof parsed.templates === "object"
         ? parsed.templates
+        : {}
+      const independent = parsed?.independent && typeof parsed.independent === "object"
+        ? parsed.independent
         : {}
 
       const normalizedGroups = groups
@@ -450,15 +484,31 @@ export default function useAppData() {
         })
         if (unique.length > 0) normalizedTemplates[safeGroupId] = unique
       })
+      const normalizedIndependent = {}
+      Object.entries(independent).forEach(([offerId, list]) => {
+        const safeOfferId = String(offerId ?? "").trim()
+        if (!safeOfferId) return
+        const safeList = Array.isArray(list) ? list : []
+        const unique = []
+        const seen = new Set()
+        safeList.forEach((label) => {
+          const value = String(label ?? "").trim()
+          if (!value || seen.has(value)) return
+          seen.add(value)
+          unique.push(value)
+        })
+        if (unique.length > 0) normalizedIndependent[safeOfferId] = unique
+      })
 
       return {
         groups: normalizedGroups,
         assignments: normalizedAssignments,
         templates: normalizedTemplates,
+        independent: normalizedIndependent,
       }
     } catch (error) {
       console.warn("Could not read local Eldorado message group store", error)
-      return { groups: [], assignments: {}, templates: {} }
+      return { groups: [], assignments: {}, templates: {}, independent: {} }
     }
   }, [])
 
@@ -2641,11 +2691,13 @@ export default function useAppData() {
       groups: eldoradoMessageGroups,
       assignments: eldoradoMessageGroupAssignments,
       templates: eldoradoMessageGroupTemplates,
+      independent: eldoradoMessageTemplatesByOffer,
     })
   }, [
     eldoradoMessageGroupAssignments,
     eldoradoMessageGroupTemplates,
     eldoradoMessageGroups,
+    eldoradoMessageTemplatesByOffer,
     writeEldoradoMessageGroupStore,
   ])
 
@@ -3165,6 +3217,7 @@ export default function useAppData() {
       setEldoradoMessageGroups(store.groups)
       setEldoradoMessageGroupAssignments(store.assignments)
       setEldoradoMessageGroupTemplates(store.templates)
+      setEldoradoMessageTemplatesByOffer(store.independent ?? {})
       return nextGroup
     },
     [
@@ -3198,6 +3251,7 @@ export default function useAppData() {
       setEldoradoMessageGroups(store.groups)
       setEldoradoMessageGroupAssignments(store.assignments)
       setEldoradoMessageGroupTemplates(store.templates)
+      setEldoradoMessageTemplatesByOffer(store.independent ?? {})
       return true
     },
     [readEldoradoMessageGroupStore, writeEldoradoMessageGroupStore],
@@ -3223,6 +3277,32 @@ export default function useAppData() {
       setEldoradoMessageGroups(store.groups)
       setEldoradoMessageGroupAssignments(store.assignments)
       setEldoradoMessageGroupTemplates(store.templates)
+      setEldoradoMessageTemplatesByOffer(store.independent ?? {})
+      return true
+    },
+    [readEldoradoMessageGroupStore, writeEldoradoMessageGroupStore],
+  )
+
+  const handleEldoradoMessageTemplateAdd = useCallback(
+    (offerId, label) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      const normalizedLabel = String(label ?? "").trim()
+      if (!normalizedOfferId || !normalizedLabel) return false
+      const store = readEldoradoMessageGroupStore()
+      store.independent = store.independent && typeof store.independent === "object"
+        ? store.independent
+        : {}
+      const list = Array.isArray(store.independent[normalizedOfferId])
+        ? store.independent[normalizedOfferId]
+        : []
+      if (list.includes(normalizedLabel)) return true
+      store.independent[normalizedOfferId] = [...list, normalizedLabel]
+      const saved = writeEldoradoMessageGroupStore(store)
+      if (!saved) return false
+      setEldoradoMessageGroups(store.groups)
+      setEldoradoMessageGroupAssignments(store.assignments)
+      setEldoradoMessageGroupTemplates(store.templates)
+      setEldoradoMessageTemplatesByOffer(store.independent ?? {})
       return true
     },
     [readEldoradoMessageGroupStore, writeEldoradoMessageGroupStore],
@@ -5403,6 +5483,7 @@ export default function useAppData() {
     eldoradoMessageGroups,
     eldoradoMessageGroupAssignments,
     eldoradoMessageGroupTemplates,
+    eldoradoMessageTemplatesByOffer,
     eldoradoStockEnabledByOffer,
     isEldoradoLoading,
     isEldoradoRefreshing,
@@ -5424,6 +5505,7 @@ export default function useAppData() {
     handleEldoradoMessageGroupCreate,
     handleEldoradoMessageGroupAssign,
     handleEldoradoMessageGroupTemplateAdd,
+    handleEldoradoMessageTemplateAdd,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
     products,
@@ -5552,6 +5634,7 @@ export default function useAppData() {
     handleDetailNoteScroll
   }
 }
+
 
 
 
