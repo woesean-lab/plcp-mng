@@ -505,6 +505,10 @@ export default function ProductsTab({
                       : `https://www.eldorado.gg${rawHref.startsWith("/") ? "" : "/"}${rawHref}`
                     : ""
                   const totalCapacity = Math.max(totalCount || 0, availableCount + usedCount)
+                  const stockFillPercent =
+                    totalCapacity > 0
+                      ? Math.min(100, Math.max(0, Math.round((availableCount / totalCapacity) * 100)))
+                      : 0
                   return (
                     <div
                       key={key}
@@ -546,7 +550,12 @@ export default function ProductsTab({
                         </button>
 
                         {isStockEnabled && (
-                          <div className="inline-flex min-h-[44px] min-w-[160px] flex-col justify-between rounded-lg border border-white/15 bg-white/6 px-3 py-2 shadow-inner backdrop-blur-sm">
+                          <div
+                            className="inline-flex min-h-[44px] min-w-[160px] flex-col justify-between rounded-lg border border-white/15 bg-white/6 px-3 py-2 shadow-inner backdrop-blur-sm"
+                            style={{
+                              background: `linear-gradient(90deg, rgba(16,185,129,0.12) ${stockFillPercent}%, rgba(255,255,255,0.04) ${stockFillPercent}%)`,
+                            }}
+                          >
                             <div className="flex items-end justify-between gap-4">
                               <div className="space-y-0.5">
                                 <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -564,17 +573,6 @@ export default function ProductsTab({
                                   {usedCount}
                                 </p>
                               </div>
-                            </div>
-                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-                              <div
-                                className="h-full bg-emerald-400/70"
-                                style={{
-                                  width:
-                                    totalCapacity > 0
-                                      ? `${Math.min(100, Math.max(0, Math.round((availableCount / totalCapacity) * 100)))}%`
-                                      : "0%",
-                                }}
-                              />
                             </div>
                           </div>
                         )}
