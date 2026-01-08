@@ -1352,13 +1352,13 @@ export default function ProductsTab({
                             </div>
 
                             <div className="space-y-3">
-                              <div className="rounded-2xl border border-white/10 bg-ink-900/40 p-4 shadow-card">
+                              <div className="rounded-2xl border border-white/10 bg-ink-900/30 p-4 shadow-card">
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                                      Stok grubu (opsiyonel)
+                                    <p className="text-sm font-semibold text-slate-100">
+                                      Stok grubu
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-slate-400">
                                       {isStockEnabled
                                         ? "Grup secmezsen stoklar urune ozeldir."
                                         : "Stok acilinca grup secilebilir."}
@@ -1368,18 +1368,18 @@ export default function ProductsTab({
                                     <button
                                       type="button"
                                       onClick={() => handleGroupAssign(offerId, "")}
-                                      className="rounded-md border border-rose-400/60 bg-rose-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
+                                      className="rounded-full border border-rose-300/50 bg-rose-500/10 px-3 py-1 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
                                     >
                                       Kaldir
                                     </button>
                                   )}
                                 </div>
-                                <div className="mt-3 space-y-2">
+                                <div className="mt-4 space-y-3">
                                   <select
                                     value={groupId}
                                     onChange={(event) => handleGroupAssign(offerId, event.target.value)}
                                     disabled={!canManageGroups || !isStockEnabled}
-                                    className="w-full appearance-none rounded-lg border border-white/10 bg-ink-950/60 px-3 py-2 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="w-full appearance-none rounded-xl border border-white/10 bg-ink-950/50 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     <option value="">Grup sec</option>
                                     {groups.map((groupOption) => (
@@ -1396,13 +1396,13 @@ export default function ProductsTab({
                                         onChange={(event) => handleGroupDraftChange(offerId, event.target.value)}
                                         placeholder="Yeni grup adi"
                                         disabled={!isStockEnabled}
-                                        className="min-w-[140px] flex-1 rounded-lg border border-white/10 bg-ink-950/60 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="min-w-[160px] flex-1 rounded-xl border border-white/10 bg-ink-950/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       />
                                       <button
                                         type="button"
                                         onClick={() => handleGroupCreate(offerId)}
                                         disabled={!groupDraftValue.trim() || !isStockEnabled}
-                                        className="rounded-full border border-accent-300/60 bg-accent-500/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-xl border border-accent-300/60 bg-accent-500/10 px-3 py-2 text-xs font-semibold text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         Grup olustur
                                       </button>
@@ -1410,16 +1410,14 @@ export default function ProductsTab({
                                   )}
                                 </div>
                               </div>
-                              <div className="rounded-2xl border border-white/10 bg-ink-900/40 p-4 shadow-card">
+                              <div className="rounded-2xl border border-white/10 bg-ink-900/30 p-4 shadow-card">
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                                      Urun notu
-                                    </p>
-                                    <p className="text-xs text-slate-500">Not urun bazinda saklanir.</p>
+                                    <p className="text-sm font-semibold text-slate-100">Urun notu</p>
+                                    <p className="text-xs text-slate-400">Not urun bazinda saklanir.</p>
                                   </div>
                                   {storedNote && !noteHasChanges && (
-                                    <span className="rounded-full border border-white/10 bg-ink-950/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-300">
+                                    <span className="rounded-full border border-white/10 bg-ink-950/60 px-2.5 py-1 text-[11px] font-semibold text-slate-300">
                                       Kayitli
                                     </span>
                                   )}
@@ -1430,14 +1428,14 @@ export default function ProductsTab({
                                   onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
                                   placeholder="Urun notu ekle"
                                   disabled={!canManageNotes}
-                                  className="mt-3 w-full rounded-lg border border-white/10 bg-ink-950/60 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="mt-4 w-full rounded-xl border border-white/10 bg-ink-950/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                 />
-                                <div className="mt-3 flex flex-wrap gap-2">
+                                <div className="mt-4 flex flex-wrap gap-2">
                                   <button
                                     type="button"
                                     onClick={() => handleNoteSave(offerId)}
                                     disabled={!canSaveNote}
-                                    className="rounded-full border border-accent-300/60 bg-accent-500/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-xl border border-accent-300/60 bg-accent-500/10 px-3 py-2 text-xs font-semibold text-accent-50 transition hover:border-accent-200 hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     Kaydet
                                   </button>
@@ -1445,7 +1443,7 @@ export default function ProductsTab({
                                     type="button"
                                     onClick={() => handleNoteReset(offerId)}
                                     disabled={noteDraftValue === undefined}
-                                    className="rounded-full border border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     Sifirla
                                   </button>
