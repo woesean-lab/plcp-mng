@@ -523,7 +523,7 @@ export default function ProductsTab({
                         isMissing ? "border-orange-300/30" : isOutOfStock ? "border-rose-300/30" : ""
                       }`}
                     >
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
                         <button
                           type="button"
                           onClick={() => toggleOfferOpen(offerId)}
@@ -557,7 +557,7 @@ export default function ProductsTab({
                         </button>
 
                         {isStockEnabled && (
-                          <div className="inline-flex h-[48px] w-[104px] flex-col justify-center rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2 py-2 shadow-inner">
+                          <div className="inline-flex h-[48px] w-full max-w-[140px] flex-col justify-center rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2 py-2 shadow-inner sm:w-[104px]">
                             <div className="flex items-center gap-2">
                               <div className="relative flex h-5 w-5 items-center justify-center">
                                 <svg viewBox="0 0 36 36" className="h-5 w-5">
@@ -597,7 +597,7 @@ export default function ProductsTab({
                         )}
 
                         <div className="flex flex-wrap items-stretch gap-1.5">
-                          <div className="flex h-[48px] w-[192px] items-center gap-1 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-2 shadow-inner">
+                          <div className="flex h-[48px] w-full items-center gap-1 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-2 shadow-inner sm:w-[192px]">
                             <button
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
