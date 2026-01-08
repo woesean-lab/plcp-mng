@@ -708,7 +708,7 @@ export default function ProductsTab({
                           disabled={!offerId}
                           className="min-w-0 flex-1 text-left disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <div className="flex min-h-[40px] flex-wrap items-center gap-2">
+                          <div className="flex min-h-[36px] flex-wrap items-center gap-2">
                             <span
                               className={`min-w-0 flex-1 break-words font-display text-[13px] font-semibold leading-snug text-white sm:text-sm ${
                                 isMissing
@@ -720,7 +720,7 @@ export default function ProductsTab({
                             >
                               {name}
                             </span>
-                            {(isStockEnabled || usedCount > 0 || isMissing) && (
+                            {(isStockEnabled || isMissing) && (
                               <div className="flex shrink-0 flex-nowrap items-center gap-2">
                                 {isStockEnabled && (
                                   <span
@@ -733,7 +733,7 @@ export default function ProductsTab({
                                     {availableCount} stok
                                   </span>
                                 )}
-                                {usedCount > 0 && (
+                                {isStockEnabled && usedCount > 0 && (
                                   <span className="rounded-full border border-amber-300/60 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50">
                                     Kullanildi: {usedCount}
                                   </span>
@@ -746,7 +746,7 @@ export default function ProductsTab({
                               </div>
                             )}
                           </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                          <div className="mt-0.5 flex flex-wrap items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em]">
                             <span className="text-accent-200">{categoryLabel}</span>
                             {groupName && (
                               <span className="text-slate-400">{groupName}</span>
@@ -755,7 +755,7 @@ export default function ProductsTab({
                         </button>
 
                         <div className="flex flex-wrap items-stretch gap-1.5">
-                          <div className="flex h-[40px] w-full items-center gap-1 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1.5 shadow-inner sm:w-[192px]">
+                          <div className="flex h-[36px] w-full items-center gap-1 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:w-[192px]">
                             <button
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
