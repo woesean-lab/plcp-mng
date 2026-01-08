@@ -43,70 +43,12 @@ function ProductsSkeleton({ panelClass }) {
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
         <aside className={`${panelClass} bg-ink-900/80`}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-                Kategoriler
-              </p>
-              <p className="mt-1 text-xs text-slate-500">Urunleri filtrele.</p>
-            </div>
-            {canRefresh && (
-              <button
-                type="button"
-                onClick={onRefresh}
-                disabled={isRefreshing}
-                className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-300 transition ${
-                  isRefreshing
-                    ? "cursor-not-allowed border-white/5 text-slate-600"
-                    : "hover:border-white/20 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white"
-                }`}
-                title="Urunleri yenile"
-                aria-label="Urunleri yenile"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 12a8 8 0 1 0 2.35-5.65" />
-                  <path d="M4 4v4h4" />
-                </svg>
-              </button>
-            )}
-          </div>
+          <SkeletonBlock className="h-3 w-24 rounded-full" />
+          <SkeletonBlock className="mt-3 h-3 w-32 rounded-full" />
           <div className="mt-4 space-y-2">
-            {categories.map((category) => {
-              const isActive = activeCategoryKey === category.key
-              return (
-                <button
-                  key={category.key}
-                  type="button"
-                  onClick={() => {
-                    setActiveCategoryKey(category.key)
-                    setPage(1)
-                  }}
-                  className={`group flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] transition ${
-                    isActive
-                      ? "border-accent-400/60 bg-accent-500/15 text-accent-50 shadow-glow"
-                      : "border-white/10 bg-ink-900/60 text-slate-200 hover:border-white/20 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <span>{category.label}</span>
-                  <span
-                    className={`text-[11px] ${
-                      isActive ? "text-accent-100" : "text-slate-400 group-hover:text-slate-200"
-                    }`}
-                  >
-                    ({category.items.length})
-                  </span>
-                </button>
-              )
-            })}
+            {Array.from({ length: 5 }).map((_, index) => (
+              <SkeletonBlock key={`product-category-${index}`} className="h-9 w-full rounded-xl" />
+            ))}
           </div>
         </aside>
 
