@@ -415,6 +415,7 @@ function App() {
       { key: "sales", label: "Satış", canView: canViewSales },
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
+      { key: "products", label: "Ürünler", canView: canViewStock },
       { key: "stock", label: "Stok", canView: canViewStock },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
@@ -1201,6 +1202,7 @@ function App() {
 }
 
 export default App
+
 
 
 
