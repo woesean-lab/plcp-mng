@@ -3257,6 +3257,38 @@ export default function useAppData() {
     [readEldoradoMessageGroupStore, writeEldoradoMessageGroupStore],
   )
 
+  const handleEldoradoMessageGroupDelete = useCallback(
+    (groupId) => {
+      const normalizedGroupId = String(groupId ?? "").trim()
+      if (!normalizedGroupId) return false
+      const store = readEldoradoMessageGroupStore()
+      const exists = store.groups.some((group) => group.id === normalizedGroupId)
+      if (!exists) {
+        toast.error("Mesaj grubu bulunamadi.")
+        return false
+      }
+
+      Object.entries(store.assignments).forEach(([offerId, assignedGroupId]) => {
+        if (assignedGroupId === normalizedGroupId) {
+          delete store.assignments[offerId]
+        }
+      })
+
+      delete store.templates[normalizedGroupId]
+      store.groups = store.groups.filter((group) => group.id !== normalizedGroupId)
+      const saved = writeEldoradoMessageGroupStore(store)
+      if (!saved) return false
+
+      setEldoradoMessageGroups(store.groups)
+      setEldoradoMessageGroupAssignments(store.assignments)
+      setEldoradoMessageGroupTemplates(store.templates)
+      setEldoradoMessageTemplatesByOffer(store.independent ?? {})
+      toast.success("Mesaj grubu silindi", { duration: 1500, position: "top-right" })
+      return true
+    },
+    [readEldoradoMessageGroupStore, writeEldoradoMessageGroupStore],
+  )
+
   const handleEldoradoMessageGroupTemplateAdd = useCallback(
     (groupId, label) => {
       const normalizedGroupId = String(groupId ?? "").trim()
@@ -3297,6 +3329,35 @@ export default function useAppData() {
         : []
       if (list.includes(normalizedLabel)) return true
       store.independent[normalizedOfferId] = [...list, normalizedLabel]
+      const saved = writeEldoradoMessageGroupStore(store)
+      if (!saved) return false
+      setEldoradoMessageGroups(store.groups)
+      setEldoradoMessageGroupAssignments(store.assignments)
+      setEldoradoMessageGroupTemplates(store.templates)
+      setEldoradoMessageTemplatesByOffer(store.independent ?? {})
+      return true
+    },
+    [readEldoradoMessageGroupStore, writeEldoradoMessageGroupStore],
+  )
+
+  const handleEldoradoMessageTemplateRemove = useCallback(
+    (offerId, label) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      const normalizedLabel = String(label ?? "").trim()
+      if (!normalizedOfferId || !normalizedLabel) return false
+      const store = readEldoradoMessageGroupStore()
+      store.independent =
+        store.independent && typeof store.independent === "object" ? store.independent : {}
+      const list = Array.isArray(store.independent[normalizedOfferId])
+        ? store.independent[normalizedOfferId]
+        : []
+      if (list.length === 0) return false
+      const nextList = list.filter((item) => item !== normalizedLabel)
+      if (nextList.length === 0) {
+        delete store.independent[normalizedOfferId]
+      } else {
+        store.independent[normalizedOfferId] = nextList
+      }
       const saved = writeEldoradoMessageGroupStore(store)
       if (!saved) return false
       setEldoradoMessageGroups(store.groups)
@@ -5504,8 +5565,10 @@ export default function useAppData() {
     handleEldoradoNoteGroupDelete,
     handleEldoradoMessageGroupCreate,
     handleEldoradoMessageGroupAssign,
+    handleEldoradoMessageGroupDelete,
     handleEldoradoMessageGroupTemplateAdd,
     handleEldoradoMessageTemplateAdd,
+    handleEldoradoMessageTemplateRemove,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
     products,

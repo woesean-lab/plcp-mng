@@ -166,8 +166,10 @@ export default function ProductsTab({
   onSaveNote,
   onCreateMessageGroup,
   onAssignMessageGroup,
+  onDeleteMessageGroup,
   onAddMessageTemplate,
   onAddMessageGroupTemplate,
+  onRemoveMessageTemplate,
   onToggleStock,
   canAddKeys = false,
   canDeleteKeys = false,
@@ -191,6 +193,7 @@ export default function ProductsTab({
   const [noteEditingByOffer, setNoteEditingByOffer] = useState({})
   const [messageTemplateDrafts, setMessageTemplateDrafts] = useState({})
   const [messageGroupDrafts, setMessageGroupDrafts] = useState({})
+  const [confirmMessageGroupDelete, setConfirmMessageGroupDelete] = useState(null)
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const canManageGroups = canAddKeys
@@ -199,6 +202,8 @@ export default function ProductsTab({
   const canManageMessages =
     canAddKeys &&
     (typeof onAddMessageGroupTemplate === "function" || typeof onAddMessageTemplate === "function")
+  const canDeleteMessageGroup = canAddKeys && typeof onDeleteMessageGroup === "function"
+  const canRemoveMessageTemplate = canAddKeys && typeof onRemoveMessageTemplate === "function"
   const canUpdateKeys = typeof onUpdateKeyStatus === "function" && canCopyKeys
   const canEditKeys = canAddKeys && typeof onUpdateKeyCode === "function"
   const items = Array.isArray(catalog?.items) ? catalog.items : []
@@ -564,7 +569,21 @@ export default function ProductsTab({
     if (typeof onAssignMessageGroup !== "function") return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
+    setConfirmMessageGroupDelete(null)
     onAssignMessageGroup(normalizedId, value)
+  }
+
+  const handleMessageGroupDelete = (groupId) => {
+    if (!canDeleteMessageGroup) return
+    const normalizedGroupId = String(groupId ?? "").trim()
+    if (!normalizedGroupId) return
+    if (confirmMessageGroupDelete === normalizedGroupId) {
+      setConfirmMessageGroupDelete(null)
+      onDeleteMessageGroup(normalizedGroupId)
+      return
+    }
+    setConfirmMessageGroupDelete(normalizedGroupId)
+    toast("Mesaj grubunu silmek icin tekrar tikla", { position: "top-right" })
   }
 
   const handleMessageTemplateAdd = (offerId) => {
@@ -583,6 +602,14 @@ export default function ProductsTab({
       if (!ok) return
     }
     setMessageTemplateDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
+  }
+
+  const handleMessageTemplateRemove = (offerId, label) => {
+    if (!canRemoveMessageTemplate) return
+    const normalizedId = String(offerId ?? "").trim()
+    const normalizedLabel = String(label ?? "").trim()
+    if (!normalizedId || !normalizedLabel) return
+    onRemoveMessageTemplate(normalizedId, normalizedLabel)
   }
 
   const handleMessageTemplateCopy = async (label) => {
@@ -988,14 +1015,15 @@ export default function ProductsTab({
                   const independentMessages = Array.isArray(messageTemplatesByOffer?.[offerId])
                     ? messageTemplatesByOffer[offerId]
                     : []
-                  const messageGroupMessages = messageGroupId
-                    ? Array.isArray(messageGroupTemplates?.[messageGroupId])
-                      ? messageGroupTemplates[messageGroupId]
-                      : []
-                    : independentMessages
-                  const messageGroupLabel =
-                    messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
-                  const rawHref = String(product?.href ?? "").trim()
+                    const messageGroupMessages = messageGroupId
+                      ? Array.isArray(messageGroupTemplates?.[messageGroupId])
+                        ? messageGroupTemplates[messageGroupId]
+                        : []
+                      : independentMessages
+                    const messageGroupLabel =
+                      messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
+                    const canDeleteMessageItem = !messageGroupId && canRemoveMessageTemplate
+                    const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
                       ? rawHref
@@ -1750,31 +1778,48 @@ export default function ProductsTab({
                                     )}
                                   </div>
                                 </div>
-                                <div className="mt-4 space-y-3">
-                                  <div className="grid gap-3 lg:grid-cols-2">
-                                    <div className="space-y-2">
+                                <div className="mt-4 space-y-4">
+                                  <div className="grid gap-3 md:grid-cols-2">
+                                    <div className="space-y-2 min-w-0">
                                       <label className="text-[11px] font-semibold text-slate-300">
                                         Mesaj grubu
                                       </label>
-                                      <select
-                                        value={messageGroupId}
-                                        onChange={(event) =>
-                                          handleMessageGroupAssign(offerId, event.target.value)
-                                        }
-                                        disabled={!canManageMessages}
-                                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                      >
-                                        <option value="">
-                                          {messageGroups.length === 0 ? "Bağımsız" : "Bağımsız"}
-                                        </option>
-                                        {messageGroups.map((group) => (
-                                          <option key={group.id} value={group.id}>
-                                            {group.name}
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <select
+                                          value={messageGroupId}
+                                          onChange={(event) =>
+                                            handleMessageGroupAssign(offerId, event.target.value)
+                                          }
+                                          disabled={!canManageMessages}
+                                          className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          <option value="">
+                                            {messageGroups.length === 0 ? "Bağımsız" : "Bağımsız"}
                                           </option>
-                                        ))}
-                                      </select>
+                                          {messageGroups.map((group) => (
+                                            <option key={group.id} value={group.id}>
+                                              {group.name}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        {messageGroupId && canDeleteMessageGroup && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleMessageGroupDelete(messageGroupId)}
+                                            className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
+                                              confirmMessageGroupDelete === messageGroupId
+                                                ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                : "border-rose-300/40 bg-rose-500/10 text-rose-50/90 hover:border-rose-300 hover:bg-rose-500/20"
+                                            }`}
+                                          >
+                                            {confirmMessageGroupDelete === messageGroupId
+                                              ? "Onayla"
+                                              : "Sil"}
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 min-w-0">
                                       <label className="text-[11px] font-semibold text-slate-300">
                                         Yeni grup
                                       </label>
@@ -1787,7 +1832,7 @@ export default function ProductsTab({
                                           }
                                           placeholder="Yeni grup adı"
                                           disabled={!canManageMessages}
-                                          className="min-w-[140px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         />
                                         <button
                                           type="button"
@@ -1810,7 +1855,7 @@ export default function ProductsTab({
                                       }
                                       placeholder={templates.length === 0 ? "Şablon yok" : "Şablon seç"}
                                       disabled={!canManageMessages || templates.length === 0}
-                                      className="min-w-[200px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       style={{ appearance: "none", WebkitAppearance: "none" }}
                                     />
                                     <datalist id={`message-template-${offerId}`}>
@@ -1838,14 +1883,27 @@ export default function ProductsTab({
                                     ) : (
                                       <div className="flex flex-wrap gap-2">
                                         {messageGroupMessages.map((label) => (
-                                          <button
+                                          <div
                                             key={`${offerId}-msg-${messageGroupId || "independent"}-${label}`}
-                                            type="button"
-                                            onClick={() => handleMessageTemplateCopy(label)}
-                                            className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"
+                                            className="flex max-w-full items-stretch gap-1"
                                           >
-                                            {label}
-                                          </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleMessageTemplateCopy(label)}
+                                              className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"
+                                            >
+                                              {label}
+                                            </button>
+                                            {canDeleteMessageItem && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleMessageTemplateRemove(offerId, label)}
+                                                className="rounded-md border border-rose-300/40 bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
+                                              >
+                                                Sil
+                                              </button>
+                                            )}
+                                          </div>
                                         ))}
                                       </div>
                                     )}
