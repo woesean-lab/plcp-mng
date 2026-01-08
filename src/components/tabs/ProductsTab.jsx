@@ -551,7 +551,7 @@ export default function ProductsTab({
 
                         {isStockEnabled && (
                           <div className="inline-flex h-[52px] w-[172px] flex-col justify-between rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-3 py-2 shadow-inner">
-                            <div className="flex items-end justify-between gap-4">
+                            <div className="flex items-center justify-between gap-4">
                               <div className="flex items-center gap-2">
                                 <div className="relative flex h-6 w-6 items-center justify-center">
                                   <svg viewBox="0 0 36 36" className="h-6 w-6">
@@ -582,16 +582,16 @@ export default function ProductsTab({
                                   <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                                     Stokta
                                   </p>
-                                  <p className="text-sm font-semibold text-emerald-100">
+                                  <p className="text-sm font-semibold leading-none text-emerald-100">
                                     {availableCount}
                                   </p>
                                 </div>
                               </div>
-                              <div className="space-y-0.5 text-right">
+                              <div className="min-w-[56px] space-y-0.5 text-right">
                                 <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                                   Kullanildi
                                 </p>
-                                <p className="text-sm font-semibold text-amber-100">
+                                <p className="text-sm font-semibold leading-none text-amber-100">
                                   {usedCount}
                                 </p>
                               </div>
