@@ -983,6 +983,7 @@ function App() {
               noteGroups={eldoradoNoteGroups}
               noteGroupAssignments={eldoradoNoteGroupAssignments}
               noteGroupNotes={eldoradoNoteGroupNotes}
+              templates={templates}
               stockEnabledByOffer={eldoradoStockEnabledByOffer}
               onLoadKeys={loadEldoradoKeys}
               onAddKeys={handleEldoradoKeysAdd}
