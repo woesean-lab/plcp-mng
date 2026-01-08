@@ -734,27 +734,19 @@ export default function ProductsTab({
                               <span className="text-slate-400">{groupName}</span>
                             )}
                           </div>
-                        </button>
-
-                        {isStockEnabled && (
-                          <div className="inline-flex items-center overflow-hidden rounded-full border border-[#ffffff1a] bg-[#ffffff0d] text-[11px] font-semibold shadow-inner">
-                            <span className="flex items-center gap-2 px-3 py-1 text-slate-200">
+                          {isStockEnabled && (
+                            <p className="mt-2 text-[11px] text-slate-400">
+                              Stok:{" "}
                               <span
-                                className={`h-1.5 w-1.5 rounded-full ${
-                                  isOutOfStock ? "bg-rose-300/80" : "bg-emerald-300/80"
+                                className={`font-semibold ${
+                                  isOutOfStock ? "text-rose-100" : "text-emerald-100"
                                 }`}
-                              />
-                              <span>{isOutOfStock ? "Stok yok" : "Stokta"}</span>
-                            </span>
-                            <span
-                              className={`border-l border-white/10 px-2.5 py-1 tabular-nums ${
-                                isOutOfStock ? "text-rose-100" : "text-emerald-100"
-                              }`}
-                            >
-                              {availableCount}
-                            </span>
-                          </div>
-                        )}
+                              >
+                                {availableCount}
+                              </span>
+                            </p>
+                          )}
+                        </button>
 
                         <div className="flex flex-wrap items-stretch gap-1.5">
                           <div className="flex h-[40px] w-full items-center gap-1 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1.5 shadow-inner sm:w-[192px]">
