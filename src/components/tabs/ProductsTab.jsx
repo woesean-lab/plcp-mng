@@ -214,6 +214,8 @@ export default function ProductsTab({
       stockEnabled: 0,
       stockDisabled: 0,
       outOfStock: 0,
+      totalStock: 0,
+      usedStock: 0,
     }
 
     allProducts.forEach((product) => {
@@ -245,6 +247,11 @@ export default function ProductsTab({
       const hasLoadedKeys = Object.prototype.hasOwnProperty.call(keysByOffer, offerId)
       const usedCount = hasLoadedKeys ? usedCountFromKeys : rawUsedCount
       const availableCount = hasLoadedKeys ? availableCountFromKeys : rawAvailableCount
+      const totalCount = Math.max(0, availableCount + usedCount)
+
+      totals.totalStock += totalCount
+      totals.usedStock += Math.max(0, usedCount)
+
       if (isStockEnabled && Math.max(0, availableCount) === 0) {
         totals.outOfStock += 1
       }
@@ -500,23 +507,23 @@ export default function ProductsTab({
           </div>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(248,113,113,0.18),transparent)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(16,185,129,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Stok bitti
+              Toplam stok
             </p>
-            <p className="mt-2 text-2xl font-semibold text-white">{productStats.outOfStock}</p>
-            <p className="mt-1 text-xs text-slate-400">Stogu biten urun</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{productStats.totalStock}</p>
+            <p className="mt-1 text-xs text-slate-400">Kayitli anahtar</p>
           </div>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(245,158,11,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Stok kapali
+              Kullanilan stok
             </p>
-            <p className="mt-2 text-2xl font-semibold text-white">{productStats.stockDisabled}</p>
-            <p className="mt-1 text-xs text-slate-400">Stok takibi kapali</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{productStats.usedStock}</p>
+            <p className="mt-1 text-xs text-slate-400">Isaretlenen anahtar</p>
           </div>
         </div>
       </div>
