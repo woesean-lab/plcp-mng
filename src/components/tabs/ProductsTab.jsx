@@ -179,6 +179,7 @@ export default function ProductsTab({
   const [noteGroupDrafts, setNoteGroupDrafts] = useState({})
   const [noteOpenByOffer, setNoteOpenByOffer] = useState({})
   const [confirmNoteGroupDelete, setConfirmNoteGroupDelete] = useState(null)
+  const [noteEditingByOffer, setNoteEditingByOffer] = useState({})
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const canManageGroups = canAddKeys
@@ -455,6 +456,18 @@ export default function ProductsTab({
     setNoteOpenByOffer((prev) => ({ ...prev, [normalizedId]: !prev[normalizedId] }))
   }
 
+  const toggleNoteEdit = (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setNoteEditingByOffer((prev) => {
+      const next = !prev[normalizedId]
+      if (!next) {
+        handleNoteReset(normalizedId)
+      }
+      return { ...prev, [normalizedId]: next }
+    })
+  }
+
   const handleNoteSave = (offerId) => {
     if (!canManageNotes) return
     const normalizedId = String(offerId ?? "").trim()
@@ -467,6 +480,7 @@ export default function ProductsTab({
     const value = draft !== undefined ? draft : stored
     onSaveNote(normalizedId, value)
     handleNoteReset(normalizedId)
+    setNoteEditingByOffer((prev) => ({ ...prev, [normalizedId]: false }))
   }
 
   const handleNoteGroupCreate = (offerId) => {
@@ -869,9 +883,12 @@ export default function ProductsTab({
                   const noteDraftValue = noteDrafts[offerId]
                   const noteInputValue = noteDraftValue !== undefined ? noteDraftValue : storedNote
                   const noteHasChanges = String(noteInputValue ?? "").trim() !== storedNote
-                  const canSaveNote = Boolean(offerId) && canManageNotes && noteHasChanges
                   const noteGroupDraftValue = noteGroupDrafts[offerId] ?? ""
                   const isNoteOpen = Boolean(noteOpenByOffer[offerId])
+                  const isNoteEditing = Boolean(noteEditingByOffer[offerId])
+                  const isNoteEditable = canManageNotes && isNoteEditing
+                  const canSaveNote =
+                    Boolean(offerId) && canManageNotes && noteHasChanges && isNoteEditing
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -1169,7 +1186,7 @@ export default function ProductsTab({
                                   onChange={(event) =>
                                     handleNoteGroupAssign(offerId, event.target.value)
                                   }
-                                  disabled={!canManageNotes}
+                                  disabled={!isNoteEditable}
                                   className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   <option value="">Bağımsız not</option>
@@ -1183,10 +1200,11 @@ export default function ProductsTab({
                                     <button
                                       type="button"
                                       onClick={() => handleNoteGroupDelete(noteGroupId)}
-                                      className={`rounded-md border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide transition ${
+                                      disabled={!isNoteEditable}
+                                      className={`rounded-md border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
                                         confirmNoteGroupDelete === noteGroupId
                                           ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                          : "border-white/10 bg-white/5 text-slate-200 hover:border-rose-300/60 hover:bg-rose-500/10 hover:text-rose-50"
+                                          : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
                                       }`}
                                     >
                                       {confirmNoteGroupDelete === noteGroupId ? "Onayla" : "Sil"}
@@ -1207,7 +1225,8 @@ export default function ProductsTab({
                                         handleNoteGroupDraftChange(offerId, event.target.value)
                                       }
                                       placeholder="Yeni not grubu"
-                                      className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                      disabled={!isNoteEditable}
+                                      className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     />
                                     <button
                                       type="button"
@@ -1215,7 +1234,7 @@ export default function ProductsTab({
                                         event.stopPropagation()
                                         handleNoteGroupCreate(offerId)
                                       }}
-                                      disabled={!noteGroupDraftValue.trim()}
+                                      disabled={!isNoteEditable || !noteGroupDraftValue.trim()}
                                       className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       Oluştur
@@ -1229,10 +1248,23 @@ export default function ProductsTab({
                               value={noteInputValue ?? ""}
                               onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
                               placeholder="Ürün notu ekle"
-                              disabled={!canManageNotes}
-                              className="mt-4 min-h-[220px] w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                              readOnly={!isNoteEditable}
+                              className="mt-4 min-h-[240px] w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 read-only:bg-ink-900/40 read-only:text-slate-300"
                             />
-                            <div className="mt-3 flex flex-wrap justify-end">
+                            <div className="mt-3 flex flex-wrap justify-end gap-2">
+                              {canManageNotes && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleNoteEdit(offerId)}
+                                  className={`flex h-8 items-center justify-center rounded-lg border px-4 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 ${
+                                    isNoteEditing
+                                      ? "border-rose-300/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
+                                      : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
+                                  }`}
+                                >
+                                  {isNoteEditing ? "Vazgeç" : "Düzenle"}
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleNoteSave(offerId)}
