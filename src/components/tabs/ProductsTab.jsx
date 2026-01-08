@@ -742,41 +742,35 @@ export default function ProductsTab({
                         </button>
 
                         {isStockEnabled && (
-                          <div className="inline-flex h-[48px] w-full max-w-[140px] flex-col justify-center rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2 py-2 shadow-inner sm:w-[104px]">
-                            <div className="flex items-center gap-2">
-                              <div className="relative flex h-5 w-5 items-center justify-center">
-                                <svg viewBox="0 0 36 36" className="h-5 w-5">
-                                  <circle
-                                    cx="18"
-                                    cy="18"
-                                    r="15"
-                                    fill="none"
-                                    stroke="rgba(248,113,113,0.6)"
-                                    strokeWidth="3"
-                                  />
-                                  <circle
-                                    cx="18"
-                                    cy="18"
-                                    r="15"
-                                    fill="none"
-                                    stroke="rgba(16,185,129,0.9)"
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeDasharray="94.2"
-                                    strokeDashoffset={
-                                      94.2 - Math.min(94.2, (stockFillPercent / 100) * 94.2)
-                                    }
-                                  />
-                                </svg>
-                              </div>
-                              <div className="space-y-0.5">
-                                <p className="text-[13px] font-semibold leading-none text-emerald-100">
-                                  Mevcut
-                                </p>
-                                <p className="text-[13px] font-semibold leading-none text-emerald-100">
-                                  {availableCount}
-                                </p>
-                              </div>
+                          <div className="inline-flex h-[36px] w-full max-w-[140px] items-center gap-2 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2 py-1 shadow-inner sm:w-[112px]">
+                            <div className="relative flex h-4 w-4 items-center justify-center">
+                              <svg viewBox="0 0 36 36" className="h-4 w-4">
+                                <circle
+                                  cx="18"
+                                  cy="18"
+                                  r="15"
+                                  fill="none"
+                                  stroke="rgba(148,163,184,0.45)"
+                                  strokeWidth="3"
+                                />
+                                <circle
+                                  cx="18"
+                                  cy="18"
+                                  r="15"
+                                  fill="none"
+                                  stroke="rgba(14,116,144,0.9)"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeDasharray="94.2"
+                                  strokeDashoffset={
+                                    94.2 - Math.min(94.2, (stockFillPercent / 100) * 94.2)
+                                  }
+                                />
+                              </svg>
+                            </div>
+                            <div className="flex items-center gap-1 text-[12px] font-semibold text-cyan-100">
+                              <span>Mevcut</span>
+                              <span className="text-cyan-50">{availableCount}</span>
                             </div>
                           </div>
                         )}
