@@ -645,6 +645,32 @@ export default function ProductsTab({
                                 <path d="m12 2 3.1 6.3 7 .9-5 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7-5-4.9 7-.9z" />
                               </svg>
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => handleKeysRefresh(offerId)}
+                              disabled={!offerId || isKeysLoading || !isStockEnabled}
+                              className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
+                                !offerId || isKeysLoading || !isStockEnabled
+                                  ? "cursor-not-allowed opacity-60"
+                                  : ""
+                              }`}
+                              aria-label="Stoklari yenile"
+                              title={!isStockEnabled ? "Stok kapali" : isKeysLoading ? "Yukleniyor..." : "Yenile"}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                                className={`h-4 w-4 ${isKeysLoading ? "animate-spin" : ""}`}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M4 12a8 8 0 1 0 2.35-5.65" />
+                                <path d="M4 4v4h4" />
+                              </svg>
+                            </button>
                             {href && (
                               <a
                                 href={href}
@@ -725,20 +751,12 @@ export default function ProductsTab({
                       {isOpen && (
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-ink-900/50 px-4 py-2 text-[11px] text-slate-400 shadow-inner">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <span>Kategori: {categoryLabel}</span>
-                              <span>Grup: {groupName || "Yok"}</span>
-                              <span>Stok: {isStockEnabled ? "Acik" : "Kapali"}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleKeysRefresh(offerId)}
-                              disabled={!offerId || isKeysLoading || !isStockEnabled}
-                              className="rounded-full border border-white/10 bg-ink-950/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-200 transition hover:border-accent-300/60 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {!isStockEnabled ? "Stok kapali" : isKeysLoading ? "Yukleniyor..." : "Yenile"}
-                            </button>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span>Kategori: {categoryLabel}</span>
+                            <span>Grup: {groupName || "Yok"}</span>
+                            <span>Stok: {isStockEnabled ? "Acik" : "Kapali"}</span>
                           </div>
+                        </div>
 
                           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.6fr)]">
                             <div className="space-y-4">
