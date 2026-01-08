@@ -855,9 +855,7 @@ export default function ProductsTab({
                   const noteHasChanges = String(noteInputValue ?? "").trim() !== storedNote
                   const canSaveNote = Boolean(offerId) && canManageNotes && noteHasChanges
                   const noteGroupDraftValue = noteGroupDrafts[offerId] ?? ""
-                  const isNoteOpen =
-                    noteOpenByOffer[offerId] ??
-                    Boolean((noteDraftValue ?? storedNote)?.toString().trim())
+                  const isNoteOpen = Boolean(noteOpenByOffer[offerId])
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -1134,7 +1132,7 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => handleNoteSave(offerId)}
                                 disabled={!canSaveNote}
-                                className="flex h-8 items-center justify-center rounded-md border border-accent-300/60 bg-accent-500/15 px-3 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-200 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-8 items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 Kaydet
                               </button>
@@ -1142,7 +1140,7 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => handleNoteReset(offerId)}
                                 disabled={noteDraftValue === undefined}
-                                className="flex h-8 items-center justify-center rounded-md border border-white/10 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-8 items-center justify-center rounded-lg border border-white/10 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-400 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 Sifirla
                               </button>
@@ -1184,7 +1182,7 @@ export default function ProductsTab({
                                     type="button"
                                     onClick={() => handleNoteGroupCreate(offerId)}
                                     disabled={!noteGroupDraftValue.trim()}
-                                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     Olustur
                                   </button>
