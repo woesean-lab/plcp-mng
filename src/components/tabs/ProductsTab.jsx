@@ -690,11 +690,6 @@ export default function ProductsTab({
                       ? rawHref
                       : `https://www.eldorado.gg${rawHref.startsWith("/") ? "" : "/"}${rawHref}`
                     : ""
-                  const totalCapacity = Math.max(totalCount || 0, availableCount + usedCount)
-                  const stockFillPercent =
-                    totalCapacity > 0
-                      ? Math.min(100, Math.max(0, Math.round((availableCount / totalCapacity) * 100)))
-                      : 0
                   return (
                     <div
                       key={key}
@@ -742,42 +737,35 @@ export default function ProductsTab({
                         </button>
 
                         {isStockEnabled && (
-                          <div className="inline-flex h-[48px] w-full max-w-[140px] flex-col justify-center rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2 py-2 shadow-inner sm:w-[104px]">
-                            <div className="flex items-center gap-2">
-                              <div className="relative flex h-5 w-5 items-center justify-center">
-                                <svg viewBox="0 0 36 36" className="h-5 w-5">
-                                  <circle
-                                    cx="18"
-                                    cy="18"
-                                    r="15"
-                                    fill="none"
-                                    stroke="rgba(248,113,113,0.6)"
-                                    strokeWidth="3"
-                                  />
-                                    <circle
-                                      cx="18"
-                                      cy="18"
-                                      r="15"
-                                      fill="none"
-                                      stroke="rgba(16,185,129,0.9)"
-                                      strokeWidth="3"
-                                      strokeLinecap="round"
-                                      strokeDasharray="94.2"
-                                    strokeDashoffset={
-                                      94.2 - Math.min(94.2, (stockFillPercent / 100) * 94.2)
-                                    }
-                                  />
-                                </svg>
-                              </div>
-                              <div className="space-y-0.5">
-                                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                  Stokta
-                                </p>
-                                <p className="text-[13px] font-semibold leading-none text-emerald-100">
-                                  {availableCount}
-                                </p>
-                              </div>
-                            </div>
+                          <div
+                            className={`relative inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] shadow-inner ${
+                              isOutOfStock
+                                ? "border-rose-300/40 bg-rose-500/10 text-rose-100"
+                                : "border-emerald-300/40 bg-emerald-500/10 text-emerald-100"
+                            }`}
+                          >
+                            <span className="relative flex h-2.5 w-2.5">
+                              <span
+                                className={`absolute inset-0 rounded-full blur-[2px] ${
+                                  isOutOfStock ? "bg-rose-300/60" : "bg-emerald-300/60"
+                                }`}
+                              />
+                              <span
+                                className={`relative h-2.5 w-2.5 rounded-full ${
+                                  isOutOfStock ? "bg-rose-300" : "bg-emerald-300"
+                                }`}
+                              />
+                            </span>
+                            <span>{isOutOfStock ? "Stok bitti" : "Stokta"}</span>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[11px] tracking-normal ${
+                                isOutOfStock
+                                  ? "border-rose-200/40 bg-rose-500/20 text-rose-50"
+                                  : "border-emerald-200/40 bg-emerald-500/20 text-emerald-50"
+                              }`}
+                            >
+                              {availableCount}
+                            </span>
                           </div>
                         )}
 
