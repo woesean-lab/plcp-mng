@@ -1517,39 +1517,6 @@ export default function ProductsTab({
                                       Ekle
                                     </button>
                                   </div>
-                                  <div className="rounded-xl border border-white/10 bg-ink-900/30 p-3">
-                                    {messageGroupMessages.length === 0 ? (
-                                      <div className="text-xs text-slate-400">
-                                        {messageGroupId ? "Bu grupta mesaj yok." : "Bağımsız mesaj yok."}
-                                      </div>
-                                    ) : (
-                                      <div className="flex flex-wrap gap-2">
-                                        {messageGroupMessages.map((label) => (
-                                          <div
-                                            key={`${offerId}-msg-${messageGroupId || "independent"}-${label}`}
-                                            className="flex max-w-full items-stretch gap-1"
-                                          >
-                                            <button
-                                              type="button"
-                                              onClick={() => handleMessageTemplateCopy(label)}
-                                              className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"
-                                            >
-                                              {label}
-                                            </button>
-                                            {canDeleteMessageItem && (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleMessageTemplateRemove(offerId, label)}
-                                                className="rounded-md border border-rose-300/40 bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
-                                              >
-                                                Sil
-                                              </button>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
                                 </div>
                               </div>
                             )}
@@ -2033,6 +2000,59 @@ export default function ProductsTab({
                                 Bu urunde stok kapali. Ustteki ON/OFF anahtarindan acin.
                               </div>
                             )}
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="text-xs font-semibold text-slate-300">
+                                    Mesaj kopyalama
+                                  </span>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
+                                      Seçili: {messageGroupLabel}
+                                    </span>
+                                    {messageGroupMessages.length > 0 && (
+                                      <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
+                                        {messageGroupMessages.length} mesaj
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/30 p-3">
+                                  {messageGroupMessages.length === 0 ? (
+                                    <div className="text-xs text-slate-400">
+                                      {messageGroupId ? "Bu grupta mesaj yok." : "Bağımsız mesaj yok."}
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                      {messageGroupMessages.map((label) => (
+                                        <div
+                                          key={`${offerId}-msg-${messageGroupId || "independent"}-${label}`}
+                                          className="flex max-w-full items-stretch gap-1"
+                                        >
+                                          <button
+                                            type="button"
+                                            onClick={() => handleMessageTemplateCopy(label)}
+                                            className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"
+                                          >
+                                            {label}
+                                          </button>
+                                          {canDeleteMessageItem && (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleMessageTemplateRemove(offerId, label)}
+                                              className="rounded-md border border-rose-300/40 bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
+                                            >
+                                              Sil
+                                            </button>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
 
                         </div>
