@@ -1205,9 +1205,8 @@ export default function ProductsTab({
                       {isOpen && (
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                           <div className={`grid gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
-                          {isStockEnabled && (
-                            <div className="space-y-3">
-                              <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
+                            {isStockEnabled && (
+                            <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                               <div
                                 role="button"
                                 tabIndex={0}
@@ -1325,7 +1324,8 @@ export default function ProductsTab({
                                 </div>
                               )}
                             </div>
-                          <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
+                            )}
+                            <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                             <div
                               role="button"
                               tabIndex={0}
@@ -1477,12 +1477,11 @@ export default function ProductsTab({
                                     </button>
                                   </div>
                                 </div>
-                              </div>
+                            </div>
                             )}
+                            </div>
                           </div>
-                        </div>
-                        )}
-                        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
+                          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                           <div
                             role="button"
                             tabIndex={0}
