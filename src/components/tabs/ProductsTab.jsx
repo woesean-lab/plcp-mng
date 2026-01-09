@@ -1987,8 +1987,6 @@ export default function ProductsTab({
                                       ))}
                                     </div>
                                   )}
-                                </div>
-                              </div>
                             </div>
                         </div>
                       </div>
