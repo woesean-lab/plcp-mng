@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import StockModal from "../modals/StockModal"
 function SkeletonBlock({ className = "" }) {
@@ -449,13 +449,11 @@ export default function ProductsTab({
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     setMessageOpenByOffer((prev) => ({ ...prev, [normalizedId]: !prev[normalizedId] }))
-    setStockGroupOpenByOffer((prev) => ({ ...prev, [normalizedId]: false }))
   }
   const toggleStockGroupOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     setStockGroupOpenByOffer((prev) => ({ ...prev, [normalizedId]: !prev[normalizedId] }))
-    setMessageOpenByOffer((prev) => ({ ...prev, [normalizedId]: false }))
   }
   const toggleNoteEdit = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -1206,9 +1204,10 @@ export default function ProductsTab({
                       
                       {isOpen && (
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
-                        <div className={`grid gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
+                          <div className={`grid gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                           {isStockEnabled && (
-                            <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
+                            <div className="space-y-3">
+                              <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                               <div
                                 role="button"
                                 tabIndex={0}
@@ -1226,8 +1225,8 @@ export default function ProductsTab({
                                 aria-expanded={isStockGroupOpen}
                               >
                                 <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                                  <div className="flex items-baseline gap-3">
-                                    <span className="text-sm font-semibold text-slate-100">Stok grubu</span>
+                                  <div>
+                                    <p className="text-[13px] font-semibold text-slate-100">Stok grubu</p>
                                   </div>
                                   <svg
                                     viewBox="0 0 24 24"
@@ -1246,100 +1245,106 @@ export default function ProductsTab({
                                   <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
                                     Seçili: {groupName || "Yok"}
                                   </span>
-                                  {groupId && canManageGroups && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation()
-                                        handleGroupAssign(offerId, "")
-                                      }}
-                                      className="rounded-full border border-rose-300/50 bg-rose-500/10 px-3 py-1 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
-                                    >
-                                      Kaldır
-                                    </button>
-                                  )}
-                                  {groupId && canManageGroups && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation()
-                                        handleGroupDelete(offerId, groupId)
-                                      }}
-                                      className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
-                                        confirmGroupDelete === groupId
-                                          ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                          : "border-white/10 bg-white/5 text-slate-200 hover:border-rose-300/60 hover:bg-rose-500/10 hover:text-rose-50"
-                                      }`}
-                                    >
-                                      {confirmGroupDelete === groupId ? "Onayla" : "Sil"}
-                                    </button>
-                                  )}
                                 </div>
                               </div>
                               {isStockGroupOpen && (
                                 <div className="px-4 pb-4 pt-3">
                                   <div className="space-y-3">
-                                    <select
-                                      value={groupId}
-                                      onChange={(event) =>
-                                        handleGroupAssign(offerId, event.target.value)
-                                      }
-                                      disabled={!canManageGroups}
-                                      className="w-full appearance-none rounded-xl border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      <option value="">Grup seç</option>
-                                      {groups.map((groupOption) => (
-                                        <option key={groupOption.id} value={groupOption.id}>
-                                          {groupOption.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    {canManageGroups && (
+                                    <div className="space-y-2">
+                                      <label className="text-[11px] font-semibold text-slate-300">
+                                        Stok grubu
+                                      </label>
                                       <div className="flex flex-wrap items-center gap-2">
-                                        <input
-                                          type="text"
-                                          value={groupDraftValue}
+                                        <select
+                                          value={groupId}
                                           onChange={(event) =>
-                                            handleGroupDraftChange(offerId, event.target.value)
+                                            handleGroupAssign(offerId, event.target.value)
                                           }
-                                          placeholder="Yeni grup adı"
-                                          className="min-w-[160px] flex-1 rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={() => handleGroupCreate(offerId)}
-                                          disabled={!groupDraftValue.trim()}
-                                          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                          disabled={!canManageGroups}
+                                          className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                          Grup oluştur
-                                        </button>
+                                          <option value="">Bağımsız</option>
+                                          {groups.map((groupOption) => (
+                                            <option key={groupOption.id} value={groupOption.id}>
+                                              {groupOption.name}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        {groupId && canManageGroups && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleGroupAssign(offerId, "")}
+                                            className="rounded-lg border border-rose-300/50 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
+                                          >
+                                            Kaldır
+                                          </button>
+                                        )}
+                                        {groupId && canManageGroups && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleGroupDelete(offerId, groupId)}
+                                            className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
+                                              confirmGroupDelete === groupId
+                                                ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                : "border-rose-300/40 bg-rose-500/10 text-rose-50/90 hover:border-rose-300 hover:bg-rose-500/20"
+                                            }`}
+                                          >
+                                            {confirmGroupDelete === groupId ? "Onayla" : "Sil"}
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {canManageGroups && (
+                                      <div className="space-y-2">
+                                        <label className="text-[11px] font-semibold text-slate-300">
+                                          Yeni grup
+                                        </label>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <input
+                                            type="text"
+                                            value={groupDraftValue}
+                                            onChange={(event) =>
+                                              handleGroupDraftChange(offerId, event.target.value)
+                                            }
+                                            placeholder="Yeni grup adı"
+                                            disabled={!canManageGroups}
+                                            className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => handleGroupCreate(offerId)}
+                                            disabled={!canManageGroups || !groupDraftValue.trim()}
+                                            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                          >
+                                            Oluştur
+                                          </button>
+                                        </div>
                                       </div>
                                     )}
                                   </div>
                                 </div>
                               )}
                             </div>
-                          )}
                           <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
-                              <div
-                                role="button"
-                                tabIndex={0}
-                                onClick={(event) => {
-                                  event.stopPropagation()
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                toggleMessageOpen(offerId)
+                              }}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault()
                                   toggleMessageOpen(offerId)
-                                }}
-                                onKeyDown={(event) => {
-                                  if (event.key === "Enter" || event.key === " ") {
-                                    event.preventDefault()
-                                    toggleMessageOpen(offerId)
-                                  }
+                                }
                               }}
                               className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 transition hover:bg-white/5"
                               aria-expanded={isMessageOpen}
                             >
                               <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
                                 <div>
-                                  <p className="text-sm font-semibold text-slate-100">Mesajlar</p>
+                                  <p className="text-[13px] font-semibold text-slate-100">Mesajlar</p>
                                 </div>
                                 <svg
                                   viewBox="0 0 24 24"
@@ -1363,49 +1368,50 @@ export default function ProductsTab({
                                     {messageGroupMessages.length} mesaj
                                   </span>
                                 )}
+                              </div>
                             </div>
                             {isMessageOpen && (
                               <div className="px-4 pb-4 pt-3">
-                                <div className="">
+                                <div className="space-y-4">
                                   <div className="grid gap-3 md:grid-cols-2">
                                     <div className="space-y-2 min-w-0">
                                       <label className="text-[11px] font-semibold text-slate-300">
                                         Mesaj grubu
                                       </label>
                                       <div className="flex flex-wrap items-center gap-2">
-                                    <select
-                                      value={messageGroupId}
-                                      onChange={(event) =>
-                                        handleMessageGroupAssign(offerId, event.target.value)
-                                      }
-                                      disabled={!canManageMessages}
-                                      className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      <option value="">
-                                        {messageGroups.length === 0 ? "Bağımsız" : "Bağımsız"}
-                                      </option>
-                                      {messageGroups.map((group) => (
-                                        <option key={group.id} value={group.id}>
-                                          {group.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    {messageGroupId && canManageMessages && (
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.stopPropagation()
-                                          handleMessageGroupAssign(offerId, "")
-                                        }}
-                                        className="rounded-lg border border-rose-300/50 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
-                                      >
-                                        Kaldır
-                                      </button>
-                                    )}
-                                    {messageGroupId && canDeleteMessageGroup && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleMessageGroupDelete(messageGroupId)}
+                                        <select
+                                          value={messageGroupId}
+                                          onChange={(event) =>
+                                            handleMessageGroupAssign(offerId, event.target.value)
+                                          }
+                                          disabled={!canManageMessages}
+                                          className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          <option value="">
+                                            {messageGroups.length === 0 ? "Bağımsız" : "Bağımsız"}
+                                          </option>
+                                          {messageGroups.map((group) => (
+                                            <option key={group.id} value={group.id}>
+                                              {group.name}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        {messageGroupId && canManageMessages && (
+                                          <button
+                                            type="button"
+                                            onClick={(event) => {
+                                              event.stopPropagation()
+                                              handleMessageGroupAssign(offerId, "")
+                                            }}
+                                            className="rounded-lg border border-rose-300/50 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
+                                          >
+                                            Kaldır
+                                          </button>
+                                        )}
+                                        {messageGroupId && canDeleteMessageGroup && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleMessageGroupDelete(messageGroupId)}
                                             className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
                                               confirmMessageGroupDelete === messageGroupId
                                                 ? "border-rose-300 bg-rose-500/25 text-rose-50"
@@ -1472,9 +1478,10 @@ export default function ProductsTab({
                                   </div>
                                 </div>
                               </div>
-                            )}
+                            </div>
                           </div>
-                        </div>
+                            </div>
+                          )}
                           <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                           <div
                             role="button"
@@ -1491,7 +1498,7 @@ export default function ProductsTab({
                           >
                             <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
                               <div className="flex items-baseline gap-3">
-                                <span className="text-sm font-semibold text-slate-100">Ürün notu</span>
+                                <span className="text-[13px] font-semibold text-slate-100">Ürün notu</span>
                                 <span className="text-[11px] text-slate-400">Not ürün bazında saklanır.</span>
                               </div>
                               <svg
@@ -1642,7 +1649,7 @@ export default function ProductsTab({
                                 <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
                                   {canCopyKeys && (
                                     <div className="flex flex-wrap items-center justify-between gap-3">
-                                      <span className="text-sm font-semibold text-slate-100">Stoklar</span>
+                                      <span className="text-[13px] font-semibold text-slate-100">Stoklar</span>
                                       <div className="flex flex-wrap items-center gap-2">
                                         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-ink-950/60 px-2 py-1">
                                           <input
@@ -1802,7 +1809,7 @@ export default function ProductsTab({
                               {!isKeysLoading && usedKeys.length > 0 && (
                                 <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
                                   <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <span className="text-sm font-semibold text-slate-100">Kullanılan Stoklar</span>
+                                    <span className="text-[13px] font-semibold text-slate-100">Kullanılan Stoklar</span>
                                     <div className="flex flex-wrap items-center gap-2">
                                       <span className="rounded-full border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
                                         {usedKeys.length} adet
@@ -2064,3 +2071,4 @@ export default function ProductsTab({
     </div>
   )
 }
+
