@@ -1954,7 +1954,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             </div>
-                            <div className="rounded-xl border border-white/10 bg-ink-900/30 p-3">
+                            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
                                 
                                   {messageGroupMessages.length === 0 ? (
                                     <div className="text-xs text-slate-400">
