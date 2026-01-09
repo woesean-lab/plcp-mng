@@ -1278,7 +1278,10 @@ export default function ProductsTab({
                               <div
                                 role="button"
                                 tabIndex={0}
-                                onClick={() => toggleStockGroupOpen(offerId)}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  toggleStockGroupOpen(offerId)
+                                }}
                                 onKeyDown={(event) => {
                                   if (event.key === "Enter" || event.key === " ") {
                                     event.preventDefault()
@@ -1384,15 +1387,18 @@ export default function ProductsTab({
                             </div>
                           )}
                           <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => toggleMessageOpen(offerId)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault()
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={(event) => {
+                                  event.stopPropagation()
                                   toggleMessageOpen(offerId)
-                                }
+                                }}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault()
+                                    toggleMessageOpen(offerId)
+                                  }
                               }}
                               className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 transition hover:bg-white/5"
                               aria-expanded={isMessageOpen}
@@ -1434,27 +1440,39 @@ export default function ProductsTab({
                                         Mesaj grubu
                                       </label>
                                       <div className="flex flex-wrap items-center gap-2">
-                                        <select
-                                          value={messageGroupId}
-                                          onChange={(event) =>
-                                            handleMessageGroupAssign(offerId, event.target.value)
-                                          }
-                                          disabled={!canManageMessages}
-                                          className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                          <option value="">
-                                            {messageGroups.length === 0 ? "Bağımsız" : "Bağımsız"}
-                                          </option>
-                                          {messageGroups.map((group) => (
-                                            <option key={group.id} value={group.id}>
-                                              {group.name}
-                                            </option>
-                                          ))}
-                                        </select>
-                                        {messageGroupId && canDeleteMessageGroup && (
-                                          <button
-                                            type="button"
-                                            onClick={() => handleMessageGroupDelete(messageGroupId)}
+                                    <select
+                                      value={messageGroupId}
+                                      onChange={(event) =>
+                                        handleMessageGroupAssign(offerId, event.target.value)
+                                      }
+                                      disabled={!canManageMessages}
+                                      className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      <option value="">
+                                        {messageGroups.length === 0 ? "Bağımsız" : "Bağımsız"}
+                                      </option>
+                                      {messageGroups.map((group) => (
+                                        <option key={group.id} value={group.id}>
+                                          {group.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {messageGroupId && canManageMessages && (
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation()
+                                          handleMessageGroupAssign(offerId, "")
+                                        }}
+                                        className="rounded-lg border border-rose-300/50 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
+                                      >
+                                        Kaldır
+                                      </button>
+                                    )}
+                                    {messageGroupId && canDeleteMessageGroup && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMessageGroupDelete(messageGroupId)}
                                             className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
                                               confirmMessageGroupDelete === messageGroupId
                                                 ? "border-rose-300 bg-rose-500/25 text-rose-50"
