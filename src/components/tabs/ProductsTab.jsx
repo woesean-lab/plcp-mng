@@ -1272,7 +1272,7 @@ export default function ProductsTab({
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                         <div className={`grid gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                           {isStockEnabled && (
-                            <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-ink-950/40 shadow-card">
+                            <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                               <div
                                 role="button"
                                 tabIndex={0}
@@ -1289,9 +1289,6 @@ export default function ProductsTab({
                                 <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
                                   <div className="flex items-baseline gap-3">
                                     <span className="text-sm font-semibold text-slate-100">Stok grubu</span>
-                                    <span className="text-[11px] text-slate-400">
-                                      Grup seçmezsen stoklar ürüne özeldir.
-                                    </span>
                                   </div>
                                   <svg
                                     viewBox="0 0 24 24"
@@ -1384,7 +1381,7 @@ export default function ProductsTab({
                               )}
                             </div>
                           )}
-                          <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-ink-950/50 shadow-card">
+                          <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                             <div
                               role="button"
                               tabIndex={0}
@@ -1399,26 +1396,8 @@ export default function ProductsTab({
                               aria-expanded={isMessageOpen}
                             >
                               <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200">
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                    className="h-4 w-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="1.6"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M8 9h8M8 13h5" />
-                                    <path d="M6.5 17.5 4 20V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6.5z" />
-                                  </svg>
-                                </span>
                                 <div>
                                   <p className="text-sm font-semibold text-slate-100">Mesajlar</p>
-                                  <p className="text-xs text-slate-400">
-                                    Mesaj grubu oluşturup şablonları buraya ekle.
-                                  </p>
                                 </div>
                                 <svg
                                   viewBox="0 0 24 24"
@@ -2139,6 +2118,7 @@ export default function ProductsTab({
     </div>
   )
 }
+
 
 
 
