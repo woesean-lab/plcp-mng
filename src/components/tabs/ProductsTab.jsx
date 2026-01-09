@@ -1206,7 +1206,7 @@ export default function ProductsTab({
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                           <div className={`grid gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                             {isStockEnabled && (
-                            <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
+                            <div className="relative z-10 h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                               <div
                                 role="button"
                                 tabIndex={0}
@@ -1325,7 +1325,7 @@ export default function ProductsTab({
                               )}
                             </div>
                             )}
-                            <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
+                            <div className="relative z-0 h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-card">
                             <div
                               role="button"
                               tabIndex={0}
