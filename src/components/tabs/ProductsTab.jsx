@@ -441,7 +441,11 @@ export default function ProductsTab({
   const setActivePanel = (offerId, panel) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    setActivePanelByOffer((prev) => ({ ...prev, [normalizedId]: panel }))
+    setActivePanelByOffer((prev) => {
+      const current = prev[normalizedId]
+      const next = current === panel ? "none" : panel
+      return { ...prev, [normalizedId]: next }
+    })
   }
   const toggleNoteEdit = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -936,9 +940,12 @@ export default function ProductsTab({
                     ? ["note", "messages", "stock"]
                     : ["note", "messages"]
                   const storedPanel = activePanelByOffer[offerId]
-                  const activePanel = availablePanels.includes(storedPanel)
-                    ? storedPanel
-                    : availablePanels[0]
+                  const activePanel =
+                    storedPanel === "none"
+                      ? "none"
+                      : availablePanels.includes(storedPanel)
+                        ? storedPanel
+                        : availablePanels[0]
                   const isNoteEditing = Boolean(noteEditingByOffer[offerId])
                   const isNoteEditable = canManageNotes && isNoteEditing
                   const canSaveNote =
@@ -1384,6 +1391,13 @@ export default function ProductsTab({
                                         {messageGroupMessages.length} mesaj
                                       </span>
                                     )}
+                                    <button
+                                      type="button"
+                                      onClick={() => setActivePanel(offerId, "messages")}
+                                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200 transition hover:border-white/30 hover:text-white"
+                                    >
+                                      Kapat
+                                    </button>
                                   </div>
                                 </div>
                                 <div className="mt-4 space-y-4">
@@ -1497,6 +1511,13 @@ export default function ProductsTab({
                                       Grup: {noteGroupName || "Secili"}
                                     </span>
                                   )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setActivePanel(offerId, "note")}
+                                    className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200 transition hover:border-white/30 hover:text-white"
+                                  >
+                                    Kapat
+                                  </button>
                                 </div>
                               </div>
                               <div className="mt-4">
