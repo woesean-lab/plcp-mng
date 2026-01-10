@@ -956,7 +956,7 @@ export default function ProductsTab({
                       ? "none"
                       : availablePanels.includes(storedPanel)
                         ? storedPanel
-                        : availablePanels[0]
+                        : "none"
                   const isNoteEditing = Boolean(noteEditingByOffer[offerId])
                   const canEditNoteText = canManageNotes && isNoteEditing
                   const canSaveNote =
@@ -1218,7 +1218,7 @@ export default function ProductsTab({
                       
                       {isOpen && (
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
-                          <div className="rounded-2xl border border-white/10 bg-white/5 p-3 shadow-card">
+                          <div className="rounded-2xl rounded-b-none border border-white/10 bg-white/5 p-3 pb-2 shadow-card">
                             <div
                               className={`grid gap-2 ${isStockEnabled ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
                               role="tablist"
@@ -1274,7 +1274,7 @@ export default function ProductsTab({
                           </div>
                           <div className={`grid items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                             {isStockEnabled && activePanel === "stock" && (
-                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
                                     <p className="text-[13px] font-semibold text-slate-100">Stok grubu</p>
@@ -1371,7 +1371,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "messages" && (
-                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
                                     <p className="text-[13px] font-semibold text-slate-100">Mesaj grubu</p>
@@ -1492,7 +1492,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "note" && (
-                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
                                     <p className="text-[13px] font-semibold text-slate-100">Ürün notu</p>
