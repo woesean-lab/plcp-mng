@@ -36,6 +36,15 @@ export default {
         glow: '0 10px 50px -12px rgba(58, 199, 255, 0.35)',
         card: '0 20px 70px -28px rgba(0, 0, 0, 0.6)',
       },
+      keyframes: {
+        panelFade: {
+          '0%': { opacity: 0, transform: 'translateY(6px)' },
+          '100%': { opacity: 1, transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        panelFade: 'panelFade 220ms ease-out',
+      },
     },
   },
   plugins: [],

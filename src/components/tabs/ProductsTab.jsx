@@ -1274,7 +1274,7 @@ export default function ProductsTab({
                           </div>
                           <div className={`grid items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                             {isStockEnabled && activePanel === "stock" && (
-                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
+                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2 animate-panelFade">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
                                     <p className="text-[13px] font-semibold text-slate-100">Stok grubu</p>
@@ -1371,7 +1371,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "messages" && (
-                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
+                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2 animate-panelFade">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
                                     <p className="text-[13px] font-semibold text-slate-100">Mesaj grubu</p>
@@ -1492,7 +1492,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "note" && (
-                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
+                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2 animate-panelFade">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
                                     <p className="text-[13px] font-semibold text-slate-100">Ürün notu</p>
