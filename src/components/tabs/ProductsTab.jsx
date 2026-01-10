@@ -1417,8 +1417,6 @@ export default function ProductsTab({
                                 )}
                               </div>
                             </div>
-                            )}
-                            {activePanel === "messages" && (
                               <div className="px-4 pb-4 pt-3">
                                 <div className="space-y-4">
                                   <div className="grid gap-3 md:grid-cols-2">
@@ -1525,6 +1523,7 @@ export default function ProductsTab({
                                     </button>
                                   </div>
                                 </div>
+                              </div>
                             </div>
                             )}
                             </div>
