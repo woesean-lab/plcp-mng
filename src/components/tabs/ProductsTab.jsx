@@ -171,6 +171,7 @@ export default function ProductsTab({
   const [starredOffers, setStarredOffers] = useState({})
   const [confirmKeyTarget, setConfirmKeyTarget] = useState(null)
   const [groupDrafts, setGroupDrafts] = useState({})
+  const [groupSelectionDrafts, setGroupSelectionDrafts] = useState({})
   const [bulkCounts, setBulkCounts] = useState({})
   const [noteDrafts, setNoteDrafts] = useState({})
   const [stockModalDraft, setStockModalDraft] = useState("")
@@ -179,11 +180,13 @@ export default function ProductsTab({
   const [savingKeys, setSavingKeys] = useState({})
   const [confirmGroupDelete, setConfirmGroupDelete] = useState(null)
   const [noteGroupDrafts, setNoteGroupDrafts] = useState({})
+  const [noteGroupSelectionDrafts, setNoteGroupSelectionDrafts] = useState({})
   const [activePanelByOffer, setActivePanelByOffer] = useState({})
   const [confirmNoteGroupDelete, setConfirmNoteGroupDelete] = useState(null)
   const [noteEditingByOffer, setNoteEditingByOffer] = useState({})
   const [messageTemplateDrafts, setMessageTemplateDrafts] = useState({})
   const [messageGroupDrafts, setMessageGroupDrafts] = useState({})
+  const [messageGroupSelectionDrafts, setMessageGroupSelectionDrafts] = useState({})
   const [confirmMessageGroupDelete, setConfirmMessageGroupDelete] = useState(null)
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
@@ -918,6 +921,8 @@ export default function ProductsTab({
                   ).trim()
                   const group = groupId ? groups.find((entry) => entry.id === groupId) : null
                   const groupName = String(group?.name ?? product?.stockGroupName ?? "").trim()
+                  const groupSelectionValue = groupSelectionDrafts[offerId] ?? groupId
+                  const isGroupSelectionDirty = groupSelectionValue !== groupId
                   const categoryKey = getCategoryKey(product)
                   const categoryLabel =
                     categoryKey === "diger" ? "Diger" : formatCategoryLabel(categoryKey)
@@ -931,6 +936,9 @@ export default function ProductsTab({
                     ? noteGroups.find((entry) => entry.id === noteGroupId)
                     : null
                   const noteGroupName = String(noteGroup?.name ?? "").trim()
+                  const noteGroupSelectionValue =
+                    noteGroupSelectionDrafts[offerId] ?? noteGroupId
+                  const isNoteGroupSelectionDirty = noteGroupSelectionValue !== noteGroupId
                   const noteGroupNote = String(noteGroupNotes?.[noteGroupId] ?? "").trim()
                   const storedNote = noteGroupId
                     ? noteGroupNote
@@ -966,6 +974,10 @@ export default function ProductsTab({
                     ? messageGroups.find((group) => group.id === messageGroupId)
                     : null
                   const messageGroupName = String(messageGroup?.name ?? "").trim()
+                  const messageGroupSelectionValue =
+                    messageGroupSelectionDrafts[offerId] ?? messageGroupId
+                  const isMessageGroupSelectionDirty =
+                    messageGroupSelectionValue !== messageGroupId
                   const independentMessages = Array.isArray(messageTemplatesByOffer?.[offerId])
                     ? messageTemplatesByOffer[offerId]
                     : []
@@ -1268,43 +1280,58 @@ export default function ProductsTab({
                                     <p className="text-[13px] font-semibold text-slate-100">Stok grubu</p>
                                     <p className="text-[11px] text-slate-400">Stokların bağlı olduğu grubu belirle.</p>
                                   </div>
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-50">
-                                      Seçili: {groupName || "Bağımsız"}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setActivePanel(offerId, "stock")}
-                                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200 transition hover:border-white/30 hover:text-white"
-                                    >
-                                      Kapat
-                                    </button>
-                                  </div>
                                 </div>
                                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
                                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                                     <label className="text-[11px] font-semibold text-slate-300">Stok grubu</label>
                                     <div className="mt-2 flex flex-wrap items-center gap-2">
                                       <select
-                                        value={groupId}
-                                        onChange={(event) => handleGroupAssign(offerId, event.target.value)}
+                                        value={groupSelectionValue}
+                                        onChange={(event) =>
+                                          setGroupSelectionDrafts((prev) => ({
+                                            ...prev,
+                                            [offerId]: event.target.value,
+                                          }))
+                                        }
                                         disabled={!canManageGroups}
                                         className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        <option value="">Bagimsiz</option>
+                                        <option value="">Bağımsız</option>
                                         {groups.map((groupOption) => (
                                           <option key={groupOption.id} value={groupOption.id}>
                                             {groupOption.name}
                                           </option>
                                         ))}
                                       </select>
-                                      {groupId && canManageGroups && (
+                                      {groupSelectionValue && canManageGroups && (
                                         <button
                                           type="button"
-                                          onClick={() => handleGroupAssign(offerId, "")}
+                                          onClick={() =>
+                                            setGroupSelectionDrafts((prev) => ({
+                                              ...prev,
+                                              [offerId]: "",
+                                            }))
+                                          }
                                           className="rounded-lg border border-rose-300/50 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
                                         >
                                           Kaldir
+                                        </button>
+                                      )}
+                                      {canManageGroups && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            handleGroupAssign(offerId, groupSelectionValue)
+                                            setGroupSelectionDrafts((prev) => {
+                                              const next = { ...prev }
+                                              delete next[offerId]
+                                              return next
+                                            })
+                                          }}
+                                          disabled={!isGroupSelectionDirty}
+                                          className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          Kaydet
                                         </button>
                                       )}
                                       {groupId && canManageGroups && (
@@ -1355,43 +1382,58 @@ export default function ProductsTab({
                                     <p className="text-[13px] font-semibold text-slate-100">Mesaj grubu</p>
                                     <p className="text-[11px] text-slate-400">Mesajların hangi grup üzerinden atanacağını seç.</p>
                                   </div>
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-50">
-                                      Seçili: {messageGroupLabel}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setActivePanel(offerId, "messages")}
-                                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200 transition hover:border-white/30 hover:text-white"
-                                    >
-                                      Kapat
-                                    </button>
-                                  </div>
                                 </div>
                                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                                     <label className="text-[11px] font-semibold text-slate-300">Mesaj grubu</label>
                                     <div className="mt-2 flex flex-wrap items-center gap-2">
                                       <select
-                                        value={messageGroupId}
-                                        onChange={(event) => handleMessageGroupAssign(offerId, event.target.value)}
+                                        value={messageGroupSelectionValue}
+                                        onChange={(event) =>
+                                          setMessageGroupSelectionDrafts((prev) => ({
+                                            ...prev,
+                                            [offerId]: event.target.value,
+                                          }))
+                                        }
                                         disabled={!canManageMessages}
                                         className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        <option value="">Bagimsiz</option>
+                                        <option value="">Bağımsız</option>
                                         {messageGroups.map((group) => (
                                           <option key={group.id} value={group.id}>
                                             {group.name}
                                           </option>
                                         ))}
                                       </select>
-                                      {messageGroupId && canManageMessages && (
+                                      {messageGroupSelectionValue && canManageMessages && (
                                         <button
                                           type="button"
-                                          onClick={() => handleMessageGroupAssign(offerId, "")}
+                                          onClick={() =>
+                                            setMessageGroupSelectionDrafts((prev) => ({
+                                              ...prev,
+                                              [offerId]: "",
+                                            }))
+                                          }
                                           className="rounded-lg border border-rose-300/50 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
                                         >
                                           Kaldir
+                                        </button>
+                                      )}
+                                      {canManageMessages && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            handleMessageGroupAssign(offerId, messageGroupSelectionValue)
+                                            setMessageGroupSelectionDrafts((prev) => {
+                                              const next = { ...prev }
+                                              delete next[offerId]
+                                              return next
+                                            })
+                                          }}
+                                          disabled={!isMessageGroupSelectionDirty}
+                                          className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          Kaydet
                                         </button>
                                       )}
                                       {messageGroupId && canDeleteMessageGroup && (
@@ -1466,37 +1508,30 @@ export default function ProductsTab({
                                     <p className="text-[13px] font-semibold text-slate-100">Ürün notu</p>
                                     <p className="text-[11px] text-slate-400">Not ürün bazında saklanır.</p>
                                   </div>
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-50">
-                                      Seçili: {noteGroupName || "Bağımsız"}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setActivePanel(offerId, "note")}
-                                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200 transition hover:border-white/30 hover:text-white"
-                                    >
-                                      Kapat
-                                    </button>
-                                  </div>
                                 </div>
                               <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                                   <label className="text-[11px] font-semibold text-slate-300">Not grubu</label>
                                   <div className="mt-2 flex items-center gap-2">
                                     <select
-                                      value={noteGroupId}
-                                      onChange={(event) => handleNoteGroupAssign(offerId, event.target.value)}
+                                      value={noteGroupSelectionValue}
+                                      onChange={(event) =>
+                                        setNoteGroupSelectionDrafts((prev) => ({
+                                          ...prev,
+                                          [offerId]: event.target.value,
+                                        }))
+                                      }
                                       disabled={!canManageNotes}
                                       className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      <option value="">Bagimsiz not</option>
+                                      <option value="">Bağımsız not</option>
                                       {noteGroups.map((groupOption) => (
                                         <option key={groupOption.id} value={groupOption.id}>
                                           {groupOption.name}
                                         </option>
                                       ))}
                                     </select>
-                                    {noteGroupId && canManageNotes && (
+                                    {noteGroupSelectionValue && canManageNotes && (
                                       <button
                                         type="button"
                                         onClick={() => handleNoteGroupDelete(noteGroupId)}
@@ -1508,6 +1543,23 @@ export default function ProductsTab({
                                         }`}
                                       >
                                         {confirmNoteGroupDelete === noteGroupId ? "Onayla" : "Sil"}
+                                      </button>
+                                    )}
+                                    {canManageNotes && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          handleNoteGroupAssign(offerId, noteGroupSelectionValue)
+                                          setNoteGroupSelectionDrafts((prev) => {
+                                            const next = { ...prev }
+                                            delete next[offerId]
+                                            return next
+                                          })
+                                        }}
+                                        disabled={!isNoteGroupSelectionDirty}
+                                        className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                      >
+                                        Kaydet
                                       </button>
                                     )}
                                   </div>
@@ -1536,14 +1588,14 @@ export default function ProductsTab({
                                   </div>
                                 )}
                               </div>
-                              <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/60 p-3">
+                              <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-0">
                                 <textarea
                                   rows={9}
                                   value={noteInputValue ?? ""}
                                   onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
-                                  placeholder="Urun notu ekle"
+                                  placeholder="Ürün notu ekle"
                                   readOnly={!canEditNoteText}
-                                  className="min-h-[240px] w-full rounded-lg bg-ink-900/40 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30 read-only:bg-ink-900/30 read-only:text-slate-300"
+                                  className="block min-h-[240px] w-full rounded-xl bg-ink-900/40 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30 read-only:bg-ink-900/30 read-only:text-slate-300"
                                 />
                               </div>
                               <div className="mt-3 flex flex-wrap justify-end gap-2">
@@ -1902,7 +1954,7 @@ export default function ProductsTab({
                                   <div className="text-xs text-slate-400">
                                     {messageGroupId
                                       ? "Bu grupta mesaj yok."
-                                      : "Bagimsiz mesaj yok."}
+                                      : "Bağımsız mesaj yok."}
                                   </div>
                                 ) : (
                                   <div className="flex flex-wrap gap-2">
@@ -2013,6 +2065,7 @@ export default function ProductsTab({
     </div>
   )
 }
+
 
 
 
