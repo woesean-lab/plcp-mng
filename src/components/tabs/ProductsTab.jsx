@@ -988,7 +988,7 @@ export default function ProductsTab({
                     : independentMessages
                   const messageGroupLabel =
                     messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
-                  const canDeleteMessageItem = !messageGroupId && canRemoveMessageTemplate
+                  const canDeleteMessageItem = canRemoveMessageTemplate
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
@@ -1314,7 +1314,7 @@ export default function ProductsTab({
                                           }
                                           className="rounded-lg border border-rose-300/50 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
                                         >
-                                          Kaldir
+                                          KALDIR
                                         </button>
                                       )}
                                       {canManageGroups && (
@@ -1344,7 +1344,7 @@ export default function ProductsTab({
                                               : "border-rose-300/40 bg-rose-500/10 text-rose-50/90 hover:border-rose-300 hover:bg-rose-500/20"
                                           }`}
                                         >
-                                          {confirmGroupDelete === groupId ? "Onayla" : "Sil"}
+                                          {confirmGroupDelete === groupId ? "Onayla" : "SİL"}
                                         </button>
                                       )}
                                     </div>
@@ -1365,9 +1365,9 @@ export default function ProductsTab({
                                           type="button"
                                           onClick={() => handleGroupCreate(offerId)}
                                           disabled={!canManageGroups || !groupDraftValue.trim()}
-                                          className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                          Olustur
+                                          OLUŞTUR
                                         </button>
                                       </div>
                                     </div>
@@ -1416,7 +1416,7 @@ export default function ProductsTab({
                                           }
                                           className="rounded-lg border border-rose-300/50 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
                                         >
-                                          Kaldir
+                                          KALDIR
                                         </button>
                                       )}
                                       {canManageMessages && (
@@ -1446,7 +1446,7 @@ export default function ProductsTab({
                                               : "border-rose-300/40 bg-rose-500/10 text-rose-50/90 hover:border-rose-300 hover:bg-rose-500/20"
                                           }`}
                                         >
-                                          {confirmMessageGroupDelete === messageGroupId ? "Onayla" : "Sil"}
+                                          {confirmMessageGroupDelete === messageGroupId ? "Onayla" : "SİL"}
                                         </button>
                                       )}
                                     </div>
@@ -1463,9 +1463,9 @@ export default function ProductsTab({
                                         type="button"
                                         onClick={() => handleMessageGroupCreate(offerId)}
                                         disabled={!canManageMessages || !messageGroupDraftValue.trim()}
-                                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        Olustur
+                                        OLUŞTUR
                                       </button>
                                     </div>
                                   </div>
@@ -1491,9 +1491,9 @@ export default function ProductsTab({
                                         type="button"
                                         onClick={() => handleMessageTemplateAdd(offerId)}
                                         disabled={!canManageMessages || !isMessageTemplateValid}
-                                        className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        Ekle
+                                        EKLE
                                       </button>
                                     </div>
                                     <p className="mt-2 text-[10px] text-slate-500">Sablon ekledikce kopyalama listesinde gorunur.</p>
@@ -1542,7 +1542,7 @@ export default function ProductsTab({
                                             : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
                                         }`}
                                       >
-                                        {confirmNoteGroupDelete === noteGroupId ? "Onayla" : "Sil"}
+                                        {confirmNoteGroupDelete === noteGroupId ? "Onayla" : "SİL"}
                                       </button>
                                     )}
                                     {canManageNotes && (
@@ -1582,7 +1582,7 @@ export default function ProductsTab({
                                         disabled={!canManageNotes || !noteGroupDraftValue.trim()}
                                         className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        Olustur
+                                        OLUŞTUR
                                       </button>
                                     </div>
                                   </div>
@@ -1609,7 +1609,7 @@ export default function ProductsTab({
                                         : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
                                     }`}
                                   >
-                                    {isNoteEditing ? "Vazgec" : "Duzenle"}
+                                    {isNoteEditing ? "Vazgec" : "DÜZENLE"}
                                   </button>
                                 )}
                                 <button
@@ -1760,7 +1760,7 @@ export default function ProductsTab({
                                                     onClick={() => handleKeyEditStart(item.id, item.code)}
                                                     className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 sm:w-auto"
                                                   >
-                                                    Duzenle
+                                                    DÜZENLE
                                                   </button>
                                                 )}
                                                 {canUpdateKeys && (
@@ -1787,7 +1787,7 @@ export default function ProductsTab({
                                                   >
                                                     {confirmKeyTarget === `${offerId}-${item.id}`
                                                       ? "Onayla"
-                                                      : "Sil"}
+                                                      : "SİL"}
                                                   </button>
                                                 )}
                                               </>
@@ -1902,7 +1902,7 @@ export default function ProductsTab({
                                                     onClick={() => handleKeyEditStart(item.id, item.code)}
                                                     className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 sm:w-auto"
                                                   >
-                                                    Duzenle
+                                                    DÜZENLE
                                                   </button>
                                                 )}
                                                 {canUpdateKeys && (
@@ -1929,7 +1929,7 @@ export default function ProductsTab({
                                                   >
                                                     {confirmKeyTarget === `${offerId}-${item.id}`
                                                       ? "Onayla"
-                                                      : "Sil"}
+                                                      : "SİL"}
                                                   </button>
                                                 )}
                                               </>
@@ -1976,7 +1976,7 @@ export default function ProductsTab({
                                             onClick={() => handleMessageTemplateRemove(offerId, label)}
                                             className="rounded-md border border-rose-300/40 bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
                                           >
-                                            Sil
+                                            SİL
                                           </button>
                                         )}
                                       </div>
@@ -2065,6 +2065,8 @@ export default function ProductsTab({
     </div>
   )
 }
+
+
 
 
 
