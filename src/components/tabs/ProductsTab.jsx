@@ -219,7 +219,7 @@ export default function ProductsTab({
       items: bucketItems,
     }))
     list.sort((a, b) => a.label.localeCompare(b.label, "tr"))
-    return [{ key: "all", label: "Tümü", items: allProducts }, ...list]
+    return [{ key: "all", label: "TÃ¼mÃ¼", items: allProducts }, ...list]
   }, [allProducts, categoryMap])
   const [activeCategoryKey, setActiveCategoryKey] = useState("all")
   const activeCategory = categories.find((category) => category.key === activeCategoryKey) ?? categories[0]
@@ -331,7 +331,7 @@ export default function ProductsTab({
       } else {
         delete next[normalizedId]
       }
-      toast.success(nextState ? "Ürün yýldýzlandý" : "Yýldýz kaldýrýldý", {
+      toast.success(nextState ? "ÃœrÃ¼n yÄ±ldÄ±zlandÄ±" : "YÄ±ldÄ±z kaldÄ±rÄ±ldÄ±", {
         duration: 1500,
         position: "top-right",
       })
@@ -581,15 +581,15 @@ export default function ProductsTab({
     const message = templates.find((tpl) => tpl.label === normalizedLabel)?.value
     const trimmedMessage = String(message ?? "").trim()
     if (!trimmedMessage) {
-      toast.error("Mesaj þablonu bulunamadý.")
+      toast.error("Mesaj ÅŸablonu bulunamadÄ±.")
       return
     }
     try {
       await navigator.clipboard.writeText(trimmedMessage)
-      toast.success("Mesaj kopyalandý", { duration: 1500, position: "top-right" })
+      toast.success("Mesaj kopyalandÄ±", { duration: 1500, position: "top-right" })
     } catch (error) {
       console.error(error)
-      toast.error("Kopyalanamadý")
+      toast.error("KopyalanamadÄ±")
     }
   }
   const handleStockToggle = (offerId) => {
@@ -697,13 +697,13 @@ export default function ProductsTab({
         <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1.5 sm:space-y-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              Ürün listesi
+              ÃœrÃ¼n listesi
             </span>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-              Ürün listesi
+              ÃœrÃ¼n listesi
             </h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Ürün adlarýný gör ve filtrele.
+              ÃœrÃ¼n adlarÄ±nÄ± gÃ¶r ve filtrele.
             </p>
           </div>
           <div className="flex w-full justify-start md:w-auto md:justify-end">
@@ -712,10 +712,10 @@ export default function ProductsTab({
                 Kategori
               </p>
               <p className="mt-2 text-lg font-semibold text-white">
-                {activeCategory?.label ?? "Tümü"}
+                {activeCategory?.label ?? "TÃ¼mÃ¼"}
               </p>
               <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-400">
-                <span>{list.length} ürün</span>
+                <span>{list.length} Ã¼rÃ¼n</span>
                 <span>{paginatedList.length} gosterilen</span>
                 <span>
                   {page}/{totalPages}
@@ -730,7 +730,7 @@ export default function ProductsTab({
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Toplam ürün
+              Toplam Ã¼rÃ¼n
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.totalOffers}</p>
             <p className="mt-1 text-xs text-slate-400">Katalogdaki teklifler</p>
@@ -740,10 +740,10 @@ export default function ProductsTab({
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(59,130,246,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Stok açýk
+              Stok aÃ§Ä±k
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.stockEnabled}</p>
-            <p className="mt-1 text-xs text-slate-400">Stok takibi açýk ürün</p>
+            <p className="mt-1 text-xs text-slate-400">Stok takibi aÃ§Ä±k Ã¼rÃ¼n</p>
           </div>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
@@ -760,7 +760,7 @@ export default function ProductsTab({
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(245,158,11,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Kullanýlan stok
+              KullanÄ±lan stok
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.usedStock}</p>
             <p className="mt-1 text-xs text-slate-400">Isaretlenen anahtar</p>
@@ -774,7 +774,7 @@ export default function ProductsTab({
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
                 Kategoriler
               </p>
-              <p className="mt-1 text-xs text-slate-500">Ürünleri filtrele.</p>
+              <p className="mt-1 text-xs text-slate-500">ÃœrÃ¼nleri filtrele.</p>
             </div>
             {canRefresh && (
               <button
@@ -786,8 +786,8 @@ export default function ProductsTab({
                     ? "cursor-not-allowed border-white/5 text-slate-600"
                     : "hover:border-white/20 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white"
                 }`}
-                title="Ürünleri yenile"
-                aria-label="Ürünleri yenile"
+                title="ÃœrÃ¼nleri yenile"
+                aria-label="ÃœrÃ¼nleri yenile"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -839,17 +839,17 @@ export default function ProductsTab({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                Ürün kataloðu
+                ÃœrÃ¼n kataloÄŸu
               </p>
               <p className="mt-1 text-sm text-slate-400">
-                {activeCategory?.label ?? "Tümü"} - {list.length} ürün
+                {activeCategory?.label ?? "TÃ¼mÃ¼"} - {list.length} Ã¼rÃ¼n
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
                   Toplam: {list.length}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
-                  Gösterilen: {paginatedList.length}
+                  GÃ¶sterilen: {paginatedList.length}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
                   Sayfa: {page}/{totalPages}
@@ -877,7 +877,7 @@ export default function ProductsTab({
                     type="text"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Ürün adý ara"
+                    placeholder="ÃœrÃ¼n adÄ± ara"
                     className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                   />
                 </div>
@@ -889,12 +889,12 @@ export default function ProductsTab({
               <ProductsListSkeleton />
             ) : filteredList.length === 0 ? (
               <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                Gösterilecek ürün bulunamadý.
+                GÃ¶sterilecek Ã¼rÃ¼n bulunamadÄ±.
               </div>
             ) : (
               <div className="space-y-4">
                 {paginatedList.map((product, index) => {
-                  const name = String(product?.name ?? "").trim() || "Ýsimsiz ürün"
+                  const name = String(product?.name ?? "").trim() || "Ä°simsiz Ã¼rÃ¼n"
                   const isMissing = Boolean(product?.missing)
                   const key = product?.id ?? `${name}-${index}`
                   const offerId = String(product?.id ?? "").trim()
@@ -987,7 +987,7 @@ export default function ProductsTab({
                       : []
                     : independentMessages
                   const messageGroupLabel =
-                    messageGroupName || (messageGroupMessages.length > 0 ? "Baðýmsýz" : "Yok")
+                    messageGroupName || (messageGroupMessages.length > 0 ? "BaÄŸÄ±msÄ±z" : "Yok")
                   const canDeleteMessageItem = canRemoveMessageTemplate
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
@@ -1040,7 +1040,7 @@ export default function ProductsTab({
                                 )}
                                 {isStockEnabled && usedCount > 0 && (
                                   <span className="rounded-full border border-amber-300/60 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50">
-                                    Kullanýldý: {usedCount}
+                                    KullanÄ±ldÄ±: {usedCount}
                                   </span>
                                 )}
                                 {isMissing && (
@@ -1070,7 +1070,7 @@ export default function ProductsTab({
                                   : ""
                               }`}
                               aria-label="Stok ac/kapat"
-                              title={isStockEnabled ? "Stok açýk" : "Stok kapalý"}
+                              title={isStockEnabled ? "Stok aÃ§Ä±k" : "Stok kapalÄ±"}
                             >
                               <span
                                 className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
@@ -1098,7 +1098,7 @@ export default function ProductsTab({
                               className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
                                 !offerId ? "cursor-not-allowed opacity-60" : ""
                               } ${starredOffers[offerId] ? "text-yellow-300" : ""}`}
-                              aria-label="Ürünü yýldýzla"
+                              aria-label="ÃœrÃ¼nÃ¼ yÄ±ldÄ±zla"
                               title={starredOffers[offerId] ? "Yildizi kaldir" : "Yildizla"}
                             >
                               <svg
@@ -1124,7 +1124,7 @@ export default function ProductsTab({
                                   : ""
                               }`}
                               aria-label="Stoklari yenile"
-                              title={!isStockEnabled ? "Stok kapalý" : isKeysLoading ? "Yükleniyor..." : "Yenile"}
+                              title={!isStockEnabled ? "Stok kapalÄ±" : isKeysLoading ? "YÃ¼kleniyor..." : "Yenile"}
                             >
                               <svg
                                 viewBox="0 0 24 24"
@@ -1146,7 +1146,7 @@ export default function ProductsTab({
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white"
-                                aria-label="Ürün linki"
+                                aria-label="ÃœrÃ¼n linki"
                               >
                                 <svg
                                   viewBox="0 0 24 24"
@@ -1197,7 +1197,7 @@ export default function ProductsTab({
                               className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
                                 isOpen ? "bg-white/10 text-white" : ""
                               } ${!offerId ? "cursor-not-allowed opacity-60" : ""}`}
-                              aria-label="Ürün detaylarýný aç/kapat"
+                              aria-label="ÃœrÃ¼n detaylarÄ±nÄ± aÃ§/kapat"
                             >
                               <svg
                                 viewBox="0 0 24 24"
@@ -1233,9 +1233,9 @@ export default function ProductsTab({
                                 }`}
                                 aria-pressed={activePanel === "note"}
                               >
-                                <span>Ürün notu</span>
+                                <span>ÃœrÃ¼n notu</span>
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
-                                  {noteGroupName || "Baðýmsýz"}
+                                  {noteGroupName || "BaÄŸÄ±msÄ±z"}
                                 </span>
                               </button>
                               <button
@@ -1266,7 +1266,7 @@ export default function ProductsTab({
                                 >
                                   <span>Stok grubu</span>
                                   <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
-                                    {groupName || "Baðýmsýz"}
+                                    {groupName || "BaÄŸÄ±msÄ±z"}
                                   </span>
                                 </button>
                               )}
@@ -1295,7 +1295,7 @@ export default function ProductsTab({
                                         disabled={!canManageGroups}
                                         className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        <option value="">Baðýmsýz</option>
+                                        <option value="">BaÄŸÄ±msÄ±z</option>
                                         {groups.map((groupOption) => (
                                           <option key={groupOption.id} value={groupOption.id}>
                                             {groupOption.name}
@@ -1339,7 +1339,7 @@ export default function ProductsTab({
                                           onClick={() => handleGroupDelete(offerId, groupId)}
                                           className="rounded-lg border border-rose-300/60 bg-rose-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
                                         >
-                                          {confirmGroupDelete === groupId ? "ONAYLA" : "SÝL"}
+                                          {confirmGroupDelete === groupId ? "ONAYLA" : "SÄ°L"}
                                         </button>
                                       )}
                                     </div>
@@ -1352,7 +1352,7 @@ export default function ProductsTab({
                                           type="text"
                                           value={groupDraftValue}
                                           onChange={(event) => handleGroupDraftChange(offerId, event.target.value)}
-                                          placeholder="Yeni grup adý"
+                                          placeholder="Yeni grup adÄ±"
                                           disabled={!canManageGroups}
                                           className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         />
@@ -1362,7 +1362,7 @@ export default function ProductsTab({
                                           disabled={!canManageGroups || !groupDraftValue.trim()}
                                           className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                          OLUÞTUR
+                                          OLUÅžTUR
                                         </button>
                                       </div>
                                     </div>
@@ -1392,7 +1392,7 @@ export default function ProductsTab({
                                         disabled={!canManageMessages}
                                         className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        <option value="">Baðýmsýz</option>
+                                        <option value="">BaÄŸÄ±msÄ±z</option>
                                         {messageGroups.map((group) => (
                                           <option key={group.id} value={group.id}>
                                             {group.name}
@@ -1436,7 +1436,7 @@ export default function ProductsTab({
                                           onClick={() => handleMessageGroupDelete(messageGroupId)}
                                           className="rounded-lg border border-rose-300/60 bg-rose-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
                                         >
-                                          {confirmMessageGroupDelete === messageGroupId ? "ONAYLA" : "SÝL"}
+                                          {confirmMessageGroupDelete === messageGroupId ? "ONAYLA" : "SÄ°L"}
                                         </button>
                                       )}
                                     </div>
@@ -1445,7 +1445,7 @@ export default function ProductsTab({
                                         type="text"
                                         value={messageGroupDraftValue}
                                         onChange={(event) => handleMessageGroupDraftChange(offerId, event.target.value)}
-                                        placeholder="Yeni grup adý"
+                                        placeholder="Yeni grup adÄ±"
                                         disabled={!canManageMessages}
                                         className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       />
@@ -1455,19 +1455,19 @@ export default function ProductsTab({
                                         disabled={!canManageMessages || !messageGroupDraftValue.trim()}
                                         className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        OLUÞTUR
+                                        OLUÅžTUR
                                       </button>
                                     </div>
                                   </div>
                                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                                    <label className="text-[11px] font-semibold text-slate-300">Mesaj þablonu</label>
+                                    <label className="text-[11px] font-semibold text-slate-300">Mesaj ÅŸablonu</label>
                                     <div className="mt-2 flex flex-wrap items-center gap-2">
                                       <input
                                         type="text"
                                         list={`message-template-${offerId}`}
                                         value={messageTemplateDraftValue}
                                         onChange={(event) => handleMessageTemplateDraftChange(offerId, event.target.value)}
-                                        placeholder={templates.length === 0 ? "Þablon yok" : "Þablon seç"}
+                                        placeholder={templates.length === 0 ? "Åžablon yok" : "Åžablon seÃ§"}
                                         disabled={!canManageMessages || templates.length === 0}
                                         className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         style={{ appearance: "none", WebkitAppearance: "none" }}
@@ -1486,7 +1486,7 @@ export default function ProductsTab({
                                         EKLE
                                       </button>
                                     </div>
-                                    <p className="mt-2 text-[10px] text-slate-500">Þablon ekledikçe kopyalama listesinde görünür.</p>
+                                    <p className="mt-2 text-[10px] text-slate-500">Åžablon ekledikÃ§e kopyalama listesinde gÃ¶rÃ¼nÃ¼r.</p>
                                   </div>
                                 </div>
                               </div>
@@ -1495,7 +1495,7 @@ export default function ProductsTab({
                               <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
-                                    <p className="text-[13px] font-semibold text-slate-100">Ürün notu</p>
+                                    <p className="text-[13px] font-semibold text-slate-100">ÃœrÃ¼n notu</p>
                                   </div>
                                 </div>
                               <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -1513,7 +1513,7 @@ export default function ProductsTab({
                                       disabled={!canManageNotes}
                                       className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      <option value="">Baðýmsýz not</option>
+                                      <option value="">BaÄŸÄ±msÄ±z not</option>
                                       {noteGroups.map((groupOption) => (
                                         <option key={groupOption.id} value={groupOption.id}>
                                           {groupOption.name}
@@ -1527,7 +1527,7 @@ export default function ProductsTab({
                                         disabled={!canManageNotes}
                                         className="rounded-md border border-rose-300/60 bg-rose-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        {confirmNoteGroupDelete === noteGroupId ? "ONAYLA" : "SÝL"}
+                                        {confirmNoteGroupDelete === noteGroupId ? "ONAYLA" : "SÄ°L"}
                                       </button>
                                     )}
                                     {canManageNotes && (
@@ -1567,7 +1567,7 @@ export default function ProductsTab({
                                         disabled={!canManageNotes || !noteGroupDraftValue.trim()}
                                         className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        OLUÞTUR
+                                        OLUÅžTUR
                                       </button>
                                     </div>
                                   </div>
@@ -1578,7 +1578,7 @@ export default function ProductsTab({
                                   rows={9}
                                   value={noteInputValue ?? ""}
                                   onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
-                                  placeholder="Ürün notu ekle"
+                                  placeholder="ÃœrÃ¼n notu ekle"
                                   readOnly={!canEditNoteText}
                                   className="block min-h-[240px] w-full rounded-xl bg-ink-900/40 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30 read-only:bg-ink-900/30 read-only:text-slate-300"
                                 />
@@ -1590,7 +1590,7 @@ export default function ProductsTab({
                                     onClick={() => toggleNoteEdit(offerId)}
                                     className="flex h-8 items-center justify-center rounded-lg border border-sky-300/60 bg-sky-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-sky-50 shadow-glow transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25"
                                   >
-                                    {isNoteEditing ? "VAZGEÇ" : "DÜZENLE"}
+                                    {isNoteEditing ? "VAZGEÃ‡" : "DÃœZENLE"}
                                   </button>
                                 )}
                                 <button
@@ -1616,7 +1616,7 @@ export default function ProductsTab({
                               )}
                               {!isKeysLoading && availableKeys.length === 0 && (
                                 <div className="rounded-2xl border border-white/10 bg-ink-900/40 px-4 py-3 text-xs text-slate-400 shadow-inner">
-                                  Bu üründe kullanýlabilir stok yok.
+                                  Bu Ã¼rÃ¼nde kullanÄ±labilir stok yok.
                                 </div>
                               )}
                               {!isKeysLoading && availableKeys.length > 0 && (
@@ -1644,7 +1644,7 @@ export default function ProductsTab({
                                             onClick={() => handleBulkCopy(offerId, true)}
                                             className="rounded-md border border-amber-300/60 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/20"
                                           >
-                                            Kopyala + kullanýldý
+                                            Kopyala + kullanÄ±ldÄ±
                                           </button>
                                         )}
                                         <button
@@ -1721,7 +1721,7 @@ export default function ProductsTab({
                                                   disabled={isSaving}
                                                   className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
-                                                  ÝPTAL
+                                                  Ä°PTAL
                                                 </button>
                                               </>
                                             ) : (
@@ -1741,7 +1741,7 @@ export default function ProductsTab({
                                                     onClick={() => handleKeyEditStart(item.id, item.code)}
                                                     className="flex h-7 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 sm:w-auto"
                                                   >
-                                                    DÜZENLE</button>
+                                                    DÃœZENLE</button>
                                                 )}
                                                 {canUpdateKeys && (
                                                   <button
@@ -1751,7 +1751,7 @@ export default function ProductsTab({
                                                     }
                                                     className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
                                                   >
-                                                    Kullanýldý
+                                                    KullanÄ±ldÄ±
                                                   </button>
                                                 )}
                                                 {canDeleteKeys && (
@@ -1767,7 +1767,7 @@ export default function ProductsTab({
                                                   >
                                                     {confirmKeyTarget === `${offerId}-${item.id}`
                                                       ? "ONAYLA"
-                                                      : "SÝL"}
+                                                      : "SÄ°L"}
                                                   </button>
                                                 )}
                                               </>
@@ -1782,7 +1782,7 @@ export default function ProductsTab({
                               {!isKeysLoading && usedKeys.length > 0 && (
                                 <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
                                   <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <span className="text-[13px] font-semibold text-slate-100">Kullanýlan Stoklar</span>
+                                    <span className="text-[13px] font-semibold text-slate-100">KullanÄ±lan Stoklar</span>
                                     <div className="flex flex-wrap items-center gap-2">
                                       <span className="rounded-full border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
                                         {usedKeys.length} adet
@@ -1862,7 +1862,7 @@ export default function ProductsTab({
                                                   disabled={isSaving}
                                                   className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
-                                                  ÝPTAL
+                                                  Ä°PTAL
                                                 </button>
                                               </>
                                             ) : (
@@ -1882,7 +1882,7 @@ export default function ProductsTab({
                                                     onClick={() => handleKeyEditStart(item.id, item.code)}
                                                     className="flex h-7 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 sm:w-auto"
                                                   >
-                                                    DÜZENLE</button>
+                                                    DÃœZENLE</button>
                                                 )}
                                                 {canUpdateKeys && (
                                                   <button
@@ -1892,7 +1892,7 @@ export default function ProductsTab({
                                                     }
                                                     className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
                                                   >
-                                                    GERÝ AL
+                                                    GERÄ° AL
                                                   </button>
                                                 )}
                                                 {canDeleteKeys && (
@@ -1908,7 +1908,7 @@ export default function ProductsTab({
                                                   >
                                                     {confirmKeyTarget === `${offerId}-${item.id}`
                                                       ? "ONAYLA"
-                                                      : "SÝL"}
+                                                      : "SÄ°L"}
                                                   </button>
                                                 )}
                                               </>
@@ -1923,7 +1923,7 @@ export default function ProductsTab({
                               </>
                             ) : (
                               <div className="rounded-2xl border border-white/10 bg-ink-900/40 px-4 py-3 text-xs text-slate-400 shadow-inner">
-                                Bu üründe stok kapalý. Üstteki ON/OFF anahtarýndan açýn.
+                                Bu Ã¼rÃ¼nde stok kapalÄ±. Ãœstteki ON/OFF anahtarÄ±ndan aÃ§Ä±n.
                               </div>
                             )}
                             </div>
@@ -1933,7 +1933,7 @@ export default function ProductsTab({
                                   <div className="text-xs text-slate-400">
                                     {messageGroupId
                                       ? "Bu grupta mesaj yok."
-                                      : "Baðýmsýz mesaj yok."}
+                                      : "BaÄŸÄ±msÄ±z mesaj yok."}
                                   </div>
                                 ) : (
                                   <div className="flex flex-wrap gap-2">
@@ -1955,7 +1955,7 @@ export default function ProductsTab({
                                             onClick={() => handleMessageTemplateRemove(offerId, label)}
                                             className="rounded-md border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
                                           >
-                                            SÝL
+                                            SÄ°L
                                           </button>
                                         )}
                                       </div>
@@ -1984,8 +1984,8 @@ export default function ProductsTab({
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   disabled={page === 1}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Önceki sayfa"
-                  title="Önceki sayfa"
+                  aria-label="Ã–nceki sayfa"
+                  title="Ã–nceki sayfa"
                 >
                   <svg
                     viewBox="0 0 24 24"
