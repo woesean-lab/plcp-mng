@@ -678,6 +678,9 @@ export default function ProductsTab({
     setPage(1)
   }, [activeCategoryKey, normalizedQuery])
   useEffect(() => {
+    setOpenOffers({})
+  }, [allProducts.length])
+  useEffect(() => {
     if (page > totalPages) {
       setPage(totalPages)
     }
@@ -947,7 +950,7 @@ export default function ProductsTab({
                         ? storedPanel
                         : availablePanels[0]
                   const isNoteEditing = Boolean(noteEditingByOffer[offerId])
-                  const isNoteEditable = canManageNotes && isNoteEditing
+                  const canEditNoteText = canManageNotes && isNoteEditing
                   const canSaveNote =
                     Boolean(offerId) && canManageNotes && noteHasChanges && isNoteEditing
                   const messageTemplateDraftValue = messageTemplateDrafts[offerId] ?? ""
@@ -966,15 +969,15 @@ export default function ProductsTab({
                   const independentMessages = Array.isArray(messageTemplatesByOffer?.[offerId])
                     ? messageTemplatesByOffer[offerId]
                     : []
-                    const messageGroupMessages = messageGroupId
-                      ? Array.isArray(messageGroupTemplates?.[messageGroupId])
-                        ? messageGroupTemplates[messageGroupId]
-                        : []
-                      : independentMessages
-                    const messageGroupLabel =
-                      messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
-                    const canDeleteMessageItem = !messageGroupId && canRemoveMessageTemplate
-                    const rawHref = String(product?.href ?? "").trim()
+                  const messageGroupMessages = messageGroupId
+                    ? Array.isArray(messageGroupTemplates?.[messageGroupId])
+                      ? messageGroupTemplates[messageGroupId]
+                      : []
+                    : independentMessages
+                  const messageGroupLabel =
+                    messageGroupName || (messageGroupMessages.length > 0 ? "Bagimsiz" : "Yok")
+                  const canDeleteMessageItem = !messageGroupId && canRemoveMessageTemplate
+                  const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
                     ? rawHref.startsWith("http://") || rawHref.startsWith("https://")
                       ? rawHref
@@ -1481,7 +1484,7 @@ export default function ProductsTab({
                                     <select
                                       value={noteGroupId}
                                       onChange={(event) => handleNoteGroupAssign(offerId, event.target.value)}
-                                      disabled={!isNoteEditable}
+                                      disabled={!canManageNotes}
                                       className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       <option value="">Bagimsiz not</option>
@@ -1495,7 +1498,7 @@ export default function ProductsTab({
                                       <button
                                         type="button"
                                         onClick={() => handleNoteGroupDelete(noteGroupId)}
-                                        disabled={!isNoteEditable}
+                                        disabled={!canManageNotes}
                                         className={`rounded-md border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
                                           confirmNoteGroupDelete === noteGroupId
                                             ? "border-rose-300 bg-rose-500/25 text-rose-50"
@@ -1516,13 +1519,13 @@ export default function ProductsTab({
                                         value={noteGroupDraftValue}
                                         onChange={(event) => handleNoteGroupDraftChange(offerId, event.target.value)}
                                         placeholder="Yeni not grubu"
-                                        disabled={!isNoteEditable}
+                                        disabled={!canManageNotes}
                                         className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       />
                                       <button
                                         type="button"
                                         onClick={() => handleNoteGroupCreate(offerId)}
-                                        disabled={!isNoteEditable || !noteGroupDraftValue.trim()}
+                                        disabled={!canManageNotes || !noteGroupDraftValue.trim()}
                                         className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         Olustur
@@ -1537,8 +1540,8 @@ export default function ProductsTab({
                                   value={noteInputValue ?? ""}
                                   onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
                                   placeholder="Urun notu ekle"
-                                  readOnly={!isNoteEditable}
-                                  className="min-h-[240px] w-full rounded-lg border border-white/10 bg-ink-900/40 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 read-only:bg-ink-900/30 read-only:text-slate-300"
+                                  readOnly={!canEditNoteText}
+                                  className="min-h-[240px] w-full rounded-lg bg-ink-900/40 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30 read-only:bg-ink-900/30 read-only:text-slate-300"
                                 />
                               </div>
                               <div className="mt-3 flex flex-wrap justify-end gap-2">
@@ -1893,12 +1896,7 @@ export default function ProductsTab({
                             </div>
                           <div className="self-start rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-[11px] font-semibold text-slate-300">
-                                  Mesaj listesi
-                                </span>
-                                <span className="text-[10px] text-slate-500">
-                                  {messageGroupId ? "Grup mesajlari" : "Bagimsiz mesajlar"}
-                                </span>
+                                <span className="text-[11px] font-semibold text-slate-300">Mesaj listesi</span>
                               </div>
                               <div className="mt-2">
                                 {messageGroupMessages.length === 0 ? (
@@ -2016,6 +2014,9 @@ export default function ProductsTab({
     </div>
   )
 }
+
+
+
 
 
 
