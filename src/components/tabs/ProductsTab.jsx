@@ -1004,7 +1004,7 @@ export default function ProductsTab({
                           : isOutOfStock
                             ? "border-rose-300/30 bg-ink-900/70"
                             : "bg-ink-900/70"
-                      }`}
+                      } ${isOpen ? "border-accent-400/60 shadow-card" : ""}`}
                     >
                       <div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
                         <button
@@ -1329,22 +1329,18 @@ export default function ProductsTab({
                                             })
                                           }}
                                           disabled={!isGroupSelectionDirty}
-                                          className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                          Kaydet
+                                          KAYDET
                                         </button>
                                       )}
                                       {groupId && canManageGroups && (
                                         <button
                                           type="button"
                                           onClick={() => handleGroupDelete(offerId, groupId)}
-                                          className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
-                                            confirmGroupDelete === groupId
-                                              ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                              : "border-rose-300/40 bg-rose-500/10 text-rose-50/90 hover:border-rose-300 hover:bg-rose-500/20"
-                                          }`}
+                                          className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                                         >
-                                          {confirmGroupDelete === groupId ? "Onayla" : "SİL"}
+                                          {confirmGroupDelete === groupId ? "ONAYLA" : "SİL"}
                                         </button>
                                       )}
                                     </div>
@@ -1357,7 +1353,7 @@ export default function ProductsTab({
                                           type="text"
                                           value={groupDraftValue}
                                           onChange={(event) => handleGroupDraftChange(offerId, event.target.value)}
-                                          placeholder="Yeni grup adi"
+                                          placeholder="Yeni grup adı"
                                           disabled={!canManageGroups}
                                           className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         />
@@ -1431,22 +1427,18 @@ export default function ProductsTab({
                                             })
                                           }}
                                           disabled={!isMessageGroupSelectionDirty}
-                                          className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                          Kaydet
+                                          KAYDET
                                         </button>
                                       )}
                                       {messageGroupId && canDeleteMessageGroup && (
                                         <button
                                           type="button"
                                           onClick={() => handleMessageGroupDelete(messageGroupId)}
-                                          className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
-                                            confirmMessageGroupDelete === messageGroupId
-                                              ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                              : "border-rose-300/40 bg-rose-500/10 text-rose-50/90 hover:border-rose-300 hover:bg-rose-500/20"
-                                          }`}
+                                          className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                                         >
-                                          {confirmMessageGroupDelete === messageGroupId ? "Onayla" : "SİL"}
+                                          {confirmMessageGroupDelete === messageGroupId ? "ONAYLA" : "SİL"}
                                         </button>
                                       )}
                                     </div>
@@ -1455,7 +1447,7 @@ export default function ProductsTab({
                                         type="text"
                                         value={messageGroupDraftValue}
                                         onChange={(event) => handleMessageGroupDraftChange(offerId, event.target.value)}
-                                        placeholder="Yeni grup adi"
+                                        placeholder="Yeni grup adı"
                                         disabled={!canManageMessages}
                                         className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       />
@@ -1470,14 +1462,14 @@ export default function ProductsTab({
                                     </div>
                                   </div>
                                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                                    <label className="text-[11px] font-semibold text-slate-300">Mesaj sablonu</label>
+                                    <label className="text-[11px] font-semibold text-slate-300">Mesaj şablonu</label>
                                     <div className="mt-2 flex flex-wrap items-center gap-2">
                                       <input
                                         type="text"
                                         list={`message-template-${offerId}`}
                                         value={messageTemplateDraftValue}
                                         onChange={(event) => handleMessageTemplateDraftChange(offerId, event.target.value)}
-                                        placeholder={templates.length === 0 ? "Sablon yok" : "Sablon sec"}
+                                        placeholder={templates.length === 0 ? "Şablon yok" : "Şablon seç"}
                                         disabled={!canManageMessages || templates.length === 0}
                                         className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         style={{ appearance: "none", WebkitAppearance: "none" }}
@@ -1491,12 +1483,12 @@ export default function ProductsTab({
                                         type="button"
                                         onClick={() => handleMessageTemplateAdd(offerId)}
                                         disabled={!canManageMessages || !isMessageTemplateValid}
-                                        className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         EKLE
                                       </button>
                                     </div>
-                                    <p className="mt-2 text-[10px] text-slate-500">Sablon ekledikce kopyalama listesinde gorunur.</p>
+                                    <p className="mt-2 text-[10px] text-slate-500">Şablon ekledikçe kopyalama listesinde görünür.</p>
                                   </div>
                                 </div>
                               </div>
@@ -1536,13 +1528,9 @@ export default function ProductsTab({
                                         type="button"
                                         onClick={() => handleNoteGroupDelete(noteGroupId)}
                                         disabled={!canManageNotes}
-                                        className={`rounded-md border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
-                                          confirmNoteGroupDelete === noteGroupId
-                                            ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                            : "border-rose-400/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
-                                        }`}
+                                        className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        {confirmNoteGroupDelete === noteGroupId ? "Onayla" : "SİL"}
+                                        {confirmNoteGroupDelete === noteGroupId ? "ONAYLA" : "SİL"}
                                       </button>
                                     )}
                                     {canManageNotes && (
@@ -1557,9 +1545,9 @@ export default function ProductsTab({
                                           })
                                         }}
                                         disabled={!isNoteGroupSelectionDirty}
-                                        className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-md border border-accent-400/70 bg-accent-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        Kaydet
+                                        KAYDET
                                       </button>
                                     )}
                                   </div>
@@ -1609,7 +1597,7 @@ export default function ProductsTab({
                                         : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
                                     }`}
                                   >
-                                    {isNoteEditing ? "Vazgec" : "DÜZENLE"}
+                                    {isNoteEditing ? "VAZGEÇ" : "DÜZENLE"}
                                   </button>
                                 )}
                                 <button
@@ -1618,7 +1606,7 @@ export default function ProductsTab({
                                   disabled={!canSaveNote}
                                   className="flex h-8 items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                  Kaydet
+                                  KAYDET
                                 </button>
                               </div>
                             </div>
@@ -1732,7 +1720,7 @@ export default function ProductsTab({
                                                   disabled={isSaving}
                                                   className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
-                                                  Kaydet
+                                                  KAYDET
                                                 </button>
                                                 <button
                                                   type="button"
@@ -1874,7 +1862,7 @@ export default function ProductsTab({
                                                   disabled={isSaving}
                                                   className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
-                                                  Kaydet
+                                                  KAYDET
                                                 </button>
                                                 <button
                                                   type="button"
