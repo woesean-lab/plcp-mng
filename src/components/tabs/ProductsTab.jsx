@@ -975,7 +975,7 @@ export default function ProductsTab({
                       : []
                     : independentMessages
                   const messageGroupLabel =
-                    messageGroupName || (messageGroupMessages.length > 0 ? "Bagimsiz" : "Yok")
+                    messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
                   const canDeleteMessageItem = !messageGroupId && canRemoveMessageTemplate
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
@@ -1221,9 +1221,9 @@ export default function ProductsTab({
                                 }`}
                                 aria-pressed={activePanel === "note"}
                               >
-                                <span>Urun notu</span>
-                                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
-                                  {storedNote ? "Kayitli" : "Bos"}
+                                <span>Ürün notu</span>
+                                <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-50">
+                                  {storedNote ? "Kayıtlı" : "Boş"}
                                 </span>
                               </button>
                               <button
@@ -1237,7 +1237,7 @@ export default function ProductsTab({
                                 aria-pressed={activePanel === "messages"}
                               >
                                 <span>Mesajlar</span>
-                                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
+                                <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-50">
                                   {messageGroupLabel}
                                 </span>
                               </button>
@@ -1253,8 +1253,8 @@ export default function ProductsTab({
                                   aria-pressed={activePanel === "stock"}
                                 >
                                   <span>Stok grubu</span>
-                                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
-                                    {groupName ? "Grup" : "Bagimsiz"}
+                                  <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-50">
+                                    {groupName ? "Grup" : "Bağımsız"}
                                   </span>
                                 </button>
                               )}
@@ -1262,15 +1262,17 @@ export default function ProductsTab({
                           </div>
                           <div className={`grid items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                             {isStockEnabled && activePanel === "stock" && (
-                              <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card lg:col-span-2">
+                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
-                                    <p className="text-[13px] font-semibold text-slate-100">Stok grubu</p>
-                                    <p className="text-[11px] text-slate-400">Stoklarin bagli oldugu grubu belirle.</p>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="text-[13px] font-semibold text-slate-100">Stok grubu</p>
+                                      <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-sky-50">
+                                        Seçili: {groupName || "Bağımsız"}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400">Stokların bağlı olduğu grubu belirle.</p>
                                   </div>
-                                  <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-50">
-                                    Secili: {groupName || "Yok"}
-                                  </span>
                                 </div>
                                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
                                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
@@ -1340,7 +1342,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "messages" && (
-                              <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card lg:col-span-2">
+                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
                                     <p className="text-[13px] font-semibold text-slate-100">Mesaj grubu</p>
@@ -1348,7 +1350,7 @@ export default function ProductsTab({
                                   </div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-1 text-[11px] font-semibold text-sky-50">
-                                      Secili: {messageGroupLabel}
+                                      Seçili: {messageGroupLabel}
                                     </span>
                                     <button
                                       type="button"
@@ -1451,21 +1453,21 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "note" && (
-                              <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card lg:col-span-2">
-                              <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-[13px] font-semibold text-slate-100">Urun notu</p>
-                                  <p className="text-[11px] text-slate-400">Not urun bazinda saklanir.</p>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
+                              <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="text-[13px] font-semibold text-slate-100">Ürün notu</p>
+                                      <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-sky-50">
+                                        Grup: {noteGroupName || "Bağımsız"}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400">Not ürün bazında saklanır.</p>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-2">
                                   {storedNote && !noteHasChanges && (
                                     <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
                                       Kayitli
-                                    </span>
-                                  )}
-                                  {noteGroupId && (
-                                    <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-1 text-[10px] font-semibold text-sky-50">
-                                      Grup: {noteGroupName || "Secili"}
                                     </span>
                                   )}
                                   <button
