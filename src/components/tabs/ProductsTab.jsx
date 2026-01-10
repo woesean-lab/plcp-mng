@@ -1223,7 +1223,7 @@ export default function ProductsTab({
                               >
                                 <span>Ürün notu</span>
                                 <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-50">
-                                  {storedNote ? "Kayıtlı" : "Boş"}
+                                  {noteGroupName || "Bağımsız"}
                                 </span>
                               </button>
                               <button
@@ -1254,7 +1254,7 @@ export default function ProductsTab({
                                 >
                                   <span>Stok grubu</span>
                                   <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-50">
-                                    {groupName ? "Grup" : "Bağımsız"}
+                                    {groupName || "Bağımsız"}
                                   </span>
                                 </button>
                               )}
@@ -1265,12 +1265,7 @@ export default function ProductsTab({
                               <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="text-[13px] font-semibold text-slate-100">Stok grubu</p>
-                                      <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-sky-50">
-                                        Seçili: {groupName || "Bağımsız"}
-                                      </span>
-                                    </div>
+                                    <p className="text-[13px] font-semibold text-slate-100">Stok grubu</p>
                                     <p className="text-[11px] text-slate-400">Stokların bağlı olduğu grubu belirle.</p>
                                   </div>
                                 </div>
@@ -1456,12 +1451,7 @@ export default function ProductsTab({
                               <div className="rounded-2xl border border-white/10 bg-[#161a25] p-4 shadow-card lg:col-span-2">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="text-[13px] font-semibold text-slate-100">Ürün notu</p>
-                                      <span className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-sky-50">
-                                        Grup: {noteGroupName || "Bağımsız"}
-                                      </span>
-                                    </div>
+                                    <p className="text-[13px] font-semibold text-slate-100">Ürün notu</p>
                                     <p className="text-[11px] text-slate-400">Not ürün bazında saklanır.</p>
                                   </div>
                                   <div className="flex flex-wrap items-center gap-2">
