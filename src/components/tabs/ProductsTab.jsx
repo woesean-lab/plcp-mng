@@ -1248,7 +1248,7 @@ export default function ProductsTab({
                                 }`}
                                 aria-pressed={activePanel === "messages"}
                               >
-                                <span>Mesajlar</span>
+                                <span>Mesaj grubu</span>
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
                                   {messageGroupLabel}
                                 </span>
