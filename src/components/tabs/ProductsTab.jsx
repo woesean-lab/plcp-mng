@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+﻿import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import StockModal from "../modals/StockModal"
 function SkeletonBlock({ className = "" }) {
@@ -1591,11 +1591,7 @@ export default function ProductsTab({
                                   <button
                                     type="button"
                                     onClick={() => toggleNoteEdit(offerId)}
-                                    className={`flex h-8 items-center justify-center rounded-lg border px-4 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 ${
-                                      isNoteEditing
-                                        ? "border-rose-300/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
-                                        : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
-                                    }`}
+                                    className="flex h-8 items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                                   >
                                     {isNoteEditing ? "VAZGEÇ" : "DÜZENLE"}
                                   </button>
@@ -1962,7 +1958,7 @@ export default function ProductsTab({
                                           <button
                                             type="button"
                                             onClick={() => handleMessageTemplateRemove(offerId, label)}
-                                            className="rounded-md border border-rose-300/40 bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-50 transition hover:border-rose-300 hover:bg-rose-500/20"
+                                            className="rounded-md border border-accent-400/70 bg-accent-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent-50 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                                           >
                                             SİL
                                           </button>
@@ -2053,6 +2049,8 @@ export default function ProductsTab({
     </div>
   )
 }
+
+
 
 
 
