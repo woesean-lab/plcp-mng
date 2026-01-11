@@ -398,12 +398,12 @@ export default function ProductsTab({
     if (!normalizedId) return
     setGroupDrafts((prev) => ({ ...prev, [normalizedId]: value }))
   }
-  const handleGroupCreate = (offerId) => {
+  const handleGroupCreate = async (offerId) => {
     if (typeof onCreateGroup !== "function" || typeof onAssignGroup !== "function") return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const draft = groupDrafts[normalizedId] ?? ""
-    const created = onCreateGroup(draft)
+    const created = await onCreateGroup(draft)
     if (!created) return
     setGroupDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
     setConfirmGroupDelete(null)
@@ -482,12 +482,12 @@ export default function ProductsTab({
     handleNoteReset(normalizedId)
     setNoteEditingByOffer((prev) => ({ ...prev, [normalizedId]: false }))
   }
-  const handleNoteGroupCreate = (offerId) => {
+  const handleNoteGroupCreate = async (offerId) => {
     if (typeof onCreateNoteGroup !== "function" || typeof onAssignNoteGroup !== "function") return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const draft = noteGroupDrafts[normalizedId] ?? ""
-    const created = onCreateNoteGroup(draft)
+    const created = await onCreateNoteGroup(draft)
     if (!created) return
     setNoteGroupDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
     onAssignNoteGroup(normalizedId, created.id)
@@ -526,7 +526,7 @@ export default function ProductsTab({
     if (!normalizedId) return
     setMessageGroupDrafts((prev) => ({ ...prev, [normalizedId]: value }))
   }
-  const handleMessageGroupCreate = (offerId) => {
+  const handleMessageGroupCreate = async (offerId) => {
     if (typeof onCreateMessageGroup !== "function" || typeof onAssignMessageGroup !== "function") {
       return
     }
@@ -534,7 +534,7 @@ export default function ProductsTab({
     if (!normalizedId) return
     const draft = String(messageGroupDrafts[normalizedId] ?? "").trim()
     if (!draft) return
-    const created = onCreateMessageGroup(draft)
+    const created = await onCreateMessageGroup(draft)
     if (!created) return
     setMessageGroupDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
     onAssignMessageGroup(normalizedId, created.id)
