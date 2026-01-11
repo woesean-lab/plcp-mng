@@ -191,6 +191,7 @@ export default function ProductsTab({
   const [messageGroupSelectionDrafts, setMessageGroupSelectionDrafts] = useState({})
   const [refreshingOffers, setRefreshingOffers] = useState({})
   const [confirmMessageGroupDelete, setConfirmMessageGroupDelete] = useState(null)
+  const [confirmMessageTemplateDelete, setConfirmMessageTemplateDelete] = useState(null)
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const canManageGroups = canAddKeys
@@ -580,6 +581,12 @@ export default function ProductsTab({
     const normalizedLabel = String(label ?? "").trim()
     if (!normalizedId || !normalizedLabel) return
     const groupId = String(messageGroupAssignments?.[normalizedId] ?? "").trim()
+    const target = `${normalizedId}:${groupId || "independent"}:${normalizedLabel}`
+    if (confirmMessageTemplateDelete !== target) {
+      setConfirmMessageTemplateDelete(target)
+      return
+    }
+    setConfirmMessageTemplateDelete(null)
     if (groupId) {
       if (typeof onRemoveMessageGroupTemplate !== "function") return
       onRemoveMessageGroupTemplate(groupId, normalizedLabel)
@@ -2025,29 +2032,34 @@ export default function ProductsTab({
                                   </div>
                                 ) : (
                                   <div className="flex flex-wrap gap-2">
-                                    {messageGroupMessages.map((label) => (
-                                      <div
-                                        key={`${offerId}-msg-${messageGroupId || "independent"}-${label}`}
-                                        className="flex max-w-full items-stretch gap-1"
-                                      >
-                                        <button
-                                          type="button"
-                                          onClick={() => handleMessageTemplateCopy(label)}
-                                          className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"
+                                    {messageGroupMessages.map((label) => {
+                                      const messageDeleteTarget = `${offerId}:${messageGroupId || "independent"}:${label}`
+                                      const isConfirmingDelete =
+                                        confirmMessageTemplateDelete === messageDeleteTarget
+                                      return (
+                                        <div
+                                          key={`${offerId}-msg-${messageGroupId || "independent"}-${label}`}
+                                          className="flex max-w-full items-stretch gap-1"
                                         >
-                                          {label}
-                                        </button>
-                                        {canDeleteMessageItem && (
                                           <button
                                             type="button"
-                                            onClick={() => handleMessageTemplateRemove(offerId, label)}
-                                            className="rounded-md border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
+                                            onClick={() => handleMessageTemplateCopy(label)}
+                                            className="max-w-full rounded-md border border-white/15 bg-white/5 px-3 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 whitespace-normal break-words"
                                           >
-                                            SİL
+                                            {label}
                                           </button>
-                                        )}
-                                      </div>
-                                    ))}
+                                          {canDeleteMessageItem && (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleMessageTemplateRemove(offerId, label)}
+                                              className="rounded-md border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
+                                            >
+                                              {isConfirmingDelete ? "ONAYLA" : "SİL"}
+                                            </button>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
                                   </div>
                                 )}
                               </div>
@@ -2132,6 +2144,8 @@ export default function ProductsTab({
     </div>
   )
 }
+
+
 
 
 
