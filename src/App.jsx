@@ -212,10 +212,12 @@ function App() {
     handleEldoradoMessageGroupAssign,
     handleEldoradoMessageGroupDelete,
     handleEldoradoMessageGroupTemplateAdd,
+    handleEldoradoMessageGroupTemplateRemove,
     handleEldoradoMessageTemplateAdd,
     handleEldoradoMessageTemplateRemove,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
+    refreshEldoradoOffer,
     products,
     productSearch,
     setProductSearch,
@@ -1015,12 +1017,14 @@ function App() {
               onDeleteNoteGroup={handleEldoradoNoteGroupDelete}
                 onCreateMessageGroup={handleEldoradoMessageGroupCreate}
                 onAssignMessageGroup={handleEldoradoMessageGroupAssign}
-                onDeleteMessageGroup={handleEldoradoMessageGroupDelete}
-                onAddMessageGroupTemplate={handleEldoradoMessageGroupTemplateAdd}
-                onAddMessageTemplate={handleEldoradoMessageTemplateAdd}
-                onRemoveMessageTemplate={handleEldoradoMessageTemplateRemove}
-                onSaveNote={handleEldoradoNoteSave}
+              onDeleteMessageGroup={handleEldoradoMessageGroupDelete}
+              onAddMessageGroupTemplate={handleEldoradoMessageGroupTemplateAdd}
+              onRemoveMessageGroupTemplate={handleEldoradoMessageGroupTemplateRemove}
+              onAddMessageTemplate={handleEldoradoMessageTemplateAdd}
+              onRemoveMessageTemplate={handleEldoradoMessageTemplateRemove}
+              onSaveNote={handleEldoradoNoteSave}
               onToggleStock={handleEldoradoStockToggle}
+              onRefreshOffer={refreshEldoradoOffer}
               canAddKeys={canAddStocks}
               canDeleteKeys={canDeleteStocks}
               canCopyKeys={canCopyStocks}
