@@ -40,7 +40,7 @@ function ProductsSkeleton({ panelClass }) {
         <SkeletonBlock className="mt-4 h-8 w-56 rounded-full" />
         <SkeletonBlock className="mt-3 h-4 w-2/3 rounded-full" />
       </header>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
         {Array.from({ length: 4 }).map((_, idx) => (
           <div
             key={`product-metric-${idx}`}
@@ -826,7 +826,7 @@ export default function ProductsTab({
           </div>
         </div>
       </header>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
           <div className="relative">
@@ -1110,7 +1110,7 @@ export default function ProductsTab({
                             : "bg-ink-900/70"
                       } ${isOpen ? "border-accent-400/60 shadow-card" : ""}`}
                     >
-                      <div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap">
                         <button
                           type="button"
                           onClick={() => toggleOfferOpen(offerId)}
@@ -1163,7 +1163,7 @@ export default function ProductsTab({
                           </div>
                         </button>
                         <div className="flex flex-wrap items-stretch gap-1.5">
-                          <div className="flex h-[36px] w-full items-center gap-1 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:w-[192px]">
+                          <div className="flex w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:h-[36px] sm:w-[192px] sm:flex-nowrap">
                             <button
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
