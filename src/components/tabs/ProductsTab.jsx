@@ -207,6 +207,8 @@ export default function ProductsTab({
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const prevNoteGroupAssignments = useRef(noteGroupAssignments)
+  const prevGroupAssignments = useRef(groupAssignments)
+  const prevMessageGroupAssignments = useRef(messageGroupAssignments)
   const canManageGroups = typeof canManageGroupsProp === "boolean" ? canManageGroupsProp : canAddKeys
   const canManageNotes =
     typeof canManageNotesProp === "boolean"
@@ -770,6 +772,40 @@ export default function ProductsTab({
     setOpenOffers({})
   }, [allProducts.length])
   useEffect(() => {
+    if (groupAssignments !== prevGroupAssignments.current) {
+      const nextAssignments = groupAssignments ?? {}
+      setGroupSelectionDrafts((prev) => {
+        const next = { ...prev }
+        Object.entries(next).forEach(([offerId, draftValue]) => {
+          const assigned = String(nextAssignments?.[offerId] ?? "").trim()
+          const normalizedDraft = String(draftValue ?? "").trim()
+          if (normalizedDraft === assigned) {
+            delete next[offerId]
+          }
+        })
+        return next
+      })
+      prevGroupAssignments.current = groupAssignments
+    }
+  }, [groupAssignments])
+  useEffect(() => {
+    if (messageGroupAssignments !== prevMessageGroupAssignments.current) {
+      const nextAssignments = messageGroupAssignments ?? {}
+      setMessageGroupSelectionDrafts((prev) => {
+        const next = { ...prev }
+        Object.entries(next).forEach(([offerId, draftValue]) => {
+          const assigned = String(nextAssignments?.[offerId] ?? "").trim()
+          const normalizedDraft = String(draftValue ?? "").trim()
+          if (normalizedDraft === assigned) {
+            delete next[offerId]
+          }
+        })
+        return next
+      })
+      prevMessageGroupAssignments.current = messageGroupAssignments
+    }
+  }, [messageGroupAssignments])
+  useEffect(() => {
     const prev = prevNoteGroupAssignments.current || {}
     const next = noteGroupAssignments || {}
     const changed = new Set()
@@ -797,6 +833,17 @@ export default function ProductsTab({
         })
       }, 320)
     }
+    setNoteGroupSelectionDrafts((current) => {
+      const updated = { ...current }
+      Object.entries(updated).forEach(([offerId, draftValue]) => {
+        const assigned = String(next?.[offerId] ?? "").trim()
+        const normalizedDraft = String(draftValue ?? "").trim()
+        if (normalizedDraft === assigned) {
+          delete updated[offerId]
+        }
+      })
+      return updated
+    })
     prevNoteGroupAssignments.current = next
   }, [noteGroupAssignments])
   useEffect(() => {
@@ -1464,11 +1511,6 @@ export default function ProductsTab({
                                           type="button"
                                           onClick={() => {
                                             handleGroupAssign(offerId, groupSelectionValue)
-                                            setGroupSelectionDrafts((prev) => {
-                                              const next = { ...prev }
-                                              delete next[offerId]
-                                              return next
-                                            })
                                             triggerSelectFlash(offerId, "stock-group")
                                           }}
                                           disabled={!isGroupSelectionDirty}
@@ -1579,11 +1621,6 @@ export default function ProductsTab({
                                           type="button"
                                           onClick={() => {
                                             handleMessageGroupAssign(offerId, messageGroupSelectionValue)
-                                            setMessageGroupSelectionDrafts((prev) => {
-                                              const next = { ...prev }
-                                              delete next[offerId]
-                                              return next
-                                            })
                                             triggerSelectFlash(offerId, "message-group")
                                           }}
                                           disabled={!isMessageGroupSelectionDirty}
@@ -1771,11 +1808,6 @@ export default function ProductsTab({
                                                 type="button"
                                                 onClick={() => {
                                                   handleNoteGroupAssign(offerId, noteGroupSelectionValue)
-                                                  setNoteGroupSelectionDrafts((prev) => {
-                                                    const next = { ...prev }
-                                                    delete next[offerId]
-                                                    return next
-                                                  })
                                                   triggerSelectFlash(offerId, "note-group")
                                                 }}
                                                 disabled={!isNoteGroupSelectionDirty}
