@@ -2923,7 +2923,31 @@ const handleEldoradoNoteSave = useCallback(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: [normalizedKeyId], status: normalizedStatus }),
         })
-        if (!res.ok) throw new Error("api_error")
+        if (!res.ok) {
+          let detail = ""
+          try {
+            const payload = await res.json()
+            detail = String(payload?.error || payload?.message || "").trim()
+          } catch (parseError) {
+            detail = ""
+          }
+          const fallback = await apiFetch(`/api/eldorado/keys/${normalizedKeyId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: normalizedStatus }),
+          })
+          if (!fallback.ok) {
+            if (!detail) {
+              try {
+                const payload = await fallback.json()
+                detail = String(payload?.error || payload?.message || "").trim()
+              } catch (parseError) {
+                detail = ""
+              }
+            }
+            throw new Error(detail || "api_error")
+          }
+        }
         await loadEldoradoKeys(normalizedOfferId, { force: true })
         loadEldoradoCatalog(undefined, { silent: true })
         toast.success(normalizedStatus === "used" ? "Stok kullanildi" : "Stok geri alindi")
@@ -3020,7 +3044,35 @@ const handleEldoradoNoteSave = useCallback(
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ids, status: "used" }),
           })
-          if (!res.ok) throw new Error("api_error")
+          if (!res.ok) {
+            let detail = ""
+            try {
+              const payload = await res.json()
+              detail = String(payload?.error || payload?.message || "").trim()
+            } catch (parseError) {
+              detail = ""
+            }
+            if (ids.length === 1) {
+              const fallback = await apiFetch(`/api/eldorado/keys/${ids[0]}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "used" }),
+              })
+              if (!fallback.ok) {
+                if (!detail) {
+                  try {
+                    const payload = await fallback.json()
+                    detail = String(payload?.error || payload?.message || "").trim()
+                  } catch (parseError) {
+                    detail = ""
+                  }
+                }
+                throw new Error(detail || "api_error")
+              }
+            } else {
+              throw new Error(detail || "api_error")
+            }
+          }
           await loadEldoradoKeys(normalizedOfferId, { force: true })
           loadEldoradoCatalog(undefined, { silent: true })
         } catch (error) {
