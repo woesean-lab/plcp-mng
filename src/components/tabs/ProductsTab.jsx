@@ -175,6 +175,7 @@ export default function ProductsTab({
   canManageNotes: canManageNotesProp,
   canManageMessages: canManageMessagesProp,
   canToggleStock: canToggleStockProp,
+  canViewLinks = false,
   canStarOffers: canStarOffersProp,
 }) {
   const [query, setQuery] = useState("")
@@ -1251,7 +1252,7 @@ export default function ProductsTab({
                                 <path d="M4 4v4h4" />
                               </svg>
                             </button>
-                            {href && (
+                            {href && canViewLinks && (
                               <a
                                 href={href}
                                 target="_blank"
