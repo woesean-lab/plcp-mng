@@ -2381,11 +2381,6 @@ export default function useAppData() {
     if (!normalizedOfferId) return false
     const nextGroupId = String(groupId ?? "").trim()
 
-    if (nextGroupId && !eldoradoGroups.some((group) => group.id === nextGroupId)) {
-      toast.error("Stok grubu bulunamadi.")
-      return false
-    }
-
     try {
       const res = await apiFetch("/api/eldorado/stock-groups/assign", {
         method: "PUT",
