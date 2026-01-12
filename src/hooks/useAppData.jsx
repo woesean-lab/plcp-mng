@@ -3226,25 +3226,25 @@ const handleEldoradoNoteSave = useCallback(
             } catch (parseError) {
               detail = ""
             }
-            if (ids.length === 1) {
-              const fallback = await apiFetch(`/api/eldorado/keys/${ids[0]}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "used" }),
-              })
-              if (!fallback.ok) {
-                if (!detail) {
-                  try {
-                    const payload = await fallback.json()
-                    detail = String(payload?.error || payload?.message || "").trim()
-                  } catch (parseError) {
-                    detail = ""
-                  }
-                }
-                throw new Error(detail || "api_error")
-              }
-            } else {
+            const fallbackResults = await Promise.all(
+              ids.map((id) =>
+                apiFetch(`/api/eldorado/keys/${id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: "used" }),
+                }),
+              ),
+            )
+            const successCount = fallbackResults.filter((response) => response.ok).length
+            if (successCount === 0) {
               throw new Error(detail || "api_error")
+            }
+            const failedCount = ids.length - successCount
+            if (failedCount > 0) {
+              toast.error(`${failedCount} stok isaretlenemedi`, {
+                duration: 1800,
+                position: "top-right",
+              })
             }
           }
           await loadEldoradoKeys(normalizedOfferId, { force: true })
