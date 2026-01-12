@@ -140,6 +140,7 @@ export default function ProductsTab({
   messageTemplatesByOffer = {},
   templates = [],
   stockEnabledByOffer = {},
+  starredOffers = {},
   onLoadKeys,
   onAddKeys,
   onDeleteKey,
@@ -163,6 +164,7 @@ export default function ProductsTab({
   onRemoveMessageGroupTemplate,
   onRemoveMessageTemplate,
   onToggleStock,
+  onToggleOfferStar,
   onRefreshOffer,
   canAddKeys = false,
   canDeleteKeys = false,
@@ -170,7 +172,6 @@ export default function ProductsTab({
 }) {
   const [query, setQuery] = useState("")
   const [openOffers, setOpenOffers] = useState({})
-  const [starredOffers, setStarredOffers] = useState({})
   const [confirmKeyTarget, setConfirmKeyTarget] = useState(null)
   const [groupDrafts, setGroupDrafts] = useState({})
   const [groupSelectionDrafts, setGroupSelectionDrafts] = useState({})
@@ -328,22 +329,10 @@ export default function ProductsTab({
     })
   }
   const toggleStarred = (offerId) => {
+    if (typeof onToggleOfferStar !== "function") return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    setStarredOffers((prev) => {
-      const next = { ...prev }
-      const nextState = !next[normalizedId]
-      if (nextState) {
-        next[normalizedId] = true
-      } else {
-        delete next[normalizedId]
-      }
-      toast.success(nextState ? "Ürün yıldızlandı" : "Yıldız kaldırıldı", {
-        duration: 1500,
-        position: "top-right",
-      })
-      return next
-    })
+    onToggleOfferStar(normalizedId)
   }
   const handleStockModalScroll = (event) => {
     if (!stockModalLineRef.current) return

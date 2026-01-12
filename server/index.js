@@ -293,6 +293,7 @@ const loadEldoradoStore = async () => {
     messageAssignments,
     messageGroupTemplateRows,
     messageTemplateRows,
+    offerStars,
   ] = await Promise.all([
     prisma.eldoradoStockGroup.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.eldoradoStockGroupAssignment.findMany(),
@@ -305,6 +306,7 @@ const loadEldoradoStore = async () => {
     prisma.eldoradoMessageGroupAssignment.findMany(),
     prisma.eldoradoMessageGroupTemplate.findMany(),
     prisma.eldoradoMessageTemplate.findMany(),
+    prisma.eldoradoOfferStar.findMany(),
   ])
 
   const stockGroupAssignments = {}
@@ -364,6 +366,12 @@ const loadEldoradoStore = async () => {
     messageTemplatesByOffer[entry.offerId].push(entry.label)
   })
 
+  const starredOffers = {}
+  offerStars.forEach((entry) => {
+    if (!entry?.offerId) return
+    starredOffers[entry.offerId] = true
+  })
+
   return {
     stockGroups: stockGroups.map((group) => ({
       id: group.id,
@@ -388,6 +396,7 @@ const loadEldoradoStore = async () => {
     messageGroupAssignments,
     messageGroupTemplates,
     messageTemplatesByOffer,
+    starredOffers,
   }
 }
 
@@ -1935,6 +1944,36 @@ app.get("/api/eldorado/store", async (_req, res, next) => {
   }
 })
 
+app.post("/api/eldorado/offers/:id/star", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+  const starredRaw = req.body?.starred
+  if (starredRaw === undefined) {
+    res.status(400).json({ error: "starred is required" })
+    return
+  }
+
+  const starred =
+    typeof starredRaw === "boolean"
+      ? starredRaw
+      : String(starredRaw).toLowerCase() === "true"
+
+  if (starred) {
+    await prisma.eldoradoOfferStar.upsert({
+      where: { offerId },
+      update: {},
+      create: { offerId },
+    })
+  } else {
+    await prisma.eldoradoOfferStar.deleteMany({ where: { offerId } })
+  }
+
+  res.json({ offerId, starred })
+})
+
 app.post("/api/eldorado/stock-groups", async (req, res) => {
   const name = String(req.body?.name ?? "").trim()
   if (!name) {
@@ -2134,6 +2173,24 @@ app.put("/api/eldorado/keys/:id", async (req, res) => {
       status: updated.status,
       createdAt: updated.createdAt.toISOString(),
     })
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "key not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/eldorado/keys/:id", async (req, res) => {
+  const id = String(req.params.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "invalid id" })
+    return
+  }
+  try {
+    await prisma.eldoradoKey.delete({ where: { id } })
+    res.status(204).end()
   } catch (error) {
     if (error?.code === "P2025") {
       res.status(404).json({ error: "key not found" })

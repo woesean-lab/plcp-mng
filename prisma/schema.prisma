@@ -161,6 +161,11 @@ model EldoradoStockEnabled {
   enabled Boolean @default(true)
 }
 
+model EldoradoOfferStar {
+  offerId   String   @id
+  createdAt DateTime @default(now())
+}
+
 model List {
   id        String   @id @default(cuid())
   name      String

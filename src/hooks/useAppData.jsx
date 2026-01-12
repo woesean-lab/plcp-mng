@@ -172,6 +172,7 @@ export default function useAppData() {
   const [eldoradoMessageGroupTemplates, setEldoradoMessageGroupTemplates] = useState({})
   const [eldoradoMessageTemplatesByOffer, setEldoradoMessageTemplatesByOffer] = useState({})
   const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState({})
+  const [eldoradoStarredOffers, setEldoradoStarredOffers] = useState({})
   const stockModalTextareaRef = useRef(null)
   const stockModalLineRef = useRef(null)
   const isStockTextSelectingRef = useRef(false)
@@ -372,6 +373,15 @@ export default function useAppData() {
     [authToken],
   )
 
+  const readApiError = useCallback(async (res) => {
+    try {
+      const payload = await res.json()
+      return String(payload?.error || payload?.message || "").trim()
+    } catch (error) {
+      return ""
+    }
+  }, [])
+
   const loadEldoradoStore = useCallback(
     async (signal) => {
       try {
@@ -414,6 +424,9 @@ export default function useAppData() {
             ? data.messageTemplatesByOffer
             : {},
         )
+        setEldoradoStarredOffers(
+          data?.starredOffers && typeof data.starredOffers === "object" ? data.starredOffers : {},
+        )
         setEldoradoStockEnabledByOffer(
           data?.stockEnabledByOffer && typeof data.stockEnabledByOffer === "object"
             ? data.stockEnabledByOffer
@@ -424,7 +437,7 @@ export default function useAppData() {
         toast.error("Eldorado ayarlari alinamadi (API/Server kontrol edin).")
       }
     },
-    [apiFetch],
+    [apiFetch, readApiError],
   )
 
   const loadLists = useCallback(
@@ -2344,7 +2357,10 @@ export default function useAppData() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: trimmed }),
       })
-      if (!res.ok) throw new Error("api_error")
+      if (!res.ok) {
+        const detail = await readApiError(res)
+        throw new Error(detail || "api_error")
+      }
       const created = await res.json()
       setEldoradoGroups((prev) => {
         if (prev.some((group) => group.id === created.id)) return prev
@@ -2352,7 +2368,10 @@ export default function useAppData() {
       })
       return created
     } catch (error) {
-      toast.error("Grup olusturulamadi (API/Server kontrol edin).")
+      const detail = String(error?.message || "").trim()
+      toast.error(
+        detail ? `Grup olusturulamadi (${detail}).` : "Grup olusturulamadi (API/Server kontrol edin).",
+      )
       return null
     }
   }
@@ -2493,7 +2512,71 @@ const handleEldoradoNoteSave = useCallback(
         return false
       }
     },
-    [apiFetch],
+    [apiFetch, readApiError],
+  )
+
+  const handleEldoradoOfferStarToggle = useCallback(
+    async (offerId) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      if (!normalizedOfferId) return false
+      const wasStarred = Boolean(eldoradoStarredOffers?.[normalizedOfferId])
+      const nextStarred = !wasStarred
+
+      setEldoradoStarredOffers((prev) => {
+        const next = { ...prev }
+        if (nextStarred) {
+          next[normalizedOfferId] = true
+        } else {
+          delete next[normalizedOfferId]
+        }
+        return next
+      })
+
+      try {
+        const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/star`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ starred: nextStarred }),
+        })
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
+        const payload = await res.json()
+        setEldoradoStarredOffers((prev) => {
+          const next = { ...prev }
+          if (payload?.starred) {
+            next[normalizedOfferId] = true
+          } else {
+            delete next[normalizedOfferId]
+          }
+          return next
+        })
+        toast.success(payload?.starred ? "Urun yildizlandi" : "Yildiz kaldirildi", {
+          duration: 1500,
+          position: "top-right",
+        })
+        return true
+      } catch (error) {
+        setEldoradoStarredOffers((prev) => {
+          const next = { ...prev }
+          if (wasStarred) {
+            next[normalizedOfferId] = true
+          } else {
+            delete next[normalizedOfferId]
+          }
+          return next
+        })
+        const detail = String(error?.message || "").trim()
+        toast.error(
+          detail
+            ? `Yildiz islemi basarisiz (${detail}).`
+            : "Yildiz islemi basarisiz (API/Server kontrol edin).",
+        )
+        return false
+      }
+    },
+    [apiFetch, eldoradoStarredOffers, readApiError],
   )
 
   const handleEldoradoNoteGroupCreate = useCallback(
@@ -2509,7 +2592,10 @@ const handleEldoradoNoteSave = useCallback(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: trimmed }),
         })
-        if (!res.ok) throw new Error("api_error")
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
         const created = await res.json()
         setEldoradoNoteGroups((prev) => {
           if (prev.some((group) => group.id === created.id)) return prev
@@ -2517,11 +2603,16 @@ const handleEldoradoNoteSave = useCallback(
         })
         return created
       } catch (error) {
-        toast.error("Not grubu olusturulamadi (API/Server kontrol edin).")
+        const detail = String(error?.message || "").trim()
+        toast.error(
+          detail
+            ? `Not grubu olusturulamadi (${detail}).`
+            : "Not grubu olusturulamadi (API/Server kontrol edin).",
+        )
         return null
       }
     },
-    [apiFetch],
+    [apiFetch, readApiError],
   )
 
   const handleEldoradoNoteGroupAssign = useCallback(
@@ -2600,7 +2691,10 @@ const handleEldoradoNoteSave = useCallback(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: trimmed }),
         })
-        if (!res.ok) throw new Error("api_error")
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
         const created = await res.json()
         setEldoradoMessageGroups((prev) => {
           if (prev.some((group) => group.id === created.id)) return prev
@@ -2608,11 +2702,16 @@ const handleEldoradoNoteSave = useCallback(
         })
         return created
       } catch (error) {
-        toast.error("Mesaj grubu olusturulamadi (API/Server kontrol edin).")
+        const detail = String(error?.message || "").trim()
+        toast.error(
+          detail
+            ? `Mesaj grubu olusturulamadi (${detail}).`
+            : "Mesaj grubu olusturulamadi (API/Server kontrol edin).",
+        )
         return null
       }
     },
-    [apiFetch],
+    [apiFetch, readApiError],
   )
 
   const handleEldoradoMessageGroupAssign = useCallback(
@@ -2855,18 +2954,22 @@ const handleEldoradoNoteSave = useCallback(
 
       setEldoradoKeysDeleting((prev) => ({ ...prev, [normalizedKeyId]: true }))
       try {
-        const res = await apiFetch("/api/eldorado/keys/bulk-delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids: [normalizedKeyId] }),
+        const res = await apiFetch(`/api/eldorado/keys/${normalizedKeyId}`, {
+          method: "DELETE",
         })
-        if (!res.ok) throw new Error("api_error")
+        if (!res.ok && res.status !== 404) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
         await loadEldoradoKeys(normalizedOfferId, { force: true })
         loadEldoradoCatalog(undefined, { silent: true })
         toast.success("Stok silindi")
       } catch (error) {
         console.error(error)
-        toast.error("Stok silinemedi (API/Server kontrol edin).")
+        const detail = String(error?.message || "").trim()
+        toast.error(
+          detail ? `Stok silinemedi (${detail}).` : "Stok silinemedi (API/Server kontrol edin).",
+        )
       } finally {
         setEldoradoKeysDeleting((prev) => {
           const next = { ...prev }
@@ -2875,7 +2978,7 @@ const handleEldoradoNoteSave = useCallback(
         })
       }
     },
-    [apiFetch, loadEldoradoCatalog, loadEldoradoKeys],
+    [apiFetch, loadEldoradoCatalog, loadEldoradoKeys, readApiError],
   )
 
   const handleEldoradoBulkDelete = useCallback(
@@ -2892,18 +2995,35 @@ const handleEldoradoNoteSave = useCallback(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: idList }),
         })
-        if (!res.ok) throw new Error("api_error")
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          const results = await Promise.all(
+            idList.map((id) =>
+              apiFetch(`/api/eldorado/keys/${id}`, {
+                method: "DELETE",
+              }),
+            ),
+          )
+          const failed = results.find((item) => !item.ok && item.status !== 404)
+          if (failed) {
+            const fallbackDetail = await readApiError(failed)
+            throw new Error(fallbackDetail || detail || "api_error")
+          }
+        }
         await loadEldoradoKeys(normalizedOfferId, { force: true })
         loadEldoradoCatalog(undefined, { silent: true })
         toast.success("Stoklar silindi", { duration: 1500, position: "top-right" })
         return true
       } catch (error) {
         console.error(error)
-        toast.error("Stoklar silinemedi (API/Server kontrol edin).")
+        const detail = String(error?.message || "").trim()
+        toast.error(
+          detail ? `Stoklar silinemedi (${detail}).` : "Stoklar silinemedi (API/Server kontrol edin).",
+        )
         return false
       }
     },
-    [apiFetch, loadEldoradoCatalog, loadEldoradoKeys],
+    [apiFetch, loadEldoradoCatalog, loadEldoradoKeys, readApiError],
   )
 
   const handleEldoradoKeyStatusUpdate = useCallback(
@@ -4917,6 +5037,7 @@ const handleEldoradoNoteSave = useCallback(
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
     eldoradoStockEnabledByOffer,
+    eldoradoStarredOffers,
     isEldoradoLoading,
     isEldoradoRefreshing,
     refreshEldoradoCatalog,
@@ -4944,6 +5065,7 @@ const handleEldoradoNoteSave = useCallback(
     refreshEldoradoOffer,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
+    handleEldoradoOfferStarToggle,
     products,
     productSearch,
     setProductSearch,
