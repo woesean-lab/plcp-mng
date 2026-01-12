@@ -2328,112 +2328,101 @@ export default function useAppData() {
     [loadEldoradoKeys, loadEldoradoStore],
   )
 
-  const handleEldoradoGroupCreate = useCallback(
-    async (name) => {
-      const trimmed = String(name ?? "").trim()
-      if (!trimmed) {
-        toast.error("Grup adi gerekli.")
-        return null
-      }
-      try {
-        const res = await apiFetch("/api/eldorado/stock-groups", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: trimmed }),
+  const handleEldoradoGroupCreate = async (name) => {
+    const trimmed = String(name ?? "").trim()
+    if (!trimmed) {
+      toast.error("Grup adi gerekli.")
+      return null
+    }
+    try {
+      const res = await apiFetch("/api/eldorado/stock-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      })
+      if (!res.ok) throw new Error("api_error")
+      const created = await res.json()
+      setEldoradoGroups((prev) => {
+        if (prev.some((group) => group.id === created.id)) return prev
+        return [...prev, created]
+      })
+      return created
+    } catch (error) {
+      toast.error("Grup olusturulamadi (API/Server kontrol edin).")
+      return null
+    }
+  }
+
+  const handleEldoradoGroupAssign = async (offerId, groupId) => {
+    const normalizedOfferId = String(offerId ?? "").trim()
+    if (!normalizedOfferId) return false
+    const nextGroupId = String(groupId ?? "").trim()
+
+    if (nextGroupId && !eldoradoGroups.some((group) => group.id === nextGroupId)) {
+      toast.error("Stok grubu bulunamadi.")
+      return false
+    }
+
+    try {
+      const res = await apiFetch("/api/eldorado/stock-groups/assign", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offerId: normalizedOfferId, groupId: nextGroupId || "" }),
+      })
+      if (!res.ok) throw new Error("api_error")
+
+      setEldoradoGroupAssignments((prev) => {
+        const next = { ...prev }
+        if (nextGroupId) {
+          next[normalizedOfferId] = nextGroupId
+        } else {
+          delete next[normalizedOfferId]
+        }
+        return next
+      })
+      await loadEldoradoKeys(normalizedOfferId, { force: true })
+      loadEldoradoCatalog()
+      return true
+    } catch (error) {
+      toast.error("Stok grubu atanamadi (API/Server kontrol edin).")
+      return false
+    }
+  }
+  const handleEldoradoGroupDelete = async (groupId) => {
+    const normalizedGroupId = String(groupId ?? "").trim()
+    if (!normalizedGroupId) return false
+
+    if (!eldoradoGroups.some((group) => group.id === normalizedGroupId)) {
+      toast.error("Stok grubu bulunamadi.")
+      return false
+    }
+
+    try {
+      const res = await apiFetch(`/api/eldorado/stock-groups/${normalizedGroupId}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error("api_error")
+      const payload = await res.json()
+      const affectedOffers = Array.isArray(payload?.affectedOffers) ? payload.affectedOffers : []
+
+      setEldoradoGroups((prev) => prev.filter((group) => group.id !== normalizedGroupId))
+      setEldoradoGroupAssignments((prev) => {
+        const next = { ...prev }
+        affectedOffers.forEach((offerId) => {
+          delete next[offerId]
         })
-        if (!res.ok) throw new Error("api_error")
-        const created = await res.json()
-        setEldoradoGroups((prev) => {
-          if (prev.some((group) => group.id === created.id)) return prev
-          return [...prev, created]
-        })
-        return created
-      } catch (error) {
-        toast.error("Grup olusturulamadi (API/Server kontrol edin).")
-        return null
-      }
-    },
-    [apiFetch],
-  )
-
-  const handleEldoradoGroupAssign = useCallback(
-    async (offerId, groupId) => {
-      const normalizedOfferId = String(offerId ?? "").trim()
-      if (!normalizedOfferId) return false
-      const nextGroupId = String(groupId ?? "").trim()
-
-      if (nextGroupId && !eldoradoGroups.some((group) => group.id === nextGroupId)) {
-        toast.error("Stok grubu bulunamadi.")
-        return false
-      }
-
-      try {
-        const res = await apiFetch("/api/eldorado/stock-groups/assign", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ offerId: normalizedOfferId, groupId: nextGroupId || "" }),
-        })
-        if (!res.ok) throw new Error("api_error")
-
-        setEldoradoGroupAssignments((prev) => {
-          const next = { ...prev }
-          if (nextGroupId) {
-            next[normalizedOfferId] = nextGroupId
-          } else {
-            delete next[normalizedOfferId]
-          }
-          return next
-        })
-        await loadEldoradoKeys(normalizedOfferId, { force: true })
-        loadEldoradoCatalog()
-        return true
-      } catch (error) {
-        toast.error("Stok grubu atanamadi (API/Server kontrol edin).")
-        return false
-      }
-    },
-    [apiFetch, eldoradoGroups, loadEldoradoCatalog, loadEldoradoKeys],
-  )
-
-  const handleEldoradoGroupDelete = useCallback(
-    async (groupId) => {
-      const normalizedGroupId = String(groupId ?? "").trim()
-      if (!normalizedGroupId) return false
-
-      if (!eldoradoGroups.some((group) => group.id === normalizedGroupId)) {
-        toast.error("Stok grubu bulunamadi.")
-        return false
-      }
-
-      try {
-        const res = await apiFetch(`/api/eldorado/stock-groups/${normalizedGroupId}`, {
-          method: "DELETE",
-        })
-        if (!res.ok) throw new Error("api_error")
-        const payload = await res.json()
-        const affectedOffers = Array.isArray(payload?.affectedOffers) ? payload.affectedOffers : []
-
-        setEldoradoGroups((prev) => prev.filter((group) => group.id !== normalizedGroupId))
-        setEldoradoGroupAssignments((prev) => {
-          const next = { ...prev }
-          affectedOffers.forEach((offerId) => {
-            delete next[offerId]
-          })
-          return next
-        })
-        await Promise.all(affectedOffers.map((offerId) => loadEldoradoKeys(offerId, { force: true })))
-        loadEldoradoCatalog()
-        toast.success("Stok grubu silindi", { duration: 1500, position: "top-right" })
-        return true
-      } catch (error) {
-        toast.error("Stok grubu silinemedi (API/Server kontrol edin).")
-        return false
-      }
-    },
-    [apiFetch, eldoradoGroups, loadEldoradoCatalog, loadEldoradoKeys],
-  )
-
-  const handleEldoradoNoteSave = useCallback(
+        return next
+      })
+      await Promise.all(affectedOffers.map((offerId) => loadEldoradoKeys(offerId, { force: true })))
+      loadEldoradoCatalog()
+      toast.success("Stok grubu silindi", { duration: 1500, position: "top-right" })
+      return true
+    } catch (error) {
+      toast.error("Stok grubu silinemedi (API/Server kontrol edin).")
+      return false
+    }
+  }
+const handleEldoradoNoteSave = useCallback(
     async (offerId, rawNote) => {
       const normalizedOfferId = String(offerId ?? "").trim()
       if (!normalizedOfferId) return false
