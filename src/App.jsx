@@ -412,7 +412,7 @@ function App() {
     PERMISSIONS.listsEdit,
   ])
   const canViewStock = hasPermission(PERMISSIONS.stockView)
-  const canViewProducts = hasAnyPermission([PERMISSIONS.productsView, PERMISSIONS.stockView])
+  const canViewProducts = hasPermission(PERMISSIONS.productsView)
   const canCreateProducts = hasAnyPermission([PERMISSIONS.stockProductCreate, PERMISSIONS.stockManage])
   const canEditProducts = hasAnyPermission([PERMISSIONS.stockProductEdit, PERMISSIONS.stockManage])
   const canDeleteProducts = hasAnyPermission([PERMISSIONS.stockProductDelete, PERMISSIONS.stockManage])

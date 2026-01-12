@@ -237,7 +237,7 @@ export default function useAppData() {
     PERMISSIONS.salesCreate,
     PERMISSIONS.adminManage,
   ])
-  const canViewProductsTab = hasAnyPermission([PERMISSIONS.productsView, PERMISSIONS.stockView])
+  const canViewProductsTab = hasPermission(PERMISSIONS.productsView)
   const availableTabs = useMemo(() => {
     const tabs = []
     if (isAuthed) tabs.push("dashboard")
