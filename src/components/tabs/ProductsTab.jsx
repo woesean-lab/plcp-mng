@@ -202,6 +202,9 @@ export default function ProductsTab({
   const [refreshingOffers, setRefreshingOffers] = useState({})
   const [confirmMessageGroupDelete, setConfirmMessageGroupDelete] = useState(null)
   const [confirmMessageTemplateDelete, setConfirmMessageTemplateDelete] = useState(null)
+  const [priceEnabledByOffer, setPriceEnabledByOffer] = useState({})
+  const [priceDrafts, setPriceDrafts] = useState({})
+  const [savedPricesByOffer, setSavedPricesByOffer] = useState({})
   const [keyFadeById, setKeyFadeById] = useState({})
   const [noteGroupFlashByOffer, setNoteGroupFlashByOffer] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
@@ -434,6 +437,35 @@ export default function ProductsTab({
     if (ok) {
       handleStockModalClose()
     }
+  }
+  const handlePriceToggle = (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setPriceEnabledByOffer((prev) => ({ ...prev, [normalizedId]: !prev[normalizedId] }))
+  }
+  const handlePriceDraftChange = (offerId, field, value) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setPriceDrafts((prev) => ({
+      ...prev,
+      [normalizedId]: {
+        ...(prev[normalizedId] ?? { base: "", percent: "" }),
+        [field]: value,
+      },
+    }))
+  }
+  const handlePriceSave = (offerId, base, percent, result) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setSavedPricesByOffer((prev) => ({
+      ...prev,
+      [normalizedId]: {
+        base,
+        percent,
+        result,
+      },
+    }))
+    toast.success("Fiyat kaydedildi.")
   }
   const handleBulkCountChange = (offerId, value) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -1137,6 +1169,11 @@ export default function ProductsTab({
                   const availablePanels = isStockEnabled
                     ? ["note", "messages", "stock"]
                     : ["note", "messages"]
+                  const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
+                  if (isPriceEnabled) {
+                    availablePanels.push("price")
+                  }
+                  const tabCount = 2 + (isStockEnabled ? 1 : 0) + (isPriceEnabled ? 1 : 0)
                   const storedPanel = activePanelByOffer[offerId]
                   const activePanel =
                     storedPanel === "none"
@@ -1175,6 +1212,15 @@ export default function ProductsTab({
                     : independentMessages
                   const messageGroupLabel =
                     messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
+                  const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
+                  const baseValue = String(priceDraft.base ?? "").replace(",", ".")
+                  const percentValue = String(priceDraft.percent ?? "").replace(",", ".")
+                  const baseNumber = Number(baseValue)
+                  const percentNumber = Number(percentValue)
+                  const priceResult =
+                    Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
+                      ? baseNumber * (percentNumber / 100)
+                      : ""
                   const canDeleteMessageItem = messageGroupId
                     ? typeof onRemoveMessageGroupTemplate === "function"
                     : typeof onRemoveMessageTemplate === "function"
@@ -1308,6 +1354,35 @@ export default function ProductsTab({
                               >
                                 <path d="M12 2v6" />
                                 <path d="M6.4 6.4a8 8 0 1 0 11.2 0" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handlePriceToggle(offerId)}
+                              disabled={!offerId}
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
+                                !offerId ? "cursor-not-allowed opacity-60" : ""
+                              }`}
+                              aria-label="Fiyat aç/kapat"
+                              title={isPriceEnabled ? "Fiyat açık" : "Fiyat kapalı"}
+                            >
+                              <span
+                                className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
+                                  isPriceEnabled ? "bg-sky-400" : "bg-rose-400"
+                                }`}
+                              />
+                              <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M12 2v20" />
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />
                               </svg>
                             </button>
                             <button
@@ -1447,7 +1522,7 @@ export default function ProductsTab({
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                           <div className="rounded-2xl rounded-b-none border border-white/10 bg-white/5 p-3 pb-2 shadow-card">
                             <div
-                              className={`grid gap-2 ${isStockEnabled ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+                              className={`grid gap-2 ${tabCount === 4 ? "sm:grid-cols-4" : tabCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
                               role="tablist"
                             >
                               <button
@@ -1494,6 +1569,23 @@ export default function ProductsTab({
                                   <span>Stok grubu</span>
                                   <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
                                     {groupName || "Bağımsız"}
+                                  </span>
+                                </button>
+                              )}
+                              {isPriceEnabled && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActivePanel(offerId, "price")}
+                                  className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold transition ${
+                                    activePanel === "price"
+                                      ? "border-accent-400/70 bg-ink-900/70 text-slate-100 shadow-card"
+                                      : "border-white/10 bg-ink-900/40 text-slate-300 hover:border-white/20 hover:bg-ink-900/60"
+                                  }`}
+                                  aria-pressed={activePanel === "price"}
+                                >
+                                  <span>Fiyat</span>
+                                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
+                                    {savedPricesByOffer?.[offerId]?.result ?? "-"}
                                   </span>
                                 </button>
                               )}
@@ -1743,6 +1835,71 @@ export default function ProductsTab({
                                 </div>
                                   </>
                                 )}
+                              </div>
+                            )}
+                            {activePanel === "price" && isPriceEnabled && (
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-[13px] font-semibold text-slate-100">Fiyat</p>
+                                  </div>
+                                </div>
+                                <div className="mt-4 space-y-4">
+                                  <div className="grid gap-3 sm:grid-cols-3">
+                                    <label className="flex flex-col gap-2 text-[11px] font-semibold text-slate-300">
+                                      Fiyat gir
+                                      <input
+                                        type="text"
+                                        value={priceDraft.base}
+                                        onChange={(event) =>
+                                          handlePriceDraftChange(offerId, "base", event.target.value)
+                                        }
+                                        placeholder="Baz fiyat"
+                                        className="rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                      />
+                                    </label>
+                                    <label className="flex flex-col gap-2 text-[11px] font-semibold text-slate-300">
+                                      Yüzdelik
+                                      <input
+                                        type="text"
+                                        value={priceDraft.percent}
+                                        onChange={(event) =>
+                                          handlePriceDraftChange(offerId, "percent", event.target.value)
+                                        }
+                                        placeholder="%"
+                                        className="rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                      />
+                                    </label>
+                                    <div className="flex flex-col gap-2 text-[11px] font-semibold text-slate-300">
+                                      Sonuç
+                                      <div className="flex h-10 items-center rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100">
+                                        {priceResult === "" ? "-" : priceResult.toFixed(2)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    {savedPricesByOffer?.[offerId]?.result !== undefined && (
+                                      <div className="text-xs text-slate-400">
+                                        Kayıtlı: {savedPricesByOffer[offerId].result}
+                                      </div>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handlePriceSave(
+                                          offerId,
+                                          baseNumber,
+                                          percentNumber,
+                                          priceResult === "" ? 0 : priceResult,
+                                        )
+                                      }
+                                      disabled={priceResult === "" || !offerId}
+                                      className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      KAYDET
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                             )}
                             {activePanel === "note" && (
