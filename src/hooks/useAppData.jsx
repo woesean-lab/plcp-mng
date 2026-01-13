@@ -175,6 +175,7 @@ export default function useAppData() {
   const [eldoradoStarredOffers, setEldoradoStarredOffers] = useState({})
   const [eldoradoLogs, setEldoradoLogs] = useState([])
   const [isEldoradoLogsLoading, setIsEldoradoLogsLoading] = useState(false)
+  const lastEldoradoLogRef = useRef("")
   const stockModalTextareaRef = useRef(null)
   const stockModalLineRef = useRef(null)
   const isStockTextSelectingRef = useRef(false)
@@ -2290,7 +2291,13 @@ export default function useAppData() {
         if (!res.ok) throw new Error("api_error")
         const payload = await res.json()
         const lines = Array.isArray(payload?.lines) ? payload.lines : []
-        setEldoradoLogs(lines.map((line) => String(line ?? "")))
+        const normalized = lines.map((line) => String(line ?? ""))
+        setEldoradoLogs(normalized)
+        const lastLine = normalized[normalized.length - 1]
+        if (lastLine && lastLine !== lastEldoradoLogRef.current) {
+          lastEldoradoLogRef.current = lastLine
+          toast(lastLine, { position: "top-right", duration: 2400 })
+        }
       } catch (error) {
         if (error?.name === "AbortError") return
         setEldoradoLogs([])
@@ -5232,9 +5239,6 @@ const handleEldoradoNoteSave = useCallback(
     users,
     isAdminLoading,
     isAdminTabLoading,
-    eldoradoLogs,
-    isEldoradoLogsLoading,
-    loadEldoradoLogs,
     roleDraft,
     setRoleDraft,
     userDraft,

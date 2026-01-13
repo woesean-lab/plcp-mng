@@ -291,9 +291,6 @@ function App() {
     users,
     isAdminLoading,
     isAdminTabLoading,
-    eldoradoLogs,
-    isEldoradoLogsLoading,
-    loadEldoradoLogs,
     roleDraft,
     setRoleDraft,
     userDraft,
@@ -1260,9 +1257,6 @@ function App() {
               panelClass={panelClass}
               canManageRoles={canManageRoles}
               canManageUsers={canManageUsers}
-              eldoradoLogs={eldoradoLogs}
-              isEldoradoLogsLoading={isEldoradoLogsLoading}
-              onRefreshEldoradoLogs={loadEldoradoLogs}
               activeUser={activeUser}
               roles={roles}
               users={users}

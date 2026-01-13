@@ -25,7 +25,7 @@ const SCRAPE_URLS =
       ? [START_URL]
       : DEFAULT_URLS
 const TOTAL_PAGES = Number(process.env.ELDORADO_PAGES ?? 0)
-const MAX_PAGES = Number(process.env.ELDORADO_MAX_PAGES ?? 50)
+const MAX_PAGES = Number(process.env.ELDORADO_MAX_PAGES ?? 20)
 const USE_TOTAL_PAGES = Number.isFinite(TOTAL_PAGES) && TOTAL_PAGES > 0
 const OUTPUT_PATH = process.env.ELDORADO_OUTPUT ?? "src/data/eldorado-products.json"
 const TITLE_SELECTOR = process.env.ELDORADO_TITLE_SELECTOR ?? ".offer-title"
