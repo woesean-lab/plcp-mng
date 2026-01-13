@@ -204,6 +204,7 @@ export default function ProductsTab({
   const [keyFadeById, setKeyFadeById] = useState({})
   const [noteGroupFlashByOffer, setNoteGroupFlashByOffer] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
+  const [showMissingOnly, setShowMissingOnly] = useState(false)
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const prevNoteGroupAssignments = useRef(noteGroupAssignments)
@@ -296,12 +297,18 @@ export default function ProductsTab({
   const [page, setPage] = useState(1)
   const pageSize = 12
   const filteredList = useMemo(() => {
-    if (!normalizedQuery) return list
-    return list.filter((product) => {
-      const name = String(product?.name ?? "").toLowerCase()
-      return name.includes(normalizedQuery)
-    })
-  }, [list, normalizedQuery])
+    const baseList = normalizedQuery
+      ? list.filter((product) => {
+          const name = String(product?.name ?? "").toLowerCase()
+          return name.includes(normalizedQuery)
+        })
+      : list
+    return showMissingOnly ? baseList.filter((product) => Boolean(product?.missing)) : baseList
+  }, [list, normalizedQuery, showMissingOnly])
+  const missingCount = useMemo(
+    () => list.filter((product) => Boolean(product?.missing)).length,
+    [list],
+  )
   const sortedList = useMemo(() => {
     if (!starredOffers || Object.keys(starredOffers).length === 0) return filteredList
     return [...filteredList].sort((a, b) => {
@@ -767,7 +774,7 @@ export default function ProductsTab({
   }, [activeCategoryKey, categories])
   useEffect(() => {
     setPage(1)
-  }, [activeCategoryKey, normalizedQuery])
+  }, [activeCategoryKey, normalizedQuery, showMissingOnly])
   useEffect(() => {
     setOpenOffers({})
   }, [allProducts.length])
@@ -1017,6 +1024,24 @@ export default function ProductsTab({
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
                   Sayfa: {page}/{totalPages}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setShowMissingOnly((prev) => !prev)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] transition ${
+                    showMissingOnly
+                      ? "border-rose-300/60 bg-rose-500/15 text-rose-50 shadow-glow"
+                      : "border-white/10 bg-ink-900/80 text-slate-200 hover:border-white/20 hover:bg-white/5"
+                  }`}
+                >
+                  <span>Sadece eksik</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      showMissingOnly ? "bg-rose-500/20 text-rose-50" : "bg-white/5 text-slate-300"
+                    }`}
+                  >
+                    {missingCount}
+                  </span>
+                </button>
               </div>
             </div>
             <div className="flex w-full flex-col gap-2">
