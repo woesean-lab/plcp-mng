@@ -223,6 +223,22 @@ export default function ProductsTab({
     if (!savedPricesByOfferProp || typeof savedPricesByOfferProp !== "object") return
     setSavedPricesByOffer(savedPricesByOfferProp)
   }, [savedPricesByOfferProp])
+  useEffect(() => {
+    if (!savedPricesByOfferProp || typeof savedPricesByOfferProp !== "object") return
+    setPriceDrafts((prev) => {
+      const next = { ...prev }
+      Object.entries(savedPricesByOfferProp).forEach(([offerId, price]) => {
+        if (!offerId || !price || typeof price !== "object") return
+        const hasDraft = next[offerId] && (next[offerId].base !== "" || next[offerId].percent !== "")
+        if (hasDraft) return
+        next[offerId] = {
+          base: price.base ?? "",
+          percent: price.percent ?? "",
+        }
+      })
+      return next
+    })
+  }, [savedPricesByOfferProp])
   const canManageGroups = typeof canManageGroupsProp === "boolean" ? canManageGroupsProp : canAddKeys
   const canManageNotes =
     typeof canManageNotesProp === "boolean"
