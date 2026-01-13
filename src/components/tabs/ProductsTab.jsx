@@ -1173,24 +1173,56 @@ export default function ProductsTab({
                       } ${isOpen ? "border-accent-400/60 shadow-card" : ""}`}
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => toggleOfferOpen(offerId)}
-                          disabled={!offerId || !canStarOffers}
-                          className="min-w-0 flex-1 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                        <div
+                          role="button"
+                          tabIndex={!offerId || !canStarOffers ? -1 : 0}
+                          aria-disabled={!offerId || !canStarOffers}
+                          onClick={() => {
+                            if (!offerId || !canStarOffers) return
+                            toggleOfferOpen(offerId)
+                          }}
+                          onKeyDown={(event) => {
+                            if (!offerId || !canStarOffers) return
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault()
+                              toggleOfferOpen(offerId)
+                            }
+                          }}
+                          className={`min-w-0 flex-1 text-left ${
+                            !offerId || !canStarOffers ? "cursor-not-allowed opacity-60" : ""
+                          }`}
                         >
                           <div className="flex min-h-[36px] flex-wrap items-center gap-2">
-                            <span
-                              className={`min-w-0 flex-1 break-words font-display text-[13px] font-semibold leading-snug text-white sm:text-sm ${
-                                isMissing
-                                  ? "text-orange-50"
-                                  : isOutOfStock
-                                    ? "text-rose-50"
-                                    : "text-white"
-                              }`}
-                            >
-                              {name}
-                            </span>
+                            {href && canViewLinks ? (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(event) => event.stopPropagation()}
+                                onContextMenu={(event) => event.stopPropagation()}
+                                className={`min-w-0 flex-1 break-words font-display text-[13px] font-semibold leading-snug text-white underline decoration-transparent decoration-2 underline-offset-4 transition hover:decoration-accent-400 sm:text-sm ${
+                                  isMissing
+                                    ? "text-orange-50"
+                                    : isOutOfStock
+                                      ? "text-rose-50"
+                                      : "text-white"
+                                }`}
+                              >
+                                {name}
+                              </a>
+                            ) : (
+                              <span
+                                className={`min-w-0 flex-1 break-words font-display text-[13px] font-semibold leading-snug text-white sm:text-sm ${
+                                  isMissing
+                                    ? "text-orange-50"
+                                    : isOutOfStock
+                                      ? "text-rose-50"
+                                      : "text-white"
+                                }`}
+                              >
+                                {name}
+                              </span>
+                            )}
                             {(isStockEnabled || isMissing) && (
                               <div className="flex shrink-0 flex-nowrap items-center gap-2">
                                 {isStockEnabled && (
@@ -1223,7 +1255,7 @@ export default function ProductsTab({
                               <span className="text-slate-400">{groupName}</span>
                             )}
                           </div>
-                        </button>
+                        </div>
                         <div className="flex flex-wrap items-stretch gap-1.5">
                           <div className="flex w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:h-[36px] sm:w-[192px] sm:flex-nowrap">
                             <button
