@@ -204,7 +204,6 @@ export default function ProductsTab({
   const [keyFadeById, setKeyFadeById] = useState({})
   const [noteGroupFlashByOffer, setNoteGroupFlashByOffer] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
-  const [showMissingOnly, setShowMissingOnly] = useState(false)
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const prevNoteGroupAssignments = useRef(noteGroupAssignments)
@@ -268,6 +267,10 @@ export default function ProductsTab({
   const items = Array.isArray(catalog?.items) ? catalog.items : []
   const topups = Array.isArray(catalog?.topups) ? catalog.topups : []
   const allProducts = useMemo(() => [...items, ...topups], [items, topups])
+  const missingTotal = useMemo(
+    () => allProducts.filter((product) => Boolean(product?.missing)).length,
+    [allProducts],
+  )
   const categoryMap = useMemo(() => {
     const bucket = new Map()
     allProducts.forEach((product) => {
@@ -284,31 +287,33 @@ export default function ProductsTab({
       items: bucketItems,
     }))
     list.sort((a, b) => a.label.localeCompare(b.label, "tr"))
-    return [{ key: "all", label: "Tümü", items: allProducts }, ...list]
+    return [
+      { key: "all", label: "Tümü", items: allProducts },
+      { key: "missing", label: "Eksik ürünler", items: allProducts },
+      ...list,
+    ]
   }, [allProducts, categoryMap])
   const [activeCategoryKey, setActiveCategoryKey] = useState("all")
   const activeCategory = categories.find((category) => category.key === activeCategoryKey) ?? categories[0]
   const canRefresh = typeof onRefresh === "function"
-  const list =
-    activeCategoryKey === "all"
+  const baseList =
+    activeCategoryKey === "all" || activeCategoryKey === "missing"
       ? allProducts
       : categoryMap.get(activeCategoryKey) ?? activeCategory?.items ?? []
+  const list =
+    activeCategoryKey === "missing"
+      ? baseList.filter((product) => Boolean(product?.missing))
+      : baseList
   const normalizedQuery = query.trim().toLowerCase()
   const [page, setPage] = useState(1)
   const pageSize = 12
   const filteredList = useMemo(() => {
-    const baseList = normalizedQuery
-      ? list.filter((product) => {
-          const name = String(product?.name ?? "").toLowerCase()
-          return name.includes(normalizedQuery)
-        })
-      : list
-    return showMissingOnly ? baseList.filter((product) => Boolean(product?.missing)) : baseList
-  }, [list, normalizedQuery, showMissingOnly])
-  const missingCount = useMemo(
-    () => list.filter((product) => Boolean(product?.missing)).length,
-    [list],
-  )
+    if (!normalizedQuery) return list
+    return list.filter((product) => {
+      const name = String(product?.name ?? "").toLowerCase()
+      return name.includes(normalizedQuery)
+    })
+  }, [list, normalizedQuery])
   const sortedList = useMemo(() => {
     if (!starredOffers || Object.keys(starredOffers).length === 0) return filteredList
     return [...filteredList].sort((a, b) => {
@@ -774,7 +779,7 @@ export default function ProductsTab({
   }, [activeCategoryKey, categories])
   useEffect(() => {
     setPage(1)
-  }, [activeCategoryKey, normalizedQuery, showMissingOnly])
+  }, [activeCategoryKey, normalizedQuery])
   useEffect(() => {
     setOpenOffers({})
   }, [allProducts.length])
@@ -998,7 +1003,7 @@ export default function ProductsTab({
                       isActive ? "text-accent-100" : "text-slate-400 group-hover:text-slate-200"
                     }`}
                   >
-                    ({category.items.length})
+                    ({category.key === "missing" ? missingTotal : category.items.length})
                   </span>
                 </button>
               )
@@ -1024,24 +1029,6 @@ export default function ProductsTab({
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
                   Sayfa: {page}/{totalPages}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setShowMissingOnly((prev) => !prev)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] transition ${
-                    showMissingOnly
-                      ? "border-rose-300/60 bg-rose-500/15 text-rose-50 shadow-glow"
-                      : "border-white/10 bg-ink-900/80 text-slate-200 hover:border-white/20 hover:bg-white/5"
-                  }`}
-                >
-                  <span>Sadece eksik</span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      showMissingOnly ? "bg-rose-500/20 text-rose-50" : "bg-white/5 text-slate-300"
-                    }`}
-                  >
-                    {missingCount}
-                  </span>
-                </button>
               </div>
             </div>
             <div className="flex w-full flex-col gap-2">
