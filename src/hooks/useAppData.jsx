@@ -555,17 +555,6 @@ export default function useAppData() {
   }, [canManageAdmin, isAuthed, loadAdminData])
 
   useEffect(() => {
-    if (!isAuthed || !canManageAdmin || activeTab !== "admin") {
-      setEldoradoLogs([])
-      setIsEldoradoLogsLoading(false)
-      return
-    }
-    const controller = new AbortController()
-    loadEldoradoLogs(controller.signal)
-    return () => controller.abort()
-  }, [activeTab, canManageAdmin, isAuthed, loadEldoradoLogs])
-
-  useEffect(() => {
     if (lists.length === 0) {
       if (activeListId) setActiveListId("")
       return
@@ -2312,6 +2301,17 @@ export default function useAppData() {
     },
     [apiFetch],
   )
+
+  useEffect(() => {
+    if (!isAuthed || !canManageAdmin || activeTab !== "admin") {
+      setEldoradoLogs([])
+      setIsEldoradoLogsLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    loadEldoradoLogs(controller.signal)
+    return () => controller.abort()
+  }, [activeTab, canManageAdmin, isAuthed, loadEldoradoLogs])
 
   const loadEldoradoGroups = useCallback(
     (signal) => loadEldoradoStore(signal),
