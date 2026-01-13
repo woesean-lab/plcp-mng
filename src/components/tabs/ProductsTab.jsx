@@ -175,6 +175,7 @@ export default function ProductsTab({
   canManageNotes: canManageNotesProp,
   canManageMessages: canManageMessagesProp,
   canToggleStock: canToggleStockProp,
+  canToggleCard: canToggleCardProp,
   canViewLinks = false,
   canStarOffers: canStarOffersProp,
 }) {
@@ -237,6 +238,8 @@ export default function ProductsTab({
     (typeof canEditKeysProp === "boolean" ? canEditKeysProp : canAddKeys)
   const canStarOffers =
     typeof canStarOffersProp === "boolean" ? canStarOffersProp : canAddKeys
+  const canToggleCard =
+    typeof canToggleCardProp === "boolean" ? canToggleCardProp : canStarOffers
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   const triggerKeyFade = (keyId) => {
     const normalizedId = String(keyId ?? "").trim()
@@ -1187,21 +1190,21 @@ export default function ProductsTab({
                       <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap">
                         <div
                           role="button"
-                          tabIndex={!offerId || !canStarOffers ? -1 : 0}
-                          aria-disabled={!offerId || !canStarOffers}
+                          tabIndex={!offerId || !canToggleCard ? -1 : 0}
+                          aria-disabled={!offerId || !canToggleCard}
                           onClick={() => {
-                            if (!offerId || !canStarOffers) return
+                            if (!offerId || !canToggleCard) return
                             toggleOfferOpen(offerId)
                           }}
                           onKeyDown={(event) => {
-                            if (!offerId || !canStarOffers) return
+                            if (!offerId || !canToggleCard) return
                             if (event.key === "Enter" || event.key === " ") {
                               event.preventDefault()
                               toggleOfferOpen(offerId)
                             }
                           }}
                           className={`min-w-0 flex-1 text-left ${
-                            !offerId || !canStarOffers ? "cursor-not-allowed opacity-60" : ""
+                            !offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""
                           }`}
                         >
                           <div className="flex min-h-[36px] flex-wrap items-center gap-2">
@@ -1392,10 +1395,10 @@ export default function ProductsTab({
                             <button
                               type="button"
                               onClick={() => toggleOfferOpen(offerId)}
-                              disabled={!offerId || !canStarOffers}
+                              disabled={!offerId || !canToggleCard}
                               className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
                                 isOpen ? "bg-white/10 text-white" : ""
-                              } ${!offerId || !canStarOffers ? "cursor-not-allowed opacity-60" : ""}`}
+                              } ${!offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""}`}
                               aria-label="Ürün detaylarını aç/kapat"
                             >
                               <svg
