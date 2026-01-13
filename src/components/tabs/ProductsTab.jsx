@@ -1255,9 +1255,7 @@ export default function ProductsTab({
                             )}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.12em]">
-                            <span className="inline-flex items-center rounded-md border border-accent-400/40 bg-accent-500/10 px-1.5 py-0.5 text-accent-100">
-                              Kategori: {categoryLabel}
-                            </span>
+                            <span className="text-accent-200">{categoryLabel}</span>
                             {groupName && (
                               <span className="inline-flex items-center rounded-md border border-sky-300/30 bg-sky-500/10 px-1.5 py-0.5 text-sky-100">
                                 Stok: {groupName}
