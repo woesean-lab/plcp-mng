@@ -7,7 +7,6 @@ export default function DashboardTab({
   ownedTaskStats,
   salesSummary,
   listCountText,
-  stockSummary,
   openProblems,
   resolvedProblems,
   recentActivity,
@@ -16,14 +15,12 @@ export default function DashboardTab({
   canViewSales,
   canViewProblems,
   canViewLists,
-  canViewStock,
   onNavigate,
 }) {
   const summary = salesSummary || { total: 0, count: 0, average: 0, last7Total: 0, yesterdayTotal: 0 }
   const tasks = ownedTaskStats || taskStats || { total: 0, todo: 0, doing: 0, done: 0 }
   const openCount = Array.isArray(openProblems) ? openProblems.length : 0
   const resolvedCount = Array.isArray(resolvedProblems) ? resolvedProblems.length : 0
-  const stocks = stockSummary || { total: 0, used: 0, empty: 0 }
   const userName = activeUser?.username || "Kullanıcı"
   const userRole = activeUser?.role?.name || "Personel"
   const permissionCount = Array.isArray(activeUser?.role?.permissions)
@@ -35,7 +32,6 @@ export default function DashboardTab({
     canViewSales,
     canViewProblems,
     canViewLists,
-    canViewStock,
   ].filter(Boolean).length
   const userInitial = userName.slice(0, 1).toUpperCase() || "K"
   const activeTaskCount = tasks.todo + tasks.doing
@@ -108,16 +104,7 @@ export default function DashboardTab({
       value: openCount,
       hint: openCount > 0 ? "Takipte" : "Temiz",
       accent: "bg-rose-400",
-    },
-    canViewStock && {
-      id: "stock",
-      label: "Stoksuz ürün",
-      value: stocks.empty,
-      subLabel: "Stokta",
-      subValue: stocks.total,
-      accent: "bg-amber-400",
-    },
-    canViewLists && {
+    },    canViewLists && {
       id: "lists",
       label: "Listeler",
       value: listCountText,
@@ -170,15 +157,7 @@ export default function DashboardTab({
       detail: "Kayıtları güncelle",
       tab: "problems",
       accent: "bg-rose-400",
-    },
-    canViewStock && {
-      id: "act-stock",
-      label: "Stok güncelle",
-      detail: "Ürünleri kontrol et",
-      tab: "stock",
-      accent: "bg-amber-400",
-    },
-    canViewMessages && {
+    },    canViewMessages && {
       id: "act-messages",
       label: "Şablonları yönet",
       detail: "Mesaj havuzu",

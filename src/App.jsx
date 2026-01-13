@@ -2,14 +2,12 @@
 import { Toaster } from "react-hot-toast"
 import ProfileModal from "./components/modals/ProfileModal"
 import NoteModal from "./components/modals/NoteModal"
-import StockModal from "./components/modals/StockModal"
 import TaskDetailModal from "./components/modals/TaskDetailModal"
 import TaskEditModal from "./components/modals/TaskEditModal"
 import LoadingIndicator from "./components/LoadingIndicator"
 import ListsTab from "./components/tabs/ListsTab"
 import MessagesTab from "./components/tabs/MessagesTab"
 import ProblemsTab from "./components/tabs/ProblemsTab"
-import StockTab from "./components/tabs/StockTab"
 import TasksTab from "./components/tabs/TasksTab"
 import SalesTab from "./components/tabs/SalesTab"
 import DashboardTab from "./components/tabs/DashboardTab"
@@ -173,9 +171,7 @@ function App() {
     handleListDeleteRow,
     handleListInsertColumn,
     handleListDeleteColumn,
-    isStockTabLoading,
     isProductsTabLoading,
-    stockSummary,
     eldoradoCatalog,
     eldoradoKeysByOffer,
     eldoradoKeysLoading,
@@ -220,59 +216,7 @@ function App() {
     handleEldoradoStockToggle,
     handleEldoradoOfferStarToggle,
     refreshEldoradoOffer,
-    products,
-    productSearch,
-    setProductSearch,
-    filteredProducts,
-    splitStocks,
-    dragState,
-    handleDragStart,
-    handleDragOver,
-    handleDrop,
-    handleDragEnd,
-    lastDeleted,
-    handleUndoDelete,
-    openStockModal,
-    openProducts,
-    toggleProductOpen,
     templates,
-    handleProductCopyMessage,
-    editingProduct,
-    handleEditStart,
-    handleEditChange,
-    handleEditSave,
-    handleEditCancel,
-    confirmProductTarget,
-    confirmStockTarget,
-    handleProductDeleteWithConfirm,
-    bulkCount,
-    setBulkCount,
-    handleBulkCopyAndMarkUsed,
-    handleBulkCopyAndDelete,
-    deletingStocks,
-    usingStocks,
-    highlightStocks,
-    isStockTextSelectingRef,
-    editingStocks,
-    savingStocks,
-    handleStockEditChange,
-    handleStockEditSave,
-    handleStockEditCancel,
-    handleStockCopy,
-    handleStockEditStart,
-    handleStockStatusUpdate,
-    handleStockDeleteWithConfirm,
-    STOCK_STATUS,
-    usedBulkCount,
-    setUsedBulkCount,
-    handleUsedBulkDelete,
-    productForm,
-    setProductForm,
-    handleProductAdd,
-    stockForm,
-    setStockForm,
-    handleStockAdd,
-    resetStockForm,
     isProblemsTabLoading,
     openProblems,
     resolvedProblems,
@@ -323,16 +267,6 @@ function App() {
     setNoteModalDraft,
     setNoteModalImages,
     handleNoteModalSave,
-    isStockModalOpen,
-    handleStockModalClose,
-    stockModalDraft,
-    setStockModalDraft,
-    stockModalTarget,
-    stockModalLineRef,
-    stockModalLineCount,
-    stockModalTextareaRef,
-    handleStockModalScroll,
-    handleStockModalSave,
     taskDetailTarget,
     closeTaskDetail,
     taskDetailComments,
@@ -412,88 +346,54 @@ function App() {
     PERMISSIONS.listsStructureEdit,
     PERMISSIONS.listsEdit,
   ])
-  const canViewStock = hasPermission(PERMISSIONS.stockView)
   const canViewProducts = hasPermission(PERMISSIONS.productsView)
-  const canCreateProducts = hasAnyPermission([PERMISSIONS.stockProductCreate, PERMISSIONS.stockManage])
-  const canEditProducts = hasAnyPermission([PERMISSIONS.stockProductEdit, PERMISSIONS.stockManage])
-  const canDeleteProducts = hasAnyPermission([PERMISSIONS.stockProductDelete, PERMISSIONS.stockManage])
-  const canReorderProducts = hasAnyPermission([
-    PERMISSIONS.stockProductReorder,
-    PERMISSIONS.stockManage,
-  ])
-  const canAddStocks = hasAnyPermission([PERMISSIONS.stockStockAdd, PERMISSIONS.stockManage])
-  const canEditStocks = hasAnyPermission([PERMISSIONS.stockStockEdit, PERMISSIONS.stockManage])
-  const canDeleteStocks = hasAnyPermission([PERMISSIONS.stockStockDelete, PERMISSIONS.stockManage])
-  const canChangeStockStatus = hasAnyPermission([
-    PERMISSIONS.stockStockStatus,
-    PERMISSIONS.stockManage,
-  ])
-  const canCopyStocks = hasAnyPermission([PERMISSIONS.stockStockCopy, PERMISSIONS.stockManage])
-  const canBulkStocks = hasAnyPermission([PERMISSIONS.stockStockBulk, PERMISSIONS.stockManage])
   const canAddProductStocks = hasAnyPermission([
     PERMISSIONS.productsStockAdd,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockStockAdd,
-    PERMISSIONS.stockManage,
   ])
   const canEditProductStocks = hasAnyPermission([
     PERMISSIONS.productsStockEdit,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockStockEdit,
-    PERMISSIONS.stockManage,
   ])
   const canDeleteProductStocks = hasAnyPermission([
     PERMISSIONS.productsStockDelete,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockStockDelete,
-    PERMISSIONS.stockManage,
   ])
   const canChangeProductStockStatus = hasAnyPermission([
     PERMISSIONS.productsStockStatus,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockStockStatus,
-    PERMISSIONS.stockManage,
   ])
   const canCopyProductStocks = hasAnyPermission([
     PERMISSIONS.productsStockCopy,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockStockCopy,
-    PERMISSIONS.stockManage,
   ])
   const canManageProductGroups = hasAnyPermission([
     PERMISSIONS.productsGroupManage,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockManage,
   ])
   const canManageProductNotes = hasAnyPermission([
     PERMISSIONS.productsNoteManage,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockManage,
   ])
   const canManageProductMessages = hasAnyPermission([
     PERMISSIONS.productsMessageManage,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockManage,
   ])
   const canToggleProductStock = hasAnyPermission([
     PERMISSIONS.productsStockToggle,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockManage,
   ])
   const canToggleProductCard = hasAnyPermission([
     PERMISSIONS.productsCardToggle,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockManage,
   ])
   const canViewProductLinks = hasAnyPermission([
     PERMISSIONS.productsLinkView,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockManage,
   ])
   const canStarProducts = hasAnyPermission([
     PERMISSIONS.productsStar,
     PERMISSIONS.productsManage,
-    PERMISSIONS.stockManage,
   ])
   const canManageRoles = hasAnyPermission([PERMISSIONS.adminRolesManage, PERMISSIONS.adminManage])
   const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
@@ -506,7 +406,6 @@ function App() {
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
-      { key: "stock", label: "Stok", canView: canViewStock },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
@@ -516,7 +415,6 @@ function App() {
       canViewMessages,
       canViewProblems,
       canViewSales,
-      canViewStock,
       canViewProducts,
       canViewTasks,
     ],
@@ -901,7 +799,6 @@ function App() {
               ownedTaskStats={ownedTaskStats}
               salesSummary={salesSummary}
               listCountText={listCountText}
-              stockSummary={stockSummary}
                 openProblems={openProblems}
                 resolvedProblems={resolvedProblems}
                 recentActivity={recentActivity}
@@ -910,7 +807,6 @@ function App() {
                 canViewSales={canViewSales}
                 canViewProblems={canViewProblems}
                 canViewLists={canViewLists}
-                canViewStock={canViewStock}
                 onNavigate={handleTabSwitch}
               />
           </div>
@@ -1152,78 +1048,6 @@ function App() {
           </div>
         )}
 
-        {activeTab === "stock" && canViewStock && (
-          <div className={getTabSlideClass("stock")}>
-            <StockTab
-              isLoading={isStockTabLoading}
-              panelClass={panelClass}
-              canCreateProducts={canCreateProducts}
-              canEditProducts={canEditProducts}
-              canDeleteProducts={canDeleteProducts}
-              canReorderProducts={canReorderProducts}
-              canAddStocks={canAddStocks}
-              canEditStocks={canEditStocks}
-              canDeleteStocks={canDeleteStocks}
-              canChangeStockStatus={canChangeStockStatus}
-              canCopyStocks={canCopyStocks}
-              canBulkStocks={canBulkStocks}
-              stockSummary={stockSummary}
-              products={products}
-              productSearch={productSearch}
-              setProductSearch={setProductSearch}
-              filteredProducts={filteredProducts}
-              splitStocks={splitStocks}
-              dragState={dragState}
-              handleDragStart={handleDragStart}
-              handleDragOver={handleDragOver}
-              handleDrop={handleDrop}
-              handleDragEnd={handleDragEnd}
-              lastDeleted={lastDeleted}
-              handleUndoDelete={handleUndoDelete}
-              openStockModal={openStockModal}
-              openProducts={openProducts}
-              toggleProductOpen={toggleProductOpen}
-              templates={templates}
-              handleProductCopyMessage={handleProductCopyMessage}
-              editingProduct={editingProduct}
-              handleEditStart={handleEditStart}
-              handleEditChange={handleEditChange}
-              handleEditSave={handleEditSave}
-              handleEditCancel={handleEditCancel}
-              confirmProductTarget={confirmProductTarget}
-              confirmStockTarget={confirmStockTarget}
-              handleProductDeleteWithConfirm={handleProductDeleteWithConfirm}
-              bulkCount={bulkCount}
-              setBulkCount={setBulkCount}
-              handleBulkCopyAndMarkUsed={handleBulkCopyAndMarkUsed}
-              handleBulkCopyAndDelete={handleBulkCopyAndDelete}
-              deletingStocks={deletingStocks}
-              usingStocks={usingStocks}
-              highlightStocks={highlightStocks}
-              isStockTextSelectingRef={isStockTextSelectingRef}
-              editingStocks={editingStocks}
-              savingStocks={savingStocks}
-              handleStockEditChange={handleStockEditChange}
-              handleStockEditSave={handleStockEditSave}
-              handleStockEditCancel={handleStockEditCancel}
-              handleStockCopy={handleStockCopy}
-              handleStockEditStart={handleStockEditStart}
-              handleStockStatusUpdate={handleStockStatusUpdate}
-              handleStockDeleteWithConfirm={handleStockDeleteWithConfirm}
-              STOCK_STATUS={STOCK_STATUS}
-              usedBulkCount={usedBulkCount}
-              setUsedBulkCount={setUsedBulkCount}
-              handleUsedBulkDelete={handleUsedBulkDelete}
-              productForm={productForm}
-              setProductForm={setProductForm}
-              handleProductAdd={handleProductAdd}
-              stockForm={stockForm}
-              setStockForm={setStockForm}
-              handleStockAdd={handleStockAdd}
-              resetStockForm={resetStockForm}
-            />
-          </div>
-        )}
 
         {activeTab === "problems" && canViewProblems && (
           <div className={getTabSlideClass("problems")}>
@@ -1313,18 +1137,6 @@ function App() {
           setDraft={setNoteModalDraft}
           setImages={setNoteModalImages}
           onSave={handleNoteModalSave}
-        />
-        <StockModal
-          isOpen={isStockModalOpen}
-          onClose={handleStockModalClose}
-          draft={stockModalDraft}
-          setDraft={setStockModalDraft}
-          targetName={stockModalTarget?.name}
-          lineRef={stockModalLineRef}
-          lineCount={stockModalLineCount}
-          textareaRef={stockModalTextareaRef}
-          onScroll={handleStockModalScroll}
-          onSave={handleStockModalSave}
         />
         <TaskDetailModal
           target={taskDetailTarget}

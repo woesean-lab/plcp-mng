@@ -83,17 +83,6 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "products.star",
   "products.card.toggle",
   "products.manage",
-  "stock.view",
-  "stock.product.create",
-  "stock.product.edit",
-  "stock.product.delete",
-  "stock.product.reorder",
-  "stock.stock.add",
-  "stock.stock.edit",
-  "stock.stock.delete",
-  "stock.stock.status",
-  "stock.stock.copy",
-  "stock.stock.bulk",
   "admin.roles.manage",
   "admin.users.manage",
 ]
@@ -102,7 +91,6 @@ const LEGACY_PERMISSIONS = [
   "tasks.edit",
   "problems.manage",
   "lists.edit",
-  "stock.manage",
   "admin.manage",
 ]
 const allowedPermissions = new Set([...DEFAULT_ADMIN_PERMISSIONS, ...LEGACY_PERMISSIONS])
