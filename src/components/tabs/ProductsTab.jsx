@@ -2389,7 +2389,7 @@ export default function ProductsTab({
                           <div className="self-start rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
                               <div>
                                 {messageGroupMessages.length === 0 ? (
-                                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                  <div className="text-xs text-slate-400">
                                     {messageGroupId
                                       ? "Bu grupta mesaj yok."
                                       : "Bağımsız mesaj yok."}
