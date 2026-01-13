@@ -170,6 +170,7 @@ export default function ProductsTab({
   onTogglePrice,
   onToggleOfferStar,
   onRefreshOffer,
+  canManagePrices: canManagePricesProp,
   canAddKeys = false,
   canDeleteKeys = false,
   canCopyKeys = false,
@@ -263,6 +264,8 @@ export default function ProductsTab({
       ? canManageMessagesProp
       : canAddKeys &&
         (typeof onAddMessageGroupTemplate === "function" || typeof onAddMessageTemplate === "function")
+  const canManagePrices =
+    typeof canManagePricesProp === "boolean" ? canManagePricesProp : canAddKeys
   const canDeleteMessageGroup =
     canManageMessages && typeof onDeleteMessageGroup === "function"
   const canRemoveMessageTemplate =
@@ -475,6 +478,7 @@ export default function ProductsTab({
     }
   }
   const handlePriceToggle = async (offerId) => {
+    if (!canManagePrices) return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const nextEnabled = !priceEnabledByOffer?.[normalizedId]
@@ -1404,9 +1408,9 @@ export default function ProductsTab({
                             <button
                               type="button"
                               onClick={() => handlePriceToggle(offerId)}
-                              disabled={!offerId}
+                              disabled={!offerId || !canManagePrices}
                               className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:bg-white/10 hover:text-white ${
-                                !offerId ? "cursor-not-allowed opacity-60" : ""
+                                !offerId || !canManagePrices ? "cursor-not-allowed opacity-60" : ""
                               }`}
                               aria-label="Fiyat aç/kapat"
                               title={isPriceEnabled ? "Fiyat açık" : "Fiyat kapalı"}
@@ -1620,12 +1624,15 @@ export default function ProductsTab({
                               {isPriceEnabled && (
                                 <button
                                   type="button"
-                                  onClick={() => setActivePanel(offerId, "price")}
+                                  onClick={() => {
+                                    if (!canManagePrices) return
+                                    setActivePanel(offerId, "price")
+                                  }}
                                   className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold transition ${
                                     activePanel === "price"
                                       ? "border-accent-400/70 bg-ink-900/70 text-slate-100 shadow-card"
                                       : "border-white/10 bg-ink-900/40 text-slate-300 hover:border-white/20 hover:bg-ink-900/60"
-                                  }`}
+                                  } ${!canManagePrices ? "cursor-not-allowed opacity-60" : ""}`}
                                   aria-pressed={activePanel === "price"}
                                 >
                                   <span>Fiyat</span>
@@ -1897,6 +1904,7 @@ export default function ProductsTab({
                                           handlePriceDraftChange(offerId, "base", event.target.value)
                                         }
                                         placeholder="Baz fiyat"
+                                        disabled={!canManagePrices}
                                         className="min-w-[160px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                                       />
                                     </div>
@@ -1911,7 +1919,7 @@ export default function ProductsTab({
                                             priceResult === "" ? 0 : priceResult,
                                           )
                                         }
-                                        disabled={priceResult === "" || !offerId}
+                                        disabled={priceResult === "" || !offerId || !canManagePrices}
                                         className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-8 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         KAYDET
@@ -1929,6 +1937,7 @@ export default function ProductsTab({
                                             handlePriceDraftChange(offerId, "percent", event.target.value)
                                           }
                                           placeholder="%"
+                                          disabled={!canManagePrices}
                                           className="min-w-[120px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                                         />
                                       </div>
