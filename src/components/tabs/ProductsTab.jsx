@@ -349,6 +349,7 @@ export default function ProductsTab({
       totalStock: 0,
       usedStock: 0,
     }
+    const countedGroups = new Set()
     allProducts.forEach((product) => {
       const offerId = String(product?.id ?? "").trim()
       const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
@@ -378,14 +379,22 @@ export default function ProductsTab({
       const usedCount = hasLoadedKeys ? usedCountFromKeys : rawUsedCount
       const availableCount = hasLoadedKeys ? availableCountFromKeys : rawAvailableCount
       const totalCount = Math.max(0, availableCount + usedCount)
-      totals.totalStock += totalCount
-      totals.usedStock += Math.max(0, usedCount)
+      const groupId = String(
+        groupAssignments?.[offerId] ?? product?.stockGroupId ?? "",
+      ).trim()
+      const countKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+      const shouldCountStock = !countedGroups.has(countKey)
+      if (shouldCountStock) {
+        countedGroups.add(countKey)
+        totals.totalStock += totalCount
+        totals.usedStock += Math.max(0, usedCount)
+      }
       if (isStockEnabled && Math.max(0, availableCount) === 0) {
         totals.outOfStock += 1
       }
     })
     return totals
-  }, [allProducts, keysByOffer, stockEnabledByOffer])
+  }, [allProducts, groupAssignments, keysByOffer, stockEnabledByOffer])
   const toggleOfferOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
