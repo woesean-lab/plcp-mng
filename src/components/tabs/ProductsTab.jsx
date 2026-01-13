@@ -1844,10 +1844,10 @@ export default function ProductsTab({
                                     <p className="text-[13px] font-semibold text-slate-100">Fiyat</p>
                                   </div>
                                 </div>
-                                <div className="mt-4 space-y-3">
-                                  <div className="grid gap-4 sm:grid-cols-2">
-                                    <label className="flex flex-col gap-2 text-[10px] font-semibold text-slate-300">
-                                      Fiyat gir
+                                <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
+                                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                    <label className="text-[11px] font-semibold text-slate-300">Fiyat gir</label>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2">
                                       <input
                                         type="text"
                                         value={priceDraft.base}
@@ -1855,38 +1855,48 @@ export default function ProductsTab({
                                           handlePriceDraftChange(offerId, "base", event.target.value)
                                         }
                                         placeholder="Baz fiyat"
-                                        className="h-9 rounded-lg border border-white/10 bg-ink-900/60 px-3 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                        className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                                       />
-                                    </label>
-                                    <label className="flex flex-col gap-2 text-[10px] font-semibold text-slate-300">
-                                      Yüzdelik
-                                      <input
-                                        type="text"
-                                        value={priceDraft.percent}
-                                        onChange={(event) =>
-                                          handlePriceDraftChange(offerId, "percent", event.target.value)
-                                        }
-                                        placeholder="%"
-                                        className="h-9 rounded-lg border border-white/10 bg-ink-900/60 px-3 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                                      />
-                                    </label>
+                                    </div>
                                   </div>
-                                  <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handlePriceSave(
-                                          offerId,
-                                          baseNumber,
-                                          percentNumber,
-                                          priceResult === "" ? 0 : priceResult,
-                                        )
-                                      }
-                                      disabled={priceResult === "" || !offerId}
-                                      className="h-8 rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 shadow-glow transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      KAYDET
-                                    </button>
+                                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                    <label className="text-[11px] font-semibold text-slate-300">{"Y\u00fczdelik"}</label>
+                                    <div className="mt-2 space-y-2">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <input
+                                          type="text"
+                                          value={priceDraft.percent}
+                                          onChange={(event) =>
+                                            handlePriceDraftChange(offerId, "percent", event.target.value)
+                                          }
+                                          placeholder="%"
+                                          className="min-w-[120px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                        />
+                                      </div>
+                                      <div className="flex items-center justify-between gap-3 rounded-lg border border-accent-400/40 bg-accent-500/10 px-3 py-2 text-[12px] font-semibold text-accent-50">
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-accent-100/80">
+                                          {"Sonu\u00e7"}
+                                        </span>
+                                        <span>{priceResult === "" ? "-" : priceResult.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex flex-wrap justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handlePriceSave(
+                                              offerId,
+                                              baseNumber,
+                                              percentNumber,
+                                              priceResult === "" ? 0 : priceResult,
+                                            )
+                                          }
+                                          disabled={priceResult === "" || !offerId}
+                                          className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-8 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          KAYDET
+                                        </button>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
