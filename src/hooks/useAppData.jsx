@@ -173,6 +173,8 @@ export default function useAppData() {
   const [eldoradoMessageTemplatesByOffer, setEldoradoMessageTemplatesByOffer] = useState({})
   const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState({})
   const [eldoradoStarredOffers, setEldoradoStarredOffers] = useState({})
+  const [eldoradoLogs, setEldoradoLogs] = useState([])
+  const [isEldoradoLogsLoading, setIsEldoradoLogsLoading] = useState(false)
   const stockModalTextareaRef = useRef(null)
   const stockModalLineRef = useRef(null)
   const isStockTextSelectingRef = useRef(false)
@@ -551,6 +553,17 @@ export default function useAppData() {
     loadAdminData(controller.signal)
     return () => controller.abort()
   }, [canManageAdmin, isAuthed, loadAdminData])
+
+  useEffect(() => {
+    if (!isAuthed || !canManageAdmin || activeTab !== "admin") {
+      setEldoradoLogs([])
+      setIsEldoradoLogsLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    loadEldoradoLogs(controller.signal)
+    return () => controller.abort()
+  }, [activeTab, canManageAdmin, isAuthed, loadEldoradoLogs])
 
   useEffect(() => {
     if (lists.length === 0) {
@@ -2279,6 +2292,26 @@ export default function useAppData() {
       setIsEldoradoRefreshing(false)
     }
   }, [apiFetch, applyEldoradoKeyCounts, isEldoradoRefreshing])
+
+  const loadEldoradoLogs = useCallback(
+    async (signal) => {
+      setIsEldoradoLogsLoading(true)
+      try {
+        const res = await apiFetch("/api/eldorado/logs", { signal })
+        if (!res.ok) throw new Error("api_error")
+        const payload = await res.json()
+        const lines = Array.isArray(payload?.lines) ? payload.lines : []
+        setEldoradoLogs(lines.map((line) => String(line ?? "")))
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        setEldoradoLogs([])
+        toast.error("Eldorado loglari alinamadi (API/Server kontrol edin).")
+      } finally {
+        setIsEldoradoLogsLoading(false)
+      }
+    },
+    [apiFetch],
+  )
 
   const loadEldoradoGroups = useCallback(
     (signal) => loadEldoradoStore(signal),
@@ -5199,6 +5232,9 @@ const handleEldoradoNoteSave = useCallback(
     users,
     isAdminLoading,
     isAdminTabLoading,
+    eldoradoLogs,
+    isEldoradoLogsLoading,
+    loadEldoradoLogs,
     roleDraft,
     setRoleDraft,
     userDraft,

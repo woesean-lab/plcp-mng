@@ -30,6 +30,8 @@ const eldoradoTitleSelector = process.env.ELDORADO_TITLE_SELECTOR ?? ".offer-tit
 const eldoradoDataDir = path.resolve(appRoot, "src", "data")
 const eldoradoItemsPath = path.join(eldoradoDataDir, "eldorado-products.json")
 const eldoradoTopupsPath = path.join(eldoradoDataDir, "eldorado-topups.json")
+const eldoradoLogPath =
+  process.env.ELDORADO_LOG_PATH ?? path.join(eldoradoDataDir, "eldorado-scrape.log")
 const eldoradoScriptPath = path.resolve(appRoot, "scripts", "eldorado-scrape.mjs")
 const playwrightBrowsersPath =
   process.env.PLAYWRIGHT_BROWSERS_PATH ?? path.resolve(appRoot, ".cache", "ms-playwright")
@@ -462,6 +464,7 @@ const runEldoradoScrape = ({ url, pages, outputPath }) => {
       ELDORADO_PAGES: String(pages),
       ELDORADO_OUTPUT: outputPath,
       ELDORADO_TITLE_SELECTOR: eldoradoTitleSelector,
+      ELDORADO_LOG_PATH: eldoradoLogPath,
       PLAYWRIGHT_BROWSERS_PATH: playwrightBrowsersPath,
     }
     const child = spawn(process.execPath, [eldoradoScriptPath], { env, cwd: appRoot })
@@ -1905,6 +1908,22 @@ app.get("/api/eldorado/products", async (_req, res, next) => {
     const catalog = await loadEldoradoCatalog()
     res.json({ catalog })
   } catch (error) {
+    next(error)
+  }
+})
+
+app.get("/api/eldorado/logs", async (req, res, next) => {
+  const rawLimit = Number(req.query?.limit ?? 200)
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 1000) : 200
+  try {
+    const raw = await fs.readFile(eldoradoLogPath, "utf8")
+    const lines = raw.split(/\r?\n/).filter(Boolean)
+    res.json({ lines: lines.slice(-limit) })
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      res.json({ lines: [] })
+      return
+    }
     next(error)
   }
 })

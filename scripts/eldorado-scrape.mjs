@@ -29,6 +29,7 @@ const MAX_PAGES = Number(process.env.ELDORADO_MAX_PAGES ?? 50)
 const USE_TOTAL_PAGES = Number.isFinite(TOTAL_PAGES) && TOTAL_PAGES > 0
 const OUTPUT_PATH = process.env.ELDORADO_OUTPUT ?? "src/data/eldorado-products.json"
 const TITLE_SELECTOR = process.env.ELDORADO_TITLE_SELECTOR ?? ".offer-title"
+const LOG_PATH = process.env.ELDORADO_LOG_PATH ?? ""
 const DEFAULT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH ?? path.resolve(process.cwd(), ".cache", "ms-playwright")
 const SKIP_BROWSER_DOWNLOAD = process.env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD === "1"
 const SKIP_PLAYWRIGHT_INSTALL = process.env.SKIP_PLAYWRIGHT_INSTALL === "1"
@@ -40,14 +41,25 @@ if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
   process.env.PLAYWRIGHT_BROWSERS_PATH = DEFAULT_BROWSERS_PATH
 }
 
-const logScrapePlan = () => {
+const writeLogLine = async (message) => {
+  console.log(message)
+  if (!LOG_PATH) return
+  try {
+    await fs.mkdir(path.dirname(LOG_PATH), { recursive: true })
+    await fs.appendFile(LOG_PATH, `${message}\n`, "utf8")
+  } catch (error) {
+    console.warn("[eldorado] failed to write log:", error)
+  }
+}
+
+const logScrapePlan = async () => {
   const pagesHint = USE_TOTAL_PAGES ? `total_pages=${TOTAL_PAGES}` : `max_pages=${MAX_PAGES}`
-  console.log(
+  await writeLogLine(
     `[eldorado] plan urls=${SCRAPE_URLS.length} selector="${TITLE_SELECTOR}" ${pagesHint}`,
   )
-  SCRAPE_URLS.forEach((url, index) => {
-    console.log(`[eldorado] plan[${index + 1}/${SCRAPE_URLS.length}] ${url}`)
-  })
+  for (const [index, url] of SCRAPE_URLS.entries()) {
+    await writeLogLine(`[eldorado] plan[${index + 1}/${SCRAPE_URLS.length}] ${url}`)
+  }
 }
 
 const normalizeHref = (href) => {
@@ -232,7 +244,9 @@ const scrapeCategory = async (startUrl) => {
 
   while (pageIndex <= maxPages) {
     const pageUrl = buildPageUrl(startUrl, pageIndex)
-    console.log(`[eldorado] page ${pageIndex}${USE_TOTAL_PAGES ? `/${TOTAL_PAGES}` : ""}: ${pageUrl}`)
+    await writeLogLine(
+      `[eldorado] page ${pageIndex}${USE_TOTAL_PAGES ? `/${TOTAL_PAGES}` : ""}: ${pageUrl}`,
+    )
     await page.goto(pageUrl, { waitUntil: "domcontentloaded" })
     await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {})
     const found = await page
@@ -272,7 +286,7 @@ const scrapeCategory = async (startUrl) => {
         })
         .filter((item) => item.name)
     })
-    console.log(`[eldorado] found ${pageItems.length} items`)
+    await writeLogLine(`[eldorado] found ${pageItems.length} items`)
     if (pageItems.length === 0) {
       emptyPages += 1
       if (!USE_TOTAL_PAGES && emptyPages >= 2) break
@@ -285,14 +299,14 @@ const scrapeCategory = async (startUrl) => {
 
   await browser.close()
   const elapsed = Math.round((Date.now() - startTime) / 1000)
-  console.log(
+  await writeLogLine(
     `[eldorado] done category=${categoryHint || "unknown"} items=${scraped.length} time=${elapsed}s`,
   )
   return scraped
 }
 
 const scrapeAllPages = async () => {
-  logScrapePlan()
+  await logScrapePlan()
   const all = []
   for (const url of SCRAPE_URLS) {
     const items = await scrapeCategory(url)

@@ -27,6 +27,9 @@ export default function AdminTab({
   panelClass,
   canManageRoles,
   canManageUsers,
+  eldoradoLogs,
+  isEldoradoLogsLoading,
+  onRefreshEldoradoLogs,
   activeUser,
   roles,
   users,
@@ -52,6 +55,7 @@ export default function AdminTab({
 
   const isRoleEditing = Boolean(roleDraft?.id)
   const isUserEditing = Boolean(userDraft?.id)
+  const canShowLogs = canManageRoles || canManageUsers
 
   return (
     <div className="space-y-6">
@@ -82,6 +86,44 @@ export default function AdminTab({
           </div>
         </div>
       </header>
+
+      {canShowLogs && (
+        <div className={`${panelClass} bg-ink-900/60`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                Eldorado Tarama Logu
+              </p>
+              <p className="text-xs text-slate-400">Son tarama ciktilari burada gorunur.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onRefreshEldoradoLogs?.()}
+              disabled={isEldoradoLogsLoading}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition ${
+                isEldoradoLogsLoading
+                  ? "cursor-not-allowed border-white/10 bg-white/5 text-slate-400"
+                  : "border-accent-300/60 bg-accent-500/15 text-accent-50 hover:border-accent-300 hover:bg-accent-500/25"
+              }`}
+            >
+              {isEldoradoLogsLoading ? "Yukleniyor" : "Yenile"}
+            </button>
+          </div>
+          <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
+            {isEldoradoLogsLoading ? (
+              <div className="h-28 w-full rounded-lg bg-white/5" />
+            ) : eldoradoLogs.length === 0 ? (
+              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                Log bulunamadi.
+              </div>
+            ) : (
+              <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-ink-950/60 p-3 text-[11px] text-slate-200">
+                {eldoradoLogs.join("\n")}
+              </pre>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {canManageRoles && (
