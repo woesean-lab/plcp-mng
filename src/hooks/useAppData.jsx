@@ -2293,10 +2293,20 @@ export default function useAppData() {
         const lines = Array.isArray(payload?.lines) ? payload.lines : []
         const normalized = lines.map((line) => String(line ?? ""))
         setEldoradoLogs(normalized)
+        const lastSeen = lastEldoradoLogRef.current
+        const lastSeenIndex = lastSeen ? normalized.lastIndexOf(lastSeen) : -1
+        const freshLines = lastSeenIndex >= 0 ? normalized.slice(lastSeenIndex + 1) : normalized.slice(-1)
+        freshLines.forEach((line) => {
+          if (!line) return
+          toast(line, {
+            position: "top-right",
+            duration: 2400,
+            style: { maxWidth: "92vw" },
+          })
+        })
         const lastLine = normalized[normalized.length - 1]
-        if (lastLine && lastLine !== lastEldoradoLogRef.current) {
+        if (lastLine) {
           lastEldoradoLogRef.current = lastLine
-          toast(lastLine, { position: "top-right", duration: 2400 })
         }
       } catch (error) {
         if (error?.name === "AbortError") return
@@ -2310,15 +2320,21 @@ export default function useAppData() {
   )
 
   useEffect(() => {
-    if (!isAuthed || !canManageAdmin || activeTab !== "admin") {
-      setEldoradoLogs([])
+    if (!isAuthed || !isEldoradoRefreshing) {
       setIsEldoradoLogsLoading(false)
       return
     }
+    lastEldoradoLogRef.current = ""
     const controller = new AbortController()
     loadEldoradoLogs(controller.signal)
-    return () => controller.abort()
-  }, [activeTab, canManageAdmin, isAuthed, loadEldoradoLogs])
+    const timer = window.setInterval(() => {
+      loadEldoradoLogs()
+    }, 2500)
+    return () => {
+      controller.abort()
+      window.clearInterval(timer)
+    }
+  }, [isAuthed, isEldoradoRefreshing, loadEldoradoLogs])
 
   const loadEldoradoGroups = useCallback(
     (signal) => loadEldoradoStore(signal),
