@@ -434,7 +434,7 @@ export default function ProductsTab({
       const shouldCountStock = !countedGroups.has(countKey)
       if (shouldCountStock) {
         countedGroups.add(countKey)
-        totals.totalStock += totalCount
+        totals.totalStock += Math.max(0, availableCount)
         totals.usedStock += Math.max(0, usedCount)
       }
       if (isStockEnabled && Math.max(0, availableCount) === 0) {
