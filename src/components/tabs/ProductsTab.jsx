@@ -1267,27 +1267,6 @@ export default function ProductsTab({
                     : independentMessages
                   const messageGroupLabel =
                     messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
-                  const stockMetaLabel = groupName
-                    ? `Grup: ${groupName}`
-                    : isStockEnabled
-                      ? "Bireysel"
-                      : "Kapali"
-                  const noteMetaLabel = noteGroupName
-                    ? `Grup: ${noteGroupName}`
-                    : storedNote
-                      ? "Kayitli"
-                      : "Yok"
-                  const messageMetaLabel = messageGroupLabel
-                  const hasStockMeta = Boolean(groupName) || isStockEnabled
-                  const hasNoteMeta = Boolean(noteGroupName) || Boolean(storedNote)
-                  const hasMessageMeta =
-                    Boolean(messageGroupName) || (Array.isArray(messageGroupMessages) && messageGroupMessages.length > 0)
-                  const metaItems = [
-                    { id: "category", label: "Kategori", value: categoryLabel, visible: Boolean(categoryLabel) },
-                    { id: "stock", label: "Stok", value: stockMetaLabel, visible: hasStockMeta },
-                    { id: "note", label: "Not", value: noteMetaLabel, visible: hasNoteMeta },
-                    { id: "message", label: "Mesaj", value: messageMetaLabel, visible: hasMessageMeta },
-                  ].filter((item) => item.visible)
                   const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
                   const baseValue = String(priceDraft.base ?? "").replace(",", ".")
                   const percentValue = String(priceDraft.percent ?? "").replace(",", ".")
@@ -1376,18 +1355,6 @@ export default function ProductsTab({
                               </div>
                             )}
                           </div>
-                          {metaItems.length > 0 && (
-                            <div className="mt-2 grid gap-x-4 gap-y-1 text-[11px] text-slate-400 sm:grid-cols-2">
-                              {metaItems.map((item) => (
-                                <div key={item.id} className="flex items-center gap-2">
-                                  <span className="uppercase tracking-[0.18em] text-slate-500">
-                                    {item.label}
-                                  </span>
-                                  <span className="text-slate-200">{item.value}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                         <div className="flex flex-wrap items-stretch gap-1.5">
                           <div className="flex w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:h-[36px] sm:w-[192px] sm:flex-nowrap">
