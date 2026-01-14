@@ -867,6 +867,7 @@ function App() {
                 canViewMessages={canViewMessages}
                 canViewTasks={canViewTasks}
                 canViewSales={canViewSales}
+                canViewSalesAnalytics={canViewSalesAnalytics}
                 canViewProblems={canViewProblems}
                 canViewProducts={canViewProducts}
                 canViewLists={canViewLists}

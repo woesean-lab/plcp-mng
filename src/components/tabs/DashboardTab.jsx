@@ -14,6 +14,7 @@
   canViewMessages,
   canViewTasks,
   canViewSales,
+  canViewSalesAnalytics,
   canViewProblems,
   canViewProducts,
   canViewLists,
@@ -87,7 +88,7 @@
 
   const products = productSummary || { total: 0, stockEnabled: 0, outOfStock: 0 }
   const kpiItems = [
-    canViewSales && {
+    canViewSalesAnalytics && {
       id: "sales",
       label: "Son 7 gün satış",
       value: summary.last7Total,
