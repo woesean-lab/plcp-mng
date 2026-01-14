@@ -1355,35 +1355,33 @@ export default function ProductsTab({
                               </div>
                             )}
                           </div>
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-300">
-                            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-semibold text-slate-200">
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+                            <span className="text-[10px] font-semibold text-slate-300">
                               {categoryLabel}
                             </span>
                             {(groupName || noteGroupName || messageGroupName) && (
-                              <>
-                                <span className="h-3 w-px bg-white/10" />
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                  {groupName && (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-semibold text-slate-200">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                                      Stok {groupName}
-                                    </span>
-                                  )}
-                                  {noteGroupName && (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-semibold text-slate-200">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                                      Not {noteGroupName}
-                                    </span>
-                                  )}
-                                  {messageGroupName && (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-semibold text-slate-200">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                                      Mesaj {messageGroupName}
-                                    </span>
-                                  )}
-                                </div>
-                              </>
+                              <span className="text-slate-500">•</span>
                             )}
+                            <div className="flex flex-wrap items-center gap-2">
+                              {groupName && (
+                                <span className="inline-flex items-center gap-1 text-[9px] text-slate-300">
+                                  <span className="h-1 w-1 rounded-full bg-slate-500" />
+                                  Stok {groupName}
+                                </span>
+                              )}
+                              {noteGroupName && (
+                                <span className="inline-flex items-center gap-1 text-[9px] text-slate-300">
+                                  <span className="h-1 w-1 rounded-full bg-slate-500" />
+                                  Not {noteGroupName}
+                                </span>
+                              )}
+                              {messageGroupName && (
+                                <span className="inline-flex items-center gap-1 text-[9px] text-slate-300">
+                                  <span className="h-1 w-1 rounded-full bg-slate-500" />
+                                  Mesaj {messageGroupName}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="flex flex-wrap items-stretch gap-1.5">
