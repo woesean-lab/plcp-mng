@@ -2116,7 +2116,7 @@ export default function ProductsTab({
                           </div>
                           )}
                           {activePanel === "inventory" && (
-                            <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-3 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                            <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-2 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                               <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.6fr)]">
                           <div className="space-y-4">
                             {isOfferRefreshing ? (
