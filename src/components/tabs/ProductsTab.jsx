@@ -2131,7 +2131,7 @@ export default function ProductsTab({
                                 </div>
                               )}
                               {!isKeysLoading && availableKeys.length > 0 && (
-                                <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
+                                <div className="space-y-4 rounded-2xl bg-ink-900/50 p-4 shadow-card">
                                   {canCopyKeys && (
                                     <div className="flex flex-wrap items-center justify-between gap-3">
                                       <span className="text-[13px] font-semibold text-slate-100">Stoklar</span>
@@ -2181,7 +2181,7 @@ export default function ProductsTab({
                                       return (
                                         <div
                                           key={item.id}
-                                          className={`group flex flex-col items-start gap-3 rounded-xl border border-emerald-300/30 bg-emerald-500/5 px-3 py-2 transition-all duration-300 hover:border-emerald-200/60 hover:bg-emerald-500/10 sm:flex-row sm:items-center animate-panelFade ${
+                                          className={`group flex flex-col items-start gap-3 rounded-xl border border-white/10 bg-ink-900/50 px-3 py-2 transition-all duration-300 hover:border-white/20 hover:bg-ink-900/60 sm:flex-row sm:items-center animate-panelFade ${
                                             isDeleting ? "opacity-60" : ""
                                           } ${isFading ? "animate-keyFadeOut" : ""}`}
                                         >
@@ -2292,7 +2292,7 @@ export default function ProductsTab({
                                 </div>
                               )}
                               {!isKeysLoading && usedKeys.length > 0 && (
-                                <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
+                                <div className="space-y-4 rounded-2xl bg-ink-900/50 p-4 shadow-card">
                                   <div className="flex flex-wrap items-center justify-between gap-3">
                                     <span className="text-[13px] font-semibold text-slate-100">Kullanılan Stoklar</span>
                                     <div className="flex flex-wrap items-center gap-2">
@@ -2323,7 +2323,7 @@ export default function ProductsTab({
                                       return (
                                         <div
                                           key={item.id}
-                                          className={`group flex flex-col items-start gap-3 rounded-xl border border-rose-300/30 bg-rose-500/5 px-3 py-2 transition-all duration-300 hover:border-rose-200/60 hover:bg-rose-500/10 sm:flex-row sm:items-center animate-panelFade ${
+                                          className={`group flex flex-col items-start gap-3 rounded-xl border border-white/10 bg-ink-900/50 px-3 py-2 transition-all duration-300 hover:border-white/20 hover:bg-ink-900/60 sm:flex-row sm:items-center animate-panelFade ${
                                             isDeleting ? "opacity-60" : ""
                                           } ${isFading ? "animate-keyFadeOut" : ""}`}
                                         >
@@ -2440,7 +2440,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             </div>
-                          <div className="self-start rounded-2xl border border-white/10 bg-white/5 p-4 shadow-card">
+                          <div className="self-start rounded-2xl bg-ink-900/50 p-4 shadow-card">
                               <div>
                                 {messageGroupMessages.length === 0 ? (
                                   <div className="text-xs text-slate-400">
@@ -2565,7 +2565,6 @@ export default function ProductsTab({
     </div>
   )
 }
-
 
 
 
