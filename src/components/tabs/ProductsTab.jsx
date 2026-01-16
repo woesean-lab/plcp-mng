@@ -990,7 +990,7 @@ export default function ProductsTab({
               </p>
               <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-400">
                 <span>{list.length} ürün</span>
-                <span>{paginatedList.length} g?sterilen</span>
+                <span>{paginatedList.length} gösterilen</span>
                 <span>
                   {page}/{totalPages}
                 </span>
@@ -1982,7 +1982,7 @@ export default function ProductsTab({
                                       rows={9}
                                       value={noteInputValue ?? ""}
                                       onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
-                                      placeholder="?or??n notu ekle"
+                                      placeholder="Ürün notu ekle"
                                       readOnly={!canEditNoteText}
                                       className={`block min-h-[220px] w-full rounded-xl bg-ink-900/50 px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 read-only:bg-ink-900/40 read-only:text-slate-300 ${noteGroupFlashByOffer?.[offerId] ? "animate-noteSwap" : ""}`}
                                     />
@@ -2155,7 +2155,7 @@ export default function ProductsTab({
                                             onClick={() => handleBulkCopy(offerId, true)}
                                             className="rounded-md border border-amber-300/60 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 h-8 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/20"
                                           >
-                                            Kopyala + kullan?ld?
+                                            Kopyala + kullanıldı
                                           </button>
                                         )}
                                         <button
