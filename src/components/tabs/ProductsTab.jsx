@@ -1554,53 +1554,68 @@ export default function ProductsTab({
                       
                       {isOpen && (
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
-                          <div className="rounded-2xl rounded-b-none border border-white/10 bg-white/5 p-3 pb-2 shadow-card">
-                            <div
-                              className={`grid gap-2 ${tabCount === 5 ? "sm:grid-cols-5" : tabCount === 4 ? "sm:grid-cols-4" : tabCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
-                              role="tablist"
-                            >
+                          <div className="rounded-2xl rounded-b-none border border-white/10 bg-[#131826] px-3 pt-2 shadow-card">
+                            <div className="flex flex-wrap items-end gap-4 border-b border-white/10" role="tablist">
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "inventory")}
-                                className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold transition ${
+                                className={`group flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                   activePanel === "inventory"
-                                    ? "border-accent-400/70 bg-ink-900/70 text-slate-100 shadow-card"
-                                    : "border-white/10 bg-ink-900/40 text-slate-300 hover:border-white/20 hover:bg-ink-900/60"
+                                    ? "border-accent-400 text-white"
+                                    : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
                                 }`}
                                 aria-pressed={activePanel === "inventory"}
                               >
                                 <span>Stok</span>
-                                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
+                                <span
+                                  className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                    activePanel === "inventory"
+                                      ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
+                                      : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
+                                  }`}
+                                >
                                   {availableCount} / {usedCount}
                                 </span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "note")}
-                                className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold transition ${
+                                className={`group flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                   activePanel === "note"
-                                    ? "border-accent-400/70 bg-ink-900/70 text-slate-100 shadow-card"
-                                    : "border-white/10 bg-ink-900/40 text-slate-300 hover:border-white/20 hover:bg-ink-900/60"
+                                    ? "border-accent-400 text-white"
+                                    : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
                                 }`}
                                 aria-pressed={activePanel === "note"}
                               >
                                 <span>Ürün notu</span>
-                                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
+                                <span
+                                  className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                    activePanel === "note"
+                                      ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
+                                      : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
+                                  }`}
+                                >
                                   {noteGroupName || "Bağımsız"}
                                 </span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "messages")}
-                                className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold transition ${
+                                className={`group flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                   activePanel === "messages"
-                                    ? "border-accent-400/70 bg-ink-900/70 text-slate-100 shadow-card"
-                                    : "border-white/10 bg-ink-900/40 text-slate-300 hover:border-white/20 hover:bg-ink-900/60"
+                                    ? "border-accent-400 text-white"
+                                    : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
                                 }`}
                                 aria-pressed={activePanel === "messages"}
                               >
                                 <span>Mesaj grubu</span>
-                                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
+                                <span
+                                  className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                    activePanel === "messages"
+                                      ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
+                                      : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
+                                  }`}
+                                >
                                   {messageGroupLabel}
                                 </span>
                               </button>
@@ -1608,15 +1623,21 @@ export default function ProductsTab({
                                 <button
                                   type="button"
                                   onClick={() => setActivePanel(offerId, "stock-group")}
-                                  className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold transition ${
+                                  className={`group flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                     activePanel === "stock-group"
-                                      ? "border-accent-400/70 bg-ink-900/70 text-slate-100 shadow-card"
-                                      : "border-white/10 bg-ink-900/40 text-slate-300 hover:border-white/20 hover:bg-ink-900/60"
+                                      ? "border-accent-400 text-white"
+                                      : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
                                   }`}
                                   aria-pressed={activePanel === "stock-group"}
                                 >
                                   <span>Stok grubu</span>
-                                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
+                                  <span
+                                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                      activePanel === "stock-group"
+                                        ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
+                                        : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
+                                    }`}
+                                  >
                                     {groupName || "Bağımsız"}
                                   </span>
                                 </button>
@@ -1628,10 +1649,10 @@ export default function ProductsTab({
                                     if (!canManagePrices) return
                                     setActivePanel(offerId, "price")
                                   }}
-                                  className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold transition ${
+                                  className={`flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                     activePanel === "price"
-                                      ? "border-accent-400/70 bg-ink-900/70 text-slate-100 shadow-card"
-                                      : "border-white/10 bg-ink-900/40 text-slate-300 hover:border-white/20 hover:bg-ink-900/60"
+                                      ? "border-accent-400 text-white"
+                                      : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
                                   } ${!canManagePrices ? "cursor-not-allowed opacity-60" : ""}`}
                                   aria-pressed={activePanel === "price"}
                                 >
