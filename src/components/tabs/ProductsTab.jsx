@@ -1978,22 +1978,14 @@ export default function ProductsTab({
                                   </div>
                                 ) : (
                                   <>
-                                    <div
-                                      className={`overflow-hidden rounded-2xl bg-ink-900/60 p-3 ${
-                                        noteGroupFlashByOffer?.[offerId] ? "animate-noteSwap" : ""
-                                      }`}
-                                    >
-                                      <textarea
-                                        rows={9}
-                                        value={noteInputValue ?? ""}
-                                        onChange={(event) =>
-                                          handleNoteDraftChange(offerId, event.target.value)
-                                        }
-                                        placeholder="Ürün notu ekle"
-                                        readOnly={!canEditNoteText}
-                                        className="block min-h-[220px] w-full rounded-xl bg-ink-900/50 px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 read-only:bg-ink-900/40 read-only:text-slate-300"
-                                      />
-                                    </div>
+                                    <textarea
+                                      rows={9}
+                                      value={noteInputValue ?? ""}
+                                      onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
+                                      placeholder="?or??n notu ekle"
+                                      readOnly={!canEditNoteText}
+                                      className={`block min-h-[220px] w-full rounded-xl bg-ink-900/50 px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 read-only:bg-ink-900/40 read-only:text-slate-300 ${noteGroupFlashByOffer?.[offerId] ? "animate-noteSwap" : ""}`}
+                                    />
                                     <div className="mt-3 flex flex-wrap justify-end gap-2">
                                       {canManageNotes && (
                                         <button
