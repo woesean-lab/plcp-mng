@@ -1664,7 +1664,7 @@ export default function ProductsTab({
                           {activePanel !== "inventory" && (
                           <div className={`grid items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                             {isStockEnabled && activePanel === "stock-group" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 {isOfferRefreshing && (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-24 rounded-lg" />
@@ -1979,7 +1979,7 @@ export default function ProductsTab({
                                 ) : (
                                   <>
                                     <div
-                                      className={`overflow-hidden rounded-2xl border border-white/10 bg-ink-950/40 p-3 ${
+                                      className={`overflow-hidden rounded-2xl bg-ink-900/60 p-3 ${
                                         noteGroupFlashByOffer?.[offerId] ? "animate-noteSwap" : ""
                                       }`}
                                     >
@@ -1991,7 +1991,7 @@ export default function ProductsTab({
                                         }
                                         placeholder="Ürün notu ekle"
                                         readOnly={!canEditNoteText}
-                                        className="block min-h-[220px] w-full rounded-xl bg-ink-950/40 px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 read-only:bg-ink-950/30 read-only:text-slate-300"
+                                        className="block min-h-[220px] w-full rounded-xl bg-ink-900/50 px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 read-only:bg-ink-900/40 read-only:text-slate-300"
                                       />
                                     </div>
                                     <div className="mt-3 flex flex-wrap justify-end gap-2">
@@ -2015,7 +2015,7 @@ export default function ProductsTab({
                                     </div>
                                     <div className="mt-5 border-t border-white/10 pt-5">
                                       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                                        <div className="rounded-xl border border-white/10 bg-ink-900/40 p-4">
+                                        <div className="rounded-xl bg-ink-900/50 p-4">
                                           <label className="text-[11px] font-semibold text-slate-300">Not grubu</label>
                                           <div
                                             className={`mt-2 flex items-center gap-2 ${
@@ -2031,7 +2031,7 @@ export default function ProductsTab({
                                                 }))
                                               }
                                               disabled={!canManageNotes}
-                                              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-950/40 px-3 py-2 text-sm text-slate-100 h-10 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 h-10 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                               <option value="">Bağımsız not</option>
                                               {noteGroups.map((groupOption) => (
@@ -2083,7 +2083,7 @@ export default function ProductsTab({
                                           </div>
                                         </div>
                                         {canManageNotes && (
-                                          <div className="rounded-xl border border-white/10 bg-ink-900/40 p-4">
+                                          <div className="rounded-xl bg-ink-900/50 p-4">
                                             <label className="text-[11px] font-semibold text-slate-300">Yeni not grubu</label>
                                             <div className="mt-2 flex items-center gap-2">
                                               <input
@@ -2094,7 +2094,7 @@ export default function ProductsTab({
                                                 }
                                                 placeholder="Yeni not grubu"
                                                 disabled={!canManageNotes}
-                                                className="w-full rounded-lg border border-white/10 bg-ink-950/40 px-3 py-2 text-sm text-slate-100 h-10 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 h-10 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               />
                                               <button
                                                 type="button"
