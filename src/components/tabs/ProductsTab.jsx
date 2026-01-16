@@ -1296,7 +1296,7 @@ export default function ProductsTab({
                           : isOutOfStock
                             ? "border-rose-300/30 bg-ink-900/70"
                             : "bg-ink-900/70"
-                      } ${isOpen ? "border-accent-400/60 shadow-card ring-1 ring-accent-500/30" : ""}`}
+                      } ${isOpen ? "border-accent-400/60 shadow-card" : ""}`}
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap">
                         <div
@@ -2565,7 +2565,6 @@ export default function ProductsTab({
     </div>
   )
 }
-
 
 
 
