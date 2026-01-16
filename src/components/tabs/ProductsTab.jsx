@@ -1675,7 +1675,7 @@ export default function ProductsTab({
                                 {!isOfferRefreshing && (
                                   <>
                                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
-                                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                  <div className="rounded-xl bg-ink-900/50 p-4">
                                     <label className="text-[11px] font-semibold text-slate-300">Stok grubu</label>
                                     <div
                                       className={`mt-2 flex flex-wrap items-center gap-2 ${
@@ -1742,7 +1742,7 @@ export default function ProductsTab({
                                     </div>
                                   </div>
                                   {canManageGroups && (
-                                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                    <div className="rounded-xl bg-ink-900/50 p-4">
                                       <label className="text-[11px] font-semibold text-slate-300">Yeni grup</label>
                                       <div className="mt-2 flex flex-wrap items-center gap-2">
                                         <input
@@ -1770,7 +1770,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "messages" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 {isOfferRefreshing ? (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-28 rounded-lg" />
@@ -1780,7 +1780,7 @@ export default function ProductsTab({
                                 ) : (
                                   <>
                                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                  <div className="rounded-xl bg-ink-900/50 p-4">
                                     <label className="text-[11px] font-semibold text-slate-300">Mesaj grubu</label>
                                     <div
                                       className={`mt-2 flex flex-wrap items-center gap-2 ${
@@ -1864,7 +1864,7 @@ export default function ProductsTab({
                                       </button>
                                     </div>
                                   </div>
-                                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                  <div className="rounded-xl bg-ink-900/50 p-4">
                                     <label className="text-[11px] font-semibold text-slate-300">Mesaj şablonu</label>
                                     <div className="mt-2 flex flex-wrap items-center gap-2">
                                       <input
@@ -1899,9 +1899,9 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "price" && isPriceEnabled && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
-                                  <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                                  <div className="rounded-lg bg-ink-900/50 p-4">
                                     <label className="text-[10px] font-semibold text-slate-300">Fiyat gir</label>
                                     <div className="mt-2 flex flex-wrap items-center gap-2">
                                       <input
@@ -1934,7 +1934,7 @@ export default function ProductsTab({
                                     </div>
                                   </div>
                                   {canViewPriceDetails && (
-                                    <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                                    <div className="rounded-lg bg-ink-900/50 p-4">
                                       <label className="text-[10px] font-semibold text-slate-300">{"Y\u00fczdelik"}</label>
                                       <div className="mt-2 space-y-2">
                                         <div className="flex flex-wrap items-center gap-2">
@@ -1962,7 +1962,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "note" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 {isOfferRefreshing ? (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-28 rounded-lg" />
