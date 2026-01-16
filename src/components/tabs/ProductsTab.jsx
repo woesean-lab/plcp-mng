@@ -1664,7 +1664,7 @@ export default function ProductsTab({
                           {activePanel !== "inventory" && (
                           <div className={`grid items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                             {isStockEnabled && activePanel === "stock-group" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#161a25] p-4 pt-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 {isOfferRefreshing && (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-24 rounded-lg" />
@@ -1915,7 +1915,7 @@ export default function ProductsTab({
                                         className="min-w-[160px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                                       />
                                     </div>
-                                    <div className="mt-3 flex flex-wrap justify-end gap-2">
+                                    <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -1979,7 +1979,7 @@ export default function ProductsTab({
                                 ) : (
                                   <>
                                     <div
-                                      className={`mt-4 overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-0 ${
+                                      className={`overflow-hidden rounded-2xl border border-white/10 bg-ink-950/40 p-3 ${
                                         noteGroupFlashByOffer?.[offerId] ? "animate-noteSwap" : ""
                                       }`}
                                     >
@@ -1991,7 +1991,7 @@ export default function ProductsTab({
                                         }
                                         placeholder="Ürün notu ekle"
                                         readOnly={!canEditNoteText}
-                                        className="block min-h-[240px] w-full rounded-xl bg-ink-900/40 px-3 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30 read-only:bg-ink-900/30 read-only:text-slate-300"
+                                        className="block min-h-[220px] w-full rounded-xl bg-ink-950/40 px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 read-only:bg-ink-950/30 read-only:text-slate-300"
                                       />
                                     </div>
                                     <div className="mt-3 flex flex-wrap justify-end gap-2">
@@ -1999,7 +1999,7 @@ export default function ProductsTab({
                                         <button
                                           type="button"
                                           onClick={() => toggleNoteEdit(offerId)}
-                                          className="flex h-8 items-center justify-center rounded-lg border border-sky-300/60 bg-sky-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-sky-50 shadow-glow transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25"
+                                          className="flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10"
                                         >
                                           {isNoteEditing ? "VAZGEÇ" : "DÜZENLE"}
                                         </button>
@@ -2008,14 +2008,14 @@ export default function ProductsTab({
                                         type="button"
                                         onClick={() => handleNoteSave(offerId)}
                                         disabled={!canSaveNote}
-                                        className="flex h-8 items-center justify-center rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 shadow-glow transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="flex h-9 items-center justify-center rounded-lg border border-accent-400/60 bg-accent-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         KAYDET
                                       </button>
                                     </div>
-                                    <div className="mt-4 border-t border-white/10 pt-4">
+                                    <div className="mt-5 border-t border-white/10 pt-5">
                                       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                                        <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                        <div className="rounded-xl border border-white/10 bg-ink-900/40 p-4">
                                           <label className="text-[11px] font-semibold text-slate-300">Not grubu</label>
                                           <div
                                             className={`mt-2 flex items-center gap-2 ${
@@ -2031,7 +2031,7 @@ export default function ProductsTab({
                                                 }))
                                               }
                                               disabled={!canManageNotes}
-                                              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-10 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-950/40 px-3 py-2 text-sm text-slate-100 h-10 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                               <option value="">Bağımsız not</option>
                                               {noteGroups.map((groupOption) => (
@@ -2052,7 +2052,7 @@ export default function ProductsTab({
                                                     triggerSelectFlash(offerId, "note-group")
                                                   }
                                                 }
-                                                className="rounded-md border border-amber-300/60 bg-amber-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 h-8 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25"
+                                                className="rounded-md border border-amber-300/50 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:border-amber-200 hover:bg-amber-500/20"
                                               >
                                                 KALDIR
                                               </button>
@@ -2062,7 +2062,7 @@ export default function ProductsTab({
                                                 type="button"
                                                 onClick={() => handleNoteGroupDelete(noteGroupId)}
                                                 disabled={!canManageNotes}
-                                                className="rounded-md border border-rose-300/60 bg-rose-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 h-8 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="rounded-md border border-rose-300/50 bg-rose-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:border-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               >
                                                 {confirmNoteGroupDelete === noteGroupId ? "ONAYLA" : "SİL"}
                                               </button>
@@ -2075,7 +2075,7 @@ export default function ProductsTab({
                                                   triggerSelectFlash(offerId, "note-group")
                                                 }}
                                                 disabled={!isNoteGroupSelectionDirty}
-                                                className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-8 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               >
                                                 KAYDET
                                               </button>
@@ -2083,7 +2083,7 @@ export default function ProductsTab({
                                           </div>
                                         </div>
                                         {canManageNotes && (
-                                          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                          <div className="rounded-xl border border-white/10 bg-ink-900/40 p-4">
                                             <label className="text-[11px] font-semibold text-slate-300">Yeni not grubu</label>
                                             <div className="mt-2 flex items-center gap-2">
                                               <input
@@ -2094,13 +2094,13 @@ export default function ProductsTab({
                                                 }
                                                 placeholder="Yeni not grubu"
                                                 disabled={!canManageNotes}
-                                                className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 h-10 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="w-full rounded-lg border border-white/10 bg-ink-950/40 px-3 py-2 text-sm text-slate-100 h-10 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               />
                                               <button
                                                 type="button"
                                                 onClick={() => handleNoteGroupCreate(offerId)}
                                                 disabled={!canManageNotes || !noteGroupDraftValue.trim()}
-                                                className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-8 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="rounded-md border border-sky-300/50 bg-sky-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:border-sky-200 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               >
                                                 OLUŞTUR
                                               </button>
