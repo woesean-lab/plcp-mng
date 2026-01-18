@@ -2323,7 +2323,7 @@ export default function ProductsTab({
                                       return (
                                         <div
                                           key={item.id}
-                                          className={`group flex flex-col items-start gap-3 rounded-xl border border-rose-300/30 bg-rose-500/5 px-3 py-2 transition-all duration-300 hover:border-rose-200/60 hover:bg-rose-500/10 sm:flex-row sm:items-center animate-panelFade ${
+                                          className={`group flex flex-col items-start gap-3 rounded-xl border border-rose-300/30 bg-rose-500/5 px-3 py-2 transition-all duration-300 hover:border-rose-200/60 hover:bg-rose-500/10 sm:flex-row sm:items-center ${
                                             isDeleting ? "opacity-60" : ""
                                           } ${isFading ? "animate-keyFadeOut" : ""}`}
                                         >
