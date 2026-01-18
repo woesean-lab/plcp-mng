@@ -162,7 +162,7 @@ export default function TasksTab({
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                <div className="inline-flex h-[34px] rounded-full border border-white/10 bg-white/5 p-1 text-xs">
+                  <div className="inline-flex h-[34px] rounded-full border border-white/10 bg-white/5 p-[1px] text-xs">
                   <button
                     type="button"
                     onClick={() => setViewMode("board")}
@@ -186,7 +186,7 @@ export default function TasksTab({
                     Liste
                   </button>
                 </div>
-                <label className="inline-flex h-[34px] items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-slate-200">
+                  <label className="inline-flex h-[34px] items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-[1px] text-xs text-slate-200">
                     <input
                       type="checkbox"
                       checked={hideStaffTasks}
