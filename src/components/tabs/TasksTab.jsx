@@ -193,7 +193,7 @@ export default function TasksTab({
                       onChange={(event) => setHideStaffTasks(event.target.checked)}
                       className="h-4 w-4 rounded border-white/30 bg-ink-900 text-accent-400 focus:ring-accent-400/40"
                     />
-                    {"Personel g\u00f6revlerini gizle"}
+                    {"Bana ait g\u00f6revler"}
                   </label>
                 </div>
               </div>
