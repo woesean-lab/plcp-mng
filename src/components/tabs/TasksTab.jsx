@@ -497,12 +497,7 @@ export default function TasksTab({
                                 }`}
                               >
                                 <div className="flex flex-wrap items-start justify-between gap-3">
-                                  <div className="flex min-w-0 flex-1 items-start gap-3">
-                                    <span
-                                      className={`mt-1 h-2.5 w-2.5 rounded-full ${
-                                        isTaskDueToday(task) ? "bg-rose-400" : "bg-emerald-300/70"
-                                      }`}
-                                    />
+                                  <div className="min-w-0 flex-1">
                                     <div className="min-w-0">
                                       <div className="flex flex-wrap items-center gap-2">
                                         <p className="truncate text-sm font-semibold text-slate-100">
@@ -538,7 +533,7 @@ export default function TasksTab({
                                   </span>
                                 </div>
                                 {isExpanded && (
-                                  <div className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-2">
+                                  <div className="mt-3 flex flex-wrap gap-2">
                                     {canProgressTasks && status !== "done" && (
                                       <button
                                         type="button"
