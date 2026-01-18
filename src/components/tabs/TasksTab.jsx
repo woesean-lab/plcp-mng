@@ -198,213 +198,215 @@ export default function TasksTab({
           </div>
 
             {viewMode === "board" ? (
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {isTasksTabLoading
-                ? Array.from({ length: 3 }).map((_, idx) => (
-                  <div
-                    key={`task-skeleton-${idx}`}
-                    className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="h-3 w-24 animate-pulse rounded-full bg-white/10" />
-                        <div className="mt-2 h-2 w-16 animate-pulse rounded-full bg-white/10" />
-                      </div>
-                      <div className="h-6 w-10 animate-pulse rounded-full bg-white/10" />
-                    </div>
-                    <div className="space-y-3">
-                      {Array.from({ length: 3 }).map((__, jdx) => (
-                        <div
-                          key={`task-skel-card-${idx}-${jdx}`}
-                          className="rounded-xl border border-white/10 bg-ink-800/70 p-3 shadow-inner"
-                        >
-                          <div className="h-3 w-3/4 animate-pulse rounded-full bg-white/10" />
-                          <div className="mt-2 h-2 w-full animate-pulse rounded-full bg-white/10" />
-                          <div className="mt-2 h-2 w-1/2 animate-pulse rounded-full bg-white/10" />
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                {isTasksTabLoading
+                  ? Array.from({ length: 3 }).map((_, idx) => (
+                    <div
+                      key={`task-skeleton-${idx}`}
+                      className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="h-3 w-24 animate-pulse rounded-full bg-white/10" />
+                          <div className="mt-2 h-2 w-16 animate-pulse rounded-full bg-white/10" />
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-                : Object.entries(taskStatusMeta).map(([status, meta]) => {
-                const visibleTasks = getVisibleTasks(status)
-                return (
-                  <div
-                    key={status}
-                    onDragOver={canProgressTasks ? (event) => handleTaskDragOver(event, status) : undefined}
-                    onDrop={canProgressTasks ? (event) => handleTaskDrop(event, status) : undefined}
-                    onDragLeave={
-                      canProgressTasks
-                        ? () =>
-                          setTaskDragState((prev) =>
-                            prev.overStatus === status ? { ...prev, overStatus: null } : prev,
-                          )
-                        : undefined
-                    }
-                    className={`flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner transition ${
-                      taskDragState.overStatus === status
-                        ? "border-accent-400/60 ring-2 ring-accent-400/30"
-                        : ""
-                    }`}
-                  >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${meta.accent}`}>{meta.label}</p>
-                      <p className="text-xs text-slate-400">{meta.helper}</p>
-                    </div>
-                    <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${meta.badge}`}>
-                      {visibleTasks.length}
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    {visibleTasks.length === 0 && (
-                      <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
-                        Bu kolon bos.
+                        <div className="h-6 w-10 animate-pulse rounded-full bg-white/10" />
                       </div>
-                    )}
-                    {visibleTasks.map((task) => {
-                      const isOwner = activeUser?.username && task.owner === activeUser.username
-                      const isExpanded = expandedTaskId === task.id
-                      return (
-                        <div
-                          key={task.id}
-                          draggable={canProgressTasks}
-                          onDragStart={
-                            canProgressTasks ? (event) => handleTaskDragStart(event, task.id) : undefined
-                          }
-                          onDragEnd={canProgressTasks ? handleTaskDragEnd : undefined}
-                          onClick={() =>
-                            setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
-                          }
-                          className={`flex flex-col gap-3 rounded-xl border p-3 shadow-inner transition hover:shadow-glow cursor-grab ${
-                            isOwner
-                              ? status === "todo"
-                                ? "border-amber-300/60 bg-amber-500/15 hover:border-amber-200/70 hover:bg-amber-500/20"
-                                : status === "doing"
-                                  ? "border-sky-300/60 bg-sky-500/15 hover:border-sky-200/70 hover:bg-sky-500/20"
-                                  : "border-emerald-300/60 bg-emerald-500/15 hover:border-emerald-200/70 hover:bg-emerald-500/20"
-                              : "border-white/10 bg-ink-800/70 hover:border-accent-300/40 hover:bg-ink-800/80"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="space-y-1">
-                              <p className="text-sm font-semibold text-slate-100">{task.title}</p>
-                              {task.note && (
-                                <p
-                                  className="text-xs text-slate-400 break-words"
-                                  style={{
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
-                                    overflow: "hidden",
-                                    overflowWrap: "anywhere",
-                                    wordBreak: "break-word",
-                                  }}
-                                  title={task.note}
-                                >
-                                  {task.note}
-                                </p>
-                              )}
-                              {isExpanded && task.owner && (
+                      <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((__, jdx) => (
+                          <div
+                            key={`task-skel-card-${idx}-${jdx}`}
+                            className="rounded-xl border border-white/10 bg-ink-800/70 p-3 shadow-inner"
+                          >
+                            <div className="h-3 w-3/4 animate-pulse rounded-full bg-white/10" />
+                            <div className="mt-2 h-2 w-full animate-pulse rounded-full bg-white/10" />
+                            <div className="mt-2 h-2 w-1/2 animate-pulse rounded-full bg-white/10" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                  : Object.entries(taskStatusMeta).map(([status, meta]) => {
+                    const visibleTasks = getVisibleTasks(status)
+                    return (
+                      <div
+                        key={status}
+                        onDragOver={canProgressTasks ? (event) => handleTaskDragOver(event, status) : undefined}
+                        onDrop={canProgressTasks ? (event) => handleTaskDrop(event, status) : undefined}
+                        onDragLeave={
+                          canProgressTasks
+                            ? () =>
+                              setTaskDragState((prev) =>
+                                prev.overStatus === status ? { ...prev, overStatus: null } : prev,
+                              )
+                            : undefined
+                        }
+                        className={`flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner transition ${
+                          taskDragState.overStatus === status
+                            ? "border-accent-400/60 ring-2 ring-accent-400/30"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${meta.accent}`}>{meta.label}</p>
+                            <p className="text-xs text-slate-400">{meta.helper}</p>
+                          </div>
+                          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${meta.badge}`}>
+                            {visibleTasks.length}
+                          </span>
+                        </div>
+                        <div className="space-y-3">
+                          {visibleTasks.length === 0 && (
+                            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                              Bu kolon bos.
+                            </div>
+                          )}
+                          {visibleTasks.map((task) => {
+                            const isOwner = activeUser?.username && task.owner === activeUser.username
+                            const isExpanded = expandedTaskId === task.id
+                            return (
+                              <div
+                                key={task.id}
+                                draggable={canProgressTasks}
+                                onDragStart={
+                                  canProgressTasks ? (event) => handleTaskDragStart(event, task.id) : undefined
+                                }
+                                onDragEnd={canProgressTasks ? handleTaskDragEnd : undefined}
+                                onClick={() =>
+                                  setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
+                                }
+                                className={`flex flex-col gap-3 rounded-xl border p-3 shadow-inner transition hover:shadow-glow cursor-grab ${
+                                  isOwner
+                                    ? status === "todo"
+                                      ? "border-amber-300/60 bg-amber-500/15 hover:border-amber-200/70 hover:bg-amber-500/20"
+                                      : status === "doing"
+                                        ? "border-sky-300/60 bg-sky-500/15 hover:border-sky-200/70 hover:bg-sky-500/20"
+                                        : "border-emerald-300/60 bg-emerald-500/15 hover:border-emerald-200/70 hover:bg-emerald-500/20"
+                                    : "border-white/10 bg-ink-800/70 hover:border-accent-300/40 hover:bg-ink-800/80"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="space-y-1">
+                                    <p className="text-sm font-semibold text-slate-100">{task.title}</p>
+                                    {task.note && (
+                                      <p
+                                        className="text-xs text-slate-400 break-words"
+                                        style={{
+                                          display: "-webkit-box",
+                                          WebkitLineClamp: 2,
+                                          WebkitBoxOrient: "vertical",
+                                          overflow: "hidden",
+                                          overflowWrap: "anywhere",
+                                          wordBreak: "break-word",
+                                        }}
+                                        title={task.note}
+                                      >
+                                        {task.note}
+                                      </p>
+                                    )}
+                                    {isExpanded && task.owner && (
+                                      <span
+                                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                          isOwner
+                                            ? "bg-accent-500/20 text-accent-50"
+                                            : "bg-white/5 text-slate-300"
+                                        }`}
+                                      >
+                                        @{task.owner}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
                                 <span
-                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                    isOwner
-                                      ? "bg-accent-500/20 text-accent-50"
+                                  className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ${
+                                    isTaskDueToday(task)
+                                      ? "bg-rose-500/15 text-rose-100"
                                       : "bg-white/5 text-slate-300"
                                   }`}
                                 >
-                                  @{task.owner}
+                                  {"Biti\u015f:"} {getTaskDueLabel(task)}
                                 </span>
-                              )}
-                            </div>
-                          </div>
-                          <span
-                            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ${
-                              isTaskDueToday(task)
-                                ? "bg-rose-500/15 text-rose-100"
-                                : "bg-white/5 text-slate-300"
-                            }`}
-                          >
-                            {"Biti\u015f:"} {getTaskDueLabel(task)}
-                          </span>
-                          {isExpanded && (
-                            <>
-                              <div className="flex flex-wrap gap-2">
-                                {canProgressTasks && status !== "done" && (
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation()
-                                      handleTaskAdvance(task.id)
-                                    }}
-                                    className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
-                                  >
-                                    {status === "todo" ? "Ba\u015flat" : "Tamamla"}
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation()
-                                    openTaskDetail(task)
-                                  }}
-                                  className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
-                                >
-                                  Detay
-                                </button>
-                                {(canUpdateTasks || canProgressTasks || canDeleteTasks) && (
+                                {isExpanded && (
                                   <>
-                                    {canUpdateTasks && (
+                                    <div className="flex flex-wrap gap-2">
+                                      {canProgressTasks && status !== "done" && (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.stopPropagation()
+                                            handleTaskAdvance(task.id)
+                                          }}
+                                          className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
+                                        >
+                                          {status === "todo" ? "Ba\u015flat" : "Tamamla"}
+                                        </button>
+                                      )}
                                       <button
                                         type="button"
                                         onClick={(event) => {
                                           event.stopPropagation()
-                                          openTaskEdit(task)
+                                          openTaskDetail(task)
                                         }}
                                         className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
                                       >
-                                        {"D\u00fczenle"}
+                                        Detay
                                       </button>
-                                    )}
-                                    {canProgressTasks && status === "done" && (
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.stopPropagation()
-                                          handleTaskReopen(task.id)
-                                        }}
-                                        className="rounded-lg border border-amber-300/70 bg-amber-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25"
-                                      >
-                                        Geri al
-                                      </button>
-                                    )}
-                                    {canDeleteTasks && (
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.stopPropagation()
-                                          handleTaskDeleteWithConfirm(task.id)
-                                        }}
-                                        className={`rounded-lg border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
-                                          confirmTaskDelete === task.id
-                                            ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                            : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
-                                        }`}
-                                      >
-                                        {confirmTaskDelete === task.id ? "Emin misin?" : "Sil"}
-                                      </button>
-                                    )}
+                                      {(canUpdateTasks || canProgressTasks || canDeleteTasks) && (
+                                        <>
+                                          {canUpdateTasks && (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation()
+                                                openTaskEdit(task)
+                                              }}
+                                              className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
+                                            >
+                                              {"D\u00fczenle"}
+                                            </button>
+                                          )}
+                                          {canProgressTasks && status === "done" && (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation()
+                                                handleTaskReopen(task.id)
+                                              }}
+                                              className="rounded-lg border border-amber-300/70 bg-amber-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25"
+                                            >
+                                              Geri al
+                                            </button>
+                                          )}
+                                          {canDeleteTasks && (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation()
+                                                handleTaskDeleteWithConfirm(task.id)
+                                              }}
+                                              className={`rounded-lg border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                                                confirmTaskDelete === task.id
+                                                  ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                                  : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                                              }`}
+                                            >
+                                              {confirmTaskDelete === task.id ? "Emin misin?" : "Sil"}
+                                            </button>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
                                   </>
                                 )}
                               </div>
-                            </>
-                          )}
+                            )
+                          })}
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-            </div>
+                      </div>
+                    )
+                  })}
+              </div>
             ) : (
               <div className="mt-6 space-y-4">
                 {Object.entries(taskStatusMeta).map(([status, meta]) => {
@@ -769,6 +771,7 @@ export default function TasksTab({
     </div>
   )
 }
+
 
 
 
