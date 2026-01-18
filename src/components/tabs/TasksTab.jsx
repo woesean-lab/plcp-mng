@@ -33,6 +33,7 @@ function TasksSkeleton({ panelClass }) {
                   <SkeletonBlock className="mt-2 h-2 w-16 rounded-full" />
                   <SkeletonBlock className="mt-4 h-20 w-full rounded-xl" />
                 </div>
+              ))}
             </div>
           </div>
         </div>
