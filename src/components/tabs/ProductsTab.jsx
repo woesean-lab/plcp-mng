@@ -334,7 +334,7 @@ export default function ProductsTab({
   const categories = useMemo(() => {
     const list = Array.from(categoryMap.entries()).map(([key, bucketItems]) => ({
       key,
-      label: key === "diger" ? "Diger" : formatCategoryLabel(key),
+      label: key === "diger" ? "Diğer" : formatCategoryLabel(key),
       items: bucketItems,
     }))
     list.sort((a, b) => a.label.localeCompare(b.label, "tr"))
@@ -1199,7 +1199,7 @@ export default function ProductsTab({
                   const isGroupSelectionDirty = groupSelectionValue !== groupId
                   const categoryKey = getCategoryKey(product)
                   const categoryLabel =
-                    categoryKey === "diger" ? "Diger" : formatCategoryLabel(categoryKey)
+                    categoryKey === "diger" ? "Diğer" : formatCategoryLabel(categoryKey)
                   const isOpen = Boolean(openOffers[offerId])
                   const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
                   const isOutOfStock = isStockEnabled && availableCount === 0
@@ -1554,7 +1554,7 @@ export default function ProductsTab({
                       
                       {isOpen && (
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
-                          <div className="rounded-2xl rounded-b-none border border-white/10 bg-[#131826] px-3 pt-2 shadow-card">
+                          <div className="rounded-2xl rounded-b-none border border-white/10 bg-ink-900/60 px-3 pt-2 shadow-card">
                             <div className="flex flex-wrap items-end gap-4 border-b border-white/10" role="tablist">
                               <button
                                 type="button"
@@ -1664,7 +1664,7 @@ export default function ProductsTab({
                           {activePanel !== "inventory" && (
                           <div className={`grid items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                             {isStockEnabled && activePanel === "stock-group" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-ink-900/60 p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 {isOfferRefreshing && (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-24 rounded-lg" />
@@ -1770,7 +1770,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "messages" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-ink-900/60 p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 {isOfferRefreshing ? (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-28 rounded-lg" />
@@ -1899,7 +1899,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "price" && isPriceEnabled && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-ink-900/60 p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 <div className="mt-1 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
                                   <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
                                     <label className="text-[12px] font-semibold text-slate-100">Fiyat gir</label>
@@ -1962,7 +1962,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "note" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-ink-900/60 p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 {isOfferRefreshing ? (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-28 rounded-lg" />
@@ -2109,7 +2109,7 @@ export default function ProductsTab({
                           )}
                           {activePanel === "inventory" && (
                             <div className="grid items-start gap-3 lg:grid-cols-2">
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-ink-900/60 p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                               <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.6fr)]">
                           <div className="space-y-4">
                             {isOfferRefreshing ? (

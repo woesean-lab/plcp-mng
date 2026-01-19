@@ -139,12 +139,24 @@
     background-color: rgba(219, 234, 254, 0.6);
   }
 
+  [data-theme='light'] .bg-ink-900\/50 {
+    background-color: rgba(219, 234, 254, 0.55);
+  }
+
+  [data-theme='light'] .bg-ink-900\/40 {
+    background-color: rgba(219, 234, 254, 0.48);
+  }
+
   [data-theme='light'] .bg-ink-900\/70 {
     background-color: rgba(219, 234, 254, 0.72);
   }
 
   [data-theme='light'] .bg-ink-900\/80 {
     background-color: rgba(219, 234, 254, 0.85);
+  }
+
+  [data-theme='light'] .bg-ink-950\/60 {
+    background-color: rgba(219, 234, 254, 0.7);
   }
 
   [data-theme='light'] .bg-ink-800 {
