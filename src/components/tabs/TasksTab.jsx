@@ -472,139 +472,154 @@ export default function TasksTab({
                           {visibleTasks.length}
                         </span>
                       </div>
-                      <div className="mt-4 space-y-2">
+                      <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-ink-900/60">
+                        <div className="hidden grid-cols-[minmax(0,1.6fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.6fr)_minmax(0,0.8fr)] gap-4 border-b border-white/10 bg-ink-900/70 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 sm:grid">
+                          <span>Görev</span>
+                          <span>Sorumlu</span>
+                          <span>Bitiş</span>
+                          <span>Durum</span>
+                          <span>İşlem</span>
+                        </div>
                         {visibleTasks.length === 0 ? (
-                          <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                          <div className="px-3 py-3 text-xs text-slate-400">
                             {"Bu listede g\u00f6rev yok."}
                           </div>
                         ) : (
-                          visibleTasks.map((task) => {
-                            const isOwner = activeUser?.username && task.owner === activeUser.username
-                            const isExpanded = expandedTaskId === task.id
-                            return (
-                              <div
-                                key={task.id}
-                                draggable={canProgressTasks}
-                                onDragStart={
-                                  canProgressTasks ? (event) => handleTaskDragStart(event, task.id) : undefined
-                                }
-                                onDragEnd={canProgressTasks ? handleTaskDragEnd : undefined}
-                                onClick={() =>
-                                  setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
-                                }
-                                className={`group rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2.5 transition hover:border-accent-300/40 hover:bg-ink-900/70 cursor-grab active:cursor-grabbing ${
-                                  isExpanded ? "shadow-glow" : ""
-                                }`}
-                              >
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                  <div className="min-w-0 flex-1">
+                          <div className="divide-y divide-white/10">
+                            {visibleTasks.map((task) => {
+                              const isOwner = activeUser?.username && task.owner === activeUser.username
+                              const isExpanded = expandedTaskId === task.id
+                              return (
+                                <div key={task.id}>
+                                  <div
+                                    draggable={canProgressTasks}
+                                    onDragStart={
+                                      canProgressTasks ? (event) => handleTaskDragStart(event, task.id) : undefined
+                                    }
+                                    onDragEnd={canProgressTasks ? handleTaskDragEnd : undefined}
+                                    onClick={() =>
+                                      setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
+                                    }
+                                    className={`group flex flex-col gap-2 px-3 py-3 transition hover:bg-ink-900/70 cursor-grab active:cursor-grabbing sm:grid sm:grid-cols-[minmax(0,1.6fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.6fr)_minmax(0,0.8fr)] sm:items-center sm:gap-4 ${
+                                      isExpanded ? "bg-ink-900/70" : "bg-transparent"
+                                    }`}
+                                  >
                                     <div className="min-w-0">
                                       <div className="flex flex-wrap items-center gap-2">
                                         <p className="truncate text-sm font-semibold text-slate-100">
                                           {task.title}
                                         </p>
-                                        {task.owner && (
-                                          <span
-                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                              isOwner
-                                                ? "bg-accent-500/20 text-accent-50"
-                                                : "bg-white/5 text-slate-300"
-                                            }`}
-                                          >
-                                            @{task.owner}
-                                          </span>
-                                        )}
                                       </div>
                                       {task.note && (
-                                        <p className="mt-0.5 truncate text-xs text-slate-400" title={task.note}>
+                                        <p
+                                          className="mt-1 text-xs text-slate-400"
+                                          style={{
+                                            display: "-webkit-box",
+                                            WebkitLineClamp: 2,
+                                            WebkitBoxOrient: "vertical",
+                                            overflow: "hidden",
+                                            overflowWrap: "anywhere",
+                                            wordBreak: "break-word",
+                                          }}
+                                          title={task.note}
+                                        >
                                           {task.note}
                                         </p>
                                       )}
                                     </div>
-                                  </div>
-                                  <span
-                                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ${
-                                      isTaskDueToday(task)
-                                        ? "bg-rose-500/15 text-rose-100"
-                                        : "bg-white/5 text-slate-300"
-                                    }`}
-                                  >
-                                    {"Biti\u015f:"} {getTaskDueLabel(task)}
-                                  </span>
-                                </div>
-                                {isExpanded && (
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    {canProgressTasks && status !== "done" && (
+                                    <div className="text-xs text-slate-300 sm:text-[11px]">
+                                      {task.owner ? `@${task.owner}` : "-"}
+                                    </div>
+                                    <span
+                                      className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ${
+                                        isTaskDueToday(task)
+                                          ? "bg-rose-500/15 text-rose-100"
+                                          : "bg-white/5 text-slate-300"
+                                      }`}
+                                    >
+                                      {getTaskDueLabel(task)}
+                                    </span>
+                                    <span className={`inline-flex items-center justify-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${meta.badge}`}>
+                                      {meta.label}
+                                    </span>
+                                    <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
+                                      {canProgressTasks && status !== "done" && (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.stopPropagation()
+                                            handleTaskAdvance(task.id)
+                                          }}
+                                          className="rounded-md border border-white/15 bg-white/5 px-2.5 py-1 text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
+                                        >
+                                          {status === "todo" ? "Başlat" : "Tamamla"}
+                                        </button>
+                                      )}
                                       <button
                                         type="button"
                                         onClick={(event) => {
                                           event.stopPropagation()
-                                          handleTaskAdvance(task.id)
+                                          openTaskDetail(task)
                                         }}
-                                        className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
+                                        className="rounded-md border border-white/15 bg-white/5 px-2.5 py-1 text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
                                       >
-                                        {status === "todo" ? "Ba\u015flat" : "Tamamla"}
+                                        Detay
                                       </button>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation()
-                                        openTaskDetail(task)
-                                      }}
-                                      className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
-                                    >
-                                      Detay
-                                    </button>
-                                    {(canUpdateTasks || canProgressTasks || canDeleteTasks) && (
-                                      <>
-                                        {canUpdateTasks && (
-                                          <button
-                                            type="button"
-                                            onClick={(event) => {
-                                              event.stopPropagation()
-                                              openTaskEdit(task)
-                                            }}
-                                            className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
-                                          >
-                                            {"D\u00fczenle"}
-                                          </button>
-                                        )}
-                                        {canProgressTasks && status === "done" && (
-                                          <button
-                                            type="button"
-                                            onClick={(event) => {
-                                              event.stopPropagation()
-                                              handleTaskReopen(task.id)
-                                            }}
-                                            className="rounded-lg border border-amber-300/70 bg-amber-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25"
-                                          >
-                                            Geri al
-                                          </button>
-                                        )}
-                                        {canDeleteTasks && (
-                                          <button
-                                            type="button"
-                                            onClick={(event) => {
-                                              event.stopPropagation()
-                                              handleTaskDeleteWithConfirm(task.id)
-                                            }}
-                                            className={`rounded-lg border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
-                                              confirmTaskDelete === task.id
-                                                ? "border-rose-300 bg-rose-500/25 text-rose-50"
-                                                : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
-                                            }`}
-                                          >
-                                            {confirmTaskDelete === task.id ? "Emin misin?" : "Sil"}
-                                          </button>
-                                        )}
-                                      </>
-                                    )}
+                                      {canUpdateTasks && (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.stopPropagation()
+                                            openTaskEdit(task)
+                                          }}
+                                          className="rounded-md border border-white/15 bg-white/5 px-2.5 py-1 text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
+                                        >
+                                          Düzenle
+                                        </button>
+                                      )}
+                                      {canProgressTasks && status === "done" && (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.stopPropagation()
+                                            handleTaskReopen(task.id)
+                                          }}
+                                          className="rounded-md border border-amber-300/70 bg-amber-500/15 px-2.5 py-1 text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25"
+                                        >
+                                          Geri al
+                                        </button>
+                                      )}
+                                      {canDeleteTasks && (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.stopPropagation()
+                                            handleTaskDeleteWithConfirm(task.id)
+                                          }}
+                                          className={`rounded-md border px-2.5 py-1 transition ${
+                                            confirmTaskDelete === task.id
+                                              ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                                              : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                                          }`}
+                                        >
+                                          {confirmTaskDelete === task.id ? "Emin misin?" : "Sil"}
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
-                                )}
-                              </div>
-                            )
-                          })
+                                  {isExpanded && (
+                                    <div className="px-3 pb-3 text-xs text-slate-300">
+                                      {task.note ? (
+                                        <p className="whitespace-pre-wrap">{task.note}</p>
+                                      ) : (
+                                        <p className="text-slate-400">Not yok.</p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
                         )}
                       </div>
                     </div>
