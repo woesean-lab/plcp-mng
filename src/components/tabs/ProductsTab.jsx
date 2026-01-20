@@ -1385,7 +1385,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
                               disabled={!canManageStock || !offerId}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-1 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 !canManageStock || !offerId
                                   ? "cursor-not-allowed opacity-60"
                                   : ""
@@ -1416,7 +1416,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => handlePriceToggle(offerId)}
                               disabled={!offerId || !canTogglePrice}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-1 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 !offerId || !canTogglePrice ? "cursor-not-allowed opacity-60" : ""
                               }`}
                               aria-label="Fiyat aç/kapat"
@@ -1445,7 +1445,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => toggleStarred(offerId)}
                               disabled={!offerId || !canStarOffers}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-1 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 !offerId || !canStarOffers ? "cursor-not-allowed opacity-60" : ""
                               } ${starredOffers[offerId] ? "text-yellow-300" : ""}`}
                               aria-label="Ürünü yıldızla"
@@ -1468,7 +1468,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => handleOfferRefresh(offerId)}
                               disabled={!offerId || isKeysLoading || !isStockEnabled || isOfferRefreshing}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-1 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 !offerId || isKeysLoading || !isStockEnabled || isOfferRefreshing
                                   ? "cursor-not-allowed opacity-60"
                                   : ""
@@ -1503,7 +1503,7 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => handleOfferDeleteWithConfirm(offerId)}
                                 disabled={!offerId}
-                                className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-1 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                                className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                   !offerId ? "cursor-not-allowed opacity-60" : ""
                                 } ${confirmOfferDelete === offerId ? "bg-rose-500/20 text-rose-100" : ""}`}
                                 aria-label="Urun sil"
@@ -1532,7 +1532,7 @@ export default function ProductsTab({
                                 href={href}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-1 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition"
+                                className="relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition"
                                 aria-label="Ürün linki"
                               >
                                 <svg
@@ -1555,7 +1555,7 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => openStockModal(offerId, name)}
                                 disabled={!offerId || !isStockEnabled}
-                                className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-1 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                                className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                   !offerId || !isStockEnabled
                                     ? "cursor-not-allowed opacity-60"
                                     : ""
@@ -1581,7 +1581,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => toggleOfferOpen(offerId)}
                               disabled={!offerId || !canToggleCard}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-1 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 isOpen ? "bg-white/10 text-white" : ""
                               } ${!offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""}`}
                               aria-label="Ürün detaylarını aç/kapat"
