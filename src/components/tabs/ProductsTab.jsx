@@ -1380,7 +1380,7 @@ export default function ProductsTab({
                           </div>
                         </div>
                         <div className="flex flex-wrap items-stretch gap-1.5">
-                          <div className="flex w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:h-[36px] sm:w-[192px] sm:flex-nowrap">
+                          <div className="flex w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:h-[36px] sm:w-[216px] sm:flex-nowrap">
                             <button
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
