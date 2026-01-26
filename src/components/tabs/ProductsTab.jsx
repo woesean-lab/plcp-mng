@@ -2175,7 +2175,7 @@ export default function ProductsTab({
                             <div className="grid items-start gap-3 lg:grid-cols-2">
                               <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                               <div className="grid gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
-                          <div className="space-y-4 lg:col-start-2 lg:row-start-1">
+                          <div className="order-2 space-y-4 lg:col-start-2 lg:row-start-1 lg:order-none">
                             {isOfferRefreshing ? (
                               <div className="space-y-3 rounded-2xl border border-white/10 bg-ink-900/40 p-4 shadow-inner">
                                 <SkeletonBlock className="h-4 w-32 rounded-lg" />
@@ -2504,7 +2504,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             </div>
-                          <div className="self-start rounded-2xl border border-white/10 bg-ink-900/50 p-4 lg:col-start-1 lg:row-start-1">
+                          <div className="order-1 self-start rounded-2xl border border-white/10 bg-ink-900/50 p-4 lg:col-start-1 lg:row-start-1 lg:order-none">
                               <div>
                                 {messageGroupMessages.length === 0 ? (
                                   <div className="text-xs text-slate-400">
