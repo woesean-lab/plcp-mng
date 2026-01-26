@@ -2280,14 +2280,14 @@ export default function ProductsTab({
                                               {item.code}
                                             </p>
                                           )}
-                                          <div className="flex w-full flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] sm:w-auto">
+                                          <div className="grid w-full grid-cols-2 gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:w-auto">
                                             {isEditing ? (
                                               <>
                                                 <button
                                                   type="button"
                                                   onClick={() => handleKeyEditSave(offerId, item.id)}
                                                   disabled={isSaving}
-                                                  className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                  className="flex h-6 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
                                                   KAYDET
                                                 </button>
@@ -2295,7 +2295,7 @@ export default function ProductsTab({
                                                   type="button"
                                                   onClick={() => handleKeyEditCancel(item.id)}
                                                   disabled={isSaving}
-                                                  className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                  className="flex h-6 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
                                                   İPTAL
                                                 </button>
@@ -2306,7 +2306,7 @@ export default function ProductsTab({
                                                   <button
                                                     type="button"
                                                     onClick={() => handleKeyCopy(item.code)}
-                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
+                                                    className="flex h-6 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
                                                   >
                                                     Kopyala
                                                   </button>
@@ -2315,7 +2315,7 @@ export default function ProductsTab({
                                                   <button
                                                     type="button"
                                                     onClick={() => handleKeyEditStart(item.id, item.code)}
-                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 sm:w-auto"
+                                                    className="flex h-6 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-2 text-[10px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 sm:w-auto"
                                                   >
                                                     DÜZENLE</button>
                                                 )}
@@ -2325,7 +2325,7 @@ export default function ProductsTab({
                                                     onClick={() =>
                                                       handleKeyStatusUpdate(offerId, item.id, "used")
                                                     }
-                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
+                                                    className="flex h-6 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
                                                   >
                                                     Kullanıldı
                                                   </button>
@@ -2335,7 +2335,7 @@ export default function ProductsTab({
                                                     type="button"
                                                     onClick={() => handleKeyDelete(offerId, item.id)}
                                                     disabled={isDeleting}
-                                                    className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
+                                                    className={`flex h-6 w-full items-center justify-center rounded-md border px-2 text-[10px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
                                                       confirmKeyTarget === `${offerId}-${item.id}`
                                                         ? "border-rose-300 bg-rose-500/25 text-rose-50"
                                                         : "border-rose-300/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
@@ -2422,14 +2422,14 @@ export default function ProductsTab({
                                               {item.code}
                                             </p>
                                           )}
-                                          <div className="flex w-full flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] sm:w-auto">
+                                          <div className="grid w-full grid-cols-2 gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:w-auto">
                                             {isEditing ? (
                                               <>
                                                 <button
                                                   type="button"
                                                   onClick={() => handleKeyEditSave(offerId, item.id)}
                                                   disabled={isSaving}
-                                                  className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                  className="flex h-6 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
                                                   KAYDET
                                                 </button>
@@ -2437,7 +2437,7 @@ export default function ProductsTab({
                                                   type="button"
                                                   onClick={() => handleKeyEditCancel(item.id)}
                                                   disabled={isSaving}
-                                                  className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                                                  className="flex h-6 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
                                                   İPTAL
                                                 </button>
@@ -2448,7 +2448,7 @@ export default function ProductsTab({
                                                   <button
                                                     type="button"
                                                     onClick={() => handleKeyCopy(item.code)}
-                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
+                                                    className="flex h-6 w-full items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-500/15 hover:text-indigo-50 sm:w-auto"
                                                   >
                                                     Kopyala
                                                   </button>
@@ -2457,7 +2457,7 @@ export default function ProductsTab({
                                                   <button
                                                     type="button"
                                                     onClick={() => handleKeyEditStart(item.id, item.code)}
-                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 sm:w-auto"
+                                                    className="flex h-6 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-2 text-[10px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 sm:w-auto"
                                                   >
                                                     DÜZENLE</button>
                                                 )}
@@ -2467,7 +2467,7 @@ export default function ProductsTab({
                                                     onClick={() =>
                                                       handleKeyStatusUpdate(offerId, item.id, "available")
                                                     }
-                                                    className="flex h-7 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
+                                                    className="flex h-6 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
                                                   >
                                                     GERİ AL
                                                   </button>
@@ -2477,7 +2477,7 @@ export default function ProductsTab({
                                                     type="button"
                                                     onClick={() => handleKeyDelete(offerId, item.id)}
                                                     disabled={isDeleting}
-                                                    className={`flex h-7 w-full items-center justify-center rounded-md border px-2 text-[11px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
+                                                    className={`flex h-6 w-full items-center justify-center rounded-md border px-2 text-[10px] font-semibold uppercase tracking-wide transition hover:-translate-y-0.5 sm:w-auto ${
                                                       confirmKeyTarget === `${offerId}-${item.id}`
                                                         ? "border-rose-300 bg-rose-500/25 text-rose-50"
                                                         : "border-rose-300/60 bg-rose-500/10 text-rose-50 hover:border-rose-300 hover:bg-rose-500/20"
