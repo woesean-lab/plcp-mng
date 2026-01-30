@@ -13,6 +13,7 @@ import SalesTab from "./components/tabs/SalesTab"
 import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
+import AutomationTab from "./components/tabs/AutomationTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
 
@@ -319,6 +320,7 @@ function App() {
   }, [])
 
   const canViewDashboard = isAuthed
+  const canViewAutomation = isAuthed
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
   const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
   const canEditMessages = hasAnyPermission([PERMISSIONS.messagesTemplateEdit, PERMISSIONS.messagesEdit])
@@ -465,6 +467,7 @@ function App() {
     () => [
       { key: "messages", label: "Mesaj", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
+      { key: "automation", label: "Otomasyon", canView: canViewAutomation },
       { key: "sales", label: "Satış", canView: canViewSales },
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
@@ -476,6 +479,7 @@ function App() {
       canViewDashboard,
       canViewLists,
       canViewMessages,
+      canViewAutomation,
       canViewProblems,
       canViewSales,
       canViewProducts,
@@ -967,6 +971,12 @@ function App() {
               resetTaskForm={resetTaskForm}
               focusTask={focusTask}
             />
+          </div>
+        )}
+
+        {activeTab === "automation" && canViewAutomation && (
+          <div className={getTabSlideClass("automation")}>
+            <AutomationTab panelClass={panelClass} />
           </div>
         )}
 
