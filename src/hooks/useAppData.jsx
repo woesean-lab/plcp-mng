@@ -4396,6 +4396,7 @@ const handleEldoradoNoteSave = useCallback(
 
   const showLoading = isLoading || !delayDone || (activeTab === "messages" && isTabLoading)
   const isTasksTabLoading = isTasksLoading || (activeTab === "tasks" && isTabLoading)
+  const isAutomationTabLoading = activeTab === "automation" && isTabLoading
   const isSalesTabLoading = isSalesLoading || (activeTab === "sales" && isTabLoading)
   const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
   const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
@@ -5233,6 +5234,7 @@ const handleEldoradoNoteSave = useCallback(
     handleAdd,
     setSelectedCategory,
     isTasksTabLoading,
+    isAutomationTabLoading,
     taskCountText,
     taskStats,
     ownedTaskStats,

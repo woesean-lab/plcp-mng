@@ -85,6 +85,7 @@ function App() {
     handleAdd,
     setSelectedCategory,
     isTasksTabLoading,
+    isAutomationTabLoading,
     taskCountText,
     taskStats,
     ownedTaskStats,
@@ -976,7 +977,7 @@ function App() {
 
         {activeTab === "automation" && canViewAutomation && (
           <div className={getTabSlideClass("automation")}>
-            <AutomationTab panelClass={panelClass} />
+            <AutomationTab panelClass={panelClass} isLoading={isAutomationTabLoading} />
           </div>
         )}
 

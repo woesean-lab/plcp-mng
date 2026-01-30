@@ -1,20 +1,67 @@
-export default function AutomationTab({ panelClass }) {
+function SkeletonBlock({ className = "" }) {
+  return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
+}
+
+function AutomationSkeleton({ panelClass }) {
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-950 via-ink-900 to-ink-800 p-5 shadow-card sm:p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_0%_0%,rgba(56,189,248,0.18),transparent)]" />
-        <div className="pointer-events-none absolute -right-24 -top-16 h-56 w-56 rounded-full bg-sky-500/20 blur-3xl" />
-        <div className="relative max-w-2xl space-y-3">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-sky-200">
-            Otomasyon
-          </span>
-          <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Akışları tasarla</h1>
-          <p className="text-sm text-slate-200/80">
-            Bu alan şimdilik hazırlık aşamasında. DB bağlantısı olmadan yerel senaryoları
-            planlayabilir, ileride kural tabanlı otomasyonlara geçiş için taslaklar oluşturabilirsin.
-          </p>
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-4 shadow-card sm:p-6">
+        <SkeletonBlock className="h-4 w-28 rounded-full" />
+        <SkeletonBlock className="mt-4 h-8 w-52" />
+        <SkeletonBlock className="mt-3 h-4 w-2/3" />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <div className={`${panelClass} bg-ink-900/60`}>
+          <SkeletonBlock className="h-3 w-24 rounded-full" />
+          <SkeletonBlock className="mt-3 h-4 w-44" />
+          <div className="mt-4 space-y-2">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <SkeletonBlock key={`automation-skeleton-${idx}`} className="h-16 w-full rounded-2xl" />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className={`${panelClass} bg-ink-900/60`}>
+            <SkeletonBlock className="h-3 w-20 rounded-full" />
+            <SkeletonBlock className="mt-3 h-16 w-full rounded-2xl" />
+          </div>
+          <div className={`${panelClass} bg-ink-900/60`}>
+            <SkeletonBlock className="h-3 w-16 rounded-full" />
+            <SkeletonBlock className="mt-3 h-12 w-full rounded-2xl" />
+          </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+export default function AutomationTab({ panelClass, isLoading = false }) {
+  if (isLoading) {
+    return <AutomationSkeleton panelClass={panelClass} />
+  }
+
+  return (
+    <div className="space-y-6">
+      <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
+        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1.5 sm:space-y-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
+              Otomasyon
+            </span>
+            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
+              Akış Planlama
+            </h1>
+            <p className="max-w-2xl text-sm text-slate-200/80">
+              DB bağlantısı gelene kadar otomasyon fikirlerini taslak olarak topla.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+              Durum: Taslak
+            </span>
+          </div>
+        </div>
+      </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className={`${panelClass} bg-ink-900/60`}>
