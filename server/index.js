@@ -48,6 +48,7 @@ const authTokenTtlMs =
 const authTokens = new Map()
 const DEFAULT_ADMIN_PERMISSIONS = [
   "automation.view",
+  "accounting.view",
   "messages.view",
   "messages.create",
   "messages.template.edit",

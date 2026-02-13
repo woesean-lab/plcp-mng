@@ -238,6 +238,7 @@ export default function useAppData() {
   const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
   const canManageAdmin = canManageRoles || canManageUsers
   const canViewAutomation = hasPermission(PERMISSIONS.automationView)
+  const canViewAccounting = hasPermission(PERMISSIONS.accountingView)
   const canViewSales = isAuthed && hasAnyPermission([
     PERMISSIONS.salesView,
     PERMISSIONS.salesCreate,
@@ -253,10 +254,19 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (canViewProductsTab) tabs.push("products")
+    if (canViewAccounting) tabs.push("accounting")
     if (canViewAutomation) tabs.push("automation")
     if (canManageAdmin) tabs.push("admin")
     return tabs
-  }, [permissions, canManageAdmin, canViewAutomation, canViewSales, canViewProductsTab, isAuthed])
+  }, [
+    permissions,
+    canManageAdmin,
+    canViewAutomation,
+    canViewAccounting,
+    canViewSales,
+    canViewProductsTab,
+    isAuthed,
+  ])
 
   useEffect(() => {
     const root = document.documentElement
@@ -4397,6 +4407,7 @@ const handleEldoradoNoteSave = useCallback(
   const showLoading = isLoading || !delayDone || (activeTab === "messages" && isTabLoading)
   const isTasksTabLoading = isTasksLoading || (activeTab === "tasks" && isTabLoading)
   const isAutomationTabLoading = activeTab === "automation" && isTabLoading
+  const isAccountingTabLoading = activeTab === "accounting" && isTabLoading
   const isSalesTabLoading = isSalesLoading || (activeTab === "sales" && isTabLoading)
   const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
   const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
@@ -5235,6 +5246,7 @@ const handleEldoradoNoteSave = useCallback(
     setSelectedCategory,
     isTasksTabLoading,
     isAutomationTabLoading,
+    isAccountingTabLoading,
     taskCountText,
     taskStats,
     ownedTaskStats,
