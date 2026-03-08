@@ -9,9 +9,15 @@ function SkeletonBlock({ className = "" }) {
 function AutomationSkeleton({ panelClass }) {
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-[#19142a] via-[#111b2f] to-[#0f1f28] p-5 shadow-card">
-        <SkeletonBlock className="h-5 w-32" />
-        <SkeletonBlock className="mt-3 h-9 w-56" />
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
+        <SkeletonBlock className="h-4 w-28 rounded-full" />
+        <SkeletonBlock className="mt-4 h-8 w-52" />
+        <SkeletonBlock className="mt-3 h-4 w-2/3" />
+        <div className="mt-4 flex flex-wrap gap-2">
+          <SkeletonBlock className="h-7 w-24 rounded-full" />
+          <SkeletonBlock className="h-7 w-24 rounded-full" />
+          <SkeletonBlock className="h-7 w-20 rounded-full" />
+        </div>
       </div>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
         <div className={`${panelClass} bg-ink-900/60`}>
@@ -164,21 +170,29 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
   return (
     <>
-      <div className="space-y-5">
-        <header className="rounded-2xl border border-white/10 bg-gradient-to-r from-[#19142a] via-[#111b2f] to-[#0f1f28] p-5 shadow-card">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+      <div className="space-y-6">
+        <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
+          <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1.5 sm:space-y-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
                 Otomasyon
+              </span>
+              <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
+                Otomasyon
+              </h1>
+              <p className="max-w-2xl text-sm text-slate-200/80">
+                Otomasyon sec, calistir ve ciktilari tek alanda takip et.
               </p>
-              <h1 className="mt-1 font-display text-2xl font-semibold text-white">Otomasyon Paneli</h1>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200">
-                {automations.length} kayit
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                Toplam: {automations.length}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
+                Son: {lastSuccess?.time ?? "--:--"}
               </span>
               <span
-                className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${
                   isRunning
                     ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
                     : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
@@ -236,32 +250,60 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
               </p>
             </div>
 
-            <div className="mt-4 rounded-xl border border-white/10 bg-[#0d1424] p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Cikti</p>
-              <div className="mt-3 max-h-[320px] space-y-2 overflow-auto pr-1">
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-700/60 bg-[#090d14] shadow-inner">
+              <div className="flex items-center justify-between border-b border-slate-700/60 bg-[#0f1724] px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-rose-400/80" />
+                  <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                  <span className="h-2 w-2 rounded-full bg-emerald-400/80" />
+                </div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                  automation.cmd
+                </p>
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                  {runLog.length} satir
+                </span>
+              </div>
+
+              <div className="max-h-[320px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
                 {runLog.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-white/10 bg-ink-900/60 px-4 py-8 text-center text-xs text-slate-500">
-                    Cikti yok
+                  <div className="space-y-1 text-slate-500">
+                    <div>C:\plcp\automation&gt; bekleniyor...</div>
+                    <div>C:\plcp\automation&gt; log yok</div>
+                    <div className="flex items-center gap-1">
+                      <span>C:\plcp\automation&gt;</span>
+                      <span className="inline-block h-4 w-2 animate-pulse bg-slate-500/80" />
+                    </div>
                   </div>
                 ) : (
-                  runLog.slice(0, 20).map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2"
-                    >
-                      <div className="flex min-w-0 items-center gap-2">
+                  <div className="space-y-0.5">
+                    {runLog.slice(0, 20).map((entry) => (
+                      <div key={entry.id} className="flex items-start gap-2 text-slate-200">
+                        <span className="flex-none text-slate-500">C:\plcp\automation&gt;</span>
                         <span
-                          className={`h-2.5 w-2.5 flex-none rounded-full ${
-                            entry.status === "success" ? "bg-emerald-400" : "bg-amber-400"
+                          className={`flex-none ${
+                            entry.status === "success" ? "text-emerald-300" : "text-amber-300"
                           }`}
-                        />
-                        <span className="truncate text-xs text-slate-200">{entry.message}</span>
+                        >
+                          [{entry.time}]
+                        </span>
+                        <span
+                          className={`flex-none ${
+                            entry.status === "success" ? "text-emerald-300" : "text-amber-300"
+                          }`}
+                        >
+                          {entry.status === "success" ? "OK" : "RUN"}
+                        </span>
+                        <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
                       </div>
-                      <span className="flex-none text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                        {entry.time}
-                      </span>
-                    </div>
-                  ))
+                    ))}
+                    {isRunning ? (
+                      <div className="mt-1 flex items-center gap-1 text-slate-400">
+                        <span>C:\plcp\automation&gt;</span>
+                        <span className="inline-block h-4 w-2 animate-pulse bg-slate-400/80" />
+                      </div>
+                    ) : null}
+                  </div>
                 )}
               </div>
             </div>
