@@ -1,14 +1,43 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 
 const WS_URL_STORAGE_KEY = "pulcipAutomationWsUrl"
+const WS_CONNECTION_STATE_STORAGE_KEY = "pulcipAutomationWsConnectionState"
+const DEFAULT_TOAST_STYLE = {
+  background: "rgba(15, 23, 42, 0.92)",
+  color: "#e2e8f0",
+  border: "1px solid rgba(148, 163, 184, 0.2)",
+}
 const readStoredWsUrl = () => {
   if (typeof window === "undefined") return ""
   try {
     return String(localStorage.getItem(WS_URL_STORAGE_KEY) ?? "").trim()
   } catch {
     return ""
+  }
+}
+const readStoredWsConnectionState = () => {
+  if (typeof window === "undefined") {
+    return { status: "idle", message: "Henüz bağlantı kurulmadı.", url: "" }
+  }
+  try {
+    const raw = localStorage.getItem(WS_CONNECTION_STATE_STORAGE_KEY)
+    if (!raw) return { status: "idle", message: "Henüz bağlantı kurulmadı.", url: "" }
+    const parsed = JSON.parse(raw)
+    const status = String(parsed?.status ?? "").trim()
+    const message = String(parsed?.message ?? "").trim()
+    const url = String(parsed?.url ?? "").trim()
+    if (!["idle", "success", "error"].includes(status)) {
+      return { status: "idle", message: "Henüz bağlantı kurulmadı.", url: "" }
+    }
+    return {
+      status,
+      message: message || "Henüz bağlantı kurulmadı.",
+      url,
+    }
+  } catch {
+    return { status: "idle", message: "Henüz bağlantı kurulmadı.", url: "" }
   }
 }
 
@@ -77,16 +106,13 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [wsUrl, setWsUrl] = useState(() => readStoredWsUrl())
   const [savedWsUrl, setSavedWsUrl] = useState(() => readStoredWsUrl())
-  const [wsTestStatus, setWsTestStatus] = useState("idle")
-  const [wsTestMessage, setWsTestMessage] = useState("Henüz bağlantı kurulmadı.")
-  const [lastTestedWsUrl, setLastTestedWsUrl] = useState("")
+  const [wsTestStatus, setWsTestStatus] = useState(() => readStoredWsConnectionState().status)
+  const [wsTestMessage, setWsTestMessage] = useState(() => readStoredWsConnectionState().message)
+  const [lastTestedWsUrl, setLastTestedWsUrl] = useState(() => readStoredWsConnectionState().url)
   const [isWsTesting, setIsWsTesting] = useState(false)
   const wsSocketRef = useRef(null)
-  const toastStyle = {
-    background: "rgba(15, 23, 42, 0.92)",
-    color: "#e2e8f0",
-    border: "1px solid rgba(148, 163, 184, 0.2)",
-  }
+  const hasAutoConnectedRef = useRef(false)
+  const toastStyle = DEFAULT_TOAST_STYLE
 
   const selectedAutomation = useMemo(
     () => automations.find((item) => item.id === selectedAutomationId) ?? null,
@@ -107,14 +133,29 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }, [])
 
-  const isValidWsUrl = (value) => {
+  const persistWsConnectionState = useCallback((url, status, message) => {
+    try {
+      localStorage.setItem(
+        WS_CONNECTION_STATE_STORAGE_KEY,
+        JSON.stringify({
+          url: String(url ?? "").trim(),
+          status: String(status ?? "").trim() || "idle",
+          message: String(message ?? "").trim() || "Henüz bağlantı kurulmadı.",
+        }),
+      )
+    } catch {
+      // Local storage unavailable.
+    }
+  }, [])
+
+  const isValidWsUrl = useCallback((value) => {
     try {
       const parsed = new URL(value)
       return parsed.protocol === "ws:" || parsed.protocol === "wss:"
     } catch {
       return false
     }
-  }
+  }, [])
 
   const saveWsUrl = () => {
     const normalized = wsUrl.trim()
@@ -130,12 +171,21 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       localStorage.setItem(WS_URL_STORAGE_KEY, normalized)
       setSavedWsUrl(normalized)
       if (normalized !== lastTestedWsUrl) {
+        setLastTestedWsUrl("")
         setWsTestStatus("idle")
-        setWsTestMessage("Kaydedildi. Bağlantı kur butonunu kullan.")
+        const message = "Kaydedildi. Bağlantı kur butonunu kullan."
+        setWsTestMessage(message)
+        persistWsConnectionState("", "idle", message)
       } else if (wsTestStatus === "success") {
-        setWsTestMessage("Kaydedildi. Son bağlantı sonucu: bağlantı başarılı.")
+        const message = "Kaydedildi. Son bağlantı sonucu: bağlantı başarılı."
+        setWsTestMessage(message)
+        persistWsConnectionState(normalized, "success", message)
       } else if (wsTestStatus === "error") {
-        setWsTestMessage("Kaydedildi. Son bağlantı sonucu: bağlantı başarısız.")
+        const message = "Kaydedildi. Son bağlantı sonucu: bağlantı başarısız."
+        setWsTestMessage(message)
+        persistWsConnectionState(normalized, "error", message)
+      } else {
+        persistWsConnectionState("", "idle", wsTestMessage)
       }
       toast.success("Websocket adresi kaydedildi", { style: toastStyle, position: "top-right" })
     } catch {
@@ -143,7 +193,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }
 
-  const buildSocketIoWsUrl = (normalizedUrl) => {
+  const buildSocketIoWsUrl = useCallback((normalizedUrl) => {
     try {
       const socketIoUrl = new URL(normalizedUrl)
       if (!/\/socket\.io\/?$/i.test(socketIoUrl.pathname)) {
@@ -157,9 +207,9 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     } catch {
       return ""
     }
-  }
+  }, [])
 
-  const testSocketIoConnection = (socketIoUrl) =>
+  const testSocketIoConnection = useCallback((socketIoUrl) =>
     new Promise((resolve) => {
       let settled = false
       let socket = null
@@ -217,16 +267,21 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         if (settled) return
         finish(false, "closed")
       })
-    })
+    }), [])
 
-  const connectSocketIo = () => {
-    const normalized = wsUrl.trim()
+  const connectSocketIo = useCallback((options = {}) => {
+    const normalized = String(options?.targetUrl ?? wsUrl).trim()
+    const silent = Boolean(options?.silent)
     if (!normalized) {
-      toast.error("Websocket adresi girin.", { style: toastStyle, position: "top-right" })
+      if (!silent) {
+        toast.error("Websocket adresi girin.", { style: toastStyle, position: "top-right" })
+      }
       return
     }
     if (!isValidWsUrl(normalized)) {
-      toast.error("Geçerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
+      if (!silent) {
+        toast.error("Geçerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
+      }
       return
     }
 
@@ -243,8 +298,13 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     if (!socketIoUrl) {
       setIsWsTesting(false)
       setWsTestStatus("error")
-      setWsTestMessage("Socket.IO bağlantı adresi oluşturulamadı.")
-      toast.error("Socket.IO adresi geçersiz.", { style: toastStyle, position: "top-right" })
+      const message = "Socket.IO bağlantı adresi oluşturulamadı."
+      setWsTestMessage(message)
+      setLastTestedWsUrl(normalized)
+      persistWsConnectionState(normalized, "error", message)
+      if (!silent) {
+        toast.error("Socket.IO adresi geçersiz.", { style: toastStyle, position: "top-right" })
+      }
       return
     }
 
@@ -255,10 +315,15 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       setWsTestStatus(status)
       setWsTestMessage(message)
       setLastTestedWsUrl(normalized)
+      persistWsConnectionState(normalized, status, message)
       if (status === "success") {
-        toast.success("Websocket bağlantısı başarılı", { style: toastStyle, position: "top-right" })
+        if (!silent) {
+          toast.success("Websocket bağlantısı başarılı", { style: toastStyle, position: "top-right" })
+        }
       } else {
-        toast.error("Websocket bağlantısı başarısız", { style: toastStyle, position: "top-right" })
+        if (!silent) {
+          toast.error("Websocket bağlantısı başarısız", { style: toastStyle, position: "top-right" })
+        }
       }
     }
 
@@ -274,7 +339,25 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         "Socket.IO bağlantısı kurulamadı. /socket.io ve CORS ayarlarını kontrol edin.",
       )
     })()
-  }
+  }, [
+    buildSocketIoWsUrl,
+    isValidWsUrl,
+    persistWsConnectionState,
+    testSocketIoConnection,
+    toastStyle,
+    wsUrl,
+  ])
+
+  useEffect(() => {
+    if (hasAutoConnectedRef.current) return
+    hasAutoConnectedRef.current = true
+    const normalized = savedWsUrl.trim()
+    if (!normalized) return
+    const timeoutId = window.setTimeout(() => {
+      connectSocketIo({ targetUrl: normalized, silent: true })
+    }, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [savedWsUrl, connectSocketIo])
 
   const wsStatusMeta = (() => {
     const normalizedCurrentWsUrl = wsUrl.trim()
@@ -282,8 +365,8 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
     if (!normalizedCurrentWsUrl) {
       return {
-        dot: "bg-rose-400",
-        badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
+        dot: "bg-slate-400",
+        badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
         label: "Bağlantı yok",
       }
     }
@@ -301,10 +384,17 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         label: "Bağlantı kuruluyor",
       }
     }
+    if (wsTestStatus === "idle") {
+      return {
+        dot: "bg-slate-400",
+        badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
+        label: "Bağlantı kurulmadı",
+      }
+    }
     if (!isCurrentUrlTested) {
       return {
-        dot: "bg-rose-400",
-        badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
+        dot: "bg-slate-400",
+        badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
         label: "Bağlantı kurulmadı",
       }
     }
@@ -319,8 +409,11 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     const nextValue = event.target.value
     setWsUrl(nextValue)
     if (nextValue.trim() !== lastTestedWsUrl) {
+      setLastTestedWsUrl("")
       setWsTestStatus("idle")
-      setWsTestMessage("Bu adres için bağlantı kurulmadı.")
+      const message = "Bu adres için bağlantı kurulmadı."
+      setWsTestMessage(message)
+      persistWsConnectionState("", "idle", message)
     }
   }
 
