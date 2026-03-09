@@ -78,7 +78,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const [wsUrl, setWsUrl] = useState(() => readStoredWsUrl())
   const [savedWsUrl, setSavedWsUrl] = useState(() => readStoredWsUrl())
   const [wsTestStatus, setWsTestStatus] = useState("idle")
-  const [wsTestMessage, setWsTestMessage] = useState("Henüz test edilmedi.")
+  const [wsTestMessage, setWsTestMessage] = useState("Henüz bağlantı kurulmadı.")
   const [lastTestedWsUrl, setLastTestedWsUrl] = useState("")
   const [isWsTesting, setIsWsTesting] = useState(false)
   const wsSocketRef = useRef(null)
@@ -129,8 +129,14 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     try {
       localStorage.setItem(WS_URL_STORAGE_KEY, normalized)
       setSavedWsUrl(normalized)
-      setWsTestStatus("idle")
-      setWsTestMessage("Kaydedildi. Test etmek için butonu kullan.")
+      if (normalized !== lastTestedWsUrl) {
+        setWsTestStatus("idle")
+        setWsTestMessage("Kaydedildi. Bağlantı kur butonunu kullan.")
+      } else if (wsTestStatus === "success") {
+        setWsTestMessage("Kaydedildi. Son bağlantı sonucu: bağlantı başarılı.")
+      } else if (wsTestStatus === "error") {
+        setWsTestMessage("Kaydedildi. Son bağlantı sonucu: bağlantı başarısız.")
+      }
       toast.success("Websocket adresi kaydedildi", { style: toastStyle, position: "top-right" })
     } catch {
       toast.error("Kaydedilemedi.", { style: toastStyle, position: "top-right" })
@@ -213,7 +219,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       })
     })
 
-  const testWsConnection = () => {
+  const connectSocketIo = () => {
     const normalized = wsUrl.trim()
     if (!normalized) {
       toast.error("Websocket adresi girin.", { style: toastStyle, position: "top-right" })
@@ -232,12 +238,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     let settled = false
     setIsWsTesting(true)
     setWsTestStatus("testing")
-    setWsTestMessage("Socket.IO bağlantısı test ediliyor...")
+    setWsTestMessage("Socket.IO bağlantısı kuruluyor...")
     const socketIoUrl = buildSocketIoWsUrl(normalized)
     if (!socketIoUrl) {
       setIsWsTesting(false)
       setWsTestStatus("error")
-      setWsTestMessage("Socket.IO test adresi oluşturulamadı.")
+      setWsTestMessage("Socket.IO bağlantı adresi oluşturulamadı.")
       toast.error("Socket.IO adresi geçersiz.", { style: toastStyle, position: "top-right" })
       return
     }
@@ -265,7 +271,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
       complete(
         "error",
-        "Socket.IO bağlantısı kurulamadı. /socket.io endpointi ve CORS ayarlarını kontrol edin.",
+        "Socket.IO bağlantısı kurulamadı. /socket.io ve CORS ayarlarını kontrol edin.",
       )
     })()
   }
@@ -292,14 +298,14 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       return {
         dot: "bg-amber-300",
         badge: "border-amber-300/50 bg-amber-500/15 text-amber-100",
-        label: "Test ediliyor",
+        label: "Bağlantı kuruluyor",
       }
     }
     if (!isCurrentUrlTested) {
       return {
         dot: "bg-rose-400",
         badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
-        label: "Test edilmedi",
+        label: "Bağlantı kurulmadı",
       }
     }
     return {
@@ -314,7 +320,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     setWsUrl(nextValue)
     if (nextValue.trim() !== lastTestedWsUrl) {
       setWsTestStatus("idle")
-      setWsTestMessage("Bu adres test edilmedi.")
+      setWsTestMessage("Bu adres için bağlantı kurulmadı.")
     }
   }
 
@@ -568,11 +574,11 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                   </button>
                   <button
                     type="button"
-                    onClick={testWsConnection}
+                    onClick={connectSocketIo}
                     disabled={isWsTesting}
                     className={`w-full ${primaryButtonClass}`}
                   >
-                    {isWsTesting ? "Test ediliyor..." : "Test et"}
+                    {isWsTesting ? "Bağlantı kuruluyor..." : "Bağlantı kur"}
                   </button>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
