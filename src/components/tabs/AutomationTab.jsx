@@ -19,7 +19,7 @@ function AutomationSkeleton({ panelClass }) {
           <SkeletonBlock className="h-7 w-20 rounded-full" />
         </div>
       </div>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
         <div className={`${panelClass} bg-ink-900/60`}>
           <SkeletonBlock className="h-4 w-28" />
           <SkeletonBlock className="mt-4 h-11 w-full" />
@@ -204,7 +204,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
           </div>
         </header>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
           <section className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Calistir</p>
