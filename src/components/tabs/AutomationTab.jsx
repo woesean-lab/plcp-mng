@@ -137,6 +137,82 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }
 
+  const buildSocketIoWsUrl = (normalizedUrl) => {
+    try {
+      const socketIoUrl = new URL(normalizedUrl)
+      if (!/\/socket\.io\/?$/i.test(socketIoUrl.pathname)) {
+        socketIoUrl.pathname = "/socket.io/"
+      } else if (!socketIoUrl.pathname.endsWith("/")) {
+        socketIoUrl.pathname = `${socketIoUrl.pathname}/`
+      }
+      socketIoUrl.searchParams.set("EIO", "4")
+      socketIoUrl.searchParams.set("transport", "websocket")
+      return socketIoUrl.toString()
+    } catch {
+      return ""
+    }
+  }
+
+  const testSocketIoConnection = (socketIoUrl) =>
+    new Promise((resolve) => {
+      let settled = false
+      let socket = null
+      let timeoutId = null
+      let handshakeTimeoutId = null
+
+      const finish = (ok, reason) => {
+        if (settled) return
+        settled = true
+        if (timeoutId) window.clearTimeout(timeoutId)
+        if (handshakeTimeoutId) window.clearTimeout(handshakeTimeoutId)
+        if (wsSocketRef.current === socket) {
+          wsSocketRef.current = null
+        }
+        try {
+          socket?.close()
+        } catch {
+          // Ignore close errors.
+        }
+        resolve({ ok, reason })
+      }
+
+      try {
+        socket = new WebSocket(socketIoUrl)
+      } catch {
+        finish(false, "invalid_url")
+        return
+      }
+
+      wsSocketRef.current = socket
+
+      timeoutId = window.setTimeout(() => {
+        finish(false, "timeout")
+      }, 6000)
+
+      socket.addEventListener("open", () => {
+        handshakeTimeoutId = window.setTimeout(() => {
+          finish(false, "socketio_handshake_timeout")
+        }, 1800)
+      })
+
+      socket.addEventListener("message", (event) => {
+        if (settled) return
+        const payload = typeof event.data === "string" ? event.data : ""
+        if (payload.startsWith("0{") || payload.includes("\"sid\"")) {
+          finish(true, "socketio_open")
+        }
+      })
+
+      socket.addEventListener("error", () => {
+        finish(false, "error")
+      })
+
+      socket.addEventListener("close", () => {
+        if (settled) return
+        finish(false, "closed")
+      })
+    })
+
   const testWsConnection = () => {
     const normalized = wsUrl.trim()
     if (!normalized) {
@@ -156,10 +232,15 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     let settled = false
     setIsWsTesting(true)
     setWsTestStatus("testing")
-    setWsTestMessage("Bağlantı test ediliyor...")
-
-    const socket = new WebSocket(normalized)
-    wsSocketRef.current = socket
+    setWsTestMessage("Socket.IO bağlantısı test ediliyor...")
+    const socketIoUrl = buildSocketIoWsUrl(normalized)
+    if (!socketIoUrl) {
+      setIsWsTesting(false)
+      setWsTestStatus("error")
+      setWsTestMessage("Socket.IO test adresi oluşturulamadı.")
+      toast.error("Socket.IO adresi geçersiz.", { style: toastStyle, position: "top-right" })
+      return
+    }
 
     const complete = (status, message) => {
       if (settled) return
@@ -173,33 +254,20 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       } else {
         toast.error("Websocket bağlantısı başarısız", { style: toastStyle, position: "top-right" })
       }
-      if (wsSocketRef.current === socket) {
-        wsSocketRef.current = null
-      }
-      try {
-        socket.close()
-      } catch {
-        // Ignore close errors.
-      }
     }
 
-    const timeoutId = window.setTimeout(() => {
-      complete("error", "Bağlantı zaman aşımına uğradı.")
-    }, 6000)
+    void (async () => {
+      const result = await testSocketIoConnection(socketIoUrl)
+      if (result.ok) {
+        complete("success", "Bağlantı başarılı (Socket.IO).")
+        return
+      }
 
-    socket.addEventListener("open", () => {
-      window.clearTimeout(timeoutId)
-      complete("success", "Bağlantı başarılı.")
-    })
-    socket.addEventListener("error", () => {
-      window.clearTimeout(timeoutId)
-      complete("error", "Bağlantı başarısız.")
-    })
-    socket.addEventListener("close", () => {
-      if (settled) return
-      window.clearTimeout(timeoutId)
-      complete("error", "Sunucu bağlantıyı kapattı.")
-    })
+      complete(
+        "error",
+        "Socket.IO bağlantısı kurulamadı. /socket.io endpointi ve CORS ayarlarını kontrol edin.",
+      )
+    })()
   }
 
   const wsStatusMeta = (() => {
