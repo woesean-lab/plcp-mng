@@ -468,8 +468,58 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     ])
 
     let settled = false
+    let hasConnected = false
+    let hasServerOutput = false
     let socket = null
     let timeoutId = null
+
+    const appendRunLog = (status, message) => {
+      const entryTime = new Date().toLocaleTimeString("tr-TR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      setRunLog((prev) => [
+        {
+          id: `log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          time: entryTime,
+          status,
+          message,
+        },
+        ...prev,
+      ])
+    }
+
+    const resetTimeout = (ms = 20000) => {
+      if (timeoutId) window.clearTimeout(timeoutId)
+      timeoutId = window.setTimeout(() => {
+        if (hasServerOutput) {
+          complete("success", `${selected.title} icin yanitlar alindi.`)
+          return
+        }
+        complete("error", `${selected.title} icin sunucudan yanit alinmadi (zaman asimi).`)
+      }, ms)
+    }
+
+    const parseSocketIoEventPacket = (packet) => {
+      if (!packet.startsWith("42")) return null
+      let dataPart = packet.slice(2)
+      if (dataPart.startsWith("/")) {
+        const namespaceSeparator = dataPart.indexOf(",")
+        if (namespaceSeparator < 0) return null
+        dataPart = dataPart.slice(namespaceSeparator + 1)
+      }
+      if (!dataPart) return null
+      try {
+        const parsed = JSON.parse(dataPart)
+        if (!Array.isArray(parsed) || parsed.length === 0) return null
+        return {
+          event: String(parsed[0] ?? "").trim() || "message",
+          args: parsed.slice(1),
+        }
+      } catch {
+        return null
+      }
+    }
 
     const complete = (status, message) => {
       if (settled) return
@@ -508,9 +558,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       return
     }
 
-    timeoutId = window.setTimeout(() => {
-      complete("error", `${selected.title} icin sunucudan yanit alinmadi (zaman asimi).`)
-    }, 8000)
+    resetTimeout(12000)
 
     socket.addEventListener("message", (event) => {
       if (settled) return
@@ -536,12 +584,33 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       }
 
       if (payload.startsWith("40")) {
-        complete("success", `${selected.title} tetiklendi. backend=${backend}`)
+        hasConnected = true
+        appendRunLog("success", `Sunucu baglantisi kuruldu. backend=${backend}`)
+        resetTimeout(25000)
         return
       }
 
-      if (payload.startsWith("41") || payload.startsWith("44")) {
+      if (payload.startsWith("41")) {
+        if (hasServerOutput) {
+          complete("success", `${selected.title} icin ciktilar alindi ve baglanti kapandi.`)
+        } else {
+          complete("error", `${selected.title} tetiklenemedi. backend=${backend}`)
+        }
+        return
+      }
+
+      if (payload.startsWith("44")) {
         complete("error", `${selected.title} tetiklenemedi. backend=${backend}`)
+        return
+      }
+
+      const eventPacket = parseSocketIoEventPacket(payload)
+      if (eventPacket) {
+        hasServerOutput = true
+        const compactArgs =
+          eventPacket.args.length > 0 ? JSON.stringify(eventPacket.args).slice(0, 240) : ""
+        appendRunLog("running", `${eventPacket.event}${compactArgs ? ` -> ${compactArgs}` : ""}`)
+        resetTimeout(25000)
       }
     })
 
@@ -551,6 +620,14 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
     socket.addEventListener("close", () => {
       if (settled) return
+      if (hasServerOutput) {
+        complete("success", `${selected.title} icin cikti akisi tamamlandi.`)
+        return
+      }
+      if (hasConnected) {
+        complete("error", `${selected.title} baglantisi acildi ancak sunucudan cikti gelmedi.`)
+        return
+      }
       complete("error", `${selected.title} icin websocket baglantisi kapandi.`)
     })
   }
