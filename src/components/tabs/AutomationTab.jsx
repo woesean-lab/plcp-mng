@@ -1,6 +1,16 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
+
+const WS_URL_STORAGE_KEY = "pulcipAutomationWsUrl"
+const readStoredWsUrl = () => {
+  if (typeof window === "undefined") return ""
+  try {
+    return String(localStorage.getItem(WS_URL_STORAGE_KEY) ?? "").trim()
+  } catch {
+    return ""
+  }
+}
 
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -62,10 +72,16 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const [selectedAutomationId, setSelectedAutomationId] = useState("")
   const [runLog, setRunLog] = useState([])
   const [isRunning, setIsRunning] = useState(false)
-  const [lastRunId, setLastRunId] = useState("")
   const [templateWarning, setTemplateWarning] = useState("")
   const [confirmRunId, setConfirmRunId] = useState("")
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [wsUrl, setWsUrl] = useState(() => readStoredWsUrl())
+  const [savedWsUrl, setSavedWsUrl] = useState(() => readStoredWsUrl())
+  const [wsTestStatus, setWsTestStatus] = useState("idle")
+  const [wsTestMessage, setWsTestMessage] = useState("Henüz test edilmedi.")
+  const [lastTestedWsUrl, setLastTestedWsUrl] = useState("")
+  const [isWsTesting, setIsWsTesting] = useState(false)
+  const wsSocketRef = useRef(null)
   const toastStyle = {
     background: "rgba(15, 23, 42, 0.92)",
     color: "#e2e8f0",
@@ -82,6 +98,158 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     [runLog],
   )
 
+  useEffect(() => {
+    return () => {
+      if (wsSocketRef.current) {
+        wsSocketRef.current.close()
+        wsSocketRef.current = null
+      }
+    }
+  }, [])
+
+  const isValidWsUrl = (value) => {
+    try {
+      const parsed = new URL(value)
+      return parsed.protocol === "ws:" || parsed.protocol === "wss:"
+    } catch {
+      return false
+    }
+  }
+
+  const saveWsUrl = () => {
+    const normalized = wsUrl.trim()
+    if (!normalized) {
+      toast.error("Websocket adresi girin.", { style: toastStyle, position: "top-right" })
+      return
+    }
+    if (!isValidWsUrl(normalized)) {
+      toast.error("Geçerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
+      return
+    }
+    try {
+      localStorage.setItem(WS_URL_STORAGE_KEY, normalized)
+      setSavedWsUrl(normalized)
+      setWsTestStatus("idle")
+      setWsTestMessage("Kaydedildi. Test etmek için butonu kullan.")
+      toast.success("Websocket adresi kaydedildi", { style: toastStyle, position: "top-right" })
+    } catch {
+      toast.error("Kaydedilemedi.", { style: toastStyle, position: "top-right" })
+    }
+  }
+
+  const testWsConnection = () => {
+    const normalized = wsUrl.trim()
+    if (!normalized) {
+      toast.error("Websocket adresi girin.", { style: toastStyle, position: "top-right" })
+      return
+    }
+    if (!isValidWsUrl(normalized)) {
+      toast.error("Geçerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
+      return
+    }
+
+    if (wsSocketRef.current) {
+      wsSocketRef.current.close()
+      wsSocketRef.current = null
+    }
+
+    let settled = false
+    setIsWsTesting(true)
+    setWsTestStatus("testing")
+    setWsTestMessage("Bağlantı test ediliyor...")
+
+    const socket = new WebSocket(normalized)
+    wsSocketRef.current = socket
+
+    const complete = (status, message) => {
+      if (settled) return
+      settled = true
+      setIsWsTesting(false)
+      setWsTestStatus(status)
+      setWsTestMessage(message)
+      setLastTestedWsUrl(normalized)
+      if (status === "success") {
+        toast.success("Websocket bağlantısı başarılı", { style: toastStyle, position: "top-right" })
+      } else {
+        toast.error("Websocket bağlantısı başarısız", { style: toastStyle, position: "top-right" })
+      }
+      if (wsSocketRef.current === socket) {
+        wsSocketRef.current = null
+      }
+      try {
+        socket.close()
+      } catch {
+        // Ignore close errors.
+      }
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      complete("error", "Bağlantı zaman aşımına uğradı.")
+    }, 6000)
+
+    socket.addEventListener("open", () => {
+      window.clearTimeout(timeoutId)
+      complete("success", "Bağlantı başarılı.")
+    })
+    socket.addEventListener("error", () => {
+      window.clearTimeout(timeoutId)
+      complete("error", "Bağlantı başarısız.")
+    })
+    socket.addEventListener("close", () => {
+      if (settled) return
+      window.clearTimeout(timeoutId)
+      complete("error", "Sunucu bağlantıyı kapattı.")
+    })
+  }
+
+  const wsStatusMeta = (() => {
+    const normalizedCurrentWsUrl = wsUrl.trim()
+    const isCurrentUrlTested = normalizedCurrentWsUrl && normalizedCurrentWsUrl === lastTestedWsUrl
+
+    if (!normalizedCurrentWsUrl) {
+      return {
+        dot: "bg-rose-400",
+        badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
+        label: "Bağlantı yok",
+      }
+    }
+    if (wsTestStatus === "success") {
+      return {
+        dot: "bg-emerald-400",
+        badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-100",
+        label: "Bağlantı başarılı",
+      }
+    }
+    if (wsTestStatus === "testing") {
+      return {
+        dot: "bg-amber-300",
+        badge: "border-amber-300/50 bg-amber-500/15 text-amber-100",
+        label: "Test ediliyor",
+      }
+    }
+    if (!isCurrentUrlTested) {
+      return {
+        dot: "bg-rose-400",
+        badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
+        label: "Test edilmedi",
+      }
+    }
+    return {
+      dot: "bg-rose-400",
+      badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
+      label: "Bağlantı başarısız",
+    }
+  })()
+
+  const handleWsUrlChange = (event) => {
+    const nextValue = event.target.value
+    setWsUrl(nextValue)
+    if (nextValue.trim() !== lastTestedWsUrl) {
+      setWsTestStatus("idle")
+      setWsTestMessage("Bu adres test edilmedi.")
+    }
+  }
+
   const runAutomation = (selected) => {
     if (!selected) return
     const now = new Date()
@@ -90,7 +258,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       minute: "2-digit",
     })
     setIsRunning(true)
-    setLastRunId(selected.id)
     toast("Otomasyon baslatildi", { style: toastStyle, position: "top-right" })
     setRunLog((prev) => [
       {
@@ -311,12 +478,41 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
           <aside className="space-y-4">
             <section className={`${panelClass} bg-ink-900/60`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Websocket</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Websocket</p>
+                <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${wsStatusMeta.badge}`}>
+                  <span className={`h-2 w-2 rounded-full ${wsStatusMeta.dot}`} />
+                  {wsStatusMeta.label}
+                </span>
+              </div>
               <div className="mt-3 space-y-3">
-                <input id="ws-url" type="text" placeholder="wss://ornek.com/ws" className={fieldClass} />
-                <button type="button" className={`w-full ${secondaryButtonClass}`}>
-                  Kaydet
-                </button>
+                <input
+                  id="ws-url"
+                  type="text"
+                  placeholder="wss://ornek.com/ws"
+                  value={wsUrl}
+                  onChange={handleWsUrlChange}
+                  className={fieldClass}
+                />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button type="button" onClick={saveWsUrl} className={`w-full ${secondaryButtonClass}`}>
+                    Kaydet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={testWsConnection}
+                    disabled={isWsTesting}
+                    className={`w-full ${primaryButtonClass}`}
+                  >
+                    {isWsTesting ? "Test ediliyor..." : "Test et"}
+                  </button>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+                  <p className="break-all">
+                    Kayıtlı: <span className="text-slate-100">{savedWsUrl || "-"}</span>
+                  </p>
+                  <p className="mt-1 text-slate-400">{wsTestMessage}</p>
+                </div>
               </div>
             </section>
 
