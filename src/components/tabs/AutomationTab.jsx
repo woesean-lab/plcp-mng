@@ -91,17 +91,16 @@ function AutomationSkeleton({ panelClass }) {
 
 export default function AutomationTab({ panelClass, isLoading = false }) {
   const [automations, setAutomations] = useState([
-    { id: "auto-1", title: "Siparis onay otomasyonu", template: "/templates/order-confirm" },
-    { id: "auto-2", title: "Stok kontrol zinciri", template: "/templates/stock-check" },
-    { id: "auto-3", title: "Problem eskalasyonu", template: "/templates/problem-escalation" },
+    { id: "auto-1", title: "Knife Crown", backend: "knife-crown" },
+    { id: "auto-2", title: "Stok kontrol zinciri", backend: "stock-check" },
+    { id: "auto-3", title: "Problem eskalasyonu", backend: "problem-escalation" },
   ])
-  const [automationForm, setAutomationForm] = useState({ title: "", template: "" })
+  const [automationForm, setAutomationForm] = useState({ title: "", backend: "" })
   const [editingId, setEditingId] = useState("")
-  const [editingDraft, setEditingDraft] = useState({ title: "", template: "" })
+  const [editingDraft, setEditingDraft] = useState({ title: "", backend: "" })
   const [selectedAutomationId, setSelectedAutomationId] = useState("")
   const [runLog, setRunLog] = useState([])
   const [isRunning, setIsRunning] = useState(false)
-  const [templateWarning, setTemplateWarning] = useState("")
   const [confirmRunId, setConfirmRunId] = useState("")
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [wsUrl, setWsUrl] = useState(() => readStoredWsUrl())
@@ -193,7 +192,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }
 
-  const buildSocketIoWsUrl = useCallback((normalizedUrl) => {
+  const buildSocketIoWsUrl = useCallback((normalizedUrl, extraQuery = {}) => {
     try {
       const socketIoUrl = new URL(normalizedUrl)
       if (!/\/socket\.io\/?$/i.test(socketIoUrl.pathname)) {
@@ -201,6 +200,14 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       } else if (!socketIoUrl.pathname.endsWith("/")) {
         socketIoUrl.pathname = `${socketIoUrl.pathname}/`
       }
+      Object.entries(extraQuery).forEach(([key, value]) => {
+        const normalizedValue = String(value ?? "").trim()
+        if (normalizedValue) {
+          socketIoUrl.searchParams.set(key, normalizedValue)
+        } else {
+          socketIoUrl.searchParams.delete(key)
+        }
+      })
       socketIoUrl.searchParams.set("EIO", "4")
       socketIoUrl.searchParams.set("transport", "websocket")
       return socketIoUrl.toString()
@@ -419,23 +426,55 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
   const runAutomation = (selected) => {
     if (!selected) return
+    const backend = String(selected.backend ?? "").trim()
+    if (!backend) {
+      toast.error("Backend map bos olamaz.", { style: toastStyle, position: "top-right" })
+      return
+    }
+
+    const baseWsUrl = String(savedWsUrl || wsUrl).trim()
+    if (!baseWsUrl || !isValidWsUrl(baseWsUrl)) {
+      toast.error("Once websocket adresini kaydedip baglanti kurun.", {
+        style: toastStyle,
+        position: "top-right",
+      })
+      return
+    }
+
+    const triggerUrl = buildSocketIoWsUrl(baseWsUrl, { backend })
+    if (!triggerUrl) {
+      toast.error("Otomasyon istegi icin websocket adresi olusturulamadi.", {
+        style: toastStyle,
+        position: "top-right",
+      })
+      return
+    }
+
     const now = new Date()
     const time = now.toLocaleTimeString("tr-TR", {
       hour: "2-digit",
       minute: "2-digit",
     })
     setIsRunning(true)
-    toast("Otomasyon baslatildi", { style: toastStyle, position: "top-right" })
+    toast("Otomasyon tetikleme istegi gonderildi", { style: toastStyle, position: "top-right" })
     setRunLog((prev) => [
       {
         id: `log-${Date.now()}`,
         time,
         status: "running",
-        message: `${selected.title} calisiyor...`,
+        message: `${selected.title} tetikleniyor... backend=${backend}`,
       },
       ...prev,
     ])
-    window.setTimeout(() => {
+
+    let settled = false
+    let socket = null
+    let timeoutId = null
+
+    const complete = (status, message) => {
+      if (settled) return
+      settled = true
+      if (timeoutId) window.clearTimeout(timeoutId)
       const doneTime = new Date().toLocaleTimeString("tr-TR", {
         hour: "2-digit",
         minute: "2-digit",
@@ -444,14 +483,76 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         {
           id: `log-${Date.now()}-done`,
           time: doneTime,
-          status: "success",
-          message: `${selected.title} tamamlandi.`,
+          status,
+          message,
         },
         ...prev,
       ])
-      toast.success("Otomasyon tamamlandi", { style: toastStyle, position: "top-right" })
+      if (status === "success") {
+        toast.success("Otomasyon tetiklendi", { style: toastStyle, position: "top-right" })
+      } else {
+        toast.error("Otomasyon tetiklenemedi", { style: toastStyle, position: "top-right" })
+      }
       setIsRunning(false)
-    }, 1200)
+      try {
+        socket?.close()
+      } catch {
+        // Ignore close errors.
+      }
+    }
+
+    try {
+      socket = new WebSocket(triggerUrl)
+    } catch {
+      complete("error", `${selected.title} icin websocket baglantisi baslatilamadi.`)
+      return
+    }
+
+    timeoutId = window.setTimeout(() => {
+      complete("error", `${selected.title} icin sunucudan yanit alinmadi (zaman asimi).`)
+    }, 8000)
+
+    socket.addEventListener("message", (event) => {
+      if (settled) return
+      const payload = typeof event.data === "string" ? event.data : ""
+      if (!payload) return
+
+      if (payload === "2") {
+        try {
+          socket.send("3")
+        } catch {
+          // Ignore pong send errors.
+        }
+        return
+      }
+
+      if (payload.startsWith("0{")) {
+        try {
+          socket.send("40")
+        } catch {
+          complete("error", `${selected.title} icin Socket.IO connect paketi gonderilemedi.`)
+        }
+        return
+      }
+
+      if (payload.startsWith("40")) {
+        complete("success", `${selected.title} tetiklendi. backend=${backend}`)
+        return
+      }
+
+      if (payload.startsWith("41") || payload.startsWith("44")) {
+        complete("error", `${selected.title} tetiklenemedi. backend=${backend}`)
+      }
+    })
+
+    socket.addEventListener("error", () => {
+      complete("error", `${selected.title} icin websocket baglanti hatasi olustu.`)
+    })
+
+    socket.addEventListener("close", () => {
+      if (settled) return
+      complete("error", `${selected.title} icin websocket baglantisi kapandi.`)
+    })
   }
 
   if (isLoading) {
@@ -580,7 +681,9 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                 {selectedAutomation?.title ?? "Secim yok"}
               </p>
               <p className="truncate text-xs text-slate-400">
-                {selectedAutomation?.template ?? "/templates/..."}
+                {selectedAutomation?.backend
+                  ? `Backend map: ${selectedAutomation.backend}`
+                  : "Backend map yok"}
               </p>
             </div>
 
@@ -697,37 +800,23 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                   className={fieldClass}
                 />
                 <input
-                  id="automation-template"
+                  id="automation-backend"
                   type="text"
-                  placeholder="/templates/..."
-                  value={automationForm.template}
+                  placeholder="Backend map (orn: knife-crown)"
+                  value={automationForm.backend}
                   onChange={(event) =>
-                    setAutomationForm((prev) => ({ ...prev, template: event.target.value }))
+                    setAutomationForm((prev) => ({ ...prev, backend: event.target.value }))
                   }
                   className={fieldClass}
                 />
-                {templateWarning ? (
-                  <div className="rounded-lg border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                    {templateWarning}
-                  </div>
-                ) : null}
                 <button
                   type="button"
                   onClick={() => {
                     const title = automationForm.title.trim()
-                    const template = automationForm.template.trim()
-                    if (!title || !template) return
-                    if (!template.startsWith("/templates/")) {
-                      setTemplateWarning("Template yolu /templates/ ile baslamali.")
-                      toast.error("Template yolu /templates/ ile baslamali.", {
-                        style: toastStyle,
-                        position: "top-right",
-                      })
-                      return
-                    }
-                    setTemplateWarning("")
-                    setAutomations((prev) => [{ id: `auto-${Date.now()}`, title, template }, ...prev])
-                    setAutomationForm({ title: "", template: "" })
+                    const backend = automationForm.backend.trim()
+                    if (!title || !backend) return
+                    setAutomations((prev) => [{ id: `auto-${Date.now()}`, title, backend }, ...prev])
+                    setAutomationForm({ title: "", backend: "" })
                     toast.success("Otomasyon eklendi", { style: toastStyle, position: "top-right" })
                   }}
                   className={`w-full ${primaryButtonClass}`}
@@ -748,7 +837,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                     const selected = automations.find((entry) => entry.id === value)
                     setEditingDraft({
                       title: selected?.title ?? "",
-                      template: selected?.template ?? "",
+                      backend: selected?.backend ?? "",
                     })
                   }}
                   className={fieldClass}
@@ -771,11 +860,11 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                 />
                 <input
                   type="text"
-                  value={editingDraft.template}
+                  value={editingDraft.backend}
                   onChange={(event) =>
-                    setEditingDraft((prev) => ({ ...prev, template: event.target.value }))
+                    setEditingDraft((prev) => ({ ...prev, backend: event.target.value }))
                   }
-                  placeholder="/templates/..."
+                  placeholder="Backend map (orn: knife-crown)"
                   className={fieldClass}
                 />
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -783,11 +872,11 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                     type="button"
                     onClick={() => {
                       const title = editingDraft.title.trim()
-                      const template = editingDraft.template.trim()
-                      if (!editingId || !title || !template) return
+                      const backend = editingDraft.backend.trim()
+                      if (!editingId || !title || !backend) return
                       setAutomations((prev) =>
                         prev.map((entry) =>
-                          entry.id === editingId ? { ...entry, title, template } : entry,
+                          entry.id === editingId ? { ...entry, title, backend } : entry,
                         ),
                       )
                       toast.success("Otomasyon guncellendi", {
@@ -805,7 +894,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                       if (!editingId) return
                       setAutomations((prev) => prev.filter((entry) => entry.id !== editingId))
                       setEditingId("")
-                      setEditingDraft({ title: "", template: "" })
+                      setEditingDraft({ title: "", backend: "" })
                       if (selectedAutomationId === editingId) setSelectedAutomationId("")
                       toast("Otomasyon silindi", { style: toastStyle, position: "top-right" })
                     }}
