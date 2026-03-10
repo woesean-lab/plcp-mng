@@ -1303,7 +1303,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                 </div>
               </div>
 
-              <div className="h-[384px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
+              <div className="no-scrollbar h-[384px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
                 <div className="space-y-0.5">
                   {visibleRunLogEntries.map((entry) => (
                     <div key={entry.id} className="flex items-start gap-2 text-slate-200">

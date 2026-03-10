@@ -127,6 +127,15 @@
 }
 
 @layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   [data-theme='light'] .bg-ink-900 {
     background-color: #dbeafe;
   }
