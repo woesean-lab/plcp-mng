@@ -1346,32 +1346,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
               </div>
             </section>
 
-            <section className={`${panelClass} bg-ink-900/60`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                Sunucu Mapleri
-              </p>
-              <div className="mt-3 space-y-2">
-                {backendOptions.length === 0 ? (
-                  <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
-                    Map listesi bos. Once baglanip mapleri cekin.
-                  </div>
-                ) : (
-                  backendOptions.map((option) => (
-                    <div
-                      key={option.key}
-                      className={`rounded-lg border px-3 py-2 text-xs ${
-                        selectedBackendKey === option.key
-                          ? "border-emerald-300/50 bg-emerald-500/10 text-emerald-100"
-                          : "border-white/10 bg-white/5 text-slate-200"
-                      }`}
-                    >
-                      <p className="truncate font-semibold">{option.label || option.key}</p>
-                      <p className="truncate font-mono text-[10px] text-slate-400">{option.key}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
           </aside>
         </div>
       </div>
