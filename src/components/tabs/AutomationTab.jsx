@@ -536,6 +536,22 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       return formatSocketIoValue(args)
     }
 
+    const readScriptLogPayload = (args) => {
+      const firstArg = args?.[0]
+      if (!firstArg || typeof firstArg !== "object") {
+        return {
+          backend: backend,
+          stream: "",
+          message: formatSocketIoArgs(args),
+        }
+      }
+      const backendValue = String(firstArg.backend ?? backend).trim() || backend
+      const streamRaw = String(firstArg.stream ?? "").trim().toLowerCase()
+      const stream = streamRaw === "stderr" ? "stderr" : streamRaw === "stdout" ? "stdout" : ""
+      const message = String(firstArg.message ?? "").trim() || formatSocketIoArgs(args)
+      return { backend: backendValue, stream, message }
+    }
+
     const complete = (status, message) => {
       if (settled) return
       settled = true
@@ -633,14 +649,24 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         const eventName = eventPacket.event.toLowerCase()
         const eventPayload = formatSocketIoArgs(eventPacket.args).slice(0, 400)
 
-        if (eventName === "script-started") {
-          appendRunLog("running", eventPayload || "script-started")
+        if (eventName === "script-triggered" || eventName === "script-started") {
+          const payloadMeta = readScriptLogPayload(eventPacket.args)
+          const line =
+            payloadMeta.message ||
+            `${payloadMeta.backend ? `${payloadMeta.backend} ` : ""}${
+              eventName === "script-triggered" ? "script tetiklendi." : "script basladi."
+            }`.trim()
+          appendRunLog("running", line)
           resetTimeout(25000)
           continue
         }
 
         if (eventName === "script-log") {
-          appendRunLog("running", eventPayload || "script-log")
+          const payloadMeta = readScriptLogPayload(eventPacket.args)
+          const streamTag = payloadMeta.stream ? `[${payloadMeta.stream}] ` : ""
+          const backendTag = payloadMeta.backend ? `${payloadMeta.backend}: ` : ""
+          const line = `${backendTag}${streamTag}${payloadMeta.message || "script-log"}`.slice(0, 400)
+          appendRunLog(payloadMeta.stream === "stderr" ? "error" : "running", line)
           resetTimeout(25000)
           continue
         }
