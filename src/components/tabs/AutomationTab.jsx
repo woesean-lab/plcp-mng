@@ -1341,84 +1341,78 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
           <aside className="space-y-4">
             <section className={`${panelClass} bg-ink-900/60`}>
-              <div className="rounded-xl border border-white/10 bg-gradient-to-br from-ink-900/80 via-ink-900/60 to-ink-800/60 p-2.5 sm:p-3">
-                <div className="flex items-start justify-between gap-2.5">
-                  <div>
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                      Websocket
-                    </p>
-                    <p className="mt-1 text-[11px] text-slate-400">
-                      Proxy adresini kaydet, baglan ve backend mapleri cek.
-                    </p>
-                  </div>
+              <div className="flex items-start justify-between gap-2.5">
+                <div>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    Websocket
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    Proxy adresini kaydet, baglan ve backend mapleri cek.
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${wsStatusMeta.badge}`}
+                >
+                  <span className={`h-2 w-2 rounded-full ${wsStatusMeta.dot}`} />
+                  {wsStatusMeta.label}
+                </span>
+              </div>
+
+              <div className="mt-2.5 space-y-2">
+                <label
+                  htmlFor="ws-url"
+                  className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500"
+                >
+                  Sunucu adresi
+                </label>
+                <input
+                  id="ws-url"
+                  type="text"
+                  placeholder="wss://ornek.com/ws"
+                  value={wsUrl}
+                  onChange={handleWsUrlChange}
+                  className={`${fieldClass} !bg-ink-950/80 !px-3 !py-2 !text-xs`}
+                />
+              </div>
+
+              <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+                <button type="button" onClick={saveWsUrl} className={wsActionSecondaryButtonClass}>
+                  Kaydet
+                </button>
+                <button
+                  type="button"
+                  onClick={connectSocketIo}
+                  disabled={isWsTesting}
+                  className={wsActionPrimaryButtonClass}
+                >
+                  {isWsTesting ? "Baglaniyor..." : "Baglan"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void refreshBackendMaps({ silent: false })
+                  }}
+                  disabled={backendListStatus === "loading" || wsTestStatus !== "success"}
+                  className={wsActionSecondaryButtonClass}
+                >
+                  {backendListStatus === "loading" ? "Map aliniyor..." : "Mapleri cek"}
+                </button>
+              </div>
+
+              <div className="mt-2.5 border-t border-white/10 pt-2.5">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Kayitli adres
+                </p>
+                <p className="mt-1 break-all font-mono text-[10px] text-slate-200">{savedWsUrl || "-"}</p>
+                <p className="mt-2 text-[10px] text-slate-300">{wsTestMessage}</p>
+
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-slate-400">{backendListMessage}</span>
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${wsStatusMeta.badge}`}
+                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${backendStatusMeta.badge}`}
                   >
-                    <span className={`h-2 w-2 rounded-full ${wsStatusMeta.dot}`} />
-                    {wsStatusMeta.label}
+                    {backendStatusMeta.label}
                   </span>
-                </div>
-
-                <div className="mt-2.5 space-y-2">
-                  <label
-                    htmlFor="ws-url"
-                    className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500"
-                  >
-                    Sunucu adresi
-                  </label>
-                  <input
-                    id="ws-url"
-                    type="text"
-                    placeholder="wss://ornek.com/ws"
-                    value={wsUrl}
-                    onChange={handleWsUrlChange}
-                    className={`${fieldClass} !bg-ink-950/80 !px-3 !py-2 !text-xs`}
-                  />
-                </div>
-
-                <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-                  <button type="button" onClick={saveWsUrl} className={wsActionSecondaryButtonClass}>
-                    Kaydet
-                  </button>
-                  <button
-                    type="button"
-                    onClick={connectSocketIo}
-                    disabled={isWsTesting}
-                    className={wsActionPrimaryButtonClass}
-                  >
-                    {isWsTesting ? "Baglaniyor..." : "Baglan"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void refreshBackendMaps({ silent: false })
-                    }}
-                    disabled={backendListStatus === "loading" || wsTestStatus !== "success"}
-                    className={wsActionSecondaryButtonClass}
-                  >
-                    {backendListStatus === "loading" ? "Map aliniyor..." : "Mapleri cek"}
-                  </button>
-                </div>
-
-                <div className="mt-2.5 rounded-lg border border-white/10 bg-black/25 p-2.5">
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Kayitli adres
-                  </p>
-                  <p className="mt-1 break-all font-mono text-[10px] text-slate-200">
-                    {savedWsUrl || "-"}
-                  </p>
-
-                  <div className="mt-2 h-px bg-white/10" />
-                  <p className="mt-2 text-[10px] text-slate-300">{wsTestMessage}</p>
-
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-slate-400">{backendListMessage}</span>
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${backendStatusMeta.badge}`}
-                    >
-                      {backendStatusMeta.label}
-                    </span>
-                  </div>
                 </div>
               </div>
             </section>
