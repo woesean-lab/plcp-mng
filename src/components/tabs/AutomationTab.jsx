@@ -103,6 +103,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const [isRunning, setIsRunning] = useState(false)
   const [confirmRunId, setConfirmRunId] = useState("")
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [resultPopup, setResultPopup] = useState({
+    isOpen: false,
+    title: "",
+    backend: "",
+    value: "",
+  })
   const [wsUrl, setWsUrl] = useState(() => readStoredWsUrl())
   const [savedWsUrl, setSavedWsUrl] = useState(() => readStoredWsUrl())
   const [wsTestStatus, setWsTestStatus] = useState(() => readStoredWsConnectionState().status)
@@ -455,6 +461,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       hour: "2-digit",
       minute: "2-digit",
     })
+    setResultPopup((prev) => ({ ...prev, isOpen: false }))
     setIsRunning(true)
     toast("Otomasyon tetikleme istegi gonderildi", { style: toastStyle, position: "top-right" })
     setRunLog((prev) => [
@@ -638,8 +645,15 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         if (eventName === "sonuc") {
           const firstArg = eventPacket.args[0]
           const resultBackend = String(firstArg?.backend ?? backend).trim() || backend
-          const valueText = formatValue(firstArg?.value).slice(0, 500) || "-"
+          const rawValueText = formatValue(firstArg?.value)
+          const valueText = rawValueText.slice(0, 500) || "-"
           appendRunLog("success", `${resultBackend} => ${valueText}`)
+          setResultPopup({
+            isOpen: true,
+            title: selected.title,
+            backend: resultBackend,
+            value: rawValueText || "-",
+          })
           hasResult = true
           complete("success", `${selected.title} tamamlandi.`)
           return
@@ -678,7 +692,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const secondaryButtonClass =
     "rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10"
 
-  const modalContent = isConfirmOpen ? (
+  const confirmModalContent = isConfirmOpen ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/75 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
         <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">Onay</p>
@@ -709,6 +723,53 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
             }}
           >
             Iptal
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null
+
+  const resultModalContent = resultPopup.isOpen ? (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-emerald-300/40 bg-ink-900/95 p-5 shadow-card">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
+            <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
+              <path d="M7.629 13.314 4.486 10.17l-1.172 1.172 4.315 4.315L16.686 6.6l-1.172-1.172z" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
+              Islem Basarili
+            </p>
+            <p className="mt-1 text-base font-semibold text-white">
+              {resultPopup.title || "Otomasyon"} tamamlandi.
+            </p>
+            <p className="mt-1 text-xs text-slate-300">
+              Sonuc: <span className="text-emerald-100">{resultPopup.backend || "-"}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Sonuc Degeri</p>
+          <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-100">
+            {resultPopup.value || "-"}
+          </pre>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            className={primaryButtonClass}
+            onClick={() =>
+              setResultPopup((prev) => ({
+                ...prev,
+                isOpen: false,
+              }))
+            }
+          >
+            Kapat
           </button>
         </div>
       </div>
@@ -1021,8 +1082,11 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         </div>
       </div>
 
-      {typeof document !== "undefined" && modalContent
-        ? createPortal(modalContent, document.body)
+      {typeof document !== "undefined" && confirmModalContent
+        ? createPortal(confirmModalContent, document.body)
+        : null}
+      {typeof document !== "undefined" && resultModalContent
+        ? createPortal(resultModalContent, document.body)
         : null}
     </>
   )
