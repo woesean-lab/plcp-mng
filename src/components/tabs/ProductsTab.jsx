@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 import StockModal from "../modals/StockModal"
 function SkeletonBlock({ className = "" }) {
@@ -287,6 +288,12 @@ export default function ProductsTab({
       : {},
   )
   const [automationBackendDrafts, setAutomationBackendDrafts] = useState({})
+  const [automationResultPopup, setAutomationResultPopup] = useState({
+    isOpen: false,
+    title: "",
+    backend: "",
+    value: "",
+  })
   const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
   const [priceDrafts, setPriceDrafts] = useState({})
@@ -674,6 +681,7 @@ export default function ProductsTab({
     const label = String(automationName ?? "").trim() || "Otomasyon"
     closeAutomationSocket(normalizedId)
     setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+    setAutomationResultPopup((prev) => ({ ...prev, isOpen: false }))
     appendAutomationRunLog(normalizedId, "running", `${label} tetikleniyor... backend=${backend}`)
 
     let settled = false
@@ -815,18 +823,28 @@ export default function ProductsTab({
 
         if (eventName === "sonuc") {
           const resultBackend = String(firstArg?.backend ?? backend).trim() || backend
-          const rawValue =
-            typeof firstArg?.value === "string"
-              ? firstArg.value
-              : firstArg?.value === null || firstArg?.value === undefined
-                ? ""
-                : JSON.stringify(firstArg.value)
+          let rawValue = ""
+          if (typeof firstArg?.value === "string") {
+            rawValue = firstArg.value
+          } else if (firstArg?.value !== null && firstArg?.value !== undefined) {
+            try {
+              rawValue = JSON.stringify(firstArg.value)
+            } catch {
+              rawValue = String(firstArg.value)
+            }
+          }
           const valueText = String(rawValue ?? "").trim()
           appendAutomationRunLog(
             normalizedId,
             "success",
             `${resultBackend} => ${valueText || "-"}`,
           )
+          setAutomationResultPopup({
+            isOpen: true,
+            title: label,
+            backend: resultBackend,
+            value: rawValue || "-",
+          })
           hasResult = true
           complete("success", `${label} tamamlandi.`)
           return
@@ -1392,6 +1410,63 @@ export default function ProductsTab({
   if (isLoading) {
     return <ProductsSkeleton panelClass={panelClass} />
   }
+  const resultModalContent = automationResultPopup.isOpen ? (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
+            <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
+              <path d="M7.629 13.314 4.486 10.17l-1.172 1.172 4.315 4.315L16.686 6.6l-1.172-1.172z" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
+              Islem Basarili
+            </p>
+            <p className="mt-1 text-base font-semibold text-white">
+              {automationResultPopup.title || "Otomasyon"} tamamlandi.
+            </p>
+            <p className="mt-1 text-xs text-slate-300">
+              Sonuc: <span className="text-emerald-100">{automationResultPopup.backend || "-"}</span>
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="mt-4 cursor-copy rounded-xl border border-white/10 bg-black/25 p-3"
+          title="Sonucu kopyalamak icin tikla"
+          onClick={async () => {
+            const valueToCopy = String(automationResultPopup.value || "-")
+            try {
+              await navigator.clipboard.writeText(valueToCopy)
+              toast.success("Sonuc kopyalandi", { position: "top-right" })
+            } catch {
+              toast.error("Sonuc kopyalanamadi", { position: "top-right" })
+            }
+          }}
+        >
+          <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-100">
+            {automationResultPopup.value || "-"}
+          </pre>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25"
+            onClick={() =>
+              setAutomationResultPopup((prev) => ({
+                ...prev,
+                isOpen: false,
+              }))
+            }
+          >
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null
   return (
     <div className="space-y-6">
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
@@ -3226,6 +3301,9 @@ export default function ProductsTab({
         onScroll={handleStockModalScroll}
         onSave={handleStockModalSave}
       />
+      {typeof document !== "undefined" && resultModalContent
+        ? createPortal(resultModalContent, document.body)
+        : null}
     </div>
   )
 }
