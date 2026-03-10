@@ -469,18 +469,44 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
     let settled = false
     let hasConnected = false
-    let hasServerOutput = false
+    let hasResult = false
     let socket = null
     let timeoutId = null
+
+    const appendRunLog = (status, message) => {
+      const entryTime = new Date().toLocaleTimeString("tr-TR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      setRunLog((prev) => [
+        {
+          id: `log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          time: entryTime,
+          status,
+          message,
+        },
+        ...prev,
+      ])
+    }
+
+    const formatValue = (value) => {
+      if (typeof value === "string") return value
+      if (value === null || value === undefined) return ""
+      try {
+        return JSON.stringify(value)
+      } catch {
+        return String(value)
+      }
+    }
 
     const resetTimeout = (ms = 20000) => {
       if (timeoutId) window.clearTimeout(timeoutId)
       timeoutId = window.setTimeout(() => {
-        if (hasServerOutput) {
-          complete("success", `${selected.title} icin yanitlar alindi.`)
+        if (hasResult) {
+          complete("success", `${selected.title} tamamlandi.`)
           return
         }
-        complete("error", `${selected.title} icin sunucudan yanit alinmadi (zaman asimi).`)
+        complete("error", `${selected.title} icin sonuc yaniti alinmadi (zaman asimi).`)
       }, ms)
     }
 
@@ -542,7 +568,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       return
     }
 
-    resetTimeout(12000)
+    resetTimeout(15000)
 
     socket.addEventListener("message", (event) => {
       if (settled) return
@@ -576,15 +602,15 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
         if (packet.startsWith("40")) {
           hasConnected = true
-          resetTimeout(25000)
+          resetTimeout(300000)
           continue
         }
 
         if (packet.startsWith("41")) {
-          if (hasServerOutput) {
-            complete("success", `${selected.title} icin ciktilar alindi ve baglanti kapandi.`)
+          if (hasResult) {
+            complete("success", `${selected.title} tamamlandi.`)
           } else {
-            complete("error", `${selected.title} tetiklenemedi. backend=${backend}`)
+            complete("error", `${selected.title} tamamlanmadan baglanti kapandi (sonuc yok).`)
           }
           return
         }
@@ -597,36 +623,29 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         const eventPacket = parseSocketIoEventPacket(packet)
         if (!eventPacket) continue
 
-        hasServerOutput = true
         const eventName = eventPacket.event.toLowerCase()
 
         if (eventName === "script-triggered" || eventName === "script-started") {
-          resetTimeout(25000)
+          resetTimeout(300000)
           continue
         }
 
         if (eventName === "script-log") {
-          resetTimeout(25000)
+          resetTimeout(300000)
           continue
         }
 
-        if (eventName === "script-exit") {
+        if (eventName === "sonuc") {
           const firstArg = eventPacket.args[0]
-          const exitCodeRaw =
-            typeof firstArg === "number"
-              ? firstArg
-              : Number(firstArg?.exitCode ?? firstArg?.code ?? NaN)
-          const isSuccess = Number.isFinite(exitCodeRaw) ? exitCodeRaw === 0 : true
-          complete(
-            isSuccess ? "success" : "error",
-            isSuccess
-              ? `${selected.title} script tamamlandi.`
-              : `${selected.title} script hata ile tamamlandi.`,
-          )
+          const resultBackend = String(firstArg?.backend ?? backend).trim() || backend
+          const valueText = formatValue(firstArg?.value).slice(0, 500) || "-"
+          appendRunLog("success", `${resultBackend} => ${valueText}`)
+          hasResult = true
+          complete("success", `${selected.title} tamamlandi.`)
           return
         }
 
-        resetTimeout(25000)
+        resetTimeout(300000)
       }
     })
 
@@ -636,12 +655,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
     socket.addEventListener("close", () => {
       if (settled) return
-      if (hasServerOutput) {
-        complete("success", `${selected.title} icin cikti akisi tamamlandi.`)
+      if (hasResult) {
+        complete("success", `${selected.title} tamamlandi.`)
         return
       }
       if (hasConnected) {
-        complete("error", `${selected.title} baglantisi acildi ancak sunucudan cikti gelmedi.`)
+        complete("error", `${selected.title} baglantisi acildi ancak sonuc gelmedi.`)
         return
       }
       complete("error", `${selected.title} icin websocket baglantisi kapandi.`)
