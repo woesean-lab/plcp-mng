@@ -1094,6 +1094,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     "rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
   const secondaryButtonClass =
     "rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10"
+  const wsActionButtonBaseClass =
+    "w-full min-w-0 rounded-lg px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.08em] transition sm:text-[11px]"
+  const wsActionPrimaryButtonClass =
+    `${wsActionButtonBaseClass} border border-emerald-300/70 bg-emerald-500/15 text-emerald-50 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0`
+  const wsActionSecondaryButtonClass =
+    `${wsActionButtonBaseClass} border border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60`
 
   const confirmModalContent = isConfirmOpen ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/75 px-4 backdrop-blur-sm">
@@ -1351,15 +1357,15 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                   onChange={handleWsUrlChange}
                   className={fieldClass}
                 />
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <button type="button" onClick={saveWsUrl} className={`w-full ${secondaryButtonClass}`}>
+                <div className="grid grid-cols-3 gap-2">
+                  <button type="button" onClick={saveWsUrl} className={wsActionSecondaryButtonClass}>
                     Kaydet
                   </button>
                   <button
                     type="button"
                     onClick={connectSocketIo}
                     disabled={isWsTesting}
-                    className={`w-full ${primaryButtonClass}`}
+                    className={wsActionPrimaryButtonClass}
                   >
                     {isWsTesting ? "Bağlantı kuruluyor..." : "Bağlantı kur"}
                   </button>
@@ -1369,7 +1375,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                       void refreshBackendMaps({ silent: false })
                     }}
                     disabled={backendListStatus === "loading" || wsTestStatus !== "success"}
-                    className={`w-full ${secondaryButtonClass}`}
+                    className={wsActionSecondaryButtonClass}
                   >
                     {backendListStatus === "loading" ? "Map aliniyor..." : "Mapleri cek"}
                   </button>
