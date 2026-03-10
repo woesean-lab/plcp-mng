@@ -33,6 +33,32 @@ const readStoredWsConnectionState = () => {
   }
 }
 
+const splitEnginePackets = (payload) => {
+  if (!payload) return []
+  return payload.includes("\u001e") ? payload.split("\u001e").filter(Boolean) : [payload]
+}
+
+const parseSocketIoEventPacket = (packet) => {
+  if (!packet.startsWith("42")) return null
+  let dataPart = packet.slice(2)
+  if (dataPart.startsWith("/")) {
+    const namespaceSeparator = dataPart.indexOf(",")
+    if (namespaceSeparator < 0) return null
+    dataPart = dataPart.slice(namespaceSeparator + 1)
+  }
+  if (!dataPart) return null
+  try {
+    const parsed = JSON.parse(dataPart)
+    if (!Array.isArray(parsed) || parsed.length === 0) return null
+    return {
+      event: String(parsed[0] ?? "").trim() || "message",
+      args: parsed.slice(1),
+    }
+  } catch {
+    return null
+  }
+}
+
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
 }
@@ -86,6 +112,11 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const [automationForm, setAutomationForm] = useState({ title: "", backend: "" })
   const [editingId, setEditingId] = useState("")
   const [editingDraft, setEditingDraft] = useState({ title: "", backend: "" })
+  const [backendOptions, setBackendOptions] = useState([])
+  const [backendListStatus, setBackendListStatus] = useState("idle")
+  const [backendListMessage, setBackendListMessage] = useState(
+    "Baglanti kuruldugunda backend map listesi alinacak.",
+  )
   const [selectedAutomationId, setSelectedAutomationId] = useState("")
   const [runLog, setRunLog] = useState([])
   const [isRunning, setIsRunning] = useState(false)
@@ -116,6 +147,32 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     () => runLog.find((entry) => entry.status === "success") ?? null,
     [runLog],
   )
+
+  const backendSelectOptions = useMemo(() => {
+    const seen = new Set()
+    const merged = []
+
+    const pushOption = (key, label) => {
+      const normalizedKey = String(key ?? "").trim()
+      if (!normalizedKey || seen.has(normalizedKey)) return
+      seen.add(normalizedKey)
+      merged.push({
+        key: normalizedKey,
+        label: String(label ?? normalizedKey).trim() || normalizedKey,
+      })
+    }
+
+    backendOptions.forEach((item) => {
+      pushOption(item?.key, item?.label)
+    })
+    automations.forEach((item) => {
+      pushOption(item?.backend, item?.backend)
+    })
+    pushOption(automationForm.backend, automationForm.backend)
+    pushOption(editingDraft.backend, editingDraft.backend)
+
+    return merged
+  }, [automations, automationForm.backend, backendOptions, editingDraft.backend])
 
   useEffect(() => {
     return () => {
@@ -173,6 +230,18 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     return { id, title, backend }
   }, [])
 
+  const normalizeBackendOption = useCallback((entry) => {
+    if (typeof entry === "string") {
+      const key = entry.trim()
+      if (!key) return null
+      return { key, label: key }
+    }
+    const key = String(entry?.key ?? entry?.backend ?? entry?.id ?? "").trim()
+    if (!key) return null
+    const label = String(entry?.label ?? entry?.title ?? entry?.name ?? key).trim() || key
+    return { key, label }
+  }, [])
+
   useEffect(() => {
     let isMounted = true
     const controller = new AbortController()
@@ -220,6 +289,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       controller.abort()
     }
   }, [apiFetchAutomation, normalizeAutomation, readApiError, toastStyle])
+
+  useEffect(() => {
+    if (automationForm.backend.trim()) return
+    if (backendSelectOptions.length === 0) return
+    setAutomationForm((prev) => ({ ...prev, backend: backendSelectOptions[0].key }))
+  }, [automationForm.backend, backendSelectOptions])
 
   const isValidWsUrl = useCallback((value) => {
     try {
@@ -364,6 +439,199 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       })
     }), [])
 
+  const extractBackendItems = useCallback((payload) => {
+    if (Array.isArray(payload)) return payload
+    if (payload && typeof payload === "object") {
+      if (Array.isArray(payload.items)) return payload.items
+      if (Array.isArray(payload.backends)) return payload.backends
+      if (Array.isArray(payload.data)) return payload.data
+      return Object.entries(payload).map(([key, value]) => ({
+        key,
+        label: String(value?.label ?? key).trim() || key,
+      }))
+    }
+    return []
+  }, [])
+
+  const fetchBackendMapsFromSocketIo = useCallback((socketIoUrl) =>
+    new Promise((resolve) => {
+      let settled = false
+      let socket = null
+      let timeoutId = null
+      let requestSent = false
+      let hasConnected = false
+
+      const finish = (result) => {
+        if (settled) return
+        settled = true
+        if (timeoutId) window.clearTimeout(timeoutId)
+        try {
+          socket?.close()
+        } catch {
+          // Ignore close errors.
+        }
+        resolve(result)
+      }
+
+      try {
+        socket = new WebSocket(socketIoUrl)
+      } catch {
+        finish({ ok: false, reason: "invalid_url", items: [] })
+        return
+      }
+
+      timeoutId = window.setTimeout(() => {
+        finish({ ok: false, reason: "timeout", items: [] })
+      }, 7000)
+
+      socket.addEventListener("message", (event) => {
+        if (settled) return
+        const payload = typeof event.data === "string" ? event.data : ""
+        if (!payload) return
+
+        const packets = splitEnginePackets(payload)
+
+        for (const packet of packets) {
+          if (settled) return
+
+          if (packet === "2") {
+            try {
+              socket.send("3")
+            } catch {
+              // Ignore pong send errors.
+            }
+            continue
+          }
+
+          if (packet.startsWith("0{")) {
+            try {
+              socket.send("40")
+            } catch {
+              finish({ ok: false, reason: "socketio_connect_send_failed", items: [] })
+            }
+            continue
+          }
+
+          if (packet.startsWith("40")) {
+            hasConnected = true
+            if (!requestSent) {
+              requestSent = true
+              try {
+                socket.send('42["backend-map-list:get"]')
+              } catch {
+                finish({ ok: false, reason: "request_send_failed", items: [] })
+              }
+            }
+            continue
+          }
+
+          if (packet.startsWith("44")) {
+            finish({ ok: false, reason: "request_rejected", items: [] })
+            return
+          }
+
+          const eventPacket = parseSocketIoEventPacket(packet)
+          if (!eventPacket) continue
+
+          const eventName = eventPacket.event.toLowerCase()
+          if (
+            eventName !== "backend-map-list" &&
+            eventName !== "backend-map-list:result" &&
+            eventName !== "backends:list" &&
+            eventName !== "backends-list"
+          ) {
+            continue
+          }
+
+          const itemsRaw = extractBackendItems(eventPacket.args[0])
+          const normalized = itemsRaw.map(normalizeBackendOption).filter(Boolean)
+          finish({ ok: true, reason: "received", items: normalized })
+          return
+        }
+      })
+
+      socket.addEventListener("error", () => {
+        finish({ ok: false, reason: "socket_error", items: [] })
+      })
+
+      socket.addEventListener("close", () => {
+        if (settled) return
+        finish({
+          ok: false,
+          reason: hasConnected ? "closed_before_list" : "closed",
+          items: [],
+        })
+      })
+    }), [extractBackendItems, normalizeBackendOption])
+
+  const refreshBackendMaps = useCallback(async (options = {}) => {
+    const normalized = String(options?.targetUrl ?? savedWsUrl ?? wsUrl).trim()
+    const silent = Boolean(options?.silent)
+
+    if (!normalized || !isValidWsUrl(normalized)) {
+      setBackendListStatus("error")
+      setBackendListMessage("Backend map icin gecerli websocket adresi gerekli.")
+      if (!silent) {
+        toast.error("Backend map listesi alinamadi: websocket adresi gecersiz.", {
+          style: toastStyle,
+          position: "top-right",
+        })
+      }
+      return false
+    }
+
+    const socketIoUrl = buildSocketIoWsUrl(normalized)
+    if (!socketIoUrl) {
+      setBackendListStatus("error")
+      setBackendListMessage("Backend map icin Socket.IO adresi olusturulamadi.")
+      if (!silent) {
+        toast.error("Backend map listesi alinamadi: Socket.IO adresi gecersiz.", {
+          style: toastStyle,
+          position: "top-right",
+        })
+      }
+      return false
+    }
+
+    setBackendListStatus("loading")
+    setBackendListMessage("Backend map listesi aliniyor...")
+
+    const result = await fetchBackendMapsFromSocketIo(socketIoUrl)
+    if (!result.ok) {
+      setBackendListStatus("error")
+      setBackendListMessage("Backend map listesi alinamadi.")
+      if (!silent) {
+        toast.error("Backend map listesi alinamadi.", { style: toastStyle, position: "top-right" })
+      }
+      return false
+    }
+
+    const normalizedItems = Array.isArray(result.items) ? result.items : []
+    if (normalizedItems.length === 0) {
+      setBackendListStatus("error")
+      setBackendListMessage("Sunucu backend map listesi bos dondu.")
+      if (!silent) {
+        toast.error("Backend map listesi bos dondu.", { style: toastStyle, position: "top-right" })
+      }
+      return false
+    }
+
+    setBackendOptions(normalizedItems)
+    setBackendListStatus("success")
+    setBackendListMessage(`${normalizedItems.length} backend map alindi.`)
+    if (!silent) {
+      toast.success("Backend map listesi guncellendi.", { style: toastStyle, position: "top-right" })
+    }
+    return true
+  }, [
+    buildSocketIoWsUrl,
+    fetchBackendMapsFromSocketIo,
+    isValidWsUrl,
+    savedWsUrl,
+    toastStyle,
+    wsUrl,
+  ])
+
   const connectSocketIo = useCallback((options = {}) => {
     const normalized = String(options?.targetUrl ?? wsUrl).trim()
     const silent = Boolean(options?.silent)
@@ -425,6 +693,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     void (async () => {
       const result = await testSocketIoConnection(socketIoUrl)
       if (result.ok) {
+        await refreshBackendMaps({ targetUrl: normalized, silent: true })
         complete("success", "Bağlantı başarılı (Socket.IO).")
         return
       }
@@ -438,6 +707,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     buildSocketIoWsUrl,
     isValidWsUrl,
     persistWsConnectionState,
+    refreshBackendMaps,
     testSocketIoConnection,
     toastStyle,
     wsUrl,
@@ -500,9 +770,37 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   })()
 
+  const backendStatusMeta = (() => {
+    if (backendListStatus === "success") {
+      return {
+        badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-100",
+        label: "Map listesi hazir",
+      }
+    }
+    if (backendListStatus === "loading") {
+      return {
+        badge: "border-amber-300/50 bg-amber-500/15 text-amber-100",
+        label: "Map listesi aliniyor",
+      }
+    }
+    if (backendListStatus === "error") {
+      return {
+        badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
+        label: "Map listesi alinamadi",
+      }
+    }
+    return {
+      badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
+      label: "Map listesi bekleniyor",
+    }
+  })()
+
   const handleWsUrlChange = (event) => {
     const nextValue = event.target.value
     setWsUrl(nextValue)
+    setBackendListStatus("idle")
+    setBackendListMessage("Bu adres icin backend map listesi alinmadi.")
+    setBackendOptions([])
     if (nextValue.trim() !== lastTestedWsUrl) {
       setLastTestedWsUrl("")
       setWsTestStatus("idle")
@@ -645,27 +943,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       }, ms)
     }
 
-    const parseSocketIoEventPacket = (packet) => {
-      if (!packet.startsWith("42")) return null
-      let dataPart = packet.slice(2)
-      if (dataPart.startsWith("/")) {
-        const namespaceSeparator = dataPart.indexOf(",")
-        if (namespaceSeparator < 0) return null
-        dataPart = dataPart.slice(namespaceSeparator + 1)
-      }
-      if (!dataPart) return null
-      try {
-        const parsed = JSON.parse(dataPart)
-        if (!Array.isArray(parsed) || parsed.length === 0) return null
-        return {
-          event: String(parsed[0] ?? "").trim() || "message",
-          args: parsed.slice(1),
-        }
-      } catch {
-        return null
-      }
-    }
-
     const complete = (status, message) => {
       if (settled) return
       settled = true
@@ -710,9 +987,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       const payload = typeof event.data === "string" ? event.data : ""
       if (!payload) return
 
-      const packets = payload.includes("\u001e")
-        ? payload.split("\u001e").filter(Boolean)
-        : [payload]
+      const packets = splitEnginePackets(payload)
 
       for (const packet of packets) {
         if (settled) return
@@ -1076,7 +1351,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                   onChange={handleWsUrlChange}
                   className={fieldClass}
                 />
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-3">
                   <button type="button" onClick={saveWsUrl} className={`w-full ${secondaryButtonClass}`}>
                     Kaydet
                   </button>
@@ -1088,12 +1363,30 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                   >
                     {isWsTesting ? "Bağlantı kuruluyor..." : "Bağlantı kur"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void refreshBackendMaps({ silent: false })
+                    }}
+                    disabled={backendListStatus === "loading" || wsTestStatus !== "success"}
+                    className={`w-full ${secondaryButtonClass}`}
+                  >
+                    {backendListStatus === "loading" ? "Map aliniyor..." : "Mapleri cek"}
+                  </button>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
                   <p className="break-all">
                     Kayıtlı: <span className="text-slate-100">{savedWsUrl || "-"}</span>
                   </p>
                   <p className="mt-1 text-slate-400">{wsTestMessage}</p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="text-slate-400">{backendListMessage}</span>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${backendStatusMeta.badge}`}
+                    >
+                      {backendStatusMeta.label}
+                    </span>
+                  </div>
                 </div>
               </div>
             </section>
@@ -1111,21 +1404,35 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                   }
                   className={fieldClass}
                 />
-                <input
+                <select
                   id="automation-backend"
-                  type="text"
-                  placeholder="Backend map (orn: knife-crown)"
                   value={automationForm.backend}
                   onChange={(event) =>
                     setAutomationForm((prev) => ({ ...prev, backend: event.target.value }))
                   }
                   className={fieldClass}
-                />
+                >
+                  <option value="">
+                    {backendSelectOptions.length > 0 ? "Backend map sec" : "Backend map listesi bekleniyor"}
+                  </option>
+                  {backendSelectOptions.map((option) => (
+                    <option key={option.key} value={option.key}>
+                      {option.label} ({option.key})
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   onClick={async () => {
                     const title = automationForm.title.trim()
                     const backend = automationForm.backend.trim()
+                    if (backendSelectOptions.length === 0) {
+                      toast.error("Backend map listesi alinmadan otomasyon eklenemez.", {
+                        style: toastStyle,
+                        position: "top-right",
+                      })
+                      return
+                    }
                     if (!title || !backend) return
                     try {
                       const created = await createAutomation(title, backend)
@@ -1139,6 +1446,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                       })
                     }
                   }}
+                  disabled={backendSelectOptions.length === 0}
                   className={`w-full ${primaryButtonClass}`}
                 >
                   Ekle
@@ -1178,15 +1486,20 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                   placeholder="Otomasyon basligi"
                   className={fieldClass}
                 />
-                <input
-                  type="text"
+                <select
                   value={editingDraft.backend}
                   onChange={(event) =>
                     setEditingDraft((prev) => ({ ...prev, backend: event.target.value }))
                   }
-                  placeholder="Backend map (orn: knife-crown)"
                   className={fieldClass}
-                />
+                >
+                  <option value="">Backend map sec</option>
+                  {backendSelectOptions.map((option) => (
+                    <option key={option.key} value={option.key}>
+                      {option.label} ({option.key})
+                    </option>
+                  ))}
+                </select>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
@@ -1252,4 +1565,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     </>
   )
 }
+
+
+
 
