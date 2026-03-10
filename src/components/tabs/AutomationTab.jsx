@@ -5,6 +5,7 @@ import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
 const WS_CONNECTION_STATE_STORAGE_KEY = "pulcipAutomationWsConnectionState"
 const MAX_RUN_LOG_ENTRIES = 300
+const CMD_VISIBLE_ROWS = 15
 const DEFAULT_TOAST_STYLE = {
   background: "rgba(15, 23, 42, 0.92)",
   color: "#e2e8f0",
@@ -143,6 +144,14 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const lastSuccess = useMemo(
     () => runLog.find((entry) => entry.status === "success") ?? null,
     [runLog],
+  )
+  const visibleRunLogEntries = useMemo(
+    () => runLog.slice(0, CMD_VISIBLE_ROWS),
+    [runLog],
+  )
+  const emptyRunLogRows = useMemo(
+    () => Math.max(0, CMD_VISIBLE_ROWS - visibleRunLogEntries.length),
+    [visibleRunLogEntries.length],
   )
 
   const backendSelectOptions = useMemo(() => {
@@ -1294,46 +1303,45 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                 </div>
               </div>
 
-              <div className="max-h-[320px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
-                {runLog.length === 0 ? (
-                  <div className="space-y-1 text-slate-500">
-                    <div>C:\plcp\automation&gt; bekleniyor...</div>
-                    <div>C:\plcp\automation&gt; log yok</div>
-                    <div className="flex items-center gap-1">
-                      <span>C:\plcp\automation&gt;</span>
-                      <span className="inline-block h-4 w-2 animate-pulse bg-slate-500/80" />
+              <div className="h-[384px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
+                <div className="space-y-0.5">
+                  {visibleRunLogEntries.map((entry) => (
+                    <div key={entry.id} className="flex items-start gap-2 text-slate-200">
+                      <span className="flex-none text-slate-500">C:\plcp\automation&gt;</span>
+                      <span
+                        className={`flex-none ${
+                          entry.status === "success" ? "text-emerald-300" : "text-amber-300"
+                        }`}
+                      >
+                        [{entry.time}]
+                      </span>
+                      <span
+                        className={`flex-none ${
+                          entry.status === "success" ? "text-emerald-300" : "text-amber-300"
+                        }`}
+                      >
+                        {entry.status === "success" ? "OK" : "RUN"}
+                      </span>
+                      <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-0.5">
-                    {runLog.slice(0, 20).map((entry) => (
-                      <div key={entry.id} className="flex items-start gap-2 text-slate-200">
-                        <span className="flex-none text-slate-500">C:\plcp\automation&gt;</span>
+                  ))}
+                  {Array.from({ length: emptyRunLogRows }).map((_, index) => (
+                    <div key={`empty-row-${index}`} className="flex items-start gap-2 text-slate-600/80">
+                      <span className="flex-none text-slate-600">C:\plcp\automation&gt;</span>
+                      {isRunning && index === 0 ? (
+                        <span className="inline-block h-4 w-2 animate-pulse bg-slate-500/80" />
+                      ) : (
                         <span
-                          className={`flex-none ${
-                            entry.status === "success" ? "text-emerald-300" : "text-amber-300"
+                          className={`min-w-0 ${
+                            runLog.length === 0 && index === 0 ? "text-slate-500" : "opacity-0"
                           }`}
                         >
-                          [{entry.time}]
+                          {runLog.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
                         </span>
-                        <span
-                          className={`flex-none ${
-                            entry.status === "success" ? "text-emerald-300" : "text-amber-300"
-                          }`}
-                        >
-                          {entry.status === "success" ? "OK" : "RUN"}
-                        </span>
-                        <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
-                      </div>
-                    ))}
-                    {isRunning ? (
-                      <div className="mt-1 flex items-center gap-1 text-slate-400">
-                        <span>C:\plcp\automation&gt;</span>
-                        <span className="inline-block h-4 w-2 animate-pulse bg-slate-400/80" />
-                      </div>
-                    ) : null}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
