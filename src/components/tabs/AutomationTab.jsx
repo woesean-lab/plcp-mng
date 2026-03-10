@@ -731,7 +731,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
   const resultModalContent = resultPopup.isOpen ? (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-emerald-300/40 bg-ink-900/95 p-5 shadow-card">
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
             <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
@@ -751,9 +751,20 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
           </div>
         </div>
 
-        <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Sonuc Degeri</p>
-          <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-100">
+        <div
+          className="mt-4 cursor-copy rounded-xl border border-white/10 bg-black/25 p-3"
+          title="Sonucu kopyalamak icin tikla"
+          onClick={async () => {
+            const valueToCopy = String(resultPopup.value || "-")
+            try {
+              await navigator.clipboard.writeText(valueToCopy)
+              toast.success("Sonuc kopyalandi", { style: toastStyle, position: "top-right" })
+            } catch {
+              toast.error("Sonuc kopyalanamadi", { style: toastStyle, position: "top-right" })
+            }
+          }}
+        >
+          <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-100">
             {resultPopup.value || "-"}
           </pre>
         </div>
