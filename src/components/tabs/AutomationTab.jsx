@@ -473,22 +473,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     let socket = null
     let timeoutId = null
 
-    const appendRunLog = (status, message) => {
-      const entryTime = new Date().toLocaleTimeString("tr-TR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-      setRunLog((prev) => [
-        {
-          id: `log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          time: entryTime,
-          status,
-          message,
-        },
-        ...prev,
-      ])
-    }
-
     const resetTimeout = (ms = 20000) => {
       if (timeoutId) window.clearTimeout(timeoutId)
       timeoutId = window.setTimeout(() => {
@@ -519,37 +503,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       } catch {
         return null
       }
-    }
-
-    const formatSocketIoValue = (value) => {
-      if (typeof value === "string") return value
-      try {
-        return JSON.stringify(value)
-      } catch {
-        return String(value)
-      }
-    }
-
-    const formatSocketIoArgs = (args) => {
-      if (!Array.isArray(args) || args.length === 0) return ""
-      if (args.length === 1) return formatSocketIoValue(args[0])
-      return formatSocketIoValue(args)
-    }
-
-    const readScriptLogPayload = (args) => {
-      const firstArg = args?.[0]
-      if (!firstArg || typeof firstArg !== "object") {
-        return {
-          backend: backend,
-          stream: "",
-          message: formatSocketIoArgs(args),
-        }
-      }
-      const backendValue = String(firstArg.backend ?? backend).trim() || backend
-      const streamRaw = String(firstArg.stream ?? "").trim().toLowerCase()
-      const stream = streamRaw === "stderr" ? "stderr" : streamRaw === "stdout" ? "stdout" : ""
-      const message = String(firstArg.message ?? "").trim() || formatSocketIoArgs(args)
-      return { backend: backendValue, stream, message }
     }
 
     const complete = (status, message) => {
@@ -623,7 +576,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
         if (packet.startsWith("40")) {
           hasConnected = true
-          appendRunLog("success", `Sunucu baglantisi kuruldu. backend=${backend}`)
           resetTimeout(25000)
           continue
         }
@@ -647,26 +599,13 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
         hasServerOutput = true
         const eventName = eventPacket.event.toLowerCase()
-        const eventPayload = formatSocketIoArgs(eventPacket.args).slice(0, 400)
 
         if (eventName === "script-triggered" || eventName === "script-started") {
-          const payloadMeta = readScriptLogPayload(eventPacket.args)
-          const line =
-            payloadMeta.message ||
-            `${payloadMeta.backend ? `${payloadMeta.backend} ` : ""}${
-              eventName === "script-triggered" ? "script tetiklendi." : "script basladi."
-            }`.trim()
-          appendRunLog("running", line)
           resetTimeout(25000)
           continue
         }
 
         if (eventName === "script-log") {
-          const payloadMeta = readScriptLogPayload(eventPacket.args)
-          const streamTag = payloadMeta.stream ? `[${payloadMeta.stream}] ` : ""
-          const backendTag = payloadMeta.backend ? `${payloadMeta.backend}: ` : ""
-          const line = `${backendTag}${streamTag}${payloadMeta.message || "script-log"}`.slice(0, 400)
-          appendRunLog(payloadMeta.stream === "stderr" ? "error" : "running", line)
           resetTimeout(25000)
           continue
         }
@@ -678,7 +617,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
               ? firstArg
               : Number(firstArg?.exitCode ?? firstArg?.code ?? NaN)
           const isSuccess = Number.isFinite(exitCodeRaw) ? exitCodeRaw === 0 : true
-          appendRunLog(isSuccess ? "success" : "error", eventPayload || "script-exit")
           complete(
             isSuccess ? "success" : "error",
             isSuccess
@@ -688,7 +626,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
           return
         }
 
-        appendRunLog("running", `${eventPacket.event}${eventPayload ? ` -> ${eventPayload}` : ""}`)
         resetTimeout(25000)
       }
     })
