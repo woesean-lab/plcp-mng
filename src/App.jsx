@@ -472,7 +472,7 @@ function App() {
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
-      { key: "automation", label: "Otomasyon", canView: canViewAutomation },
+      { key: "automation", label: "Stok çek", canView: canViewAutomation },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [

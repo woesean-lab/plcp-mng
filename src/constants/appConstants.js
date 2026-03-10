@@ -135,7 +135,7 @@ export const PERMISSIONS = {
 
 export const PERMISSION_GROUPS = [
   {
-    title: "Otomasyon",
+    title: "Stok çek",
     items: [{ id: PERMISSIONS.automationView, label: "Goruntule" }],
   },
   {
