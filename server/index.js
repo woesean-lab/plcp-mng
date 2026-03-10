@@ -579,6 +579,12 @@ const initialTemplates = [
 ]
 
 
+const initialAutomations = [
+  { title: "Knife Crown", backend: "knife-crown" },
+  { title: "Stok kontrol zinciri", backend: "stock-check" },
+  { title: "Problem eskalasyonu", backend: "problem-escalation" },
+]
+
 async function ensureDefaults() {
   await prisma.category.upsert({
     where: { name: "Genel" },
@@ -601,6 +607,17 @@ async function ensureDefaults() {
     (await prisma.role.create({
       data: { name: "Admin", permissions: DEFAULT_ADMIN_PERMISSIONS },
     }))
+
+  const automationCount = await prisma.automation.count()
+  if (automationCount === 0) {
+    await prisma.automation.createMany({ data: initialAutomations })
+  }
+
+  await prisma.automationConfig.upsert({
+    where: { id: "default" },
+    create: { id: "default", wsUrl: null },
+    update: {},
+  })
 
   const userCount = await prisma.user.count()
   if (userCount === 0) {
@@ -695,6 +712,118 @@ app.get("/api/auth/verify", async (req, res) => {
 })
 
 app.use("/api", requireAuth)
+
+app.get("/api/automations", requirePermission("automation.view"), async (_req, res) => {
+  const automations = await prisma.automation.findMany({
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  })
+  res.json(automations)
+})
+
+app.post("/api/automations", requirePermission("automation.view"), async (req, res) => {
+  const title = String(req.body?.title ?? "").trim()
+  const backend = String(req.body?.backend ?? "").trim()
+
+  if (!title || !backend) {
+    res.status(400).json({ error: "title and backend are required" })
+    return
+  }
+
+  const created = await prisma.automation.create({
+    data: {
+      title,
+      backend,
+    },
+  })
+  res.status(201).json(created)
+})
+
+app.put("/api/automations/:id", requirePermission("automation.view"), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  const title = String(req.body?.title ?? "").trim()
+  const backend = String(req.body?.backend ?? "").trim()
+
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+  if (!title || !backend) {
+    res.status(400).json({ error: "title and backend are required" })
+    return
+  }
+
+  try {
+    const updated = await prisma.automation.update({
+      where: { id },
+      data: { title, backend },
+    })
+    res.json(updated)
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Automation not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/automations/:id", requirePermission("automation.view"), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+
+  try {
+    await prisma.automation.delete({ where: { id } })
+    res.json({ ok: true })
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "Automation not found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.get("/api/automation/config", requirePermission("automation.view"), async (_req, res) => {
+  const config = await prisma.automationConfig.findUnique({
+    where: { id: "default" },
+  })
+  res.json({
+    wsUrl: String(config?.wsUrl ?? "").trim(),
+  })
+})
+
+app.put("/api/automation/config", requirePermission("automation.view"), async (req, res) => {
+  const wsUrlRaw = String(req.body?.wsUrl ?? "").trim()
+  let wsUrl = ""
+
+  if (wsUrlRaw) {
+    try {
+      const parsed = new URL(wsUrlRaw)
+      const protocol = String(parsed.protocol || "").toLowerCase()
+      if (protocol !== "ws:" && protocol !== "wss:") {
+        res.status(400).json({ error: "wsUrl must start with ws:// or wss://" })
+        return
+      }
+      wsUrl = wsUrlRaw
+    } catch {
+      res.status(400).json({ error: "Invalid wsUrl" })
+      return
+    }
+  }
+
+  const updated = await prisma.automationConfig.upsert({
+    where: { id: "default" },
+    create: { id: "default", wsUrl: wsUrl || null },
+    update: { wsUrl: wsUrl || null },
+  })
+
+  res.json({
+    wsUrl: String(updated.wsUrl ?? "").trim(),
+  })
+})
 
 app.get("/api/templates", async (req, res) => {
   const templates = await prisma.template.findMany({ orderBy: { id: "asc" } })

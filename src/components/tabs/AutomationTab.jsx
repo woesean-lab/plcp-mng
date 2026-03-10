@@ -1,21 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
+import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
-const WS_URL_STORAGE_KEY = "pulcipAutomationWsUrl"
 const WS_CONNECTION_STATE_STORAGE_KEY = "pulcipAutomationWsConnectionState"
 const DEFAULT_TOAST_STYLE = {
   background: "rgba(15, 23, 42, 0.92)",
   color: "#e2e8f0",
   border: "1px solid rgba(148, 163, 184, 0.2)",
-}
-const readStoredWsUrl = () => {
-  if (typeof window === "undefined") return ""
-  try {
-    return String(localStorage.getItem(WS_URL_STORAGE_KEY) ?? "").trim()
-  } catch {
-    return ""
-  }
 }
 const readStoredWsConnectionState = () => {
   if (typeof window === "undefined") {
@@ -90,11 +82,7 @@ function AutomationSkeleton({ panelClass }) {
 }
 
 export default function AutomationTab({ panelClass, isLoading = false }) {
-  const [automations, setAutomations] = useState([
-    { id: "auto-1", title: "Knife Crown", backend: "knife-crown" },
-    { id: "auto-2", title: "Stok kontrol zinciri", backend: "stock-check" },
-    { id: "auto-3", title: "Problem eskalasyonu", backend: "problem-escalation" },
-  ])
+  const [automations, setAutomations] = useState([])
   const [automationForm, setAutomationForm] = useState({ title: "", backend: "" })
   const [editingId, setEditingId] = useState("")
   const [editingDraft, setEditingDraft] = useState({ title: "", backend: "" })
@@ -109,8 +97,8 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     backend: "",
     value: "",
   })
-  const [wsUrl, setWsUrl] = useState(() => readStoredWsUrl())
-  const [savedWsUrl, setSavedWsUrl] = useState(() => readStoredWsUrl())
+  const [wsUrl, setWsUrl] = useState("")
+  const [savedWsUrl, setSavedWsUrl] = useState("")
   const [wsTestStatus, setWsTestStatus] = useState(() => readStoredWsConnectionState().status)
   const [wsTestMessage, setWsTestMessage] = useState(() => readStoredWsConnectionState().message)
   const [lastTestedWsUrl, setLastTestedWsUrl] = useState(() => readStoredWsConnectionState().url)
@@ -153,6 +141,86 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }, [])
 
+  const apiFetchAutomation = useCallback(async (input, init = {}) => {
+    const headers = new Headers(init.headers || {})
+    if (typeof window !== "undefined") {
+      try {
+        const token = String(localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "").trim()
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`)
+        }
+      } catch {
+        // Ignore localStorage read errors.
+      }
+    }
+    return fetch(input, { ...init, headers })
+  }, [])
+
+  const readApiError = useCallback(async (res) => {
+    try {
+      const payload = await res.json()
+      return String(payload?.error || payload?.message || "").trim()
+    } catch {
+      return ""
+    }
+  }, [])
+
+  const normalizeAutomation = useCallback((entry) => {
+    const id = String(entry?.id ?? "").trim()
+    const title = String(entry?.title ?? "").trim()
+    const backend = String(entry?.backend ?? "").trim()
+    if (!id || !title || !backend) return null
+    return { id, title, backend }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+    const controller = new AbortController()
+
+    const loadAutomationData = async () => {
+      try {
+        const [automationsRes, configRes] = await Promise.all([
+          apiFetchAutomation("/api/automations", { signal: controller.signal }),
+          apiFetchAutomation("/api/automation/config", { signal: controller.signal }),
+        ])
+        if (!automationsRes.ok) {
+          const apiError = await readApiError(automationsRes)
+          throw new Error(apiError || "Otomasyonlar alinamadi.")
+        }
+        if (!configRes.ok) {
+          const apiError = await readApiError(configRes)
+          throw new Error(apiError || "Websocket ayarlari alinamadi.")
+        }
+
+        const automationsPayload = await automationsRes.json()
+        const configPayload = await configRes.json()
+        if (!isMounted) return
+
+        const normalizedAutomations = Array.isArray(automationsPayload)
+          ? automationsPayload.map(normalizeAutomation).filter(Boolean)
+          : []
+        setAutomations(normalizedAutomations)
+
+        const configWsUrl = String(configPayload?.wsUrl ?? "").trim()
+        setWsUrl(configWsUrl)
+        setSavedWsUrl(configWsUrl)
+      } catch (error) {
+        if (!isMounted || controller.signal.aborted) return
+        toast.error(error?.message || "Otomasyon verileri alinamadi.", {
+          style: toastStyle,
+          position: "top-right",
+        })
+      }
+    }
+
+    loadAutomationData()
+
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
+  }, [apiFetchAutomation, normalizeAutomation, readApiError, toastStyle])
+
   const isValidWsUrl = useCallback((value) => {
     try {
       const parsed = new URL(value)
@@ -162,42 +230,56 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }, [])
 
-  const saveWsUrl = () => {
+  const saveWsUrl = async () => {
     const normalized = wsUrl.trim()
     if (!normalized) {
       toast.error("Websocket adresi girin.", { style: toastStyle, position: "top-right" })
       return
     }
     if (!isValidWsUrl(normalized)) {
-      toast.error("Geçerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
+      toast.error("Gecerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
       return
     }
+
     try {
-      localStorage.setItem(WS_URL_STORAGE_KEY, normalized)
-      setSavedWsUrl(normalized)
-      if (normalized !== lastTestedWsUrl) {
+      const res = await apiFetchAutomation("/api/automation/config", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ wsUrl: normalized }),
+      })
+      if (!res.ok) {
+        const apiError = await readApiError(res)
+        throw new Error(apiError || "Kaydedilemedi.")
+      }
+
+      const payload = await res.json()
+      const persistedWsUrl = String(payload?.wsUrl ?? normalized).trim()
+      setWsUrl(persistedWsUrl)
+      setSavedWsUrl(persistedWsUrl)
+
+      if (persistedWsUrl !== lastTestedWsUrl) {
         setLastTestedWsUrl("")
         setWsTestStatus("idle")
-        const message = "Kaydedildi. Bağlantı kur butonunu kullan."
+        const message = "Kaydedildi. Baglanti kur butonunu kullan."
         setWsTestMessage(message)
         persistWsConnectionState("", "idle", message)
       } else if (wsTestStatus === "success") {
-        const message = "Kaydedildi. Son bağlantı sonucu: bağlantı başarılı."
+        const message = "Kaydedildi. Son baglanti sonucu: baglanti basarili."
         setWsTestMessage(message)
-        persistWsConnectionState(normalized, "success", message)
+        persistWsConnectionState(persistedWsUrl, "success", message)
       } else if (wsTestStatus === "error") {
-        const message = "Kaydedildi. Son bağlantı sonucu: bağlantı başarısız."
+        const message = "Kaydedildi. Son baglanti sonucu: baglanti basarisiz."
         setWsTestMessage(message)
-        persistWsConnectionState(normalized, "error", message)
+        persistWsConnectionState(persistedWsUrl, "error", message)
       } else {
         persistWsConnectionState("", "idle", wsTestMessage)
       }
+
       toast.success("Websocket adresi kaydedildi", { style: toastStyle, position: "top-right" })
-    } catch {
-      toast.error("Kaydedilemedi.", { style: toastStyle, position: "top-right" })
+    } catch (error) {
+      toast.error(error?.message || "Kaydedilemedi.", { style: toastStyle, position: "top-right" })
     }
   }
-
   const buildSocketIoWsUrl = useCallback((normalizedUrl, extraQuery = {}) => {
     try {
       const socketIoUrl = new URL(normalizedUrl)
@@ -363,9 +445,9 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
   useEffect(() => {
     if (hasAutoConnectedRef.current) return
-    hasAutoConnectedRef.current = true
     const normalized = savedWsUrl.trim()
     if (!normalized) return
+    hasAutoConnectedRef.current = true
     const timeoutId = window.setTimeout(() => {
       connectSocketIo({ targetUrl: normalized, silent: true })
     }, 0)
@@ -429,6 +511,52 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       persistWsConnectionState("", "idle", message)
     }
   }
+
+  const createAutomation = useCallback(async (title, backend) => {
+    const res = await apiFetchAutomation("/api/automations", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title, backend }),
+    })
+    if (!res.ok) {
+      const apiError = await readApiError(res)
+      throw new Error(apiError || "Otomasyon eklenemedi.")
+    }
+    const payload = await res.json()
+    const normalized = normalizeAutomation(payload)
+    if (!normalized) {
+      throw new Error("Sunucudan gecersiz otomasyon cevabi dondu.")
+    }
+    return normalized
+  }, [apiFetchAutomation, normalizeAutomation, readApiError])
+
+  const updateAutomation = useCallback(async (id, title, backend) => {
+    const res = await apiFetchAutomation(`/api/automations/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title, backend }),
+    })
+    if (!res.ok) {
+      const apiError = await readApiError(res)
+      throw new Error(apiError || "Otomasyon guncellenemedi.")
+    }
+    const payload = await res.json()
+    const normalized = normalizeAutomation(payload)
+    if (!normalized) {
+      throw new Error("Sunucudan gecersiz otomasyon cevabi dondu.")
+    }
+    return normalized
+  }, [apiFetchAutomation, normalizeAutomation, readApiError])
+
+  const removeAutomation = useCallback(async (id) => {
+    const res = await apiFetchAutomation(`/api/automations/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    })
+    if (!res.ok) {
+      const apiError = await readApiError(res)
+      throw new Error(apiError || "Otomasyon silinemedi.")
+    }
+  }, [apiFetchAutomation, readApiError])
 
   const runAutomation = (selected) => {
     if (!selected) return
@@ -995,13 +1123,21 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                 />
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     const title = automationForm.title.trim()
                     const backend = automationForm.backend.trim()
                     if (!title || !backend) return
-                    setAutomations((prev) => [{ id: `auto-${Date.now()}`, title, backend }, ...prev])
-                    setAutomationForm({ title: "", backend: "" })
-                    toast.success("Otomasyon eklendi", { style: toastStyle, position: "top-right" })
+                    try {
+                      const created = await createAutomation(title, backend)
+                      setAutomations((prev) => [created, ...prev])
+                      setAutomationForm({ title: "", backend: "" })
+                      toast.success("Otomasyon eklendi", { style: toastStyle, position: "top-right" })
+                    } catch (error) {
+                      toast.error(error?.message || "Otomasyon eklenemedi.", {
+                        style: toastStyle,
+                        position: "top-right",
+                      })
+                    }
                   }}
                   className={`w-full ${primaryButtonClass}`}
                 >
@@ -1054,19 +1190,25 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                 <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       const title = editingDraft.title.trim()
                       const backend = editingDraft.backend.trim()
                       if (!editingId || !title || !backend) return
-                      setAutomations((prev) =>
-                        prev.map((entry) =>
-                          entry.id === editingId ? { ...entry, title, backend } : entry,
-                        ),
-                      )
-                      toast.success("Otomasyon guncellendi", {
-                        style: toastStyle,
-                        position: "top-right",
-                      })
+                      try {
+                        const updated = await updateAutomation(editingId, title, backend)
+                        setAutomations((prev) =>
+                          prev.map((entry) => (entry.id === editingId ? updated : entry)),
+                        )
+                        toast.success("Otomasyon guncellendi", {
+                          style: toastStyle,
+                          position: "top-right",
+                        })
+                      } catch (error) {
+                        toast.error(error?.message || "Otomasyon guncellenemedi.", {
+                          style: toastStyle,
+                          position: "top-right",
+                        })
+                      }
                     }}
                     className={primaryButtonClass}
                   >
@@ -1074,13 +1216,21 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       if (!editingId) return
-                      setAutomations((prev) => prev.filter((entry) => entry.id !== editingId))
-                      setEditingId("")
-                      setEditingDraft({ title: "", backend: "" })
-                      if (selectedAutomationId === editingId) setSelectedAutomationId("")
-                      toast("Otomasyon silindi", { style: toastStyle, position: "top-right" })
+                      try {
+                        await removeAutomation(editingId)
+                        setAutomations((prev) => prev.filter((entry) => entry.id !== editingId))
+                        setEditingId("")
+                        setEditingDraft({ title: "", backend: "" })
+                        if (selectedAutomationId === editingId) setSelectedAutomationId("")
+                        toast("Otomasyon silindi", { style: toastStyle, position: "top-right" })
+                      } catch (error) {
+                        toast.error(error?.message || "Otomasyon silinemedi.", {
+                          style: toastStyle,
+                          position: "top-right",
+                        })
+                      }
                     }}
                     className="rounded-lg border border-rose-300/60 bg-rose-500/10 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
                   >
@@ -1102,3 +1252,4 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     </>
   )
 }
+
