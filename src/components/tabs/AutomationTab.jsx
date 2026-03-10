@@ -521,6 +521,21 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       }
     }
 
+    const formatSocketIoValue = (value) => {
+      if (typeof value === "string") return value
+      try {
+        return JSON.stringify(value)
+      } catch {
+        return String(value)
+      }
+    }
+
+    const formatSocketIoArgs = (args) => {
+      if (!Array.isArray(args) || args.length === 0) return ""
+      if (args.length === 1) return formatSocketIoValue(args[0])
+      return formatSocketIoValue(args)
+    }
+
     const complete = (status, message) => {
       if (settled) return
       settled = true
@@ -565,51 +580,89 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       const payload = typeof event.data === "string" ? event.data : ""
       if (!payload) return
 
-      if (payload === "2") {
-        try {
-          socket.send("3")
-        } catch {
-          // Ignore pong send errors.
+      const packets = payload.includes("\u001e")
+        ? payload.split("\u001e").filter(Boolean)
+        : [payload]
+
+      for (const packet of packets) {
+        if (settled) return
+
+        if (packet === "2") {
+          try {
+            socket.send("3")
+          } catch {
+            // Ignore pong send errors.
+          }
+          continue
         }
-        return
-      }
 
-      if (payload.startsWith("0{")) {
-        try {
-          socket.send("40")
-        } catch {
-          complete("error", `${selected.title} icin Socket.IO connect paketi gonderilemedi.`)
+        if (packet.startsWith("0{")) {
+          try {
+            socket.send("40")
+          } catch {
+            complete("error", `${selected.title} icin Socket.IO connect paketi gonderilemedi.`)
+          }
+          continue
         }
-        return
-      }
 
-      if (payload.startsWith("40")) {
-        hasConnected = true
-        appendRunLog("success", `Sunucu baglantisi kuruldu. backend=${backend}`)
-        resetTimeout(25000)
-        return
-      }
+        if (packet.startsWith("40")) {
+          hasConnected = true
+          appendRunLog("success", `Sunucu baglantisi kuruldu. backend=${backend}`)
+          resetTimeout(25000)
+          continue
+        }
 
-      if (payload.startsWith("41")) {
-        if (hasServerOutput) {
-          complete("success", `${selected.title} icin ciktilar alindi ve baglanti kapandi.`)
-        } else {
+        if (packet.startsWith("41")) {
+          if (hasServerOutput) {
+            complete("success", `${selected.title} icin ciktilar alindi ve baglanti kapandi.`)
+          } else {
+            complete("error", `${selected.title} tetiklenemedi. backend=${backend}`)
+          }
+          return
+        }
+
+        if (packet.startsWith("44")) {
           complete("error", `${selected.title} tetiklenemedi. backend=${backend}`)
+          return
         }
-        return
-      }
 
-      if (payload.startsWith("44")) {
-        complete("error", `${selected.title} tetiklenemedi. backend=${backend}`)
-        return
-      }
+        const eventPacket = parseSocketIoEventPacket(packet)
+        if (!eventPacket) continue
 
-      const eventPacket = parseSocketIoEventPacket(payload)
-      if (eventPacket) {
         hasServerOutput = true
-        const compactArgs =
-          eventPacket.args.length > 0 ? JSON.stringify(eventPacket.args).slice(0, 240) : ""
-        appendRunLog("running", `${eventPacket.event}${compactArgs ? ` -> ${compactArgs}` : ""}`)
+        const eventName = eventPacket.event.toLowerCase()
+        const eventPayload = formatSocketIoArgs(eventPacket.args).slice(0, 400)
+
+        if (eventName === "script-started") {
+          appendRunLog("running", eventPayload || "script-started")
+          resetTimeout(25000)
+          continue
+        }
+
+        if (eventName === "script-log") {
+          appendRunLog("running", eventPayload || "script-log")
+          resetTimeout(25000)
+          continue
+        }
+
+        if (eventName === "script-exit") {
+          const firstArg = eventPacket.args[0]
+          const exitCodeRaw =
+            typeof firstArg === "number"
+              ? firstArg
+              : Number(firstArg?.exitCode ?? firstArg?.code ?? NaN)
+          const isSuccess = Number.isFinite(exitCodeRaw) ? exitCodeRaw === 0 : true
+          appendRunLog(isSuccess ? "success" : "error", eventPayload || "script-exit")
+          complete(
+            isSuccess ? "success" : "error",
+            isSuccess
+              ? `${selected.title} script tamamlandi.`
+              : `${selected.title} script hata ile tamamlandi.`,
+          )
+          return
+        }
+
+        appendRunLog("running", `${eventPacket.event}${eventPayload ? ` -> ${eventPayload}` : ""}`)
         resetTimeout(25000)
       }
     })
