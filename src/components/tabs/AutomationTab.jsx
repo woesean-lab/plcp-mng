@@ -1095,11 +1095,11 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const secondaryButtonClass =
     "rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10"
   const wsActionButtonBaseClass =
-    "w-full min-w-0 rounded-lg px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.08em] transition sm:text-[11px]"
+    "w-full min-w-0 rounded-xl px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.06em] transition sm:text-[11px]"
   const wsActionPrimaryButtonClass =
-    `${wsActionButtonBaseClass} border border-emerald-300/70 bg-emerald-500/15 text-emerald-50 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0`
+    `${wsActionButtonBaseClass} border border-emerald-300/60 bg-emerald-500/15 text-emerald-50 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0`
   const wsActionSecondaryButtonClass =
-    `${wsActionButtonBaseClass} border border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60`
+    `${wsActionButtonBaseClass} border border-white/15 bg-white/[0.06] text-slate-200 hover:border-white/25 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60`
 
   const confirmModalContent = isConfirmOpen ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/75 px-4 backdrop-blur-sm">
@@ -1341,23 +1341,42 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
           <aside className="space-y-4">
             <section className={`${panelClass} bg-ink-900/60`}>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Websocket</p>
-                <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${wsStatusMeta.badge}`}>
-                  <span className={`h-2 w-2 rounded-full ${wsStatusMeta.dot}`} />
-                  {wsStatusMeta.label}
-                </span>
-              </div>
-              <div className="mt-3 space-y-3">
-                <input
-                  id="ws-url"
-                  type="text"
-                  placeholder="wss://ornek.com/ws"
-                  value={wsUrl}
-                  onChange={handleWsUrlChange}
-                  className={fieldClass}
-                />
-                <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-ink-900/80 via-ink-900/60 to-ink-800/60 p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                      Websocket
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Proxy adresini kaydet, baglanti kur ve backend mapleri cek.
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${wsStatusMeta.badge}`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${wsStatusMeta.dot}`} />
+                    {wsStatusMeta.label}
+                  </span>
+                </div>
+
+                <div className="mt-3 space-y-2.5">
+                  <label
+                    htmlFor="ws-url"
+                    className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500"
+                  >
+                    Sunucu adresi
+                  </label>
+                  <input
+                    id="ws-url"
+                    type="text"
+                    placeholder="wss://ornek.com/ws"
+                    value={wsUrl}
+                    onChange={handleWsUrlChange}
+                    className={`${fieldClass} bg-ink-950/80`}
+                  />
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2">
                   <button type="button" onClick={saveWsUrl} className={wsActionSecondaryButtonClass}>
                     Kaydet
                   </button>
@@ -1367,7 +1386,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                     disabled={isWsTesting}
                     className={wsActionPrimaryButtonClass}
                   >
-                    {isWsTesting ? "Bağlantı kuruluyor..." : "Bağlantı kur"}
+                    {isWsTesting ? "Baglanti kuruluyor..." : "Baglanti kur"}
                   </button>
                   <button
                     type="button"
@@ -1380,13 +1399,20 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                     {backendListStatus === "loading" ? "Map aliniyor..." : "Mapleri cek"}
                   </button>
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
-                  <p className="break-all">
-                    Kayıtlı: <span className="text-slate-100">{savedWsUrl || "-"}</span>
+
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/25 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Kayitli adres
                   </p>
-                  <p className="mt-1 text-slate-400">{wsTestMessage}</p>
+                  <p className="mt-1 break-all font-mono text-[11px] text-slate-200">
+                    {savedWsUrl || "-"}
+                  </p>
+
+                  <div className="mt-2 h-px bg-white/10" />
+                  <p className="mt-2 text-[11px] text-slate-300">{wsTestMessage}</p>
+
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="text-slate-400">{backendListMessage}</span>
+                    <span className="text-[11px] text-slate-400">{backendListMessage}</span>
                     <span
                       className={`inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${backendStatusMeta.badge}`}
                     >
@@ -1571,6 +1597,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     </>
   )
 }
+
 
 
 
