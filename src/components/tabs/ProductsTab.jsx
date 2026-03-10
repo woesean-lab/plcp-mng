@@ -1565,7 +1565,9 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => handleAutomationToggle(offerId)}
                               disabled={!offerId || !canManageAutomation}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md transition before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                                isAutomationEnabled ? "text-emerald-300 hover:text-emerald-200" : "text-slate-200/80 hover:text-white"
+                              } ${
                                 !offerId || !canManageAutomation ? "cursor-not-allowed opacity-60" : ""
                               }`}
                               aria-label="Otomasyon ac/kapat"
@@ -1573,21 +1575,16 @@ export default function ProductsTab({
                             >
                               <span
                                 className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
-                                  isAutomationEnabled ? "bg-indigo-300" : "bg-rose-400"
+                                  isAutomationEnabled ? "bg-emerald-400" : "bg-rose-400"
                                 }`}
                               />
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
                                 className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                                fill="currentColor"
                               >
-                                <path d="M6 5v14l9-7z" />
-                                <path d="M18 6v12" />
+                                <path d="M8 6v12l10-6z" />
                               </svg>
                             </button>
                             <button
@@ -1873,18 +1870,6 @@ export default function ProductsTab({
                                   } ${!canManageAutomation ? "cursor-not-allowed opacity-60" : ""}`}
                                   aria-pressed={activePanel === "automation"}
                                 >
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                    className="h-3.5 w-3.5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M8 6v12l8-6z" />
-                                  </svg>
                                   <span>Otomasyon</span>
                                 </button>
                               )}
@@ -2192,19 +2177,17 @@ export default function ProductsTab({
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
                               <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
-                                <div className="mt-1 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+                                <div className="mt-1">
                                   <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
-                                    <label className="text-[12px] font-semibold text-slate-100">
-                                      Backend map
-                                    </label>
-                                    <div className="mt-1">
+                                    <label className="text-[12px] font-semibold text-slate-100">Backend map</label>
+                                    <div className="mt-1 flex flex-wrap items-center gap-2">
                                       <select
                                         value={automationBackendValue}
                                         onChange={(event) =>
                                           handleAutomationBackendDraftChange(offerId, event.target.value)
                                         }
                                         disabled={!canManageAutomation}
-                                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <option value="">
                                           {automationBackendOptions.length === 0
@@ -2232,9 +2215,6 @@ export default function ProductsTab({
                                           )
                                         })}
                                       </select>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-end">
                                     <button
                                       type="button"
                                       onClick={() => handleAutomationSave(offerId)}
@@ -2249,6 +2229,7 @@ export default function ProductsTab({
                                     </button>
                                   </div>
                                 </div>
+                              </div>
                               </div>
                             )}
                             {activePanel === "note" && (
