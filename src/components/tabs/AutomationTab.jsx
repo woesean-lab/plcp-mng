@@ -4,6 +4,8 @@ import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
 const WS_CONNECTION_STATE_STORAGE_KEY = "pulcipAutomationWsConnectionState"
+const CMD_RUN_LOG_STORAGE_KEY = "pulcipAutomationCmdRunLog"
+const MAX_RUN_LOG_ENTRIES = 300
 const DEFAULT_TOAST_STYLE = {
   background: "rgba(15, 23, 42, 0.92)",
   color: "#e2e8f0",
@@ -30,6 +32,30 @@ const readStoredWsConnectionState = () => {
     }
   } catch {
     return { status: "idle", message: "Henüz bağlantı kurulmadı.", url: "" }
+  }
+}
+
+const readStoredRunLog = () => {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(CMD_RUN_LOG_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+
+    return parsed
+      .map((entry) => {
+        const id = String(entry?.id ?? "").trim()
+        const time = String(entry?.time ?? "").trim()
+        const status = String(entry?.status ?? "").trim()
+        const message = String(entry?.message ?? "").trim()
+        if (!id || !time || !status || !message) return null
+        return { id, time, status, message }
+      })
+      .filter(Boolean)
+      .slice(0, MAX_RUN_LOG_ENTRIES)
+  } catch {
+    return []
   }
 }
 
@@ -114,7 +140,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     "Baglanti kuruldugunda backend map listesi alinacak.",
   )
   const [selectedBackendKey, setSelectedBackendKey] = useState("")
-  const [runLog, setRunLog] = useState([])
+  const [runLog, setRunLog] = useState(() => readStoredRunLog())
   const [isRunning, setIsRunning] = useState(false)
   const [confirmRunBackendKey, setConfirmRunBackendKey] = useState("")
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
@@ -143,6 +169,10 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     () => runLog.find((entry) => entry.status === "success") ?? null,
     [runLog],
   )
+
+  const prependRunLogEntry = useCallback((entry) => {
+    setRunLog((prev) => [entry, ...prev].slice(0, MAX_RUN_LOG_ENTRIES))
+  }, [])
 
   const backendSelectOptions = useMemo(() => {
     const seen = new Set()
@@ -186,6 +216,18 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       // Local storage unavailable.
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      localStorage.setItem(
+        CMD_RUN_LOG_STORAGE_KEY,
+        JSON.stringify(runLog.slice(0, MAX_RUN_LOG_ENTRIES)),
+      )
+    } catch {
+      // Local storage unavailable.
+    }
+  }, [runLog])
 
   const apiFetchAutomation = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -818,15 +860,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     setResultPopup((prev) => ({ ...prev, isOpen: false }))
     setIsRunning(true)
     toast("Otomasyon tetikleme istegi gonderildi", { style: toastStyle, position: "top-right" })
-    setRunLog((prev) => [
-      {
-        id: `log-${Date.now()}`,
-        time,
-        status: "running",
-        message: `${selectedName} tetikleniyor... backend=${backend}`,
-      },
-      ...prev,
-    ])
+    prependRunLogEntry({
+      id: `log-${Date.now()}`,
+      time,
+      status: "running",
+      message: `${selectedName} tetikleniyor... backend=${backend}`,
+    })
 
     let settled = false
     let hasConnected = false
@@ -839,15 +878,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         hour: "2-digit",
         minute: "2-digit",
       })
-      setRunLog((prev) => [
-        {
-          id: `log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          time: entryTime,
-          status,
-          message,
-        },
-        ...prev,
-      ])
+      prependRunLogEntry({
+        id: `log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        time: entryTime,
+        status,
+        message,
+      })
     }
 
     const formatValue = (value) => {
@@ -879,15 +915,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         hour: "2-digit",
         minute: "2-digit",
       })
-      setRunLog((prev) => [
-        {
-          id: `log-${Date.now()}-done`,
-          time: doneTime,
-          status,
-          message,
-        },
-        ...prev,
-      ])
+      prependRunLogEntry({
+        id: `log-${Date.now()}-done`,
+        time: doneTime,
+        status,
+        message,
+      })
       if (status === "success") {
         toast.success("Otomasyon tetiklendi", { style: toastStyle, position: "top-right" })
       } else {
