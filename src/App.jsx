@@ -192,7 +192,7 @@ function App() {
     eldoradoStockEnabledByOffer,
     eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
-    eldoradoAutomationBackendByOffer,
+    eldoradoAutomationBackendsByOffer,
     eldoradoAutomationBackendOptions,
     eldoradoOfferPrices,
     eldoradoOfferPriceEnabledByOffer,
@@ -1092,7 +1092,7 @@ function App() {
               stockEnabledByOffer={eldoradoStockEnabledByOffer}
               automationWsUrl={eldoradoAutomationWsUrl}
               automationEnabledByOffer={eldoradoAutomationEnabledByOffer}
-              automationBackendByOffer={eldoradoAutomationBackendByOffer}
+              automationBackendsByOffer={eldoradoAutomationBackendsByOffer}
               automationBackendOptions={eldoradoAutomationBackendOptions}
               savedPricesByOffer={eldoradoOfferPrices}
               priceEnabledByOffer={eldoradoOfferPriceEnabledByOffer}

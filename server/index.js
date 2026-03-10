@@ -349,12 +349,23 @@ const loadEldoradoStore = async () => {
 
   const automationEnabledByOffer = {}
   const automationBackendByOffer = {}
+  const automationBackendsByOffer = {}
   offerAutomationRows.forEach((entry) => {
     if (!entry?.offerId) return
     automationEnabledByOffer[entry.offerId] = Boolean(entry.enabled)
-    const backend = String(entry?.backend ?? "").trim()
-    if (backend) {
-      automationBackendByOffer[entry.offerId] = backend
+    const rawBackends = Array.isArray(entry?.backends) ? entry.backends : []
+    const normalizedBackends = rawBackends
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean)
+    const legacyBackend = String(entry?.backend ?? "").trim()
+    const mergedBackends = normalizedBackends.length > 0
+      ? normalizedBackends
+      : legacyBackend
+        ? [legacyBackend]
+        : []
+    if (mergedBackends.length > 0) {
+      automationBackendsByOffer[entry.offerId] = Array.from(new Set(mergedBackends))
+      automationBackendByOffer[entry.offerId] = automationBackendsByOffer[entry.offerId][0]
     }
   })
 
@@ -445,6 +456,7 @@ const loadEldoradoStore = async () => {
     automationWsUrl: String(automationConfig?.wsUrl ?? "").trim(),
     automationEnabledByOffer,
     automationBackendByOffer,
+    automationBackendsByOffer,
     automationBackendOptions,
     offerPriceEnabledByOffer,
     offerPrices,
@@ -2862,12 +2874,13 @@ app.put("/api/eldorado/offers/:id/automation", async (req, res) => {
 
   const hasEnabled = Object.prototype.hasOwnProperty.call(req.body ?? {}, "enabled")
   const hasBackend = Object.prototype.hasOwnProperty.call(req.body ?? {}, "backend")
-  if (!hasEnabled && !hasBackend) {
-    res.status(400).json({ error: "enabled or backend is required" })
+  const hasBackends = Object.prototype.hasOwnProperty.call(req.body ?? {}, "backends")
+  if (!hasEnabled && !hasBackend && !hasBackends) {
+    res.status(400).json({ error: "enabled, backend or backends is required" })
     return
   }
 
-  const createData = { offerId, enabled: false, backend: null }
+  const createData = { offerId, enabled: false, backend: null, backends: [] }
   const updateData = {}
 
   if (hasEnabled) {
@@ -2878,10 +2891,33 @@ app.put("/api/eldorado/offers/:id/automation", async (req, res) => {
     updateData.enabled = enabled
   }
 
+  if (hasBackends) {
+    if (!Array.isArray(req.body?.backends)) {
+      res.status(400).json({ error: "backends must be an array" })
+      return
+    }
+    const normalizedBackends = Array.from(
+      new Set(
+        req.body.backends
+          .map((item) => String(item ?? "").trim())
+          .filter(Boolean),
+      ),
+    )
+    createData.backends = normalizedBackends
+    updateData.backends = normalizedBackends
+    createData.backend = normalizedBackends[0] || null
+    updateData.backend = normalizedBackends[0] || null
+  }
+
   if (hasBackend) {
     const backend = String(req.body?.backend ?? "").trim()
-    createData.backend = backend || null
-    updateData.backend = backend || null
+    if (!hasBackends) {
+      const backends = backend ? [backend] : []
+      createData.backend = backend || null
+      updateData.backend = backend || null
+      createData.backends = backends
+      updateData.backends = backends
+    }
   }
 
   const saved = await prisma.eldoradoOfferAutomation.upsert({
@@ -2895,6 +2931,7 @@ app.put("/api/eldorado/offers/:id/automation", async (req, res) => {
     offerId: saved.offerId,
     enabled: Boolean(saved.enabled),
     backend: String(saved.backend ?? "").trim(),
+    backends: Array.isArray(saved.backends) ? saved.backends : [],
   })
 })
 

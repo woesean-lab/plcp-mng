@@ -174,7 +174,7 @@ export default function useAppData() {
   const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState({})
   const [eldoradoAutomationWsUrl, setEldoradoAutomationWsUrl] = useState("")
   const [eldoradoAutomationEnabledByOffer, setEldoradoAutomationEnabledByOffer] = useState({})
-  const [eldoradoAutomationBackendByOffer, setEldoradoAutomationBackendByOffer] = useState({})
+  const [eldoradoAutomationBackendsByOffer, setEldoradoAutomationBackendsByOffer] = useState({})
   const [eldoradoAutomationBackendOptions, setEldoradoAutomationBackendOptions] = useState([])
   const [eldoradoOfferPrices, setEldoradoOfferPrices] = useState({})
   const [eldoradoOfferPriceEnabledByOffer, setEldoradoOfferPriceEnabledByOffer] = useState({})
@@ -456,11 +456,19 @@ export default function useAppData() {
             ? data.automationEnabledByOffer
             : {},
         )
-        setEldoradoAutomationBackendByOffer(
-          data?.automationBackendByOffer && typeof data.automationBackendByOffer === "object"
-            ? data.automationBackendByOffer
-            : {},
-        )
+        const automationBackendsRaw =
+          data?.automationBackendsByOffer && typeof data.automationBackendsByOffer === "object"
+            ? data.automationBackendsByOffer
+            : data?.automationBackendByOffer && typeof data.automationBackendByOffer === "object"
+              ? Object.entries(data.automationBackendByOffer).reduce((acc, [offerId, backend]) => {
+                  const normalizedOfferId = String(offerId ?? "").trim()
+                  const normalizedBackend = String(backend ?? "").trim()
+                  if (!normalizedOfferId || !normalizedBackend) return acc
+                  acc[normalizedOfferId] = [normalizedBackend]
+                  return acc
+                }, {})
+              : {}
+        setEldoradoAutomationBackendsByOffer(automationBackendsRaw)
         setEldoradoAutomationBackendOptions(
           Array.isArray(data?.automationBackendOptions) ? data.automationBackendOptions : [],
         )
@@ -2631,11 +2639,23 @@ const handleEldoradoNoteSave = useCallback(
 
       const hasEnabled = Object.prototype.hasOwnProperty.call(payload, "enabled")
       const hasBackend = Object.prototype.hasOwnProperty.call(payload, "backend")
-      if (!hasEnabled && !hasBackend) return null
+      const hasBackends = Object.prototype.hasOwnProperty.call(payload, "backends")
+      if (!hasEnabled && !hasBackend && !hasBackends) return null
 
       const body = {}
       if (hasEnabled) {
         body.enabled = Boolean(payload?.enabled)
+      }
+      if (hasBackends) {
+        body.backends = Array.isArray(payload?.backends)
+          ? Array.from(
+              new Set(
+                payload.backends
+                  .map((item) => String(item ?? "").trim())
+                  .filter(Boolean),
+              ),
+            )
+          : []
       }
       if (hasBackend) {
         body.backend = String(payload?.backend ?? "").trim()
@@ -2655,6 +2675,17 @@ const handleEldoradoNoteSave = useCallback(
         const saved = await res.json()
         const savedEnabled = Boolean(saved?.enabled)
         const savedBackend = String(saved?.backend ?? "").trim()
+        const savedBackends = Array.isArray(saved?.backends)
+          ? Array.from(
+              new Set(
+                saved.backends
+                  .map((item) => String(item ?? "").trim())
+                  .filter(Boolean),
+              ),
+            )
+          : savedBackend
+            ? [savedBackend]
+            : []
 
         if (hasEnabled) {
           setEldoradoAutomationEnabledByOffer((prev) => ({
@@ -2663,11 +2694,11 @@ const handleEldoradoNoteSave = useCallback(
           }))
         }
 
-        if (hasBackend) {
-          setEldoradoAutomationBackendByOffer((prev) => {
+        if (hasBackend || hasBackends) {
+          setEldoradoAutomationBackendsByOffer((prev) => {
             const next = { ...prev }
-            if (savedBackend) {
-              next[normalizedOfferId] = savedBackend
+            if (savedBackends.length > 0) {
+              next[normalizedOfferId] = savedBackends
             } else {
               delete next[normalizedOfferId]
             }
@@ -2679,6 +2710,7 @@ const handleEldoradoNoteSave = useCallback(
           offerId: normalizedOfferId,
           enabled: savedEnabled,
           backend: savedBackend,
+          backends: savedBackends,
         }
       } catch (error) {
         const detail = String(error?.message || "").trim()
@@ -2908,7 +2940,7 @@ const handleEldoradoNoteSave = useCallback(
           delete next[normalizedOfferId]
           return next
         })
-        setEldoradoAutomationBackendByOffer((prev) => {
+        setEldoradoAutomationBackendsByOffer((prev) => {
           const next = { ...prev }
           delete next[normalizedOfferId]
           return next
@@ -3658,7 +3690,7 @@ const handleEldoradoNoteSave = useCallback(
       setEldoradoStockEnabledByOffer({})
       setEldoradoAutomationWsUrl("")
       setEldoradoAutomationEnabledByOffer({})
-      setEldoradoAutomationBackendByOffer({})
+      setEldoradoAutomationBackendsByOffer({})
       setEldoradoAutomationBackendOptions([])
       return
     }
@@ -5451,7 +5483,7 @@ const handleEldoradoNoteSave = useCallback(
     eldoradoStockEnabledByOffer,
     eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
-    eldoradoAutomationBackendByOffer,
+    eldoradoAutomationBackendsByOffer,
     eldoradoAutomationBackendOptions,
     eldoradoOfferPrices,
     eldoradoOfferPriceEnabledByOffer,

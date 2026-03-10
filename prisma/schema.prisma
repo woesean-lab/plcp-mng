@@ -86,6 +86,7 @@ model EldoradoOfferAutomation {
   offerId   String   @id
   enabled   Boolean  @default(false)
   backend   String?
+  backends  String[] @default([])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
