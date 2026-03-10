@@ -108,19 +108,15 @@ function AutomationSkeleton({ panelClass }) {
 }
 
 export default function AutomationTab({ panelClass, isLoading = false }) {
-  const [automations, setAutomations] = useState([])
-  const [automationForm, setAutomationForm] = useState({ title: "", backend: "" })
-  const [editingId, setEditingId] = useState("")
-  const [editingDraft, setEditingDraft] = useState({ title: "", backend: "" })
   const [backendOptions, setBackendOptions] = useState([])
   const [backendListStatus, setBackendListStatus] = useState("idle")
   const [backendListMessage, setBackendListMessage] = useState(
     "Baglanti kuruldugunda backend map listesi alinacak.",
   )
-  const [selectedAutomationId, setSelectedAutomationId] = useState("")
+  const [selectedBackendKey, setSelectedBackendKey] = useState("")
   const [runLog, setRunLog] = useState([])
   const [isRunning, setIsRunning] = useState(false)
-  const [confirmRunId, setConfirmRunId] = useState("")
+  const [confirmRunBackendKey, setConfirmRunBackendKey] = useState("")
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [resultPopup, setResultPopup] = useState({
     isOpen: false,
@@ -138,9 +134,9 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   const hasAutoConnectedRef = useRef(false)
   const toastStyle = DEFAULT_TOAST_STYLE
 
-  const selectedAutomation = useMemo(
-    () => automations.find((item) => item.id === selectedAutomationId) ?? null,
-    [automations, selectedAutomationId],
+  const selectedBackendOption = useMemo(
+    () => backendOptions.find((item) => item.key === selectedBackendKey) ?? null,
+    [backendOptions, selectedBackendKey],
   )
 
   const lastSuccess = useMemo(
@@ -162,17 +158,10 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       })
     }
 
-    backendOptions.forEach((item) => {
-      pushOption(item?.key, item?.label)
-    })
-    automations.forEach((item) => {
-      pushOption(item?.backend, item?.backend)
-    })
-    pushOption(automationForm.backend, automationForm.backend)
-    pushOption(editingDraft.backend, editingDraft.backend)
+    backendOptions.forEach((item) => pushOption(item?.key, item?.label))
 
     return merged
-  }, [automations, automationForm.backend, backendOptions, editingDraft.backend])
+  }, [backendOptions])
 
   useEffect(() => {
     return () => {
@@ -222,14 +211,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }, [])
 
-  const normalizeAutomation = useCallback((entry) => {
-    const id = String(entry?.id ?? "").trim()
-    const title = String(entry?.title ?? "").trim()
-    const backend = String(entry?.backend ?? "").trim()
-    if (!id || !title || !backend) return null
-    return { id, title, backend }
-  }, [])
-
   const normalizeBackendOption = useCallback((entry) => {
     if (typeof entry === "string") {
       const key = entry.trim()
@@ -248,27 +229,16 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
     const loadAutomationData = async () => {
       try {
-        const [automationsRes, configRes] = await Promise.all([
-          apiFetchAutomation("/api/automations", { signal: controller.signal }),
-          apiFetchAutomation("/api/automation/config", { signal: controller.signal }),
-        ])
-        if (!automationsRes.ok) {
-          const apiError = await readApiError(automationsRes)
-          throw new Error(apiError || "Otomasyonlar alinamadi.")
-        }
+        const configRes = await apiFetchAutomation("/api/automation/config", {
+          signal: controller.signal,
+        })
         if (!configRes.ok) {
           const apiError = await readApiError(configRes)
           throw new Error(apiError || "Websocket ayarlari alinamadi.")
         }
 
-        const automationsPayload = await automationsRes.json()
         const configPayload = await configRes.json()
         if (!isMounted) return
-
-        const normalizedAutomations = Array.isArray(automationsPayload)
-          ? automationsPayload.map(normalizeAutomation).filter(Boolean)
-          : []
-        setAutomations(normalizedAutomations)
 
         const configWsUrl = String(configPayload?.wsUrl ?? "").trim()
         setWsUrl(configWsUrl)
@@ -288,13 +258,15 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       isMounted = false
       controller.abort()
     }
-  }, [apiFetchAutomation, normalizeAutomation, readApiError, toastStyle])
+  }, [apiFetchAutomation, readApiError, toastStyle])
 
   useEffect(() => {
-    if (automationForm.backend.trim()) return
     if (backendSelectOptions.length === 0) return
-    setAutomationForm((prev) => ({ ...prev, backend: backendSelectOptions[0].key }))
-  }, [automationForm.backend, backendSelectOptions])
+    if (selectedBackendKey && backendSelectOptions.some((item) => item.key === selectedBackendKey)) {
+      return
+    }
+    setSelectedBackendKey(backendSelectOptions[0].key)
+  }, [backendSelectOptions, selectedBackendKey])
 
   const isValidWsUrl = useCallback((value) => {
     try {
@@ -810,55 +782,11 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }
 
-  const createAutomation = useCallback(async (title, backend) => {
-    const res = await apiFetchAutomation("/api/automations", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title, backend }),
-    })
-    if (!res.ok) {
-      const apiError = await readApiError(res)
-      throw new Error(apiError || "Otomasyon eklenemedi.")
-    }
-    const payload = await res.json()
-    const normalized = normalizeAutomation(payload)
-    if (!normalized) {
-      throw new Error("Sunucudan gecersiz otomasyon cevabi dondu.")
-    }
-    return normalized
-  }, [apiFetchAutomation, normalizeAutomation, readApiError])
-
-  const updateAutomation = useCallback(async (id, title, backend) => {
-    const res = await apiFetchAutomation(`/api/automations/${encodeURIComponent(id)}`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title, backend }),
-    })
-    if (!res.ok) {
-      const apiError = await readApiError(res)
-      throw new Error(apiError || "Otomasyon guncellenemedi.")
-    }
-    const payload = await res.json()
-    const normalized = normalizeAutomation(payload)
-    if (!normalized) {
-      throw new Error("Sunucudan gecersiz otomasyon cevabi dondu.")
-    }
-    return normalized
-  }, [apiFetchAutomation, normalizeAutomation, readApiError])
-
-  const removeAutomation = useCallback(async (id) => {
-    const res = await apiFetchAutomation(`/api/automations/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    })
-    if (!res.ok) {
-      const apiError = await readApiError(res)
-      throw new Error(apiError || "Otomasyon silinemedi.")
-    }
-  }, [apiFetchAutomation, readApiError])
-
-  const runAutomation = (selected) => {
-    if (!selected) return
-    const backend = String(selected.backend ?? "").trim()
+  const runAutomation = (selectedOption) => {
+    if (!selectedOption) return
+    const backend = String(selectedOption.key ?? "").trim()
+    const selectedName =
+      String(selectedOption.label ?? "").trim() || String(selectedOption.key ?? "").trim() || "Otomasyon"
     if (!backend) {
       toast.error("Backend map bos olamaz.", { style: toastStyle, position: "top-right" })
       return
@@ -895,7 +823,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         id: `log-${Date.now()}`,
         time,
         status: "running",
-        message: `${selected.title} tetikleniyor... backend=${backend}`,
+        message: `${selectedName} tetikleniyor... backend=${backend}`,
       },
       ...prev,
     ])
@@ -936,10 +864,10 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       if (timeoutId) window.clearTimeout(timeoutId)
       timeoutId = window.setTimeout(() => {
         if (hasResult) {
-          complete("success", `${selected.title} tamamlandi.`)
+          complete("success", `${selectedName} tamamlandi.`)
           return
         }
-        complete("error", `${selected.title} icin sonuc yaniti alinmadi (zaman asimi).`)
+        complete("error", `${selectedName} icin sonuc yaniti alinmadi (zaman asimi).`)
       }, ms)
     }
 
@@ -976,7 +904,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     try {
       socket = new WebSocket(triggerUrl)
     } catch {
-      complete("error", `${selected.title} icin websocket baglantisi baslatilamadi.`)
+      complete("error", `${selectedName} icin websocket baglantisi baslatilamadi.`)
       return
     }
 
@@ -1005,7 +933,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
           try {
             socket.send("40")
           } catch {
-            complete("error", `${selected.title} icin Socket.IO connect paketi gonderilemedi.`)
+            complete("error", `${selectedName} icin Socket.IO connect paketi gonderilemedi.`)
           }
           continue
         }
@@ -1018,15 +946,15 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
         if (packet.startsWith("41")) {
           if (hasResult) {
-            complete("success", `${selected.title} tamamlandi.`)
+            complete("success", `${selectedName} tamamlandi.`)
           } else {
-            complete("error", `${selected.title} tamamlanmadan baglanti kapandi (sonuc yok).`)
+            complete("error", `${selectedName} tamamlanmadan baglanti kapandi (sonuc yok).`)
           }
           return
         }
 
         if (packet.startsWith("44")) {
-          complete("error", `${selected.title} tetiklenemedi. backend=${backend}`)
+          complete("error", `${selectedName} tetiklenemedi. backend=${backend}`)
           return
         }
 
@@ -1053,12 +981,12 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
           appendRunLog("success", `${resultBackend} => ${valueText}`)
           setResultPopup({
             isOpen: true,
-            title: selected.title,
+            title: selectedName,
             backend: resultBackend,
             value: rawValueText || "-",
           })
           hasResult = true
-          complete("success", `${selected.title} tamamlandi.`)
+          complete("success", `${selectedName} tamamlandi.`)
           return
         }
 
@@ -1067,20 +995,20 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     })
 
     socket.addEventListener("error", () => {
-      complete("error", `${selected.title} icin websocket baglanti hatasi olustu.`)
+      complete("error", `${selectedName} icin websocket baglanti hatasi olustu.`)
     })
 
     socket.addEventListener("close", () => {
       if (settled) return
       if (hasResult) {
-        complete("success", `${selected.title} tamamlandi.`)
+        complete("success", `${selectedName} tamamlandi.`)
         return
       }
       if (hasConnected) {
-        complete("error", `${selected.title} baglantisi acildi ancak sonuc gelmedi.`)
+        complete("error", `${selectedName} baglantisi acildi ancak sonuc gelmedi.`)
         return
       }
-      complete("error", `${selected.title} icin websocket baglantisi kapandi.`)
+      complete("error", `${selectedName} icin websocket baglantisi kapandi.`)
     })
   }
 
@@ -1105,18 +1033,19 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/75 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
         <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">Onay</p>
-        <p className="mt-2 text-base font-semibold text-white">Otomasyon calistirilsin mi?</p>
+        <p className="mt-2 text-base font-semibold text-white">Backend map calistirilsin mi?</p>
         <p className="mt-2 text-sm text-slate-300">
-          {automations.find((item) => item.id === confirmRunId)?.title ?? ""}
+          {backendOptions.find((item) => item.key === confirmRunBackendKey)?.label ??
+            confirmRunBackendKey}
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <button
             type="button"
             className={primaryButtonClass}
             onClick={() => {
-              const selected = automations.find((item) => item.id === confirmRunId)
+              const selected = backendOptions.find((item) => item.key === confirmRunBackendKey)
               setIsConfirmOpen(false)
-              setConfirmRunId("")
+              setConfirmRunBackendKey("")
               if (!selected) return
               runAutomation(selected)
             }}
@@ -1128,7 +1057,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
             className={secondaryButtonClass}
             onClick={() => {
               setIsConfirmOpen(false)
-              setConfirmRunId("")
+              setConfirmRunBackendKey("")
             }}
           >
             Iptal
@@ -1214,7 +1143,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
             </div>
             <div className="flex flex-wrap gap-2 sm:justify-end">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-                Toplam: {automations.length}
+                Toplam: {backendOptions.length}
               </span>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
                 Son: {lastSuccess?.time ?? "--:--"}
@@ -1243,23 +1172,23 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
 
             <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
               <select
-                value={selectedAutomationId}
-                onChange={(event) => setSelectedAutomationId(event.target.value)}
+                value={selectedBackendKey}
+                onChange={(event) => setSelectedBackendKey(event.target.value)}
                 className={fieldClass}
               >
-                <option value="">Otomasyon sec</option>
-                {automations.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
+                <option value="">Backend map sec</option>
+                {backendOptions.map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {item.label}
                   </option>
                 ))}
               </select>
               <button
                 type="button"
-                disabled={!selectedAutomationId || isRunning}
+                disabled={!selectedBackendKey || isRunning}
                 onClick={() => {
-                  if (!selectedAutomationId || isRunning) return
-                  setConfirmRunId(selectedAutomationId)
+                  if (!selectedBackendKey || isRunning) return
+                  setConfirmRunBackendKey(selectedBackendKey)
                   setIsConfirmOpen(true)
                 }}
                 className={`min-w-[130px] ${primaryButtonClass}`}
@@ -1269,14 +1198,14 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
             </div>
 
             <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Secili Otomasyon</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Secili Backend Map</p>
               <p className="mt-1 truncate text-sm text-slate-100">
-                {selectedAutomation?.title ?? "Secim yok"}
+                {selectedBackendOption?.label ?? "Secim yok"}
               </p>
               <p className="truncate text-xs text-slate-400">
-                {selectedAutomation?.backend
-                  ? `Backend map: ${selectedAutomation.backend}`
-                  : "Backend map yok"}
+                {selectedBackendOption?.key
+                  ? `Backend key: ${selectedBackendOption.key}`
+                  : "Backend key yok"}
               </p>
             </div>
 
@@ -1418,164 +1347,29 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
             </section>
 
             <section className={`${panelClass} bg-ink-900/60`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Yeni Ekle</p>
-              <div className="mt-3 space-y-3">
-                <input
-                  id="automation-title"
-                  type="text"
-                  placeholder="Otomasyon basligi"
-                  value={automationForm.title}
-                  onChange={(event) =>
-                    setAutomationForm((prev) => ({ ...prev, title: event.target.value }))
-                  }
-                  className={fieldClass}
-                />
-                <select
-                  id="automation-backend"
-                  value={automationForm.backend}
-                  onChange={(event) =>
-                    setAutomationForm((prev) => ({ ...prev, backend: event.target.value }))
-                  }
-                  className={fieldClass}
-                >
-                  <option value="">
-                    {backendSelectOptions.length > 0 ? "Backend map sec" : "Backend map listesi bekleniyor"}
-                  </option>
-                  {backendSelectOptions.map((option) => (
-                    <option key={option.key} value={option.key}>
-                      {option.label} ({option.key})
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const title = automationForm.title.trim()
-                    const backend = automationForm.backend.trim()
-                    if (backendSelectOptions.length === 0) {
-                      toast.error("Backend map listesi alinmadan otomasyon eklenemez.", {
-                        style: toastStyle,
-                        position: "top-right",
-                      })
-                      return
-                    }
-                    if (!title || !backend) return
-                    try {
-                      const created = await createAutomation(title, backend)
-                      setAutomations((prev) => [created, ...prev])
-                      setAutomationForm({ title: "", backend: "" })
-                      toast.success("Otomasyon eklendi", { style: toastStyle, position: "top-right" })
-                    } catch (error) {
-                      toast.error(error?.message || "Otomasyon eklenemedi.", {
-                        style: toastStyle,
-                        position: "top-right",
-                      })
-                    }
-                  }}
-                  disabled={backendSelectOptions.length === 0}
-                  className={`w-full ${primaryButtonClass}`}
-                >
-                  Ekle
-                </button>
-              </div>
-            </section>
-
-            <section className={`${panelClass} bg-ink-900/60`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Duzenle / Sil</p>
-              <div className="mt-3 space-y-3">
-                <select
-                  value={editingId}
-                  onChange={(event) => {
-                    const value = event.target.value
-                    setEditingId(value)
-                    const selected = automations.find((entry) => entry.id === value)
-                    setEditingDraft({
-                      title: selected?.title ?? "",
-                      backend: selected?.backend ?? "",
-                    })
-                  }}
-                  className={fieldClass}
-                >
-                  <option value="">Otomasyon sec</option>
-                  {automations.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.title}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  value={editingDraft.title}
-                  onChange={(event) =>
-                    setEditingDraft((prev) => ({ ...prev, title: event.target.value }))
-                  }
-                  placeholder="Otomasyon basligi"
-                  className={fieldClass}
-                />
-                <select
-                  value={editingDraft.backend}
-                  onChange={(event) =>
-                    setEditingDraft((prev) => ({ ...prev, backend: event.target.value }))
-                  }
-                  className={fieldClass}
-                >
-                  <option value="">Backend map sec</option>
-                  {backendSelectOptions.map((option) => (
-                    <option key={option.key} value={option.key}>
-                      {option.label} ({option.key})
-                    </option>
-                  ))}
-                </select>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const title = editingDraft.title.trim()
-                      const backend = editingDraft.backend.trim()
-                      if (!editingId || !title || !backend) return
-                      try {
-                        const updated = await updateAutomation(editingId, title, backend)
-                        setAutomations((prev) =>
-                          prev.map((entry) => (entry.id === editingId ? updated : entry)),
-                        )
-                        toast.success("Otomasyon guncellendi", {
-                          style: toastStyle,
-                          position: "top-right",
-                        })
-                      } catch (error) {
-                        toast.error(error?.message || "Otomasyon guncellenemedi.", {
-                          style: toastStyle,
-                          position: "top-right",
-                        })
-                      }
-                    }}
-                    className={primaryButtonClass}
-                  >
-                    Kaydet
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!editingId) return
-                      try {
-                        await removeAutomation(editingId)
-                        setAutomations((prev) => prev.filter((entry) => entry.id !== editingId))
-                        setEditingId("")
-                        setEditingDraft({ title: "", backend: "" })
-                        if (selectedAutomationId === editingId) setSelectedAutomationId("")
-                        toast("Otomasyon silindi", { style: toastStyle, position: "top-right" })
-                      } catch (error) {
-                        toast.error(error?.message || "Otomasyon silinemedi.", {
-                          style: toastStyle,
-                          position: "top-right",
-                        })
-                      }
-                    }}
-                    className="rounded-lg border border-rose-300/60 bg-rose-500/10 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
-                  >
-                    Sil
-                  </button>
-                </div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                Sunucu Mapleri
+              </p>
+              <div className="mt-3 space-y-2">
+                {backendOptions.length === 0 ? (
+                  <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
+                    Map listesi bos. Once baglanip mapleri cekin.
+                  </div>
+                ) : (
+                  backendOptions.map((option) => (
+                    <div
+                      key={option.key}
+                      className={`rounded-lg border px-3 py-2 text-xs ${
+                        selectedBackendKey === option.key
+                          ? "border-emerald-300/50 bg-emerald-500/10 text-emerald-100"
+                          : "border-white/10 bg-white/5 text-slate-200"
+                      }`}
+                    >
+                      <p className="truncate font-semibold">{option.label || option.key}</p>
+                      <p className="truncate font-mono text-[10px] text-slate-400">{option.key}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </section>
           </aside>
