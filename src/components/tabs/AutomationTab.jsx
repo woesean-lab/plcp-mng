@@ -4,7 +4,6 @@ import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
 const WS_CONNECTION_STATE_STORAGE_KEY = "pulcipAutomationWsConnectionState"
-const CMD_RUN_LOG_STORAGE_KEY = "pulcipAutomationCmdRunLog"
 const MAX_RUN_LOG_ENTRIES = 300
 const DEFAULT_TOAST_STYLE = {
   background: "rgba(15, 23, 42, 0.92)",
@@ -32,30 +31,6 @@ const readStoredWsConnectionState = () => {
     }
   } catch {
     return { status: "idle", message: "Henüz bağlantı kurulmadı.", url: "" }
-  }
-}
-
-const readStoredRunLog = () => {
-  if (typeof window === "undefined") return []
-  try {
-    const raw = localStorage.getItem(CMD_RUN_LOG_STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-
-    return parsed
-      .map((entry) => {
-        const id = String(entry?.id ?? "").trim()
-        const time = String(entry?.time ?? "").trim()
-        const status = String(entry?.status ?? "").trim()
-        const message = String(entry?.message ?? "").trim()
-        if (!id || !time || !status || !message) return null
-        return { id, time, status, message }
-      })
-      .filter(Boolean)
-      .slice(0, MAX_RUN_LOG_ENTRIES)
-  } catch {
-    return []
   }
 }
 
@@ -140,7 +115,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     "Baglanti kuruldugunda backend map listesi alinacak.",
   )
   const [selectedBackendKey, setSelectedBackendKey] = useState("")
-  const [runLog, setRunLog] = useState(() => readStoredRunLog())
+  const [runLog, setRunLog] = useState([])
   const [isRunning, setIsRunning] = useState(false)
   const [confirmRunBackendKey, setConfirmRunBackendKey] = useState("")
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
@@ -169,10 +144,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     () => runLog.find((entry) => entry.status === "success") ?? null,
     [runLog],
   )
-
-  const prependRunLogEntry = useCallback((entry) => {
-    setRunLog((prev) => [entry, ...prev].slice(0, MAX_RUN_LOG_ENTRIES))
-  }, [])
 
   const backendSelectOptions = useMemo(() => {
     const seen = new Set()
@@ -217,18 +188,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }, [])
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      localStorage.setItem(
-        CMD_RUN_LOG_STORAGE_KEY,
-        JSON.stringify(runLog.slice(0, MAX_RUN_LOG_ENTRIES)),
-      )
-    } catch {
-      // Local storage unavailable.
-    }
-  }, [runLog])
-
   const apiFetchAutomation = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
     if (typeof window !== "undefined") {
@@ -265,26 +224,92 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     return { key, label }
   }, [])
 
+  const normalizeRunLogEntry = useCallback((entry) => {
+    const id = String(entry?.id ?? "").trim()
+    const time = String(entry?.time ?? "").trim()
+    const status = String(entry?.status ?? "").trim()
+    const message = String(entry?.message ?? "").trim()
+    if (!id || !time || !status || !message) return null
+    return { id, time, status, message }
+  }, [])
+
+  const persistRunLogEntry = useCallback(async (entry) => {
+    try {
+      const res = await apiFetchAutomation("/api/automation/logs", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(entry),
+      })
+      if (!res.ok) {
+        // Ignore API-level errors; keep local UI responsive.
+      }
+    } catch {
+      // Ignore persistence errors; keep local UI responsive.
+    }
+  }, [apiFetchAutomation])
+
+  const prependRunLogEntry = useCallback((entry) => {
+    const normalized = normalizeRunLogEntry(entry)
+    if (!normalized) return
+    setRunLog((prev) => [normalized, ...prev].slice(0, MAX_RUN_LOG_ENTRIES))
+    void persistRunLogEntry(normalized)
+  }, [normalizeRunLogEntry, persistRunLogEntry])
+
+  const clearRunLogs = useCallback(async () => {
+    try {
+      const res = await apiFetchAutomation("/api/automation/logs", {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const apiError = await readApiError(res)
+        throw new Error(apiError || "Loglar temizlenemedi.")
+      }
+      setRunLog([])
+      toast.success("Loglar temizlendi", { style: toastStyle, position: "top-right" })
+    } catch (error) {
+      toast.error(error?.message || "Loglar temizlenemedi.", {
+        style: toastStyle,
+        position: "top-right",
+      })
+    }
+  }, [apiFetchAutomation, readApiError, toastStyle])
+
   useEffect(() => {
     let isMounted = true
     const controller = new AbortController()
 
     const loadAutomationData = async () => {
       try {
-        const configRes = await apiFetchAutomation("/api/automation/config", {
-          signal: controller.signal,
-        })
+        const [configRes, logsRes] = await Promise.all([
+          apiFetchAutomation("/api/automation/config", {
+            signal: controller.signal,
+          }),
+          apiFetchAutomation("/api/automation/logs", {
+            signal: controller.signal,
+          }),
+        ])
         if (!configRes.ok) {
           const apiError = await readApiError(configRes)
           throw new Error(apiError || "Websocket ayarlari alinamadi.")
         }
 
         const configPayload = await configRes.json()
+        let logsPayload = []
+        if (logsRes.ok) {
+          logsPayload = await logsRes.json()
+        } else {
+          logsPayload = []
+        }
         if (!isMounted) return
 
         const configWsUrl = String(configPayload?.wsUrl ?? "").trim()
         setWsUrl(configWsUrl)
         setSavedWsUrl(configWsUrl)
+
+        const normalizedLogs = Array.isArray(logsPayload)
+          ? logsPayload.map(normalizeRunLogEntry).filter(Boolean).slice(0, MAX_RUN_LOG_ENTRIES)
+          : []
+        setRunLog(normalizedLogs)
       } catch (error) {
         if (!isMounted || controller.signal.aborted) return
         toast.error(error?.message || "Otomasyon verileri alinamadi.", {
@@ -300,7 +325,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       isMounted = false
       controller.abort()
     }
-  }, [apiFetchAutomation, readApiError, toastStyle])
+  }, [apiFetchAutomation, normalizeRunLogEntry, readApiError, toastStyle])
 
   useEffect(() => {
     if (backendSelectOptions.length === 0) return
@@ -1252,9 +1277,21 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
                 <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-400">
                   automation.cmd
                 </p>
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                  {runLog.length} satir
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                    {runLog.length} satir
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void clearRunLogs()
+                    }}
+                    disabled={runLog.length === 0}
+                    className="rounded border border-rose-300/40 bg-rose-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-100 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Loglari temizle
+                  </button>
+                </div>
               </div>
 
               <div className="max-h-[320px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">

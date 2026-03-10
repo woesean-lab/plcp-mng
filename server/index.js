@@ -584,6 +584,7 @@ const initialAutomations = [
   { title: "Stok kontrol zinciri", backend: "stock-check" },
   { title: "Problem eskalasyonu", backend: "problem-escalation" },
 ]
+const AUTOMATION_LOG_LIMIT = 300
 
 async function ensureDefaults() {
   await prisma.category.upsert({
@@ -673,6 +674,15 @@ const requireAnyPermission = (permissionList) => (req, res, next) => {
     return
   }
   next()
+}
+
+const normalizeAutomationRunLogEntry = (entry) => {
+  const id = String(entry?.id ?? "").trim()
+  const time = String(entry?.time ?? "").trim()
+  const status = String(entry?.status ?? "").trim()
+  const message = String(entry?.message ?? "").trim()
+  if (!id || !time || !status || !message) return null
+  return { id, time, status, message }
 }
 
 app.get("/api/health", (_req, res) => {
@@ -823,6 +833,52 @@ app.put("/api/automation/config", requirePermission("automation.view"), async (r
   res.json({
     wsUrl: String(updated.wsUrl ?? "").trim(),
   })
+})
+
+app.get("/api/automation/logs", requirePermission("automation.view"), async (_req, res) => {
+  const logs = await prisma.automationRunLog.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: AUTOMATION_LOG_LIMIT,
+  })
+  res.json(logs)
+})
+
+app.post("/api/automation/logs", requirePermission("automation.view"), async (req, res) => {
+  const normalized = normalizeAutomationRunLogEntry(req.body)
+  if (!normalized) {
+    res.status(400).json({ error: "id, time, status and message are required" })
+    return
+  }
+
+  await prisma.automationRunLog.upsert({
+    where: { id: normalized.id },
+    create: normalized,
+    update: {
+      time: normalized.time,
+      status: normalized.status,
+      message: normalized.message,
+    },
+  })
+
+  const overflow = await prisma.automationRunLog.findMany({
+    select: { id: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    skip: AUTOMATION_LOG_LIMIT,
+  })
+  if (overflow.length > 0) {
+    await prisma.automationRunLog.deleteMany({
+      where: {
+        id: { in: overflow.map((entry) => entry.id) },
+      },
+    })
+  }
+
+  res.status(201).json({ ok: true })
+})
+
+app.delete("/api/automation/logs", requirePermission("automation.view"), async (_req, res) => {
+  await prisma.automationRunLog.deleteMany({})
+  res.json({ ok: true })
 })
 
 app.get("/api/templates", async (req, res) => {
