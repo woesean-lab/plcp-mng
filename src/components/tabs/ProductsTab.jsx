@@ -290,10 +290,12 @@ export default function ProductsTab({
   const [automationBackendDrafts, setAutomationBackendDrafts] = useState({})
   const [automationResultPopup, setAutomationResultPopup] = useState({
     isOpen: false,
+    offerId: "",
     title: "",
     backend: "",
     value: "",
   })
+  const [isAddingPopupStock, setIsAddingPopupStock] = useState(false)
   const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
   const [priceDrafts, setPriceDrafts] = useState({})
@@ -841,6 +843,7 @@ export default function ProductsTab({
           )
           setAutomationResultPopup({
             isOpen: true,
+            offerId: normalizedId,
             title: label,
             backend: resultBackend,
             value: rawValue || "-",
@@ -1407,6 +1410,35 @@ export default function ProductsTab({
       setPage(totalPages)
     }
   }, [page, totalPages])
+  const handlePopupAddToStock = async () => {
+    if (typeof onAddKeys !== "function") {
+      toast.error("Stoga ekleme islemi kullanilamiyor.")
+      return
+    }
+
+    const offerId = String(automationResultPopup.offerId ?? "").trim()
+    const valueToAdd = String(automationResultPopup.value ?? "").trim()
+    if (!offerId) {
+      toast.error("Aktif urun bulunamadi.")
+      return
+    }
+    if (!valueToAdd || valueToAdd === "-") {
+      toast.error("Eklenecek deger bulunamadi.")
+      return
+    }
+
+    setIsAddingPopupStock(true)
+    try {
+      const ok = await onAddKeys(offerId, valueToAdd)
+      if (!ok) return
+      setAutomationResultPopup((prev) => ({
+        ...prev,
+        isOpen: false,
+      }))
+    } finally {
+      setIsAddingPopupStock(false)
+    }
+  }
   if (isLoading) {
     return <ProductsSkeleton panelClass={panelClass} />
   }
@@ -1450,7 +1482,17 @@ export default function ProductsTab({
           </pre>
         </div>
 
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            className="rounded-lg border border-sky-300/70 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => {
+              void handlePopupAddToStock()
+            }}
+            disabled={isAddingPopupStock}
+          >
+            {isAddingPopupStock ? "EKLENIYOR..." : "Stoga Ekle"}
+          </button>
           <button
             type="button"
             className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25"
