@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
+import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import StockModal from "../modals/StockModal"
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -298,6 +299,8 @@ export default function ProductsTab({
   const [isAddingPopupStock, setIsAddingPopupStock] = useState(false)
   const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
+  const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
+  const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [priceDrafts, setPriceDrafts] = useState({})
   const [savedPricesByOffer, setSavedPricesByOffer] = useState(
     savedPricesByOfferProp && typeof savedPricesByOfferProp === "object"
@@ -385,6 +388,37 @@ export default function ProductsTab({
     typeof canManageAutomationProp === "boolean"
       ? canManageAutomationProp
       : canToggleCard && typeof onSaveAutomation === "function"
+  const apiFetchAutomationLog = async (input, init = {}) => {
+    const headers = new Headers(init.headers || {})
+    if (typeof window !== "undefined") {
+      try {
+        const token = String(localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "").trim()
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`)
+        }
+      } catch {
+        // Ignore localStorage read errors.
+      }
+    }
+    return fetch(input, { ...init, headers })
+  }
+  const normalizeAutomationLogEntry = (entry) => {
+    const id = String(entry?.id ?? "").trim()
+    const time = String(entry?.time ?? "").trim()
+    const status = String(entry?.status ?? "").trim()
+    const message = String(entry?.message ?? "").trim()
+    if (!id || !time || !status || !message) return null
+    return { id, time, status, message }
+  }
+  const formatAutomationLogTimestamp = () =>
+    new Date().toLocaleString("tr-TR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
   useEffect(() => {
     return () => {
       Object.values(automationSocketByOfferRef.current).forEach((socket) => {
@@ -623,14 +657,62 @@ export default function ProductsTab({
     if (!normalizedId) return
     setAutomationBackendDrafts((prev) => ({ ...prev, [normalizedId]: value }))
   }
-  const appendAutomationRunLog = (offerId, status, message) => {
+  const persistAutomationRunLogEntry = async (offerId, entry) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId || !entry) return
+    try {
+      const res = await apiFetchAutomationLog(`/api/eldorado/offers/${normalizedId}/automation-logs`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(entry),
+      })
+      if (!res.ok) {
+        // Ignore API-level errors; keep UI responsive.
+      }
+    } catch {
+      // Ignore persistence errors; keep UI responsive.
+    }
+  }
+  const loadAutomationRunLogs = async (offerId, options = {}) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return false
+    const force = Boolean(options?.force)
+    if (!force && automationLogsLoadedByOffer?.[normalizedId]) return true
+
+    setAutomationLogsLoadingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+    try {
+      const res = await apiFetchAutomationLog(
+        `/api/eldorado/offers/${normalizedId}/automation-logs?limit=${MAX_AUTOMATION_RUN_LOG_ENTRIES}`,
+      )
+      if (!res.ok) {
+        throw new Error("automation_logs_load_failed")
+      }
+      const payload = await res.json()
+      const normalized = Array.isArray(payload)
+        ? payload.map(normalizeAutomationLogEntry).filter(Boolean)
+        : []
+      setAutomationRunLogByOffer((prev) => ({
+        ...prev,
+        [normalizedId]: normalized.slice(0, MAX_AUTOMATION_RUN_LOG_ENTRIES),
+      }))
+      setAutomationLogsLoadedByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+      return true
+    } catch {
+      toast.error("CMD loglari alinamadi.")
+      return false
+    } finally {
+      setAutomationLogsLoadingByOffer((prev) => {
+        const next = { ...prev }
+        delete next[normalizedId]
+        return next
+      })
+    }
+  }
+  const appendAutomationRunLog = (offerId, status, message, options = {}) => {
     const normalizedId = String(offerId ?? "").trim()
     const normalizedMessage = String(message ?? "").trim()
     if (!normalizedId || !normalizedMessage) return
-    const entryTime = new Date().toLocaleTimeString("tr-TR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+    const entryTime = formatAutomationLogTimestamp()
     const entry = {
       id: `auto-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       time: entryTime,
@@ -644,6 +726,9 @@ export default function ProductsTab({
         [normalizedId]: [entry, ...current].slice(0, MAX_AUTOMATION_RUN_LOG_ENTRIES),
       }
     })
+    if (options?.persist !== false) {
+      void persistAutomationRunLogEntry(normalizedId, entry)
+    }
   }
   const closeAutomationSocket = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -1431,6 +1516,15 @@ export default function ProductsTab({
     try {
       const ok = await onAddKeys(offerId, valueToAdd)
       if (!ok) return
+      const addedCount = valueToAdd
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean).length
+      appendAutomationRunLog(
+        offerId,
+        "success",
+        `Stoga eklendi: ${Math.max(1, addedCount)} satir`,
+      )
       setAutomationResultPopup((prev) => ({
         ...prev,
         isOpen: false,
@@ -2296,6 +2390,7 @@ export default function ProductsTab({
                                   onClick={() => {
                                     if (!canManageAutomation) return
                                     setActivePanel(offerId, "automation")
+                                    void loadAutomationRunLogs(offerId)
                                   }}
                                   className={`flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                     activePanel === "automation"

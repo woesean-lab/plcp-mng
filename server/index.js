@@ -622,6 +622,7 @@ const initialAutomations = [
   { title: "Problem eskalasyonu", backend: "problem-escalation" },
 ]
 const AUTOMATION_LOG_LIMIT = 300
+const ELDORADO_AUTOMATION_LOG_LIMIT = 300
 
 async function ensureDefaults() {
   await prisma.category.upsert({
@@ -720,6 +721,16 @@ const normalizeAutomationRunLogEntry = (entry) => {
   const message = String(entry?.message ?? "").trim()
   if (!id || !time || !status || !message) return null
   return { id, time, status, message }
+}
+
+const normalizeEldoradoAutomationRunLogEntry = (entry, offerIdFromRoute = "") => {
+  const offerId = String(offerIdFromRoute || entry?.offerId || "").trim()
+  const id = String(entry?.id ?? "").trim()
+  const time = String(entry?.time ?? "").trim()
+  const status = String(entry?.status ?? "").trim()
+  const message = String(entry?.message ?? "").trim()
+  if (!offerId || !id || !time || !status || !message) return null
+  return { offerId, id, time, status, message }
 }
 
 app.get("/api/health", (_req, res) => {
@@ -2885,6 +2896,68 @@ app.put("/api/eldorado/offers/:id/automation", async (req, res) => {
     enabled: Boolean(saved.enabled),
     backend: String(saved.backend ?? "").trim(),
   })
+})
+
+app.get("/api/eldorado/offers/:id/automation-logs", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+
+  const rawLimit = Number(req.query?.limit ?? ELDORADO_AUTOMATION_LOG_LIMIT)
+  const limit = Number.isFinite(rawLimit)
+    ? Math.min(Math.max(rawLimit, 1), ELDORADO_AUTOMATION_LOG_LIMIT)
+    : ELDORADO_AUTOMATION_LOG_LIMIT
+
+  const logs = await prisma.eldoradoAutomationRunLog.findMany({
+    where: { offerId },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: limit,
+  })
+
+  res.json(logs)
+})
+
+app.post("/api/eldorado/offers/:id/automation-logs", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+
+  const normalized = normalizeEldoradoAutomationRunLogEntry(req.body, offerId)
+  if (!normalized) {
+    res.status(400).json({ error: "id, time, status and message are required" })
+    return
+  }
+
+  await prisma.eldoradoAutomationRunLog.upsert({
+    where: { id: normalized.id },
+    create: normalized,
+    update: {
+      time: normalized.time,
+      status: normalized.status,
+      message: normalized.message,
+      offerId: normalized.offerId,
+    },
+  })
+
+  const overflow = await prisma.eldoradoAutomationRunLog.findMany({
+    where: { offerId },
+    select: { id: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    skip: ELDORADO_AUTOMATION_LOG_LIMIT,
+  })
+  if (overflow.length > 0) {
+    await prisma.eldoradoAutomationRunLog.deleteMany({
+      where: {
+        id: { in: overflow.map((entry) => entry.id) },
+      },
+    })
+  }
+
+  res.status(201).json({ ok: true })
 })
 
 app.put("/api/eldorado/stock-enabled", async (req, res) => {

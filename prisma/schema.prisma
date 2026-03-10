@@ -221,6 +221,17 @@ model AutomationRunLog {
   createdAt DateTime @default(now())
 }
 
+model EldoradoAutomationRunLog {
+  id        String   @id
+  offerId   String
+  time      String
+  status    String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([offerId, createdAt])
+}
+
 model Task {
   id            String   @id @default(cuid())
   title         String
