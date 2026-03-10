@@ -32,6 +32,59 @@ const getCategoryKey = (product) => {
   const derived = getCategoryKeyFromHref(product?.href)
   return derived || "diger"
 }
+const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
+const CMD_VISIBLE_ROWS = 15
+
+const splitEnginePackets = (payload) => {
+  if (!payload) return []
+  return payload.includes("\u001e") ? payload.split("\u001e").filter(Boolean) : [payload]
+}
+
+const parseSocketIoEventPacket = (packet) => {
+  if (!packet.startsWith("42")) return null
+  let dataPart = packet.slice(2)
+  if (dataPart.startsWith("/")) {
+    const namespaceSeparator = dataPart.indexOf(",")
+    if (namespaceSeparator < 0) return null
+    dataPart = dataPart.slice(namespaceSeparator + 1)
+  }
+  if (!dataPart) return null
+  try {
+    const parsed = JSON.parse(dataPart)
+    if (!Array.isArray(parsed) || parsed.length === 0) return null
+    return {
+      event: String(parsed[0] ?? "").trim() || "message",
+      args: parsed.slice(1),
+    }
+  } catch {
+    return null
+  }
+}
+
+const buildSocketIoWsUrl = (normalizedUrl, extraQuery = {}) => {
+  try {
+    const socketIoUrl = new URL(normalizedUrl)
+    if (!/\/socket\.io\/?$/i.test(socketIoUrl.pathname)) {
+      socketIoUrl.pathname = "/socket.io/"
+    } else if (!socketIoUrl.pathname.endsWith("/")) {
+      socketIoUrl.pathname = `${socketIoUrl.pathname}/`
+    }
+    Object.entries(extraQuery).forEach(([key, value]) => {
+      const normalizedValue = String(value ?? "").trim()
+      if (normalizedValue) {
+        socketIoUrl.searchParams.set(key, normalizedValue)
+      } else {
+        socketIoUrl.searchParams.delete(key)
+      }
+    })
+    socketIoUrl.searchParams.set("EIO", "4")
+    socketIoUrl.searchParams.set("transport", "websocket")
+    return socketIoUrl.toString()
+  } catch {
+    return ""
+  }
+}
+
 function ProductsSkeleton({ panelClass }) {
   return (
     <div className="space-y-6">
@@ -140,6 +193,7 @@ export default function ProductsTab({
   messageTemplatesByOffer = {},
   templates = [],
   stockEnabledByOffer = {},
+  automationWsUrl = "",
   automationEnabledByOffer: automationEnabledByOfferProp = {},
   automationBackendByOffer: automationBackendByOfferProp = {},
   automationBackendOptions = [],
@@ -233,6 +287,8 @@ export default function ProductsTab({
       : {},
   )
   const [automationBackendDrafts, setAutomationBackendDrafts] = useState({})
+  const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
+  const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
   const [priceDrafts, setPriceDrafts] = useState({})
   const [savedPricesByOffer, setSavedPricesByOffer] = useState(
     savedPricesByOfferProp && typeof savedPricesByOfferProp === "object"
@@ -244,6 +300,7 @@ export default function ProductsTab({
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
+  const automationSocketByOfferRef = useRef({})
   const prevNoteGroupAssignments = useRef(noteGroupAssignments)
   const prevGroupAssignments = useRef(groupAssignments)
   const prevMessageGroupAssignments = useRef(messageGroupAssignments)
@@ -319,6 +376,18 @@ export default function ProductsTab({
     typeof canManageAutomationProp === "boolean"
       ? canManageAutomationProp
       : canToggleCard && typeof onSaveAutomation === "function"
+  useEffect(() => {
+    return () => {
+      Object.values(automationSocketByOfferRef.current).forEach((socket) => {
+        try {
+          socket?.close()
+        } catch {
+          // Ignore close errors.
+        }
+      })
+      automationSocketByOfferRef.current = {}
+    }
+  }, [])
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   const triggerKeyFade = (keyId) => {
     const normalizedId = String(keyId ?? "").trim()
@@ -544,6 +613,245 @@ export default function ProductsTab({
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     setAutomationBackendDrafts((prev) => ({ ...prev, [normalizedId]: value }))
+  }
+  const appendAutomationRunLog = (offerId, status, message) => {
+    const normalizedId = String(offerId ?? "").trim()
+    const normalizedMessage = String(message ?? "").trim()
+    if (!normalizedId || !normalizedMessage) return
+    const entryTime = new Date().toLocaleTimeString("tr-TR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    const entry = {
+      id: `auto-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      time: entryTime,
+      status: String(status ?? "").trim() || "running",
+      message: normalizedMessage,
+    }
+    setAutomationRunLogByOffer((prev) => {
+      const current = Array.isArray(prev?.[normalizedId]) ? prev[normalizedId] : []
+      return {
+        ...prev,
+        [normalizedId]: [entry, ...current].slice(0, MAX_AUTOMATION_RUN_LOG_ENTRIES),
+      }
+    })
+  }
+  const closeAutomationSocket = (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    const socket = automationSocketByOfferRef.current[normalizedId]
+    if (!socket) return
+    try {
+      socket.close()
+    } catch {
+      // Ignore close errors.
+    }
+    delete automationSocketByOfferRef.current[normalizedId]
+  }
+  const handleAutomationRun = (offerId, backendValue, automationName) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    if (!canManageAutomation) return
+
+    const backend = String(backendValue ?? "").trim()
+    if (!backend) {
+      toast.error("Calistirmak icin backend map secin.")
+      return
+    }
+
+    const wsBaseUrl = String(automationWsUrl ?? "").trim()
+    if (!wsBaseUrl) {
+      toast.error("Websocket adresi bulunamadi. Stok cek sekmesinden kaydedin.")
+      return
+    }
+
+    const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, { backend })
+    if (!triggerUrl) {
+      toast.error("Socket.IO adresi olusturulamadi.")
+      return
+    }
+
+    const label = String(automationName ?? "").trim() || "Otomasyon"
+    closeAutomationSocket(normalizedId)
+    setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+    appendAutomationRunLog(normalizedId, "running", `${label} tetikleniyor... backend=${backend}`)
+
+    let settled = false
+    let hasConnected = false
+    let hasResult = false
+    let timeoutId = null
+
+    const clearRunTimeout = () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+        timeoutId = null
+      }
+    }
+
+    const resetRunTimeout = (ms = 20000) => {
+      clearRunTimeout()
+      timeoutId = window.setTimeout(() => {
+        if (hasResult) {
+          complete("success", `${label} tamamlandi.`)
+          return
+        }
+        complete("error", `${label} icin sonuc yaniti alinmadi (zaman asimi).`)
+      }, ms)
+    }
+
+    const complete = (status, message) => {
+      if (settled) return
+      settled = true
+      clearRunTimeout()
+      appendAutomationRunLog(normalizedId, status, message)
+      setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: false }))
+      closeAutomationSocket(normalizedId)
+    }
+
+    let socket
+    try {
+      socket = new WebSocket(triggerUrl)
+    } catch {
+      complete("error", `${label} icin websocket baglantisi baslatilamadi.`)
+      return
+    }
+
+    automationSocketByOfferRef.current[normalizedId] = socket
+    resetRunTimeout(15000)
+
+    socket.addEventListener("message", (event) => {
+      if (settled) return
+      const payload = typeof event.data === "string" ? event.data : ""
+      if (!payload) return
+      const packets = splitEnginePackets(payload)
+
+      for (const packet of packets) {
+        if (settled) return
+
+        if (packet === "2") {
+          try {
+            socket.send("3")
+          } catch {
+            // Ignore pong send errors.
+          }
+          continue
+        }
+
+        if (packet.startsWith("0{")) {
+          try {
+            socket.send("40")
+          } catch {
+            complete("error", `${label} icin Socket.IO connect paketi gonderilemedi.`)
+          }
+          continue
+        }
+
+        if (packet.startsWith("40")) {
+          hasConnected = true
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (packet.startsWith("41")) {
+          if (hasResult) {
+            complete("success", `${label} tamamlandi.`)
+          } else {
+            complete("error", `${label} tamamlanmadan baglanti kapandi (sonuc yok).`)
+          }
+          return
+        }
+
+        if (packet.startsWith("44")) {
+          complete("error", `${label} tetiklenemedi. backend=${backend}`)
+          return
+        }
+
+        const eventPacket = parseSocketIoEventPacket(packet)
+        if (!eventPacket) continue
+        const eventName = eventPacket.event.toLowerCase()
+        const firstArg = eventPacket.args[0]
+
+        if (eventName === "script-triggered" || eventName === "script-started") {
+          appendAutomationRunLog(normalizedId, "running", `${backend} script baslatildi.`)
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "script-log") {
+          const stream = String(firstArg?.stream ?? "").trim().toLowerCase()
+          const message = String(firstArg?.message ?? "").trim()
+          if (message) {
+            const lines = message.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+            lines.forEach((line) => {
+              appendAutomationRunLog(
+                normalizedId,
+                stream === "stderr" ? "error" : "running",
+                line,
+              )
+            })
+          }
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "script-exit") {
+          const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
+          if (Number.isFinite(exitCode)) {
+            appendAutomationRunLog(
+              normalizedId,
+              exitCode === 0 ? "success" : "error",
+              `Script cikti. Kod: ${exitCode}`,
+            )
+          } else {
+            appendAutomationRunLog(normalizedId, "running", "Script cikis olayi alindi.")
+          }
+          if (!hasResult) {
+            complete("error", `${label} cikti ancak sonuc alinmadi.`)
+            return
+          }
+          resetRunTimeout(5000)
+          continue
+        }
+
+        if (eventName === "sonuc") {
+          const resultBackend = String(firstArg?.backend ?? backend).trim() || backend
+          const rawValue =
+            typeof firstArg?.value === "string"
+              ? firstArg.value
+              : firstArg?.value === null || firstArg?.value === undefined
+                ? ""
+                : JSON.stringify(firstArg.value)
+          const valueText = String(rawValue ?? "").trim()
+          appendAutomationRunLog(
+            normalizedId,
+            "success",
+            `${resultBackend} => ${valueText || "-"}`,
+          )
+          hasResult = true
+          complete("success", `${label} tamamlandi.`)
+          return
+        }
+
+        resetRunTimeout(300000)
+      }
+    })
+
+    socket.addEventListener("error", () => {
+      complete("error", `${label} icin websocket baglanti hatasi olustu.`)
+    })
+
+    socket.addEventListener("close", () => {
+      if (settled) return
+      if (hasResult) {
+        complete("success", `${label} tamamlandi.`)
+        return
+      }
+      if (hasConnected) {
+        complete("error", `${label} baglantisi acildi ancak sonuc gelmedi.`)
+        return
+      }
+      complete("error", `${label} icin websocket baglantisi kapandi.`)
+    })
   }
   const handleAutomationSave = async (offerId) => {
     if (!canManageAutomation || typeof onSaveAutomation !== "function") return
@@ -1363,6 +1671,15 @@ export default function ProductsTab({
                     automationBackendDrafts?.[offerId] ?? savedAutomationBackend,
                   ).trim()
                   const isAutomationBackendDirty = automationBackendValue !== savedAutomationBackend
+                  const automationRunLogEntries = Array.isArray(automationRunLogByOffer?.[offerId])
+                    ? automationRunLogByOffer[offerId]
+                    : []
+                  const visibleAutomationRunLogEntries = automationRunLogEntries.slice(0, CMD_VISIBLE_ROWS)
+                  const emptyAutomationRunLogRows = Math.max(
+                    0,
+                    CMD_VISIBLE_ROWS - visibleAutomationRunLogEntries.length,
+                  )
+                  const isAutomationRunning = Boolean(automationIsRunningByOffer?.[offerId])
                   if (isStockEnabled) {
                     availablePanels.push("stock-group")
                   }
@@ -2177,44 +2494,42 @@ export default function ProductsTab({
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
                               <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
-                                <div className="mt-1">
-                                  <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
-                                    <label className="text-[12px] font-semibold text-slate-100">Backend map</label>
-                                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                                      <select
-                                        value={automationBackendValue}
-                                        onChange={(event) =>
-                                          handleAutomationBackendDraftChange(offerId, event.target.value)
-                                        }
-                                        disabled={!canManageAutomation}
-                                        className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                      >
-                                        <option value="">
-                                          {automationBackendOptions.length === 0
-                                            ? "Backend map bulunamadi"
-                                            : "Backend map sec"}
-                                        </option>
-                                        {savedAutomationBackend &&
-                                          !automationBackendOptions.some(
-                                            (item) =>
-                                              String(item?.key ?? "").trim() === savedAutomationBackend,
-                                          ) && (
-                                            <option value={savedAutomationBackend}>
-                                              {savedAutomationBackend}
-                                            </option>
-                                          )}
-                                        {automationBackendOptions.map((option) => {
-                                          const optionKey = String(option?.key ?? "").trim()
-                                          if (!optionKey) return null
-                                          const optionLabel =
-                                            String(option?.label ?? "").trim() || optionKey
-                                          return (
-                                            <option key={`${offerId}-automation-${optionKey}`} value={optionKey}>
-                                              {optionLabel}
-                                            </option>
-                                          )
-                                        })}
-                                      </select>
+                                <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
+                                  <label className="text-[12px] font-semibold text-slate-100">Backend map</label>
+                                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <select
+                                      value={automationBackendValue}
+                                      onChange={(event) =>
+                                        handleAutomationBackendDraftChange(offerId, event.target.value)
+                                      }
+                                      disabled={!canManageAutomation}
+                                      className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      <option value="">
+                                        {automationBackendOptions.length === 0
+                                          ? "Backend map bulunamadi"
+                                          : "Backend map sec"}
+                                      </option>
+                                      {savedAutomationBackend &&
+                                        !automationBackendOptions.some(
+                                          (item) =>
+                                            String(item?.key ?? "").trim() === savedAutomationBackend,
+                                        ) && (
+                                          <option value={savedAutomationBackend}>
+                                            {savedAutomationBackend}
+                                          </option>
+                                        )}
+                                      {automationBackendOptions.map((option) => {
+                                        const optionKey = String(option?.key ?? "").trim()
+                                        if (!optionKey) return null
+                                        const optionLabel = String(option?.label ?? "").trim() || optionKey
+                                        return (
+                                          <option key={`${offerId}-automation-${optionKey}`} value={optionKey}>
+                                            {optionLabel}
+                                          </option>
+                                        )
+                                      })}
+                                    </select>
                                     <button
                                       type="button"
                                       onClick={() => handleAutomationSave(offerId)}
@@ -2227,9 +2542,87 @@ export default function ProductsTab({
                                     >
                                       KAYDET
                                     </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAutomationRun(offerId, automationBackendValue, name)}
+                                      disabled={
+                                        !canManageAutomation ||
+                                        !automationBackendValue ||
+                                        isAutomationRunning
+                                      }
+                                      className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      {isAutomationRunning ? "CALISIYOR..." : "CALISTIR"}
+                                    </button>
+                                  </div>
+                                  {!String(automationWsUrl ?? "").trim() && (
+                                    <p className="mt-2 text-[11px] text-amber-200/90">
+                                      Websocket adresi yok. Stok cek sekmesinden baglanti adresini kaydet.
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="mt-3 rounded-lg border border-white/10 bg-ink-900/60">
+                                  <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
+                                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                                      CMD
+                                    </span>
+                                    <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                                      {automationRunLogEntries.length} satir
+                                    </span>
+                                  </div>
+                                  <div className="no-scrollbar h-[336px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
+                                    <div className="space-y-0.5">
+                                      {visibleAutomationRunLogEntries.map((entry) => (
+                                        <div key={entry.id} className="flex items-start gap-2 text-slate-200">
+                                          <span className="flex-none text-slate-500">C:\plcp\automation&gt;</span>
+                                          <span
+                                            className={`flex-none ${
+                                              entry.status === "success"
+                                                ? "text-emerald-300"
+                                                : entry.status === "error"
+                                                  ? "text-rose-300"
+                                                  : "text-amber-300"
+                                            }`}
+                                          >
+                                            [{entry.time}]
+                                          </span>
+                                          <span
+                                            className={`flex-none ${
+                                              entry.status === "success"
+                                                ? "text-emerald-300"
+                                                : entry.status === "error"
+                                                  ? "text-rose-300"
+                                                  : "text-amber-300"
+                                            }`}
+                                          >
+                                            {entry.status === "success"
+                                              ? "OK"
+                                              : entry.status === "error"
+                                                ? "ERR"
+                                                : "RUN"}
+                                          </span>
+                                          <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                                        </div>
+                                      ))}
+                                      {Array.from({ length: emptyAutomationRunLogRows }).map((_, index) => (
+                                        <div key={`automation-placeholder-${offerId}-${index}`} className="flex items-start gap-2 text-slate-700">
+                                          <span className="flex-none text-slate-600">C:\plcp\automation&gt;</span>
+                                          <span className="flex-none text-slate-700">[--:--]</span>
+                                          <span className="flex-none text-slate-700">--</span>
+                                          <span
+                                            className={`truncate text-slate-700 ${
+                                              automationRunLogEntries.length === 0 && index === 0
+                                                ? "text-slate-500"
+                                                : "opacity-0"
+                                            }`}
+                                          >
+                                            {automationRunLogEntries.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
                               </div>
                             )}
                             {activePanel === "note" && (

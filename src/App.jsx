@@ -190,6 +190,7 @@ function App() {
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
     eldoradoStockEnabledByOffer,
+    eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
     eldoradoAutomationBackendByOffer,
     eldoradoAutomationBackendOptions,
@@ -1089,6 +1090,7 @@ function App() {
               messageTemplatesByOffer={eldoradoMessageTemplatesByOffer}
               templates={templates}
               stockEnabledByOffer={eldoradoStockEnabledByOffer}
+              automationWsUrl={eldoradoAutomationWsUrl}
               automationEnabledByOffer={eldoradoAutomationEnabledByOffer}
               automationBackendByOffer={eldoradoAutomationBackendByOffer}
               automationBackendOptions={eldoradoAutomationBackendOptions}

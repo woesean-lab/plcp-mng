@@ -172,6 +172,7 @@ export default function useAppData() {
   const [eldoradoMessageGroupTemplates, setEldoradoMessageGroupTemplates] = useState({})
   const [eldoradoMessageTemplatesByOffer, setEldoradoMessageTemplatesByOffer] = useState({})
   const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState({})
+  const [eldoradoAutomationWsUrl, setEldoradoAutomationWsUrl] = useState("")
   const [eldoradoAutomationEnabledByOffer, setEldoradoAutomationEnabledByOffer] = useState({})
   const [eldoradoAutomationBackendByOffer, setEldoradoAutomationBackendByOffer] = useState({})
   const [eldoradoAutomationBackendOptions, setEldoradoAutomationBackendOptions] = useState([])
@@ -449,6 +450,7 @@ export default function useAppData() {
             ? data.stockEnabledByOffer
             : {},
         )
+        setEldoradoAutomationWsUrl(String(data?.automationWsUrl ?? "").trim())
         setEldoradoAutomationEnabledByOffer(
           data?.automationEnabledByOffer && typeof data.automationEnabledByOffer === "object"
             ? data.automationEnabledByOffer
@@ -3654,6 +3656,7 @@ const handleEldoradoNoteSave = useCallback(
       setEldoradoMessageGroupTemplates({})
       setEldoradoMessageTemplatesByOffer({})
       setEldoradoStockEnabledByOffer({})
+      setEldoradoAutomationWsUrl("")
       setEldoradoAutomationEnabledByOffer({})
       setEldoradoAutomationBackendByOffer({})
       setEldoradoAutomationBackendOptions([])
@@ -5446,6 +5449,7 @@ const handleEldoradoNoteSave = useCallback(
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
     eldoradoStockEnabledByOffer,
+    eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
     eldoradoAutomationBackendByOffer,
     eldoradoAutomationBackendOptions,
