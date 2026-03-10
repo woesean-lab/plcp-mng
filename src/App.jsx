@@ -190,6 +190,9 @@ function App() {
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
     eldoradoStockEnabledByOffer,
+    eldoradoAutomationEnabledByOffer,
+    eldoradoAutomationBackendByOffer,
+    eldoradoAutomationBackendOptions,
     eldoradoOfferPrices,
     eldoradoOfferPriceEnabledByOffer,
     eldoradoStarredOffers,
@@ -218,6 +221,7 @@ function App() {
     handleEldoradoMessageTemplateRemove,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
+    handleEldoradoOfferAutomationSave,
     handleEldoradoOfferPriceSave,
     handleEldoradoOfferPriceToggle,
     handleEldoradoOfferStarToggle,
@@ -411,6 +415,7 @@ function App() {
     PERMISSIONS.productsCardToggle,
     PERMISSIONS.productsManage,
   ])
+  const canManageProductAutomation = canToggleProductCard
   const canViewProductLinks = hasAnyPermission([
     PERMISSIONS.productsLinkView,
     PERMISSIONS.productsManage,
@@ -1084,6 +1089,9 @@ function App() {
               messageTemplatesByOffer={eldoradoMessageTemplatesByOffer}
               templates={templates}
               stockEnabledByOffer={eldoradoStockEnabledByOffer}
+              automationEnabledByOffer={eldoradoAutomationEnabledByOffer}
+              automationBackendByOffer={eldoradoAutomationBackendByOffer}
+              automationBackendOptions={eldoradoAutomationBackendOptions}
               savedPricesByOffer={eldoradoOfferPrices}
               priceEnabledByOffer={eldoradoOfferPriceEnabledByOffer}
               starredOffers={eldoradoStarredOffers}
@@ -1110,6 +1118,7 @@ function App() {
               onRemoveMessageTemplate={handleEldoradoMessageTemplateRemove}
               onSaveNote={handleEldoradoNoteSave}
               onToggleStock={handleEldoradoStockToggle}
+              onSaveAutomation={handleEldoradoOfferAutomationSave}
               onSavePrice={handleEldoradoOfferPriceSave}
               onTogglePrice={handleEldoradoOfferPriceToggle}
               onToggleOfferStar={handleEldoradoOfferStarToggle}
@@ -1128,6 +1137,7 @@ function App() {
               canTogglePrice={canToggleProductPrice}
               canToggleStock={canToggleProductStock}
               canToggleCard={canToggleProductCard}
+              canManageAutomation={canManageProductAutomation}
               canViewLinks={canViewProductLinks}
               canStarOffers={canStarProducts}
               canDeleteOffers={canDeleteOffers}

@@ -294,6 +294,7 @@ const loadEldoradoStore = async () => {
     stockGroups,
     stockAssignments,
     stockEnabled,
+    offerAutomationRows,
     offerPriceRows,
     offerPriceEnabledRows,
     offerNotes,
@@ -305,10 +306,12 @@ const loadEldoradoStore = async () => {
     messageGroupTemplateRows,
     messageTemplateRows,
     offerStars,
+    automationRows,
   ] = await Promise.all([
     prisma.eldoradoStockGroup.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.eldoradoStockGroupAssignment.findMany(),
     prisma.eldoradoStockEnabled.findMany(),
+    prisma.eldoradoOfferAutomation.findMany(),
     prisma.eldoradoOfferPrice.findMany(),
     prisma.eldoradoOfferPriceEnabled.findMany(),
     prisma.eldoradoOfferNote.findMany(),
@@ -320,6 +323,10 @@ const loadEldoradoStore = async () => {
     prisma.eldoradoMessageGroupTemplate.findMany(),
     prisma.eldoradoMessageTemplate.findMany(),
     prisma.eldoradoOfferStar.findMany(),
+    prisma.automation.findMany({
+      select: { title: true, backend: true },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    }),
   ])
 
   const stockGroupAssignments = {}
@@ -333,6 +340,27 @@ const loadEldoradoStore = async () => {
   stockEnabled.forEach((entry) => {
     if (!entry?.offerId) return
     stockEnabledByOffer[entry.offerId] = Boolean(entry.enabled)
+  })
+
+  const automationEnabledByOffer = {}
+  const automationBackendByOffer = {}
+  offerAutomationRows.forEach((entry) => {
+    if (!entry?.offerId) return
+    automationEnabledByOffer[entry.offerId] = Boolean(entry.enabled)
+    const backend = String(entry?.backend ?? "").trim()
+    if (backend) {
+      automationBackendByOffer[entry.offerId] = backend
+    }
+  })
+
+  const automationBackendOptions = []
+  const seenBackendKeys = new Set()
+  automationRows.forEach((entry) => {
+    const key = String(entry?.backend ?? "").trim()
+    if (!key || seenBackendKeys.has(key)) return
+    seenBackendKeys.add(key)
+    const label = String(entry?.title ?? "").trim() || key
+    automationBackendOptions.push({ key, label })
   })
 
   const offerPrices = {}
@@ -409,6 +437,9 @@ const loadEldoradoStore = async () => {
     })),
     stockGroupAssignments,
     stockEnabledByOffer,
+    automationEnabledByOffer,
+    automationBackendByOffer,
+    automationBackendOptions,
     offerPriceEnabledByOffer,
     offerPrices,
     notesByOffer,
@@ -2278,6 +2309,7 @@ app.delete("/api/eldorado/offers/:id", async (req, res) => {
   await prisma.$transaction([
     prisma.eldoradoKey.deleteMany({ where: { offerId } }),
     prisma.eldoradoStockEnabled.deleteMany({ where: { offerId } }),
+    prisma.eldoradoOfferAutomation.deleteMany({ where: { offerId } }),
     prisma.eldoradoOfferPrice.deleteMany({ where: { offerId } }),
     prisma.eldoradoOfferPriceEnabled.deleteMany({ where: { offerId } }),
     prisma.eldoradoOfferNote.deleteMany({ where: { offerId } }),
@@ -2802,6 +2834,51 @@ app.delete("/api/eldorado/message-templates", async (req, res) => {
   }
   await prisma.eldoradoMessageTemplate.deleteMany({ where: { offerId, label } })
   res.json({ ok: true })
+})
+
+app.put("/api/eldorado/offers/:id/automation", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+
+  const hasEnabled = Object.prototype.hasOwnProperty.call(req.body ?? {}, "enabled")
+  const hasBackend = Object.prototype.hasOwnProperty.call(req.body ?? {}, "backend")
+  if (!hasEnabled && !hasBackend) {
+    res.status(400).json({ error: "enabled or backend is required" })
+    return
+  }
+
+  const createData = { offerId, enabled: false, backend: null }
+  const updateData = {}
+
+  if (hasEnabled) {
+    const enabledRaw = req.body?.enabled
+    const enabled =
+      typeof enabledRaw === "boolean" ? enabledRaw : String(enabledRaw).toLowerCase() === "true"
+    createData.enabled = enabled
+    updateData.enabled = enabled
+  }
+
+  if (hasBackend) {
+    const backend = String(req.body?.backend ?? "").trim()
+    createData.backend = backend || null
+    updateData.backend = backend || null
+  }
+
+  const saved = await prisma.eldoradoOfferAutomation.upsert({
+    where: { offerId },
+    create: createData,
+    update: updateData,
+  })
+
+  res.json({
+    ok: true,
+    offerId: saved.offerId,
+    enabled: Boolean(saved.enabled),
+    backend: String(saved.backend ?? "").trim(),
+  })
 })
 
 app.put("/api/eldorado/stock-enabled", async (req, res) => {

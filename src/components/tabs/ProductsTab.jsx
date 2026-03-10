@@ -140,6 +140,9 @@ export default function ProductsTab({
   messageTemplatesByOffer = {},
   templates = [],
   stockEnabledByOffer = {},
+  automationEnabledByOffer: automationEnabledByOfferProp = {},
+  automationBackendByOffer: automationBackendByOfferProp = {},
+  automationBackendOptions = [],
   priceEnabledByOffer: priceEnabledByOfferProp = {},
   savedPricesByOffer: savedPricesByOfferProp = {},
   starredOffers = {},
@@ -166,6 +169,7 @@ export default function ProductsTab({
   onRemoveMessageGroupTemplate,
   onRemoveMessageTemplate,
   onToggleStock,
+  onSaveAutomation,
   onSavePrice,
   onTogglePrice,
   onToggleOfferStar,
@@ -184,6 +188,7 @@ export default function ProductsTab({
   canManageMessages: canManageMessagesProp,
   canToggleStock: canToggleStockProp,
   canToggleCard: canToggleCardProp,
+  canManageAutomation: canManageAutomationProp,
   canViewLinks = false,
   canStarOffers: canStarOffersProp,
   canDeleteOffers = false,
@@ -217,6 +222,17 @@ export default function ProductsTab({
       ? priceEnabledByOfferProp
       : {},
   )
+  const [automationEnabledByOffer, setAutomationEnabledByOffer] = useState(
+    automationEnabledByOfferProp && typeof automationEnabledByOfferProp === "object"
+      ? automationEnabledByOfferProp
+      : {},
+  )
+  const [automationBackendByOffer, setAutomationBackendByOffer] = useState(
+    automationBackendByOfferProp && typeof automationBackendByOfferProp === "object"
+      ? automationBackendByOfferProp
+      : {},
+  )
+  const [automationBackendDrafts, setAutomationBackendDrafts] = useState({})
   const [priceDrafts, setPriceDrafts] = useState({})
   const [savedPricesByOffer, setSavedPricesByOffer] = useState(
     savedPricesByOfferProp && typeof savedPricesByOfferProp === "object"
@@ -239,6 +255,14 @@ export default function ProductsTab({
     if (!priceEnabledByOfferProp || typeof priceEnabledByOfferProp !== "object") return
     setPriceEnabledByOffer(priceEnabledByOfferProp)
   }, [priceEnabledByOfferProp])
+  useEffect(() => {
+    if (!automationEnabledByOfferProp || typeof automationEnabledByOfferProp !== "object") return
+    setAutomationEnabledByOffer(automationEnabledByOfferProp)
+  }, [automationEnabledByOfferProp])
+  useEffect(() => {
+    if (!automationBackendByOfferProp || typeof automationBackendByOfferProp !== "object") return
+    setAutomationBackendByOffer(automationBackendByOfferProp)
+  }, [automationBackendByOfferProp])
   useEffect(() => {
     if (!savedPricesByOfferProp || typeof savedPricesByOfferProp !== "object") return
     setPriceDrafts((prev) => {
@@ -291,6 +315,10 @@ export default function ProductsTab({
     typeof canStarOffersProp === "boolean" ? canStarOffersProp : canAddKeys
   const canToggleCard =
     typeof canToggleCardProp === "boolean" ? canToggleCardProp : canStarOffers
+  const canManageAutomation =
+    typeof canManageAutomationProp === "boolean"
+      ? canManageAutomationProp
+      : canToggleCard && typeof onSaveAutomation === "function"
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   const triggerKeyFade = (keyId) => {
     const normalizedId = String(keyId ?? "").trim()
@@ -496,6 +524,58 @@ export default function ProductsTab({
       if (!ok) return
     }
     setPriceEnabledByOffer((prev) => ({ ...prev, [normalizedId]: nextEnabled }))
+  }
+  const handleAutomationToggle = async (offerId) => {
+    if (!canManageAutomation || typeof onSaveAutomation !== "function") return
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    const nextEnabled = !Boolean(automationEnabledByOffer?.[normalizedId])
+    const saved = await onSaveAutomation(normalizedId, { enabled: nextEnabled })
+    if (!saved) return
+    setAutomationEnabledByOffer((prev) => ({ ...prev, [normalizedId]: Boolean(saved.enabled) }))
+    if (!Boolean(saved.enabled)) {
+      setActivePanelByOffer((prev) => {
+        if (prev?.[normalizedId] !== "automation") return prev
+        return { ...prev, [normalizedId]: "inventory" }
+      })
+    }
+  }
+  const handleAutomationBackendDraftChange = (offerId, value) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    setAutomationBackendDrafts((prev) => ({ ...prev, [normalizedId]: value }))
+  }
+  const handleAutomationSave = async (offerId) => {
+    if (!canManageAutomation || typeof onSaveAutomation !== "function") return
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+    const selectedBackend = String(automationBackendDrafts?.[normalizedId] ?? "").trim()
+    if (!selectedBackend) {
+      toast.error("Backend map secin.")
+      return
+    }
+    const saved = await onSaveAutomation(normalizedId, { backend: selectedBackend })
+    if (!saved) return
+    const savedBackend = String(saved?.backend ?? "").trim()
+    setAutomationBackendByOffer((prev) => {
+      const next = { ...prev }
+      if (savedBackend) {
+        next[normalizedId] = savedBackend
+      } else {
+        delete next[normalizedId]
+      }
+      return next
+    })
+    setAutomationBackendDrafts((prev) => {
+      const next = { ...prev }
+      if (savedBackend) {
+        next[normalizedId] = savedBackend
+      } else {
+        delete next[normalizedId]
+      }
+      return next
+    })
+    toast.success("Otomasyon backend kaydedildi.")
   }
   const handlePriceDraftChange = (offerId, field, value) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -980,6 +1060,23 @@ export default function ProductsTab({
     prevNoteGroupAssignments.current = next
   }, [noteGroupAssignments])
   useEffect(() => {
+    const nextBackends =
+      automationBackendByOffer && typeof automationBackendByOffer === "object"
+        ? automationBackendByOffer
+        : {}
+    setAutomationBackendDrafts((prev) => {
+      const next = { ...prev }
+      Object.entries(next).forEach(([offerId, draftValue]) => {
+        const assigned = String(nextBackends?.[offerId] ?? "").trim()
+        const normalizedDraft = String(draftValue ?? "").trim()
+        if (normalizedDraft === assigned) {
+          delete next[offerId]
+        }
+      })
+      return next
+    })
+  }, [automationBackendByOffer])
+  useEffect(() => {
     if (page > totalPages) {
       setPage(totalPages)
     }
@@ -1258,13 +1355,23 @@ export default function ProductsTab({
                   const noteGroupDraftValue = noteGroupDrafts[offerId] ?? ""
                   const availablePanels = ["inventory", "note", "messages"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
+                  const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
+                  const savedAutomationBackend = String(
+                    automationBackendByOffer?.[offerId] ?? "",
+                  ).trim()
+                  const automationBackendValue = String(
+                    automationBackendDrafts?.[offerId] ?? savedAutomationBackend,
+                  ).trim()
+                  const isAutomationBackendDirty = automationBackendValue !== savedAutomationBackend
                   if (isStockEnabled) {
                     availablePanels.push("stock-group")
                   }
                   if (isPriceEnabled) {
                     availablePanels.push("price")
                   }
-                  const tabCount = availablePanels.length
+                  if (isAutomationEnabled) {
+                    availablePanels.push("automation")
+                  }
                   const storedPanel = activePanelByOffer[offerId]
                   const activePanel =
                     storedPanel === "none"
@@ -1452,6 +1559,35 @@ export default function ProductsTab({
                               >
                                 <path d="M12 2v20" />
                                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAutomationToggle(offerId)}
+                              disabled={!offerId || !canManageAutomation}
+                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                                !offerId || !canManageAutomation ? "cursor-not-allowed opacity-60" : ""
+                              }`}
+                              aria-label="Otomasyon ac/kapat"
+                              title={isAutomationEnabled ? "Otomasyon acik" : "Otomasyon kapali"}
+                            >
+                              <span
+                                className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
+                                  isAutomationEnabled ? "bg-indigo-300" : "bg-rose-400"
+                                }`}
+                              />
+                              <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M6 5v14l9-7z" />
+                                <path d="M18 6v12" />
                               </svg>
                             </button>
                             <button
@@ -1721,6 +1857,35 @@ export default function ProductsTab({
                                   aria-pressed={activePanel === "price"}
                                 >
                                   <span>Fiyat</span>
+                                </button>
+                              )}
+                              {isAutomationEnabled && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!canManageAutomation) return
+                                    setActivePanel(offerId, "automation")
+                                  }}
+                                  className={`flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
+                                    activePanel === "automation"
+                                      ? "border-accent-400 text-white"
+                                      : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
+                                  } ${!canManageAutomation ? "cursor-not-allowed opacity-60" : ""}`}
+                                  aria-pressed={activePanel === "automation"}
+                                >
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M8 6v12l8-6z" />
+                                  </svg>
+                                  <span>Otomasyon</span>
                                 </button>
                               )}
                             </div>
@@ -2022,6 +2187,67 @@ export default function ProductsTab({
                                       </div>
                                     </div>
                                   )}
+                                </div>
+                              </div>
+                            )}
+                            {activePanel === "automation" && isAutomationEnabled && (
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                                <div className="mt-1 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+                                  <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
+                                    <label className="text-[12px] font-semibold text-slate-100">
+                                      Backend map
+                                    </label>
+                                    <div className="mt-1">
+                                      <select
+                                        value={automationBackendValue}
+                                        onChange={(event) =>
+                                          handleAutomationBackendDraftChange(offerId, event.target.value)
+                                        }
+                                        disabled={!canManageAutomation}
+                                        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                      >
+                                        <option value="">
+                                          {automationBackendOptions.length === 0
+                                            ? "Backend map bulunamadi"
+                                            : "Backend map sec"}
+                                        </option>
+                                        {savedAutomationBackend &&
+                                          !automationBackendOptions.some(
+                                            (item) =>
+                                              String(item?.key ?? "").trim() === savedAutomationBackend,
+                                          ) && (
+                                            <option value={savedAutomationBackend}>
+                                              {savedAutomationBackend}
+                                            </option>
+                                          )}
+                                        {automationBackendOptions.map((option) => {
+                                          const optionKey = String(option?.key ?? "").trim()
+                                          if (!optionKey) return null
+                                          const optionLabel =
+                                            String(option?.label ?? "").trim() || optionKey
+                                          return (
+                                            <option key={`${offerId}-automation-${optionKey}`} value={optionKey}>
+                                              {optionLabel}
+                                            </option>
+                                          )
+                                        })}
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-end">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAutomationSave(offerId)}
+                                      disabled={
+                                        !canManageAutomation ||
+                                        !automationBackendValue ||
+                                        !isAutomationBackendDirty
+                                      }
+                                      className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-9 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      KAYDET
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             )}

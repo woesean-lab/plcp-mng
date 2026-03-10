@@ -172,6 +172,9 @@ export default function useAppData() {
   const [eldoradoMessageGroupTemplates, setEldoradoMessageGroupTemplates] = useState({})
   const [eldoradoMessageTemplatesByOffer, setEldoradoMessageTemplatesByOffer] = useState({})
   const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState({})
+  const [eldoradoAutomationEnabledByOffer, setEldoradoAutomationEnabledByOffer] = useState({})
+  const [eldoradoAutomationBackendByOffer, setEldoradoAutomationBackendByOffer] = useState({})
+  const [eldoradoAutomationBackendOptions, setEldoradoAutomationBackendOptions] = useState([])
   const [eldoradoOfferPrices, setEldoradoOfferPrices] = useState({})
   const [eldoradoOfferPriceEnabledByOffer, setEldoradoOfferPriceEnabledByOffer] = useState({})
   const [eldoradoStarredOffers, setEldoradoStarredOffers] = useState({})
@@ -445,6 +448,19 @@ export default function useAppData() {
           data?.stockEnabledByOffer && typeof data.stockEnabledByOffer === "object"
             ? data.stockEnabledByOffer
             : {},
+        )
+        setEldoradoAutomationEnabledByOffer(
+          data?.automationEnabledByOffer && typeof data.automationEnabledByOffer === "object"
+            ? data.automationEnabledByOffer
+            : {},
+        )
+        setEldoradoAutomationBackendByOffer(
+          data?.automationBackendByOffer && typeof data.automationBackendByOffer === "object"
+            ? data.automationBackendByOffer
+            : {},
+        )
+        setEldoradoAutomationBackendOptions(
+          Array.isArray(data?.automationBackendOptions) ? data.automationBackendOptions : [],
         )
         setEldoradoOfferPrices(
           data?.offerPrices && typeof data.offerPrices === "object" ? data.offerPrices : {},
@@ -2606,6 +2622,75 @@ const handleEldoradoNoteSave = useCallback(
     [apiFetch, readApiError],
   )
 
+  const handleEldoradoOfferAutomationSave = useCallback(
+    async (offerId, payload = {}) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      if (!normalizedOfferId) return null
+
+      const hasEnabled = Object.prototype.hasOwnProperty.call(payload, "enabled")
+      const hasBackend = Object.prototype.hasOwnProperty.call(payload, "backend")
+      if (!hasEnabled && !hasBackend) return null
+
+      const body = {}
+      if (hasEnabled) {
+        body.enabled = Boolean(payload?.enabled)
+      }
+      if (hasBackend) {
+        body.backend = String(payload?.backend ?? "").trim()
+      }
+
+      try {
+        const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/automation`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
+
+        const saved = await res.json()
+        const savedEnabled = Boolean(saved?.enabled)
+        const savedBackend = String(saved?.backend ?? "").trim()
+
+        if (hasEnabled) {
+          setEldoradoAutomationEnabledByOffer((prev) => ({
+            ...prev,
+            [normalizedOfferId]: savedEnabled,
+          }))
+        }
+
+        if (hasBackend) {
+          setEldoradoAutomationBackendByOffer((prev) => {
+            const next = { ...prev }
+            if (savedBackend) {
+              next[normalizedOfferId] = savedBackend
+            } else {
+              delete next[normalizedOfferId]
+            }
+            return next
+          })
+        }
+
+        return {
+          offerId: normalizedOfferId,
+          enabled: savedEnabled,
+          backend: savedBackend,
+        }
+      } catch (error) {
+        const detail = String(error?.message || "").trim()
+        toast.error(
+          detail
+            ? `Otomasyon ayari kaydedilemedi (${detail}).`
+            : "Otomasyon ayari kaydedilemedi (API/Server kontrol edin).",
+        )
+        return null
+      }
+    },
+    [apiFetch, readApiError],
+  )
+
   const handleEldoradoOfferPriceSave = useCallback(
     async (offerId, base, percent, result) => {
       const normalizedOfferId = String(offerId ?? "").trim()
@@ -2812,6 +2897,16 @@ const handleEldoradoNoteSave = useCallback(
           return next
         })
         setEldoradoStockEnabledByOffer((prev) => {
+          const next = { ...prev }
+          delete next[normalizedOfferId]
+          return next
+        })
+        setEldoradoAutomationEnabledByOffer((prev) => {
+          const next = { ...prev }
+          delete next[normalizedOfferId]
+          return next
+        })
+        setEldoradoAutomationBackendByOffer((prev) => {
           const next = { ...prev }
           delete next[normalizedOfferId]
           return next
@@ -3559,6 +3654,9 @@ const handleEldoradoNoteSave = useCallback(
       setEldoradoMessageGroupTemplates({})
       setEldoradoMessageTemplatesByOffer({})
       setEldoradoStockEnabledByOffer({})
+      setEldoradoAutomationEnabledByOffer({})
+      setEldoradoAutomationBackendByOffer({})
+      setEldoradoAutomationBackendOptions([])
       return
     }
     loadEldoradoGroups()
@@ -5348,6 +5446,9 @@ const handleEldoradoNoteSave = useCallback(
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
     eldoradoStockEnabledByOffer,
+    eldoradoAutomationEnabledByOffer,
+    eldoradoAutomationBackendByOffer,
+    eldoradoAutomationBackendOptions,
     eldoradoOfferPrices,
     eldoradoOfferPriceEnabledByOffer,
     eldoradoStarredOffers,
@@ -5378,6 +5479,7 @@ const handleEldoradoNoteSave = useCallback(
     refreshEldoradoOffer,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
+    handleEldoradoOfferAutomationSave,
     handleEldoradoOfferPriceSave,
     handleEldoradoOfferPriceToggle,
     handleEldoradoOfferStarToggle,
