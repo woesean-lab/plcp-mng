@@ -14,12 +14,54 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const appRoot = path.resolve(__dirname, "..")
 const distDir = path.resolve(appRoot, "dist")
+
+const normalizeEldoradoListingUrl = (rawUrl, fallbackCategory = "") => {
+  const value = String(rawUrl ?? "").trim()
+  if (!value) return ""
+  try {
+    const parsed = new URL(value)
+    const parts = parsed.pathname.split("/").filter(Boolean)
+    const lowered = parts.map((part) => part.toLowerCase())
+    const usersIndex = lowered.indexOf("users")
+    const shopIndex = lowered.indexOf("shop")
+
+    const storeSlug =
+      usersIndex >= 0 && parts[usersIndex + 1]
+        ? String(parts[usersIndex + 1]).trim()
+        : "PulcipStore"
+    const pathCategory =
+      shopIndex >= 0 && parts[shopIndex + 1]
+        ? String(parts[shopIndex + 1]).trim()
+        : ""
+    const queryCategory = String(parsed.searchParams.get("category") ?? "").trim()
+    const category = pathCategory || queryCategory || String(fallbackCategory ?? "").trim()
+    if (!category) return value
+
+    const page =
+      String(parsed.searchParams.get("page") ?? "").trim() ||
+      String(parsed.searchParams.get("pageIndex") ?? "").trim() ||
+      "1"
+
+    const normalized = new URL(`${parsed.protocol}//${parsed.host}/users/${storeSlug}/shop/${encodeURIComponent(category)}`)
+    normalized.searchParams.set("page", page)
+    return normalized.toString()
+  } catch {
+    return value
+  }
+}
+
 const eldoradoItemsUrl =
-  process.env.ELDORADO_ITEMS_URL ??
-  "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=CustomItem&pageIndex=1"
+  normalizeEldoradoListingUrl(
+    process.env.ELDORADO_ITEMS_URL ??
+      "https://www.eldorado.gg/users/PulcipStore/shop/CustomItem?page=1",
+    "CustomItem",
+  )
 const eldoradoTopupsUrl =
-  process.env.ELDORADO_TOPUPS_URL ??
-  "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=TopUp&pageIndex=1"
+  normalizeEldoradoListingUrl(
+    process.env.ELDORADO_TOPUPS_URL ??
+      "https://www.eldorado.gg/users/PulcipStore/shop/TopUp?page=1",
+    "TopUp",
+  )
 const eldoradoItemsPagesRaw = Number(process.env.ELDORADO_ITEMS_PAGES ?? 15)
 const eldoradoTopupsPagesRaw = Number(process.env.ELDORADO_TOPUPS_PAGES ?? 1)
 const eldoradoItemsPages =

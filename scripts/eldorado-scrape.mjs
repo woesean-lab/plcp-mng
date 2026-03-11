@@ -93,8 +93,17 @@ const extractCategoryFromHref = (href) => {
 const extractCategoryFromUrl = (url) => {
   if (!url) return ""
   try {
-    const value = new URL(url).searchParams.get("category") ?? ""
-    return String(value || "").trim()
+    const parsed = new URL(url)
+    const queryCategory = String(parsed.searchParams.get("category") ?? "").trim()
+    if (queryCategory) return queryCategory
+
+    const parts = parsed.pathname.split("/").filter(Boolean)
+    const lowered = parts.map((part) => part.toLowerCase())
+    const shopIndex = lowered.indexOf("shop")
+    if (lowered[0] === "users" && shopIndex >= 0) {
+      return String(parts[shopIndex + 1] ?? "").trim()
+    }
+    return ""
   } catch (error) {
     return ""
   }
@@ -192,7 +201,17 @@ const ensurePlaywrightChromium = async () => {
 
 const buildPageUrl = (url, pageIndex) => {
   const nextUrl = new URL(url)
-  nextUrl.searchParams.set("pageIndex", String(pageIndex))
+  const parts = nextUrl.pathname.split("/").filter(Boolean)
+  const lowered = parts.map((part) => part.toLowerCase())
+  const shopIndex = lowered.indexOf("shop")
+
+  if (lowered[0] === "users" && shopIndex >= 0) {
+    nextUrl.searchParams.set("page", String(pageIndex))
+    nextUrl.searchParams.delete("pageIndex")
+  } else {
+    nextUrl.searchParams.set("pageIndex", String(pageIndex))
+    nextUrl.searchParams.delete("page")
+  }
   return nextUrl.toString()
 }
 
