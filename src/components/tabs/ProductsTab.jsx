@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
@@ -580,13 +580,13 @@ export default function ProductsTab({
   const categories = useMemo(() => {
     const list = Array.from(categoryMap.entries()).map(([key, bucketItems]) => ({
       key,
-      label: key === "diger" ? "DiÄŸer" : formatCategoryLabel(key),
+      label: key === "diger" ? "Diğer" : formatCategoryLabel(key),
       items: bucketItems,
     }))
     list.sort((a, b) => a.label.localeCompare(b.label, "tr"))
     return [
-      { key: "all", label: "TÃ¼mÃ¼", items: allProducts },
-      { key: "missing", label: "Eksik ÃœrÃ¼nler", items: allProducts },
+      { key: "all", label: "Tümü", items: allProducts },
+      { key: "missing", label: "Eksik Ürünler", items: allProducts },
       ...list,
     ]
   }, [allProducts, categoryMap])
@@ -1051,11 +1051,11 @@ export default function ProductsTab({
     const runUrl = String(target?.url ?? "").trim()
     const isStarredBackend = Boolean(target?.starred)
     const backendMasked = maskSensitiveText(backend, 8)
-    const backendDisplayRaw = isStarredBackend ? `â˜… ${backend}` : backend
+    const backendDisplayRaw = isStarredBackend ? `★ ${backend}` : backend
     const backendDisplay = canViewAutomationTargetDetails
       ? backendDisplayRaw
       : isStarredBackend
-        ? `â˜… ${backendMasked}`
+        ? `★ ${backendMasked}`
         : backendMasked
     const runUrlDisplay = canViewAutomationTargetDetails
       ? runUrl
@@ -1081,7 +1081,7 @@ export default function ProductsTab({
       return
     }
 
-    const label = String(automationName ?? "").trim() || "Stok Ã§ek"
+    const label = String(automationName ?? "").trim() || "Stok çek"
     const starterUsername = String(activeUsername ?? "").trim() || "bilinmeyen-kullanici"
     closeAutomationSocket(normalizedId)
     setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
@@ -1249,12 +1249,12 @@ export default function ProductsTab({
         if (eventName === "sonuc") {
           const rawResultBackend = String(firstArg?.backend ?? backend).trim() || backend
           const resultBackendRaw =
-            rawResultBackend === backend && isStarredBackend ? `â˜… ${rawResultBackend}` : rawResultBackend
+            rawResultBackend === backend && isStarredBackend ? `★ ${rawResultBackend}` : rawResultBackend
           const resultBackendMaskedBase = maskSensitiveText(rawResultBackend, 8)
           const resultBackend = canViewAutomationTargetDetails
             ? resultBackendRaw
             : rawResultBackend === backend && isStarredBackend
-              ? `â˜… ${resultBackendMaskedBase}`
+              ? `★ ${resultBackendMaskedBase}`
               : resultBackendMaskedBase
           let rawValue = ""
           if (typeof firstArg?.value === "string") {
@@ -1570,15 +1570,15 @@ export default function ProductsTab({
     const message = templates.find((tpl) => tpl.label === normalizedLabel)?.value
     const trimmedMessage = String(message ?? "").trim()
     if (!trimmedMessage) {
-      toast.error("Mesaj ÅŸablonu bulunamadÄ±.")
+      toast.error("Mesaj şablonu bulunamadı.")
       return
     }
     try {
       await navigator.clipboard.writeText(trimmedMessage)
-      toast.success("Mesaj kopyalandÄ±", { duration: 1500, position: "top-right" })
+      toast.success("Mesaj kopyalandı", { duration: 1500, position: "top-right" })
     } catch (error) {
       console.error(error)
-      toast.error("KopyalanamadÄ±")
+      toast.error("Kopyalanamadı")
     }
   }
   const handleStockToggle = (offerId) => {
@@ -1885,7 +1885,7 @@ export default function ProductsTab({
               Islem Basarili
             </p>
             <p className="mt-1 text-base font-semibold text-white">
-              {automationResultPopup.title || "Stok Ã§ek"} tamamlandi.
+              {automationResultPopup.title || "Stok çek"} tamamlandi.
             </p>
             <p className="mt-1 text-xs text-slate-300">
               Sonuc: <span className="text-emerald-100">{automationResultPopup.backend || "-"}</span>
@@ -1944,13 +1944,13 @@ export default function ProductsTab({
         <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1.5 sm:space-y-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              ÃœrÃ¼n listesi
+              Ürün listesi
             </span>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-              ÃœrÃ¼n listesi
+              Ürün listesi
             </h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              ÃœrÃ¼n adlarÄ±nÄ± gÃ¶r ve filtrele.
+              Ürün adlarını gör ve filtrele.
             </p>
           </div>
           <div className="flex w-full justify-start md:w-auto md:justify-end">
@@ -1959,11 +1959,11 @@ export default function ProductsTab({
                 Kategori
               </p>
               <p className="mt-2 text-lg font-semibold text-white">
-                {activeCategory?.label ?? "TÃ¼mÃ¼"}
+                {activeCategory?.label ?? "Tümü"}
               </p>
               <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-400">
-                <span>{list.length} Ã¼rÃ¼n</span>
-                <span>{paginatedList.length} gÃ¶sterilen</span>
+                <span>{list.length} ürün</span>
+                <span>{paginatedList.length} gösterilen</span>
                 <span>
                   {page}/{totalPages}
                 </span>
@@ -1977,7 +1977,7 @@ export default function ProductsTab({
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Toplam ÃœrÃ¼n
+              Toplam Ürün
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.totalOffers}</p>
             <p className="mt-1 text-xs text-slate-400">Katalogdaki teklifler</p>
@@ -1987,10 +1987,10 @@ export default function ProductsTab({
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(59,130,246,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Stok aÃ§Ä±k
+              Stok açık
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.stockEnabled}</p>
-            <p className="mt-1 text-xs text-slate-400">Stok takibi aÃ§Ä±k Ã¼rÃ¼n</p>
+            <p className="mt-1 text-xs text-slate-400">Stok takibi açık ürün</p>
           </div>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
@@ -2000,27 +2000,27 @@ export default function ProductsTab({
               Toplam stok
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.totalStock}</p>
-            <p className="mt-1 text-xs text-slate-400">KayÄ±tlÄ± anahtar</p>
+            <p className="mt-1 text-xs text-slate-400">Kayıtlı anahtar</p>
           </div>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(245,158,11,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              KullanÄ±lan stok
+              Kullanılan stok
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.usedStock}</p>
-            <p className="mt-1 text-xs text-slate-400">Ä°ÅŸaretlenen anahtar</p>
+            <p className="mt-1 text-xs text-slate-400">İşaretlenen anahtar</p>
           </div>
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(20,184,166,0.18),transparent)]" />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Otomasyon acik
+              Otomasyon açık
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.automationEnabled}</p>
-            <p className="mt-1 text-xs text-slate-400">Aktif stok cek urunu</p>
+            <p className="mt-1 text-xs text-slate-400">Aktif stok çek ürünü</p>
           </div>
         </div>
       </div>
@@ -2031,7 +2031,7 @@ export default function ProductsTab({
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
                 Kategoriler
               </p>
-              <p className="mt-1 text-xs text-slate-500">ÃœrÃ¼nleri filtrele.</p>
+              <p className="mt-1 text-xs text-slate-500">Ürünleri filtrele.</p>
             </div>
             {canRefresh && (
               <button
@@ -2043,8 +2043,8 @@ export default function ProductsTab({
                     ? "cursor-not-allowed border-white/5 text-slate-600"
                     : "hover:border-white/20 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white"
                 }`}
-                title="ÃœrÃ¼nleri yenile"
-                aria-label="ÃœrÃ¼nleri yenile"
+                title="Ürünleri yenile"
+                aria-label="Ürünleri yenile"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -2096,17 +2096,17 @@ export default function ProductsTab({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                ÃœrÃ¼n kataloÄŸu
+                Ürün kataloğu
               </p>
               <p className="mt-1 text-sm text-slate-400">
-                {activeCategory?.label ?? "TÃ¼mÃ¼"} - {list.length} Ã¼rÃ¼n
+                {activeCategory?.label ?? "Tümü"} - {list.length} ürün
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
                   Toplam: {list.length}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
-                  GÃ¶sterilen: {paginatedList.length}
+                  Gösterilen: {paginatedList.length}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
                   Sayfa: {page}/{totalPages}
@@ -2134,7 +2134,7 @@ export default function ProductsTab({
                     type="text"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="ÃœrÃ¼n adÄ± ara"
+                    placeholder="Ürün adı ara"
                     className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                   />
                   {query && (
@@ -2159,12 +2159,12 @@ export default function ProductsTab({
               <ProductsListSkeleton />
             ) : filteredList.length === 0 ? (
               <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                GÃ¶sterilecek Ã¼rÃ¼n bulunamadÄ±.
+                Gösterilecek ürün bulunamadı.
               </div>
             ) : (
               <div className="space-y-4">
                 {paginatedList.map((product, index) => {
-                  const name = String(product?.name ?? "").trim() || "Ä°simsiz Ã¼rÃ¼n"
+                  const name = String(product?.name ?? "").trim() || "İsimsiz ürün"
                   const isMissing = Boolean(product?.missing)
                   const key = product?.id ?? `${name}-${index}`
                   const offerId = String(product?.id ?? "").trim()
@@ -2195,7 +2195,7 @@ export default function ProductsTab({
                   const isGroupSelectionDirty = groupSelectionValue !== groupId
                   const categoryKey = getCategoryKey(product)
                   const categoryLabel =
-                    categoryKey === "diger" ? "DiÄŸer" : formatCategoryLabel(categoryKey)
+                    categoryKey === "diger" ? "Diğer" : formatCategoryLabel(categoryKey)
                   const isOpen = Boolean(openOffers[offerId])
                   const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
                   const isOutOfStock = isStockEnabled && availableCount === 0
@@ -2325,7 +2325,7 @@ export default function ProductsTab({
                       : []
                     : independentMessages
                   const messageGroupLabel =
-                    messageGroupName || (messageGroupMessages.length > 0 ? "BaÄŸÄ±msÄ±z" : "Yok")
+                    messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
                   const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
                   const baseValue = String(priceDraft.base ?? "").replace(",", ".")
                   const percentValue = String(priceDraft.percent ?? "").replace(",", ".")
@@ -2403,7 +2403,7 @@ export default function ProductsTab({
                                 )}
                                 {isStockEnabled && usedCount > 0 && (
                                   <span className="rounded-full border border-amber-300/60 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-50">
-                                    KullanÄ±ldÄ±: {usedCount}
+                                    Kullanıldı: {usedCount}
                                   </span>
                                 )}
                                 {isMissing && (
@@ -2426,8 +2426,8 @@ export default function ProductsTab({
                                   ? "cursor-not-allowed opacity-60"
                                   : ""
                               }`}
-                              aria-label="Stok aÃ§/kapat"
-                              title={isStockEnabled ? "Stok aÃ§Ä±k" : "Stok kapalÄ±"}
+                              aria-label="Stok aç/kapat"
+                              title={isStockEnabled ? "Stok açık" : "Stok kapalı"}
                             >
                               <span
                                 className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
@@ -2455,8 +2455,8 @@ export default function ProductsTab({
                               className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 !offerId || !canTogglePrice ? "cursor-not-allowed opacity-60" : ""
                               }`}
-                              aria-label="Fiyat aÃ§/kapat"
-                              title={isPriceEnabled ? "Fiyat aÃ§Ä±k" : "Fiyat kapalÄ±"}
+                              aria-label="Fiyat aç/kapat"
+                              title={isPriceEnabled ? "Fiyat açık" : "Fiyat kapalı"}
                             >
                               <span
                                 className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
@@ -2512,8 +2512,8 @@ export default function ProductsTab({
                               className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 !offerId || !canStarOffers ? "cursor-not-allowed opacity-60" : ""
                               } ${starredOffers[offerId] ? "text-yellow-300" : ""}`}
-                              aria-label="ÃœrÃ¼nÃ¼ yÄ±ldÄ±zla"
-                              title={starredOffers[offerId] ? "YÄ±ldÄ±zÄ± kaldÄ±r" : "YÄ±ldÄ±zla"}
+                              aria-label="Ürünü yıldızla"
+                              title={starredOffers[offerId] ? "Yıldızı kaldır" : "Yıldızla"}
                             >
                               <svg
                                 viewBox="0 0 24 24"
@@ -2537,14 +2537,14 @@ export default function ProductsTab({
                                   ? "cursor-not-allowed opacity-60"
                                   : ""
                               }`}
-                              aria-label="StoklarÄ± yenile"
+                              aria-label="Stokları yenile"
                               title={
                                 !isStockEnabled
-                                  ? "Stok kapalÄ±"
+                                  ? "Stok kapalı"
                                   : isOfferRefreshing
                                     ? "Yenileniyor..."
                                     : isKeysLoading
-                                      ? "YÃ¼kleniyor..."
+                                      ? "Yükleniyor..."
                                       : "Yenile"
                               }
                             >
@@ -2597,7 +2597,7 @@ export default function ProductsTab({
                                 target="_blank"
                                 rel="noreferrer"
                                 className="relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition"
-                                aria-label="ÃœrÃ¼n linki"
+                                aria-label="Ürün linki"
                               >
                                 <svg
                                   viewBox="0 0 24 24"
@@ -2648,7 +2648,7 @@ export default function ProductsTab({
                               className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 isOpen ? "bg-white/10 text-white" : ""
                               } ${!offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""}`}
-                              aria-label="ÃœrÃ¼n detaylarÄ±nÄ± aÃ§/kapat"
+                              aria-label="Ürün detaylarını aç/kapat"
                             >
                               <svg
                                 viewBox="0 0 24 24"
@@ -2702,7 +2702,7 @@ export default function ProductsTab({
                                 }`}
                                 aria-pressed={activePanel === "note"}
                               >
-                                <span>ÃœrÃ¼n notu</span>
+                                <span>Ürün notu</span>
                                 <span
                                   className={`max-w-[220px] whitespace-normal break-words rounded-full border px-2 py-0.5 text-left text-[10px] font-semibold leading-snug ${
                                     activePanel === "note"
@@ -2710,7 +2710,7 @@ export default function ProductsTab({
                                       : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
                                   }`}
                                 >
-                                  {noteGroupName || "BaÄŸÄ±msÄ±z"}
+                                  {noteGroupName || "Bağımsız"}
                                 </span>
                               </button>
                               <button
@@ -2753,7 +2753,7 @@ export default function ProductsTab({
                                         : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
                                     }`}
                                   >
-                                    {groupName || "BaÄŸÄ±msÄ±z"}
+                                    {groupName || "Bağımsız"}
                                   </span>
                                 </button>
                               )}
@@ -2791,7 +2791,7 @@ export default function ProductsTab({
                                   } ${!canViewAutomationPanel ? "cursor-not-allowed opacity-60" : ""}`}
                                   aria-pressed={activePanel === "automation"}
                                 >
-                                  <span>Stok Ã§ek</span>
+                                  <span>Stok çek</span>
                                 </button>
                               )}
                             </div>
@@ -2828,7 +2828,7 @@ export default function ProductsTab({
                                         disabled={!canManageGroups}
                                         className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        <option value="">BaÄŸÄ±msÄ±z</option>
+                                        <option value="">Bağımsız</option>
                                         {groups.map((groupOption) => (
                                           <option key={groupOption.id} value={groupOption.id}>
                                             {groupOption.name}
@@ -2871,7 +2871,7 @@ export default function ProductsTab({
                                           onClick={() => handleGroupDelete(offerId, groupId)}
                                           className="rounded-lg border border-rose-300/60 bg-rose-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 h-9 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
                                         >
-                                          {confirmGroupDelete === groupId ? "ONAYLA" : "SÄ°L"}
+                                          {confirmGroupDelete === groupId ? "ONAYLA" : "SİL"}
                                         </button>
                                       )}
                                     </div>
@@ -2884,7 +2884,7 @@ export default function ProductsTab({
                                           type="text"
                                           value={groupDraftValue}
                                           onChange={(event) => handleGroupDraftChange(offerId, event.target.value)}
-                                          placeholder="Yeni grup adÄ±"
+                                          placeholder="Yeni grup adı"
                                           disabled={!canManageGroups}
                                           className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         />
@@ -2894,7 +2894,7 @@ export default function ProductsTab({
                                           disabled={!canManageGroups || !groupDraftValue.trim()}
                                           className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                          OLUÅTUR
+                                          OLUŞTUR
                                         </button>
                                       </div>
                                     </div>
@@ -2933,7 +2933,7 @@ export default function ProductsTab({
                                         disabled={!canManageMessages}
                                         className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        <option value="">BaÄŸÄ±msÄ±z</option>
+                                        <option value="">Bağımsız</option>
                                         {messageGroups.map((group) => (
                                           <option key={group.id} value={group.id}>
                                             {group.name}
@@ -2976,7 +2976,7 @@ export default function ProductsTab({
                                           onClick={() => handleMessageGroupDelete(messageGroupId)}
                                           className="rounded-lg border border-rose-300/60 bg-rose-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 h-9 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
                                         >
-                                          {confirmMessageGroupDelete === messageGroupId ? "ONAYLA" : "SÄ°L"}
+                                          {confirmMessageGroupDelete === messageGroupId ? "ONAYLA" : "SİL"}
                                         </button>
                                       )}
                                     </div>
@@ -2985,7 +2985,7 @@ export default function ProductsTab({
                                         type="text"
                                         value={messageGroupDraftValue}
                                         onChange={(event) => handleMessageGroupDraftChange(offerId, event.target.value)}
-                                        placeholder="Yeni grup adÄ±"
+                                        placeholder="Yeni grup adı"
                                         disabled={!canManageMessages}
                                         className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       />
@@ -2995,19 +2995,19 @@ export default function ProductsTab({
                                         disabled={!canManageMessages || !messageGroupDraftValue.trim()}
                                         className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        OLUÅTUR
+                                        OLUŞTUR
                                       </button>
                                     </div>
                                   </div>
                                   <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
-                                    <label className="text-[12px] font-semibold text-slate-100">Mesaj ÅŸablonu</label>
+                                    <label className="text-[12px] font-semibold text-slate-100">Mesaj şablonu</label>
                                     <div className="mt-1 flex flex-wrap items-center gap-2">
                                       <input
                                         type="text"
                                         list={`message-template-${offerId}`}
                                         value={messageTemplateDraftValue}
                                         onChange={(event) => handleMessageTemplateDraftChange(offerId, event.target.value)}
-                                        placeholder={templates.length === 0 ? "Åablon yok" : "Åablon seÃ§"}
+                                        placeholder={templates.length === 0 ? "Şablon yok" : "Şablon seç"}
                                         disabled={!canManageMessages || templates.length === 0}
                                         className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         style={{ appearance: "none", WebkitAppearance: "none" }}
@@ -3026,7 +3026,7 @@ export default function ProductsTab({
                                         EKLE
                                       </button>
                                     </div>
-                                    <p className="mt-1 text-[10px] text-slate-500">Åablon ekledikÃ§e kopyalama listesinde gÃ¶rÃ¼nÃ¼r.</p>
+                                    <p className="mt-1 text-[10px] text-slate-500">Şablon ekledikçe kopyalama listesinde görünür.</p>
                                   </div>
                                 </div>
                                   </>
@@ -3102,7 +3102,7 @@ export default function ProductsTab({
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div>
                                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                                        STOK Ã‡EK HEDEFLERÄ°
+                                        STOK ÇEK HEDEFLERİ
                                       </p>
                                       <p className="mt-0.5 text-[11px] text-slate-400">
                                         URL ve backend map kaydet, satiri secip calistir.
@@ -3280,7 +3280,7 @@ export default function ProductsTab({
                                                 }`}
                                                 title={isStarred ? "Yildizi kaldir" : "Yildizla"}
                                               >
-                                                {isStarring ? "..." : isStarred ? "â˜…" : "â˜†"}
+                                                {isStarring ? "..." : isStarred ? "★" : "☆"}
                                               </button>
                                               <button
                                                 type="button"
@@ -3309,7 +3309,7 @@ export default function ProductsTab({
                                           </span>
                                           {selectedAutomationTargetIsStarred && (
                                             <span className="rounded border border-amber-300/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-100">
-                                              â˜… Yildizli
+                                              ★ Yildizli
                                             </span>
                                           )}
                                         </div>
@@ -3337,7 +3337,7 @@ export default function ProductsTab({
 
                                   {!String(automationWsUrl ?? "").trim() && (
                                     <p className="text-[10px] text-amber-200/90">
-                                      Websocket adresi yok. Stok Ã§ek sekmesinden baglanti adresini kaydet.
+                                      Websocket adresi yok. Stok çek sekmesinden baglanti adresini kaydet.
                                     </p>
                                   )}
                                 </div>
@@ -3449,7 +3449,7 @@ export default function ProductsTab({
                                       rows={9}
                                       value={noteInputValue ?? ""}
                                       onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
-                                      placeholder="ÃœrÃ¼n notu ekle"
+                                      placeholder="Ürün notu ekle"
                                       readOnly={!canEditNoteText}
                                       className={`block min-h-[220px] w-full rounded-xl border border-white/10 bg-ink-900/50 px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 read-only:bg-ink-900/40 read-only:text-slate-300 ${noteGroupFlashByOffer?.[offerId] ? "animate-noteSwap" : ""}`}
                                     />
@@ -3460,7 +3460,7 @@ export default function ProductsTab({
                                           onClick={() => toggleNoteEdit(offerId)}
                                           className="flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10"
                                         >
-                                          {isNoteEditing ? "VAZGEÃ‡" : "DÃœZENLE"}
+                                          {isNoteEditing ? "VAZGEÇ" : "DÜZENLE"}
                                         </button>
                                       )}
                                       <button
@@ -3492,7 +3492,7 @@ export default function ProductsTab({
                                               disabled={!canManageNotes}
                                               className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                             >
-                                              <option value="">BaÄŸÄ±msÄ±z not</option>
+                                              <option value="">Bağımsız not</option>
                                               {noteGroups.map((groupOption) => (
                                                 <option key={groupOption.id} value={groupOption.id}>
                                                   {groupOption.name}
@@ -3523,7 +3523,7 @@ export default function ProductsTab({
                                                 disabled={!canManageNotes}
                                                 className="rounded-md border border-rose-300/50 bg-rose-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 h-9 transition hover:border-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               >
-                                                {confirmNoteGroupDelete === noteGroupId ? "ONAYLA" : "SÄ°L"}
+                                                {confirmNoteGroupDelete === noteGroupId ? "ONAYLA" : "SİL"}
                                               </button>
                                             )}
                                             {canManageNotes && (
@@ -3561,7 +3561,7 @@ export default function ProductsTab({
                                                 disabled={!canManageNotes || !noteGroupDraftValue.trim()}
                                                 className="rounded-md border border-sky-300/50 bg-sky-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:border-sky-200 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               >
-                                                OLUÅTUR
+                                                OLUŞTUR
                                               </button>
                                             </div>
                                           </div>
@@ -3594,7 +3594,7 @@ export default function ProductsTab({
                               )}
                               {!isKeysLoading && availableKeys.length === 0 && (
                                 <div className="rounded-2xl border border-white/10 bg-ink-900/40 px-4 py-3 text-xs text-slate-400 shadow-inner">
-                                  Bu Ã¼rÃ¼nde kullanÄ±labilir stok yok.
+                                  Bu üründe kullanılabilir stok yok.
                                 </div>
                               )}
                               {!isKeysLoading && availableKeys.length > 0 && (
@@ -3622,7 +3622,7 @@ export default function ProductsTab({
                                             onClick={() => handleBulkCopy(offerId, true)}
                                             className="rounded-md border border-amber-300/60 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 h-8 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/20"
                                           >
-                                            Kopyala + kullanÄ±ldÄ±
+                                            Kopyala + kullanıldı
                                           </button>
                                         )}
                                         <button
@@ -3700,7 +3700,7 @@ export default function ProductsTab({
                                                   disabled={isSaving}
                                                   className="flex h-6 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
-                                                  Ä°PTAL
+                                                  İPTAL
                                                 </button>
                                               </>
                                             ) : (
@@ -3720,7 +3720,7 @@ export default function ProductsTab({
                                                     onClick={() => handleKeyEditStart(item.id, item.code)}
                                                     className="flex h-6 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-2 text-[10px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 sm:w-auto"
                                                   >
-                                                    DÃœZENLE</button>
+                                                    DÜZENLE</button>
                                                 )}
                                                 {canUpdateKeys && (
                                                   <button
@@ -3730,7 +3730,7 @@ export default function ProductsTab({
                                                     }
                                                     className="flex h-6 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
                                                   >
-                                                    KullanÄ±ldÄ±
+                                                    Kullanıldı
                                                   </button>
                                                 )}
                                                 {canDeleteKeys && (
@@ -3746,7 +3746,7 @@ export default function ProductsTab({
                                                   >
                                                     {confirmKeyTarget === `${offerId}-${item.id}`
                                                       ? "ONAYLA"
-                                                      : "SÄ°L"}
+                                                      : "SİL"}
                                                   </button>
                                                 )}
                                               </>
@@ -3761,7 +3761,7 @@ export default function ProductsTab({
                               {(
                                 <div className="space-y-4 rounded-2xl border border-white/10 bg-ink-900/50 p-4">
                                   <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <span className="text-[12px] font-semibold text-slate-100">KullanÄ±lan Stoklar</span>
+                                    <span className="text-[12px] font-semibold text-slate-100">Kullanılan Stoklar</span>
                                     <div className="flex flex-wrap items-center gap-2">
                                       <span className="rounded-full border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
                                         {usedKeys.length} adet
@@ -3842,7 +3842,7 @@ export default function ProductsTab({
                                                   disabled={isSaving}
                                                   className="flex h-6 w-full items-center justify-center rounded-md border border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
-                                                  Ä°PTAL
+                                                  İPTAL
                                                 </button>
                                               </>
                                             ) : (
@@ -3862,7 +3862,7 @@ export default function ProductsTab({
                                                     onClick={() => handleKeyEditStart(item.id, item.code)}
                                                     className="flex h-6 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-2 text-[10px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 sm:w-auto"
                                                   >
-                                                    DÃœZENLE</button>
+                                                    DÜZENLE</button>
                                                 )}
                                                 {canUpdateKeys && (
                                                   <button
@@ -3872,7 +3872,7 @@ export default function ProductsTab({
                                                     }
                                                     className="flex h-6 w-full items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 sm:w-auto"
                                                   >
-                                                    GERÄ° AL
+                                                    GERİ AL
                                                   </button>
                                                 )}
                                                 {canDeleteKeys && (
@@ -3888,7 +3888,7 @@ export default function ProductsTab({
                                                   >
                                                     {confirmKeyTarget === `${offerId}-${item.id}`
                                                       ? "ONAYLA"
-                                                      : "SÄ°L"}
+                                                      : "SİL"}
                                                   </button>
                                                 )}
                                               </>
@@ -3903,7 +3903,7 @@ export default function ProductsTab({
                               </>
                             ) : (
                               <div className="rounded-2xl border border-white/10 bg-ink-900/40 px-4 py-3 text-xs text-slate-400 shadow-inner">
-                                Bu Ã¼rÃ¼nde stok kapalÄ±. Ãœstteki ON/OFF anahtarÄ±ndan aÃ§Ä±n.
+                                Bu üründe stok kapalı. Üstteki ON/OFF anahtarından açın.
                               </div>
                             )}
                             </div>
@@ -3913,7 +3913,7 @@ export default function ProductsTab({
                                   <div className="text-xs text-slate-400">
                                     {messageGroupId
                                       ? "Bu grupta mesaj yok."
-                                      : "BaÄŸÄ±msÄ±z mesaj yok."}
+                                      : "Bağımsız mesaj yok."}
                                   </div>
                                 ) : (
                                   <div className="flex flex-wrap gap-2">
@@ -3939,7 +3939,7 @@ export default function ProductsTab({
                                               onClick={() => handleMessageTemplateRemove(offerId, label)}
                                               className="rounded-md border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
                                             >
-                                              {isConfirmingDelete ? "ONAYLA" : "SÄ°L"}
+                                              {isConfirmingDelete ? "ONAYLA" : "SİL"}
                                             </button>
                                           )}
                                         </div>
@@ -3972,8 +3972,8 @@ export default function ProductsTab({
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   disabled={page === 1}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Ã–nceki sayfa"
-                  title="Ã–nceki sayfa"
+                  aria-label="Önceki sayfa"
+                  title="Önceki sayfa"
                 >
                   <svg
                     viewBox="0 0 24 24"
