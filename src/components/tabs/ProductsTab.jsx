@@ -3087,7 +3087,7 @@ export default function ProductsTab({
                                     </button>
                                   </div>
 
-                                  <div className="overflow-hidden rounded-lg border border-white/10 bg-ink-950/45">
+                                  <div className="overflow-hidden rounded-lg border border-white/10 bg-ink-950/80">
                                     <div className="no-scrollbar max-h-[180px] overflow-auto divide-y divide-white/5">
                                       {automationTargets.length === 0 ? (
                                         <p className="px-3 py-4 text-center text-[11px] text-slate-500">
