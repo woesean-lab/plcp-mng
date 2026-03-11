@@ -282,6 +282,10 @@ export default function ProductsTab({
   canToggleStock: canToggleStockProp,
   canToggleCard: canToggleCardProp,
   canManageAutomation: canManageAutomationProp,
+  canViewAutomationPanel: canViewAutomationPanelProp,
+  canManageAutomationTargets: canManageAutomationTargetsProp,
+  canRunAutomation: canRunAutomationProp,
+  canViewAutomationLogs: canViewAutomationLogsProp,
   canViewLinks = false,
   canStarOffers: canStarOffersProp,
   canDeleteOffers = false,
@@ -447,6 +451,20 @@ export default function ProductsTab({
     typeof canManageAutomationProp === "boolean"
       ? canManageAutomationProp
       : canToggleCard && typeof onSaveAutomation === "function"
+  const canViewAutomationPanel =
+    typeof canViewAutomationPanelProp === "boolean"
+      ? canViewAutomationPanelProp
+      : canManageAutomation
+  const canManageAutomationTargets =
+    typeof canManageAutomationTargetsProp === "boolean"
+      ? canManageAutomationTargetsProp
+      : canManageAutomation
+  const canRunAutomation =
+    typeof canRunAutomationProp === "boolean" ? canRunAutomationProp : canManageAutomationTargets
+  const canViewAutomationLogs =
+    typeof canViewAutomationLogsProp === "boolean"
+      ? canViewAutomationLogsProp
+      : canRunAutomation || canManageAutomationTargets
   const apiFetchAutomationLog = async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
     if (typeof window !== "undefined") {
@@ -697,7 +715,7 @@ export default function ProductsTab({
     setPriceEnabledByOffer((prev) => ({ ...prev, [normalizedId]: nextEnabled }))
   }
   const handleAutomationToggle = async (offerId) => {
-    if (!canManageAutomation || typeof onSaveAutomation !== "function") return
+    if (!canManageAutomationTargets || typeof onSaveAutomation !== "function") return
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const nextEnabled = !Boolean(automationEnabledByOffer?.[normalizedId])
@@ -743,7 +761,7 @@ export default function ProductsTab({
   }
   const handleAutomationTargetSave = async (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId || !canManageAutomation || typeof onAddAutomationTarget !== "function") return
+    if (!normalizedId || !canManageAutomationTargets || typeof onAddAutomationTarget !== "function") return
     const draft = getAutomationTargetDraft(normalizedId)
     const backend = String(draft.backend ?? "").trim()
     const url = String(draft.url ?? "").trim()
@@ -807,7 +825,7 @@ export default function ProductsTab({
     if (
       !normalizedId ||
       !normalizedTargetId ||
-      !canManageAutomation ||
+      !canManageAutomationTargets ||
       typeof onDeleteAutomationTarget !== "function"
     ) {
       return
@@ -934,7 +952,7 @@ export default function ProductsTab({
   const handleAutomationRun = (offerId, target, automationName) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    if (!canManageAutomation) return
+    if (!canRunAutomation) return
 
     const backend = String(target?.backend ?? "").trim()
     const runUrl = String(target?.url ?? "").trim()
@@ -2133,7 +2151,7 @@ export default function ProductsTab({
                   if (isPriceEnabled) {
                     availablePanels.push("price")
                   }
-                  if (isAutomationEnabled) {
+                  if (isAutomationEnabled && canViewAutomationPanel) {
                     availablePanels.push("automation")
                   }
                   const storedPanel = activePanelByOffer[offerId]
@@ -2328,11 +2346,13 @@ export default function ProductsTab({
                             <button
                               type="button"
                               onClick={() => handleAutomationToggle(offerId)}
-                              disabled={!offerId || !canManageAutomation}
+                              disabled={!offerId || !canManageAutomationTargets}
                               className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md transition before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
                                 isAutomationEnabled ? "text-emerald-300 hover:text-emerald-200" : "text-slate-200/80 hover:text-white"
                               } ${
-                                !offerId || !canManageAutomation ? "cursor-not-allowed opacity-60" : ""
+                                !offerId || !canManageAutomationTargets
+                                  ? "cursor-not-allowed opacity-60"
+                                  : ""
                               }`}
                               aria-label="Stok cek ac/kapat"
                               title={isAutomationEnabled ? "Stok cek acik" : "Stok cek kapali"}
@@ -2624,15 +2644,17 @@ export default function ProductsTab({
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    if (!canManageAutomation) return
+                                    if (!canViewAutomationPanel) return
                                     setActivePanel(offerId, "automation")
-                                    void loadAutomationRunLogs(offerId)
+                                    if (canViewAutomationLogs) {
+                                      void loadAutomationRunLogs(offerId)
+                                    }
                                   }}
                                   className={`flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                     activePanel === "automation"
                                       ? "border-accent-400 text-white"
                                       : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
-                                  } ${!canManageAutomation ? "cursor-not-allowed opacity-60" : ""}`}
+                                  } ${!canViewAutomationPanel ? "cursor-not-allowed opacity-60" : ""}`}
                                   aria-pressed={activePanel === "automation"}
                                 >
                                   <span>Stok çek</span>
@@ -2972,7 +2994,7 @@ export default function ProductsTab({
                                         handleAutomationTargetDraftChange(offerId, "url", event.target.value)
                                       }
                                       placeholder="https://site.com/urun"
-                                      disabled={!canManageAutomation || isAutomationTargetSaving}
+                                      disabled={!canManageAutomationTargets || isAutomationTargetSaving}
                                       className="h-8 rounded-md border border-white/10 bg-ink-900/80 px-2.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     />
                                     <select
@@ -2980,7 +3002,9 @@ export default function ProductsTab({
                                       onChange={(event) =>
                                         handleAutomationTargetDraftChange(offerId, "backend", event.target.value)
                                       }
-                                      disabled={!canManageAutomation || automationBackendOptions.length === 0}
+                                      disabled={
+                                        !canManageAutomationTargets || automationBackendOptions.length === 0
+                                      }
                                       className="h-8 appearance-none rounded-md border border-white/10 bg-ink-900/80 px-2.5 text-[11px] text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       <option value="">
@@ -3005,7 +3029,7 @@ export default function ProductsTab({
                                         void handleAutomationTargetSave(offerId)
                                       }}
                                       disabled={
-                                        !canManageAutomation ||
+                                        !canManageAutomationTargets ||
                                         !draftAutomationBackend ||
                                         !String(draftAutomationUrl ?? "").trim() ||
                                         isAutomationTargetSaving
@@ -3088,7 +3112,7 @@ export default function ProductsTab({
                                                   event.stopPropagation()
                                                   void handleAutomationTargetDelete(offerId, targetRow.id)
                                                 }}
-                                                disabled={!canManageAutomation || isDeleting}
+                                                disabled={!canManageAutomationTargets || isDeleting}
                                                 className="rounded border border-rose-300/30 bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-rose-100 transition hover:border-rose-200/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               >
                                                 {isDeleting ? "..." : "Sil"}
@@ -3118,7 +3142,7 @@ export default function ProductsTab({
                                         handleAutomationRun(offerId, selectedAutomationTarget, name)
                                       }
                                       disabled={
-                                        !canManageAutomation ||
+                                        !canRunAutomation ||
                                         !selectedAutomationTarget ||
                                         isAutomationRunning
                                       }
@@ -3130,72 +3154,78 @@ export default function ProductsTab({
 
                                   {!String(automationWsUrl ?? "").trim() && (
                                     <p className="text-[10px] text-amber-200/90">
-                                      Websocket adresi yok. Stok cek sekmesinden baglanti adresini kaydet.
+                                      Websocket adresi yok. Stok çek sekmesinden baglanti adresini kaydet.
                                     </p>
                                   )}
                                 </div>
-                                <div className="mt-3 rounded-lg border border-white/10 bg-ink-900/60">
-                                  <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-                                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                      CMD
-                                    </span>
-                                    <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                                      {automationRunLogEntries.length} satir
-                                    </span>
-                                  </div>
-                                  <div className="no-scrollbar h-[336px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
-                                    <div className="space-y-0.5">
-                                      {visibleAutomationRunLogEntries.map((entry) => (
-                                        <div key={entry.id} className="flex items-start gap-2 text-slate-200">
-                                          <span className="flex-none text-slate-500">C:\plcp\automation&gt;</span>
-                                          <span
-                                            className={`flex-none ${
-                                              entry.status === "success"
-                                                ? "text-emerald-300"
+                                {canViewAutomationLogs ? (
+                                  <div className="mt-3 rounded-lg border border-white/10 bg-ink-900/60">
+                                    <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
+                                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                                        CMD
+                                      </span>
+                                      <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                                        {automationRunLogEntries.length} satir
+                                      </span>
+                                    </div>
+                                    <div className="no-scrollbar h-[336px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
+                                      <div className="space-y-0.5">
+                                        {visibleAutomationRunLogEntries.map((entry) => (
+                                          <div key={entry.id} className="flex items-start gap-2 text-slate-200">
+                                            <span className="flex-none text-slate-500">C:\plcp\automation&gt;</span>
+                                            <span
+                                              className={`flex-none ${
+                                                entry.status === "success"
+                                                  ? "text-emerald-300"
+                                                  : entry.status === "error"
+                                                    ? "text-rose-300"
+                                                    : "text-amber-300"
+                                              }`}
+                                            >
+                                              [{entry.time}]
+                                            </span>
+                                            <span
+                                              className={`flex-none ${
+                                                entry.status === "success"
+                                                  ? "text-emerald-300"
+                                                  : entry.status === "error"
+                                                    ? "text-rose-300"
+                                                    : "text-amber-300"
+                                              }`}
+                                            >
+                                              {entry.status === "success"
+                                                ? "OK"
                                                 : entry.status === "error"
-                                                  ? "text-rose-300"
-                                                  : "text-amber-300"
-                                            }`}
-                                          >
-                                            [{entry.time}]
-                                          </span>
-                                          <span
-                                            className={`flex-none ${
-                                              entry.status === "success"
-                                                ? "text-emerald-300"
-                                                : entry.status === "error"
-                                                  ? "text-rose-300"
-                                                  : "text-amber-300"
-                                            }`}
-                                          >
-                                            {entry.status === "success"
-                                              ? "OK"
-                                              : entry.status === "error"
-                                                ? "ERR"
-                                                : "RUN"}
-                                          </span>
-                                          <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
-                                        </div>
-                                      ))}
-                                      {Array.from({ length: emptyAutomationRunLogRows }).map((_, index) => (
-                                        <div key={`automation-placeholder-${offerId}-${index}`} className="flex items-start gap-2 text-slate-700">
-                                          <span className="flex-none text-slate-600">C:\plcp\automation&gt;</span>
-                                          <span className="flex-none text-slate-700">[--:--]</span>
-                                          <span className="flex-none text-slate-700">--</span>
-                                          <span
-                                            className={`truncate text-slate-700 ${
-                                              automationRunLogEntries.length === 0 && index === 0
-                                                ? "text-slate-500"
-                                                : "opacity-0"
-                                            }`}
-                                          >
-                                            {automationRunLogEntries.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
-                                          </span>
-                                        </div>
-                                      ))}
+                                                  ? "ERR"
+                                                  : "RUN"}
+                                            </span>
+                                            <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                                          </div>
+                                        ))}
+                                        {Array.from({ length: emptyAutomationRunLogRows }).map((_, index) => (
+                                          <div key={`automation-placeholder-${offerId}-${index}`} className="flex items-start gap-2 text-slate-700">
+                                            <span className="flex-none text-slate-600">C:\plcp\automation&gt;</span>
+                                            <span className="flex-none text-slate-700">[--:--]</span>
+                                            <span className="flex-none text-slate-700">--</span>
+                                            <span
+                                              className={`truncate text-slate-700 ${
+                                                automationRunLogEntries.length === 0 && index === 0
+                                                  ? "text-slate-500"
+                                                  : "opacity-0"
+                                              }`}
+                                            >
+                                              {automationRunLogEntries.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
+                                ) : (
+                                  <div className="mt-3 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-3 text-[11px] text-slate-400">
+                                    CMD loglarini goruntuleme izniniz yok.
+                                  </div>
+                                )}
                               </div>
                             )}
                             {activePanel === "note" && (

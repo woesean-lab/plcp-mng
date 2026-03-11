@@ -85,6 +85,9 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "products.price.details",
   "products.price.toggle",
   "products.stock.fetch",
+  "products.stock.fetch.edit",
+  "products.stock.fetch.run",
+  "products.stock.fetch.logs.view",
   "products.link.view",
   "products.star",
   "products.card.toggle",
@@ -784,6 +787,30 @@ const requireAnyPermission = (permissionList) => (req, res, next) => {
   }
   next()
 }
+
+const PRODUCT_STOCK_FETCH_VIEW_PERMISSIONS = [
+  "products.stock.fetch",
+  "products.stock.fetch.edit",
+  "products.stock.fetch.run",
+  "products.stock.fetch.logs.view",
+  "products.manage",
+]
+const PRODUCT_STOCK_FETCH_EDIT_PERMISSIONS = [
+  "products.stock.fetch.edit",
+  "products.stock.fetch",
+  "products.manage",
+]
+const PRODUCT_STOCK_FETCH_RUN_PERMISSIONS = [
+  "products.stock.fetch.run",
+  "products.stock.fetch",
+  "products.manage",
+]
+const PRODUCT_STOCK_FETCH_LOGS_PERMISSIONS = [
+  "products.stock.fetch.logs.view",
+  "products.stock.fetch.run",
+  "products.stock.fetch",
+  "products.manage",
+]
 
 const normalizeAutomationRunLogEntry = (entry) => {
   const id = String(entry?.id ?? "").trim()
@@ -2958,7 +2985,10 @@ app.delete("/api/eldorado/message-templates", async (req, res) => {
   res.json({ ok: true })
 })
 
-app.put("/api/eldorado/offers/:id/automation", async (req, res) => {
+app.put(
+  "/api/eldorado/offers/:id/automation",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_EDIT_PERMISSIONS),
+  async (req, res) => {
   const offerId = String(req.params.id ?? "").trim()
   if (!offerId) {
     res.status(400).json({ error: "offerId is required" })
@@ -3026,9 +3056,13 @@ app.put("/api/eldorado/offers/:id/automation", async (req, res) => {
     backend: String(saved.backend ?? "").trim(),
     backends: Array.isArray(saved.backends) ? saved.backends : [],
   })
-})
+  },
+)
 
-app.get("/api/eldorado/offers/:id/automation-targets", async (req, res) => {
+app.get(
+  "/api/eldorado/offers/:id/automation-targets",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_VIEW_PERMISSIONS),
+  async (req, res) => {
   const offerId = String(req.params.id ?? "").trim()
   if (!offerId) {
     res.status(400).json({ error: "offerId is required" })
@@ -3046,9 +3080,13 @@ app.get("/api/eldorado/offers/:id/automation-targets", async (req, res) => {
       .filter(Boolean)
       .map((entry) => ({ id: entry.id, backend: entry.backend, url: entry.url })),
   )
-})
+  },
+)
 
-app.post("/api/eldorado/offers/:id/automation-targets", async (req, res) => {
+app.post(
+  "/api/eldorado/offers/:id/automation-targets",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_EDIT_PERMISSIONS),
+  async (req, res) => {
   const offerId = String(req.params.id ?? "").trim()
   if (!offerId) {
     res.status(400).json({ error: "offerId is required" })
@@ -3085,9 +3123,13 @@ app.post("/api/eldorado/offers/:id/automation-targets", async (req, res) => {
       url: saved.url,
     },
   })
-})
+  },
+)
 
-app.delete("/api/eldorado/offers/:id/automation-targets/:targetId", async (req, res) => {
+app.delete(
+  "/api/eldorado/offers/:id/automation-targets/:targetId",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_EDIT_PERMISSIONS),
+  async (req, res) => {
   const offerId = String(req.params.id ?? "").trim()
   const targetId = String(req.params.targetId ?? "").trim()
   if (!offerId || !targetId) {
@@ -3104,9 +3146,13 @@ app.delete("/api/eldorado/offers/:id/automation-targets/:targetId", async (req, 
   }
 
   res.json({ ok: true, offerId, targetId })
-})
+  },
+)
 
-app.get("/api/eldorado/offers/:id/automation-logs", async (req, res) => {
+app.get(
+  "/api/eldorado/offers/:id/automation-logs",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_LOGS_PERMISSIONS),
+  async (req, res) => {
   const offerId = String(req.params.id ?? "").trim()
   if (!offerId) {
     res.status(400).json({ error: "offerId is required" })
@@ -3125,9 +3171,13 @@ app.get("/api/eldorado/offers/:id/automation-logs", async (req, res) => {
   })
 
   res.json(logs)
-})
+  },
+)
 
-app.post("/api/eldorado/offers/:id/automation-logs", async (req, res) => {
+app.post(
+  "/api/eldorado/offers/:id/automation-logs",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_RUN_PERMISSIONS),
+  async (req, res) => {
   const offerId = String(req.params.id ?? "").trim()
   if (!offerId) {
     res.status(400).json({ error: "offerId is required" })
@@ -3166,7 +3216,8 @@ app.post("/api/eldorado/offers/:id/automation-logs", async (req, res) => {
   }
 
   res.status(201).json({ ok: true })
-})
+  },
+)
 
 app.put("/api/eldorado/stock-enabled", async (req, res) => {
   const offerId = String(req.body?.offerId ?? "").trim()

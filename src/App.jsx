@@ -419,7 +419,26 @@ function App() {
     PERMISSIONS.productsCardToggle,
     PERMISSIONS.productsManage,
   ])
+  const canViewProductStockFetch = hasAnyPermission([
+    PERMISSIONS.productsStockFetch,
+    PERMISSIONS.productsStockFetchEdit,
+    PERMISSIONS.productsStockFetchRun,
+    PERMISSIONS.productsStockFetchLogsView,
+    PERMISSIONS.productsManage,
+  ])
   const canManageProductAutomation = hasAnyPermission([
+    PERMISSIONS.productsStockFetchEdit,
+    PERMISSIONS.productsStockFetch,
+    PERMISSIONS.productsManage,
+  ])
+  const canRunProductAutomation = hasAnyPermission([
+    PERMISSIONS.productsStockFetchRun,
+    PERMISSIONS.productsStockFetch,
+    PERMISSIONS.productsManage,
+  ])
+  const canViewProductAutomationLogs = hasAnyPermission([
+    PERMISSIONS.productsStockFetchLogsView,
+    PERMISSIONS.productsStockFetchRun,
     PERMISSIONS.productsStockFetch,
     PERMISSIONS.productsManage,
   ])
@@ -1149,6 +1168,10 @@ function App() {
               canToggleStock={canToggleProductStock}
               canToggleCard={canToggleProductCard}
               canManageAutomation={canManageProductAutomation}
+              canViewAutomationPanel={canViewProductStockFetch}
+              canManageAutomationTargets={canManageProductAutomation}
+              canRunAutomation={canRunProductAutomation}
+              canViewAutomationLogs={canViewProductAutomationLogs}
               canViewLinks={canViewProductLinks}
               canStarOffers={canStarProducts}
               canDeleteOffers={canDeleteOffers}
