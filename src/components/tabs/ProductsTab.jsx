@@ -3073,7 +3073,7 @@ export default function ProductsTab({
                                                   target="_blank"
                                                   rel="noreferrer"
                                                   onClick={(event) => event.stopPropagation()}
-                                                  className="block max-w-full truncate rounded px-1.5 py-0.5 text-[11px] text-slate-100 transition-colors duration-150 hover:bg-sky-500/15 hover:text-sky-100"
+                                                  className="text-[11px] text-slate-100 transition-colors duration-150 hover:text-sky-200"
                                                   title={targetRow.url}
                                                 >
                                                   {targetRow.url}
