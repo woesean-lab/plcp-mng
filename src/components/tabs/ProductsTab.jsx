@@ -3116,7 +3116,7 @@ export default function ProductsTab({
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
                                               className={`flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 transition-colors ${
                                                 isSelected
-                                                  ? "bg-accent-500/12 hover:bg-accent-400/12"
+                                                  ? "bg-accent-500/20 hover:bg-accent-500/24"
                                                   : "bg-transparent hover:bg-white/[0.05]"
                                               }`}
                                               onClick={() =>
