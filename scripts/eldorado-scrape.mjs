@@ -5,11 +5,11 @@ import { createRequire } from "node:module"
 import { chromium } from "playwright"
 
 const DEFAULT_URLS = [
-  "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=Account&pageIndex=1",
-  "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=CustomItem&pageIndex=1",
-  "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=TopUp&pageIndex=1",
-  "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=GiftCard&pageIndex=1",
-  "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=Currency&pageIndex=1",
+  "https://www.eldorado.gg/users/PulcipStore/shop/CustomItem?page=1",
+  "https://www.eldorado.gg/users/PulcipStore/shop/Account?page=1",
+  "https://www.eldorado.gg/users/PulcipStore/shop/GiftCard?page=1",
+  "https://www.eldorado.gg/users/PulcipStore/shop/TopUp?page=1",
+  "https://www.eldorado.gg/users/PulcipStore/shop/Currency?page=1",
 ]
 const START_URLS = (process.env.ELDORADO_URLS ?? "")
   .split(",")
@@ -17,7 +17,7 @@ const START_URLS = (process.env.ELDORADO_URLS ?? "")
   .filter(Boolean)
 const START_URL =
   process.env.ELDORADO_URL ??
-  "https://www.eldorado.gg/users/PulcipStore?tab=Offers&category=CustomItem&pageIndex=1"
+  "https://www.eldorado.gg/users/PulcipStore/shop/CustomItem?page=1"
 const SCRAPE_URLS =
   START_URLS.length > 0
     ? START_URLS
