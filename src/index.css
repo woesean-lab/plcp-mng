@@ -581,6 +581,22 @@
     --tw-gradient-to: #dbeafe var(--tw-gradient-to-position);
   }
 
+  .automation-target-row-selected {
+    background-color: #0b0f1999;
+  }
+
+  .automation-target-row-selected:hover {
+    background-color: #0b0f1999;
+  }
+
+  [data-theme='light'] .automation-target-row-selected {
+    background-color: rgba(59, 130, 246, 0.24);
+  }
+
+  [data-theme='light'] .automation-target-row-selected:hover {
+    background-color: rgba(59, 130, 246, 0.3);
+  }
+
   .tab-slide-in-right,
   .tab-slide-in-left {
     will-change: transform;
