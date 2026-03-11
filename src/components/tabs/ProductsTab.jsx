@@ -3061,16 +3061,18 @@ export default function ProductsTab({
                                                 className="min-w-0 flex-1 text-left"
                                                 title={targetRow.url}
                                               >
-                                                <span className="mr-1 inline-flex h-4 items-center rounded border border-white/10 bg-white/5 px-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-400">
-                                                  {serviceLabel}
-                                                </span>
                                                 <span className="block truncate text-[11px] text-slate-100">
                                                   {targetRow.url}
                                                 </span>
                                               </button>
-                                              <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
-                                                {backendLabel}
-                                              </span>
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300">
+                                                  {serviceLabel}
+                                                </span>
+                                                <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
+                                                  {backendLabel}
+                                                </span>
+                                              </div>
                                               <button
                                                 type="button"
                                                 onClick={() => {
@@ -3091,20 +3093,9 @@ export default function ProductsTab({
                                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-900/60 px-2.5 py-2">
                                     <div className="min-w-0">
                                       {selectedAutomationTarget ? (
-                                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                                          <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
-                                            {selectedAutomationServiceLabel}
-                                          </span>
-                                          <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
-                                            {selectedAutomationTarget.backend}
-                                          </span>
-                                          <span
-                                            className="max-w-[420px] truncate text-[11px] text-slate-300"
-                                            title={selectedAutomationTarget.url}
-                                          >
-                                            {selectedAutomationTarget.url}
-                                          </span>
-                                        </div>
+                                        <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
+                                          {selectedAutomationServiceLabel}
+                                        </span>
                                       ) : (
                                         <span className="text-[11px] text-slate-500">
                                           Calistirmak icin bir satir secin
