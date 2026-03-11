@@ -756,27 +756,6 @@ const normalizeAutomationRunLogEntry = (entry) => {
   return { id, time, status, message }
 }
 
-const normalizeAutomationTargetEntry = (entry) => {
-  const id = String(entry?.id ?? "").trim()
-  const url = String(entry?.url ?? "").trim()
-  const backend = String(entry?.backend ?? "").trim()
-  if (!id || !url || !backend) return null
-  return {
-    id,
-    url,
-    backend,
-    createdAt: entry?.createdAt instanceof Date ? entry.createdAt.toISOString() : null,
-    updatedAt: entry?.updatedAt instanceof Date ? entry.updatedAt.toISOString() : null,
-  }
-}
-
-const normalizeAutomationTargetPayload = (entry) => {
-  const url = String(entry?.url ?? "").trim()
-  const backend = String(entry?.backend ?? "").trim()
-  if (!url || !backend) return null
-  return { url, backend }
-}
-
 const normalizeEldoradoAutomationRunLogEntry = (entry, offerIdFromRoute = "") => {
   const offerId = String(offerIdFromRoute || entry?.offerId || "").trim()
   const id = String(entry?.id ?? "").trim()
@@ -892,58 +871,6 @@ app.delete("/api/automations/:id", requirePermission("automation.view"), async (
   } catch (error) {
     if (error?.code === "P2025") {
       res.status(404).json({ error: "Automation not found" })
-      return
-    }
-    throw error
-  }
-})
-
-app.get("/api/automation/targets", requirePermission("automation.view"), async (_req, res) => {
-  const rows = await prisma.automationTarget.findMany({
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-  })
-  const normalized = rows
-    .map((row) => normalizeAutomationTargetEntry(row))
-    .filter(Boolean)
-  res.json(normalized)
-})
-
-app.post("/api/automation/targets", requirePermission("automation.view"), async (req, res) => {
-  const normalized = normalizeAutomationTargetPayload(req.body)
-  if (!normalized) {
-    res.status(400).json({ error: "url and backend are required" })
-    return
-  }
-
-  try {
-    const created = await prisma.automationTarget.create({
-      data: normalized,
-    })
-    res.status(201).json(normalizeAutomationTargetEntry(created))
-  } catch (error) {
-    if (error?.code === "P2002") {
-      res.status(409).json({ error: "Target already exists" })
-      return
-    }
-    throw error
-  }
-})
-
-app.delete("/api/automation/targets/:id", requirePermission("automation.view"), async (req, res) => {
-  const id = String(req.params?.id ?? "").trim()
-  if (!id) {
-    res.status(400).json({ error: "id is required" })
-    return
-  }
-
-  try {
-    await prisma.automationTarget.delete({
-      where: { id },
-    })
-    res.json({ ok: true })
-  } catch (error) {
-    if (error?.code === "P2025") {
-      res.status(404).json({ error: "Target not found" })
       return
     }
     throw error

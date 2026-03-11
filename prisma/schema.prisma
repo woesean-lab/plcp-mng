@@ -223,16 +223,6 @@ model AutomationRunLog {
   createdAt DateTime @default(now())
 }
 
-model AutomationTarget {
-  id        String   @id @default(cuid())
-  url       String
-  backend   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([url, backend])
-}
-
 model EldoradoAutomationRunLog {
   id        String   @id
   offerId   String
