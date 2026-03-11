@@ -3056,15 +3056,17 @@ export default function ProductsTab({
                                               <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300">
                                                 {serviceLabel}
                                               </span>
-                                              <a
-                                                href={targetRow.url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="min-w-0 flex-1 truncate text-[11px] text-slate-100 underline-offset-2 transition hover:text-sky-200 hover:underline"
-                                                title={targetRow.url}
-                                              >
-                                                {targetRow.url}
-                                              </a>
+                                              <div className="min-w-0 flex-1 truncate">
+                                                <a
+                                                  href={targetRow.url}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  className="text-[11px] text-slate-100 underline-offset-2 transition hover:text-sky-200 hover:underline"
+                                                  title={targetRow.url}
+                                                >
+                                                  {targetRow.url}
+                                                </a>
+                                              </div>
                                               <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
                                                 {backendLabel}
                                               </span>
