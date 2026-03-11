@@ -91,8 +91,9 @@ const normalizeAutomationTarget = (entry) => {
   const id = String(entry?.id ?? "").trim()
   const backend = String(entry?.backend ?? "").trim()
   const url = String(entry?.url ?? "").trim()
+  const starred = Boolean(entry?.starred)
   if (!backend || !url) return null
-  return { id, backend, url }
+  return { id, backend, url, starred }
 }
 
 const normalizeAutomationTargetList = (value) => {
@@ -117,6 +118,7 @@ const normalizeAutomationTargetList = (value) => {
         `pair-${encodeURIComponent(item.backend).slice(0, 80)}-${encodeURIComponent(item.url).slice(0, 160)}`,
       backend: item.backend,
       url: item.url,
+      starred: Boolean(item.starred),
     })
   })
   return normalized
@@ -263,6 +265,7 @@ export default function ProductsTab({
   onSaveAutomation,
   onAddAutomationTarget,
   onDeleteAutomationTarget,
+  onToggleAutomationTargetStar,
   onSavePrice,
   onTogglePrice,
   onToggleOfferStar,
@@ -286,6 +289,7 @@ export default function ProductsTab({
   canManageAutomationTargets: canManageAutomationTargetsProp,
   canRunAutomation: canRunAutomationProp,
   canViewAutomationLogs: canViewAutomationLogsProp,
+  canStarAutomationTargets: canStarAutomationTargetsProp,
   canViewLinks = false,
   canStarOffers: canStarOffersProp,
   canDeleteOffers = false,
@@ -340,6 +344,7 @@ export default function ProductsTab({
   const [automationSelectedTargetByOffer, setAutomationSelectedTargetByOffer] = useState({})
   const [automationTargetSavingByOffer, setAutomationTargetSavingByOffer] = useState({})
   const [automationTargetDeletingByOffer, setAutomationTargetDeletingByOffer] = useState({})
+  const [automationTargetStarringByOffer, setAutomationTargetStarringByOffer] = useState({})
   const [automationResultPopup, setAutomationResultPopup] = useState({
     isOpen: false,
     offerId: "",
@@ -465,6 +470,10 @@ export default function ProductsTab({
     typeof canViewAutomationLogsProp === "boolean"
       ? canViewAutomationLogsProp
       : canRunAutomation || canManageAutomationTargets
+  const canStarAutomationTargets =
+    typeof canStarAutomationTargetsProp === "boolean"
+      ? canStarAutomationTargetsProp
+      : canManageAutomationTargets
   const apiFetchAutomationLog = async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
     if (typeof window !== "undefined") {
@@ -864,6 +873,39 @@ export default function ProductsTab({
       })
     }
   }
+  const handleAutomationTargetStarToggle = async (offerId, targetId, nextStarred) => {
+    const normalizedId = String(offerId ?? "").trim()
+    const normalizedTargetId = String(targetId ?? "").trim()
+    if (
+      !normalizedId ||
+      !normalizedTargetId ||
+      !canStarAutomationTargets ||
+      typeof onToggleAutomationTargetStar !== "function"
+    ) {
+      return
+    }
+    const actionKey = `${normalizedId}:${normalizedTargetId}`
+    setAutomationTargetStarringByOffer((prev) => ({ ...prev, [actionKey]: true }))
+    try {
+      const saved = await onToggleAutomationTargetStar(normalizedId, normalizedTargetId, Boolean(nextStarred))
+      if (!saved) return
+      setAutomationTargetsByOffer((prev) => {
+        const rows = normalizeAutomationTargetList(prev?.[normalizedId]).map((entry) =>
+          entry.id === normalizedTargetId ? { ...entry, starred: Boolean(saved.starred) } : entry,
+        )
+        return {
+          ...prev,
+          [normalizedId]: rows,
+        }
+      })
+    } finally {
+      setAutomationTargetStarringByOffer((prev) => {
+        const next = { ...prev }
+        delete next[actionKey]
+        return next
+      })
+    }
+  }
   const persistAutomationRunLogEntry = async (offerId, entry) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId || !entry) return
@@ -956,6 +998,8 @@ export default function ProductsTab({
 
     const backend = String(target?.backend ?? "").trim()
     const runUrl = String(target?.url ?? "").trim()
+    const isStarredBackend = Boolean(target?.starred)
+    const backendDisplay = isStarredBackend ? `★ ${backend}` : backend
     if (!backend) {
       toast.error("Calistirmak icin backend map secin.")
       return
@@ -985,7 +1029,7 @@ export default function ProductsTab({
     appendAutomationRunLog(
       normalizedId,
       "running",
-      `${label} tetikleniyor... backend=${backend}, url=${runUrl}`,
+      `${label} tetikleniyor... backend=${backendDisplay}, url=${runUrl}`,
     )
 
     let settled = false
@@ -1089,7 +1133,7 @@ export default function ProductsTab({
         }
 
         if (packet.startsWith("44")) {
-          complete("error", `${label} tetiklenemedi. backend=${backend}`)
+          complete("error", `${label} tetiklenemedi. backend=${backendDisplay}`)
           return
         }
 
@@ -1099,7 +1143,7 @@ export default function ProductsTab({
         const firstArg = eventPacket.args[0]
 
         if (eventName === "script-triggered" || eventName === "script-started") {
-          appendAutomationRunLog(normalizedId, "running", `${backend} script baslatildi.`)
+          appendAutomationRunLog(normalizedId, "running", `${backendDisplay} script baslatildi.`)
           resetRunTimeout(300000)
           continue
         }
@@ -1141,7 +1185,9 @@ export default function ProductsTab({
         }
 
         if (eventName === "sonuc") {
-          const resultBackend = String(firstArg?.backend ?? backend).trim() || backend
+          const rawResultBackend = String(firstArg?.backend ?? backend).trim() || backend
+          const resultBackend =
+            rawResultBackend === backend && isStarredBackend ? `★ ${rawResultBackend}` : rawResultBackend
           let rawValue = ""
           if (typeof firstArg?.value === "string") {
             rawValue = firstArg.value
@@ -2112,6 +2158,7 @@ export default function ProductsTab({
                     selectedAutomationTargetIndex >= 0
                       ? `Servis ${selectedAutomationTargetIndex + 1}`
                       : ""
+                  const selectedAutomationTargetIsStarred = Boolean(selectedAutomationTarget?.starred)
                   const draftAutomationUrl = String(automationTargetDraft?.url ?? "")
                   const draftAutomationBackend =
                     String(automationTargetDraft?.backend ?? "").trim() ||
@@ -3057,10 +3104,13 @@ export default function ProductsTab({
                                             ).trim() || targetRow.backend
                                           const serviceLabel = `Servis ${targetIndex + 1}`
                                           const isSelected = selectedAutomationTarget?.id === targetRow.id
+                                          const isStarred = Boolean(targetRow?.starred)
                                           const deleteKey = `${offerId}:${targetRow.id}`
                                           const isDeleting = Boolean(
                                             automationTargetDeletingByOffer?.[deleteKey],
                                           )
+                                          const starKey = `${offerId}:${targetRow.id}`
+                                          const isStarring = Boolean(automationTargetStarringByOffer?.[starKey])
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
@@ -3104,8 +3154,28 @@ export default function ProductsTab({
                                                 </a>
                                               </div>
                                               <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
-                                                {backendLabel}
+                                                {isStarred ? `★ ${backendLabel}` : backendLabel}
                                               </span>
+                                              <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                  event.stopPropagation()
+                                                  void handleAutomationTargetStarToggle(
+                                                    offerId,
+                                                    targetRow.id,
+                                                    !isStarred,
+                                                  )
+                                                }}
+                                                disabled={!canStarAutomationTargets || isStarring}
+                                                className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                                  isStarred
+                                                    ? "border-amber-300/40 bg-amber-500/15 text-amber-100 hover:border-amber-200/60 hover:bg-amber-500/25"
+                                                    : "border-white/15 bg-white/5 text-slate-300 hover:border-white/30 hover:bg-white/10"
+                                                }`}
+                                                title={isStarred ? "Yildizi kaldir" : "Yildizla"}
+                                              >
+                                                {isStarring ? "..." : isStarred ? "★" : "☆"}
+                                              </button>
                                               <button
                                                 type="button"
                                                 onClick={(event) => {
@@ -3127,9 +3197,16 @@ export default function ProductsTab({
                                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-900/60 px-2.5 py-2">
                                     <div className="min-w-0">
                                       {selectedAutomationTarget ? (
-                                        <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
-                                          {selectedAutomationServiceLabel}
-                                        </span>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
+                                            {selectedAutomationServiceLabel}
+                                          </span>
+                                          {selectedAutomationTargetIsStarred && (
+                                            <span className="rounded border border-amber-300/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-100">
+                                              ★ Yildizli
+                                            </span>
+                                          )}
+                                        </div>
                                       ) : (
                                         <span className="text-[11px] text-slate-500">
                                           Calistirmak icin bir satir secin

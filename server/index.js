@@ -88,6 +88,7 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "products.stock.fetch.edit",
   "products.stock.fetch.run",
   "products.stock.fetch.logs.view",
+  "products.stock.fetch.star",
   "products.link.view",
   "products.star",
   "products.card.toggle",
@@ -150,8 +151,9 @@ const normalizeOfferAutomationTarget = (entry) => {
   const offerId = String(entry?.offerId ?? "").trim()
   const backend = String(entry?.backend ?? "").trim()
   const url = String(entry?.url ?? "").trim()
+  const starred = Boolean(entry?.starred)
   if (!id || !offerId || !backend || !url) return null
-  return { id, offerId, backend, url }
+  return { id, offerId, backend, url, starred }
 }
 
 const normalizeOfferAutomationTargetInput = (value) => {
@@ -435,6 +437,7 @@ const loadEldoradoStore = async () => {
       id: normalized.id,
       backend: normalized.backend,
       url: normalized.url,
+      starred: Boolean(normalized.starred),
     })
   })
 
@@ -808,6 +811,12 @@ const PRODUCT_STOCK_FETCH_RUN_PERMISSIONS = [
 const PRODUCT_STOCK_FETCH_LOGS_PERMISSIONS = [
   "products.stock.fetch.logs.view",
   "products.stock.fetch.run",
+  "products.stock.fetch",
+  "products.manage",
+]
+const PRODUCT_STOCK_FETCH_STAR_PERMISSIONS = [
+  "products.stock.fetch.star",
+  "products.stock.fetch.edit",
   "products.stock.fetch",
   "products.manage",
 ]
@@ -3078,7 +3087,12 @@ app.get(
     rows
       .map(normalizeOfferAutomationTarget)
       .filter(Boolean)
-      .map((entry) => ({ id: entry.id, backend: entry.backend, url: entry.url })),
+      .map((entry) => ({
+        id: entry.id,
+        backend: entry.backend,
+        url: entry.url,
+        starred: Boolean(entry.starred),
+      })),
   )
   },
 )
@@ -3121,6 +3135,7 @@ app.post(
       id: saved.id,
       backend: saved.backend,
       url: saved.url,
+      starred: Boolean(saved.starred),
     },
   })
   },
@@ -3146,6 +3161,48 @@ app.delete(
   }
 
   res.json({ ok: true, offerId, targetId })
+  },
+)
+
+app.put(
+  "/api/eldorado/offers/:id/automation-targets/:targetId/star",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_STAR_PERMISSIONS),
+  async (req, res) => {
+    const offerId = String(req.params.id ?? "").trim()
+    const targetId = String(req.params.targetId ?? "").trim()
+    if (!offerId || !targetId) {
+      res.status(400).json({ error: "offerId and targetId are required" })
+      return
+    }
+    const starredRaw = req.body?.starred
+    const starred =
+      typeof starredRaw === "boolean" ? starredRaw : String(starredRaw).toLowerCase() === "true"
+
+    const updated = await prisma.eldoradoOfferAutomationTarget.updateMany({
+      where: { id: targetId, offerId },
+      data: { starred },
+    })
+    if (updated.count === 0) {
+      res.status(404).json({ error: "automation target not found" })
+      return
+    }
+
+    const target = await prisma.eldoradoOfferAutomationTarget.findUnique({ where: { id: targetId } })
+    const normalized = normalizeOfferAutomationTarget(target)
+    if (!normalized) {
+      res.status(404).json({ error: "automation target not found" })
+      return
+    }
+
+    res.json({
+      ok: true,
+      target: {
+        id: normalized.id,
+        backend: normalized.backend,
+        url: normalized.url,
+        starred: Boolean(normalized.starred),
+      },
+    })
   },
 )
 

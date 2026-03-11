@@ -483,8 +483,9 @@ export default function useAppData() {
                 const id = String(entry?.id ?? "").trim()
                 const backend = String(entry?.backend ?? "").trim()
                 const url = String(entry?.url ?? "").trim()
+                const starred = Boolean(entry?.starred)
                 if (!id || !backend || !url) return null
-                return { id, backend, url }
+                return { id, backend, url, starred }
               })
               .filter(Boolean)
             if (normalizedList.length === 0) return acc
@@ -2775,11 +2776,12 @@ const handleEldoradoNoteSave = useCallback(
         const targetId = String(data?.target?.id ?? "").trim()
         const targetBackend = String(data?.target?.backend ?? "").trim()
         const targetUrl = String(data?.target?.url ?? "").trim()
+        const targetStarred = Boolean(data?.target?.starred)
         if (!targetId || !targetBackend || !targetUrl) {
           throw new Error("invalid_target_payload")
         }
 
-        const target = { id: targetId, backend: targetBackend, url: targetUrl }
+        const target = { id: targetId, backend: targetBackend, url: targetUrl, starred: targetStarred }
         setEldoradoAutomationTargetsByOffer((prev) => {
           const current = Array.isArray(prev?.[normalizedOfferId]) ? prev[normalizedOfferId] : []
           const withoutDuplicate = current.filter((item) => item.id !== targetId)
@@ -2799,6 +2801,61 @@ const handleEldoradoNoteSave = useCallback(
           detail
             ? `Otomasyon satiri kaydedilemedi (${detail}).`
             : "Otomasyon satiri kaydedilemedi (API/Server kontrol edin).",
+        )
+        return null
+      }
+    },
+    [apiFetch, readApiError],
+  )
+
+  const handleEldoradoOfferAutomationTargetStarToggle = useCallback(
+    async (offerId, targetId, starred) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      const normalizedTargetId = String(targetId ?? "").trim()
+      if (!normalizedOfferId || !normalizedTargetId) return null
+
+      try {
+        const res = await apiFetch(
+          `/api/eldorado/offers/${normalizedOfferId}/automation-targets/${normalizedTargetId}/star`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ starred: Boolean(starred) }),
+          },
+        )
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
+        const data = await res.json()
+        const normalized = {
+          id: String(data?.target?.id ?? "").trim(),
+          backend: String(data?.target?.backend ?? "").trim(),
+          url: String(data?.target?.url ?? "").trim(),
+          starred: Boolean(data?.target?.starred),
+        }
+        if (!normalized.id || !normalized.backend || !normalized.url) {
+          throw new Error("invalid_target_payload")
+        }
+
+        setEldoradoAutomationTargetsByOffer((prev) => {
+          const current = Array.isArray(prev?.[normalizedOfferId]) ? prev[normalizedOfferId] : []
+          return {
+            ...prev,
+            [normalizedOfferId]: current.map((entry) =>
+              String(entry?.id ?? "").trim() === normalized.id
+                ? { ...entry, starred: normalized.starred }
+                : entry,
+            ),
+          }
+        })
+        return normalized
+      } catch (error) {
+        const detail = String(error?.message ?? "").trim()
+        toast.error(
+          detail
+            ? `Stok çek yildiz ayari kaydedilemedi (${detail}).`
+            : "Stok çek yildiz ayari kaydedilemedi (API/Server kontrol edin).",
         )
         return null
       }
@@ -5647,6 +5704,7 @@ const handleEldoradoNoteSave = useCallback(
     handleEldoradoOfferAutomationSave,
     handleEldoradoOfferAutomationTargetAdd,
     handleEldoradoOfferAutomationTargetDelete,
+    handleEldoradoOfferAutomationTargetStarToggle,
     handleEldoradoOfferPriceSave,
     handleEldoradoOfferPriceToggle,
     handleEldoradoOfferStarToggle,

@@ -226,6 +226,7 @@ function App() {
     handleEldoradoOfferAutomationSave,
     handleEldoradoOfferAutomationTargetAdd,
     handleEldoradoOfferAutomationTargetDelete,
+    handleEldoradoOfferAutomationTargetStarToggle,
     handleEldoradoOfferPriceSave,
     handleEldoradoOfferPriceToggle,
     handleEldoradoOfferStarToggle,
@@ -439,6 +440,12 @@ function App() {
   const canViewProductAutomationLogs = hasAnyPermission([
     PERMISSIONS.productsStockFetchLogsView,
     PERMISSIONS.productsStockFetchRun,
+    PERMISSIONS.productsStockFetch,
+    PERMISSIONS.productsManage,
+  ])
+  const canStarProductAutomationTargets = hasAnyPermission([
+    PERMISSIONS.productsStockFetchStar,
+    PERMISSIONS.productsStockFetchEdit,
     PERMISSIONS.productsStockFetch,
     PERMISSIONS.productsManage,
   ])
@@ -1149,6 +1156,7 @@ function App() {
               onSaveAutomation={handleEldoradoOfferAutomationSave}
               onAddAutomationTarget={handleEldoradoOfferAutomationTargetAdd}
               onDeleteAutomationTarget={handleEldoradoOfferAutomationTargetDelete}
+              onToggleAutomationTargetStar={handleEldoradoOfferAutomationTargetStarToggle}
               onSavePrice={handleEldoradoOfferPriceSave}
               onTogglePrice={handleEldoradoOfferPriceToggle}
               onToggleOfferStar={handleEldoradoOfferStarToggle}
@@ -1172,6 +1180,7 @@ function App() {
               canManageAutomationTargets={canManageProductAutomation}
               canRunAutomation={canRunProductAutomation}
               canViewAutomationLogs={canViewProductAutomationLogs}
+              canStarAutomationTargets={canStarProductAutomationTargets}
               canViewLinks={canViewProductLinks}
               canStarOffers={canStarProducts}
               canDeleteOffers={canDeleteOffers}
