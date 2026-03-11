@@ -314,6 +314,19 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
         const configWsUrl = String(configPayload?.wsUrl ?? "").trim()
         setWsUrl(configWsUrl)
         setSavedWsUrl(configWsUrl)
+        const configBackendOptions = Array.isArray(configPayload?.backendOptions)
+          ? configPayload.backendOptions.map(normalizeBackendOption).filter(Boolean)
+          : Array.isArray(configPayload?.backendMaps)
+            ? configPayload.backendMaps.map(normalizeBackendOption).filter(Boolean)
+            : []
+        setBackendOptions(configBackendOptions)
+        if (configBackendOptions.length > 0) {
+          setBackendListStatus("success")
+          setBackendListMessage(`${configBackendOptions.length} backend map hazir.`)
+        } else {
+          setBackendListStatus("idle")
+          setBackendListMessage("Baglanti kuruldugunda backend map listesi alinacak.")
+        }
 
         const normalizedLogs = Array.isArray(logsPayload)
           ? logsPayload.map(normalizeRunLogEntry).filter(Boolean).slice(0, MAX_RUN_LOG_ENTRIES)
@@ -334,7 +347,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       isMounted = false
       controller.abort()
     }
-  }, [apiFetchAutomation, normalizeRunLogEntry, readApiError, toastStyle])
+  }, [apiFetchAutomation, normalizeBackendOption, normalizeRunLogEntry, readApiError, toastStyle])
 
   useEffect(() => {
     if (backendSelectOptions.length === 0) return
@@ -612,6 +625,24 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
       })
     }), [extractBackendItems, normalizeBackendOption])
 
+  const persistBackendOptions = useCallback(async (options) => {
+    const normalized = Array.isArray(options)
+      ? options.map(normalizeBackendOption).filter(Boolean)
+      : []
+    try {
+      const res = await apiFetchAutomation("/api/automation/config", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ backendOptions: normalized }),
+      })
+      if (!res.ok) {
+        // Ignore API-level errors; keep local UI responsive.
+      }
+    } catch {
+      // Ignore persistence errors; keep local UI responsive.
+    }
+  }, [apiFetchAutomation, normalizeBackendOption])
+
   const refreshBackendMaps = useCallback(async (options = {}) => {
     const normalized = String(options?.targetUrl ?? savedWsUrl ?? wsUrl).trim()
     const silent = Boolean(options?.silent)
@@ -665,6 +696,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
 
     setBackendOptions(normalizedItems)
+    void persistBackendOptions(normalizedItems)
     setBackendListStatus("success")
     setBackendListMessage(`${normalizedItems.length} backend map alindi.`)
     if (!silent) {
@@ -675,6 +707,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     buildSocketIoWsUrl,
     fetchBackendMapsFromSocketIo,
     isValidWsUrl,
+    persistBackendOptions,
     savedWsUrl,
     toastStyle,
     wsUrl,

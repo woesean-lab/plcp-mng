@@ -107,6 +107,40 @@ const normalizePermissions = (value) => {
     .filter((perm) => perm && allowedPermissions.has(perm))
 }
 
+const normalizeAutomationBackendOption = (entry) => {
+  if (typeof entry === "string") {
+    const key = entry.trim()
+    if (!key) return null
+    return { key, label: key }
+  }
+  if (!entry || typeof entry !== "object") return null
+  const key = String(entry?.key ?? entry?.backend ?? entry?.id ?? "").trim()
+  if (!key) return null
+  const label = String(entry?.label ?? entry?.title ?? entry?.name ?? key).trim() || key
+  return { key, label }
+}
+
+const normalizeAutomationBackendOptions = (value) => {
+  const list = Array.isArray(value)
+    ? value
+    : value && typeof value === "object"
+      ? Object.entries(value).map(([key, rawLabel]) => ({
+        key,
+        label: String(rawLabel ?? key).trim() || key,
+      }))
+      : []
+
+  const seenKeys = new Set()
+  const normalized = []
+  list.forEach((entry) => {
+    const option = normalizeAutomationBackendOption(entry)
+    if (!option || seenKeys.has(option.key)) return
+    seenKeys.add(option.key)
+    normalized.push(option)
+  })
+  return normalized
+}
+
 const readJsonFile = async (filePath) => {
   try {
     const raw = await fs.readFile(filePath, "utf8")
@@ -307,14 +341,13 @@ const loadEldoradoStore = async () => {
     messageGroupTemplateRows,
     messageTemplateRows,
     offerStars,
-    automationRows,
   ] = await Promise.all([
     prisma.eldoradoStockGroup.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.eldoradoStockGroupAssignment.findMany(),
     prisma.eldoradoStockEnabled.findMany(),
     prisma.automationConfig.findUnique({
       where: { id: "default" },
-      select: { wsUrl: true },
+      select: { wsUrl: true, backendMaps: true },
     }),
     prisma.eldoradoOfferAutomation.findMany(),
     prisma.eldoradoOfferPrice.findMany(),
@@ -328,10 +361,6 @@ const loadEldoradoStore = async () => {
     prisma.eldoradoMessageGroupTemplate.findMany(),
     prisma.eldoradoMessageTemplate.findMany(),
     prisma.eldoradoOfferStar.findMany(),
-    prisma.automation.findMany({
-      select: { title: true, backend: true },
-      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    }),
   ])
 
   const stockGroupAssignments = {}
@@ -369,15 +398,7 @@ const loadEldoradoStore = async () => {
     }
   })
 
-  const automationBackendOptions = []
-  const seenBackendKeys = new Set()
-  automationRows.forEach((entry) => {
-    const key = String(entry?.backend ?? "").trim()
-    if (!key || seenBackendKeys.has(key)) return
-    seenBackendKeys.add(key)
-    const label = String(entry?.title ?? "").trim() || key
-    automationBackendOptions.push({ key, label })
-  })
+  const automationBackendOptions = normalizeAutomationBackendOptions(automationConfig?.backendMaps)
 
   const offerPrices = {}
   offerPriceRows.forEach((entry) => {
@@ -666,7 +687,7 @@ async function ensureDefaults() {
 
   await prisma.automationConfig.upsert({
     where: { id: "default" },
-    create: { id: "default", wsUrl: null },
+    create: { id: "default", wsUrl: null, backendMaps: [] },
     update: {},
   })
 
@@ -860,38 +881,72 @@ app.get("/api/automation/config", requirePermission("automation.view"), async (_
   const config = await prisma.automationConfig.findUnique({
     where: { id: "default" },
   })
+  const backendOptions = normalizeAutomationBackendOptions(config?.backendMaps)
   res.json({
     wsUrl: String(config?.wsUrl ?? "").trim(),
+    backendOptions,
   })
 })
 
 app.put("/api/automation/config", requirePermission("automation.view"), async (req, res) => {
-  const wsUrlRaw = String(req.body?.wsUrl ?? "").trim()
-  let wsUrl = ""
+  const hasWsUrl = Object.prototype.hasOwnProperty.call(req.body ?? {}, "wsUrl")
+  const hasBackendOptions =
+    Object.prototype.hasOwnProperty.call(req.body ?? {}, "backendOptions") ||
+    Object.prototype.hasOwnProperty.call(req.body ?? {}, "backendMaps")
+  if (!hasWsUrl && !hasBackendOptions) {
+    res.status(400).json({ error: "wsUrl or backendOptions is required" })
+    return
+  }
 
-  if (wsUrlRaw) {
-    try {
-      const parsed = new URL(wsUrlRaw)
-      const protocol = String(parsed.protocol || "").toLowerCase()
-      if (protocol !== "ws:" && protocol !== "wss:") {
-        res.status(400).json({ error: "wsUrl must start with ws:// or wss://" })
+  let wsUrl = ""
+  if (hasWsUrl) {
+    const wsUrlRaw = String(req.body?.wsUrl ?? "").trim()
+    if (wsUrlRaw) {
+      try {
+        const parsed = new URL(wsUrlRaw)
+        const protocol = String(parsed.protocol || "").toLowerCase()
+        if (protocol !== "ws:" && protocol !== "wss:") {
+          res.status(400).json({ error: "wsUrl must start with ws:// or wss://" })
+          return
+        }
+        wsUrl = wsUrlRaw
+      } catch {
+        res.status(400).json({ error: "Invalid wsUrl" })
         return
       }
-      wsUrl = wsUrlRaw
-    } catch {
-      res.status(400).json({ error: "Invalid wsUrl" })
-      return
     }
+  }
+
+  let backendOptions = []
+  if (hasBackendOptions) {
+    const rawBackendOptions = Object.prototype.hasOwnProperty.call(req.body ?? {}, "backendOptions")
+      ? req.body?.backendOptions
+      : req.body?.backendMaps
+    backendOptions = normalizeAutomationBackendOptions(rawBackendOptions)
+  }
+
+  const createData = {
+    id: "default",
+    wsUrl: hasWsUrl ? wsUrl || null : null,
+    backendMaps: hasBackendOptions ? backendOptions : [],
+  }
+  const updateData = {}
+  if (hasWsUrl) {
+    updateData.wsUrl = wsUrl || null
+  }
+  if (hasBackendOptions) {
+    updateData.backendMaps = backendOptions
   }
 
   const updated = await prisma.automationConfig.upsert({
     where: { id: "default" },
-    create: { id: "default", wsUrl: wsUrl || null },
-    update: { wsUrl: wsUrl || null },
+    create: createData,
+    update: updateData,
   })
 
   res.json({
     wsUrl: String(updated.wsUrl ?? "").trim(),
+    backendOptions: normalizeAutomationBackendOptions(updated?.backendMaps),
   })
 })
 
