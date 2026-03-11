@@ -3087,7 +3087,7 @@ export default function ProductsTab({
                                     </button>
                                   </div>
 
-                                  <div className="overflow-hidden rounded-lg border border-white/10 bg-ink-900/50">
+                                  <div className="overflow-hidden rounded-lg border border-white/10 bg-ink-950/45">
                                     <div className="no-scrollbar max-h-[180px] overflow-auto divide-y divide-white/[0.05]">
                                       {automationTargets.length === 0 ? (
                                         <p className="px-3 py-4 text-center text-[11px] text-slate-500">
@@ -3143,8 +3143,8 @@ export default function ProductsTab({
                                               <span
                                                 className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
                                                   isSelected
-                                                    ? "border-white/15 bg-white/[0.08] text-white"
-                                                    : "border-white/15 bg-ink-900/70 text-slate-200"
+                                                    ? "border-white/20 bg-white/[0.08] text-white"
+                                                    : "border-white/15 bg-ink-950/70 text-slate-200"
                                                 }`}
                                               >
                                                 {serviceLabel}
@@ -3206,7 +3206,7 @@ export default function ProductsTab({
                                     <div className="min-w-0">
                                       {selectedAutomationTarget ? (
                                         <div className="flex items-center gap-1.5">
-                                          <span className="rounded border border-white/15 bg-ink-900/80 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-200">
+                                          <span className="rounded border border-white/15 bg-ink-950/80 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-200">
                                             {selectedAutomationServiceLabel}
                                           </span>
                                           {selectedAutomationTargetIsStarred && (

@@ -176,6 +176,18 @@
     background-color: rgba(219, 234, 254, 0.7);
   }
 
+  [data-theme='light'] .bg-ink-950\/45 {
+    background-color: rgba(219, 234, 254, 0.55);
+  }
+
+  [data-theme='light'] .bg-ink-950\/70 {
+    background-color: rgba(219, 234, 254, 0.76);
+  }
+
+  [data-theme='light'] .bg-ink-950\/80 {
+    background-color: rgba(219, 234, 254, 0.86);
+  }
+
   [data-theme='light'] .bg-ink-800 {
     background-color: #dbeafe;
   }
@@ -218,6 +230,10 @@
 
   [data-theme='light'] .border-white\/15 {
     border-color: rgba(30, 58, 138, 0.28);
+  }
+
+  [data-theme='light'] .border-white\/20 {
+    border-color: rgba(30, 58, 138, 0.32);
   }
 
   [data-theme='light'] .border-accent-200 {
