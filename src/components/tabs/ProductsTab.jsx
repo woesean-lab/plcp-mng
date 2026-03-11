@@ -3141,16 +3141,16 @@ export default function ProductsTab({
                                               <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300">
                                                 {serviceLabel}
                                               </span>
-                                              <div className="min-w-0 flex-1 truncate">
+                                              <div className="min-w-0 flex-1">
                                                 <a
                                                   href={targetRow.url}
                                                   target="_blank"
                                                   rel="noreferrer"
                                                   onClick={(event) => event.stopPropagation()}
-                                                  className="text-[11px] text-slate-100 transition-colors duration-150 hover:text-sky-200"
+                                                  className="inline-flex max-w-full items-center rounded-md border border-transparent px-1.5 py-0.5 font-mono text-[11px] text-slate-200 transition-all duration-150 hover:border-sky-300/35 hover:bg-sky-500/10 hover:text-sky-100"
                                                   title={targetRow.url}
                                                 >
-                                                  {targetRow.url}
+                                                  <span className="truncate">{targetRow.url}</span>
                                                 </a>
                                               </div>
                                               <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
