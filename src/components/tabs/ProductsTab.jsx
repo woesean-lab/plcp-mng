@@ -2087,6 +2087,13 @@ export default function ProductsTab({
                     automationTargets.find((entry) => entry.id === selectedAutomationTargetId) ||
                     automationTargets[0] ||
                     null
+                  const selectedAutomationTargetIndex = selectedAutomationTarget
+                    ? automationTargets.findIndex((entry) => entry.id === selectedAutomationTarget.id)
+                    : -1
+                  const selectedAutomationServiceLabel =
+                    selectedAutomationTargetIndex >= 0
+                      ? `Servis ${selectedAutomationTargetIndex + 1}`
+                      : ""
                   const draftAutomationUrl = String(automationTargetDraft?.url ?? "")
                   const draftAutomationBackend =
                     String(automationTargetDraft?.backend ?? "").trim() ||
@@ -3016,7 +3023,7 @@ export default function ProductsTab({
                                           Henuz otomasyon satiri eklenmedi.
                                         </p>
                                       ) : (
-                                        automationTargets.map((targetRow) => {
+                                        automationTargets.map((targetRow, targetIndex) => {
                                           const backendLabel =
                                             String(
                                               automationBackendOptions.find(
@@ -3024,6 +3031,7 @@ export default function ProductsTab({
                                                   String(option?.key ?? "").trim() === targetRow.backend,
                                               )?.label ?? "",
                                             ).trim() || targetRow.backend
+                                          const serviceLabel = `Servis ${targetIndex + 1}`
                                           const isSelected = selectedAutomationTarget?.id === targetRow.id
                                           const deleteKey = `${offerId}:${targetRow.id}`
                                           const isDeleting = Boolean(
@@ -3053,6 +3061,9 @@ export default function ProductsTab({
                                                 className="min-w-0 flex-1 text-left"
                                                 title={targetRow.url}
                                               >
+                                                <span className="mr-1 inline-flex h-4 items-center rounded border border-white/10 bg-white/5 px-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                                                  {serviceLabel}
+                                                </span>
                                                 <span className="block truncate text-[11px] text-slate-100">
                                                   {targetRow.url}
                                                 </span>
@@ -3081,6 +3092,9 @@ export default function ProductsTab({
                                     <div className="min-w-0">
                                       {selectedAutomationTarget ? (
                                         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                                          <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
+                                            {selectedAutomationServiceLabel}
+                                          </span>
                                           <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
                                             {selectedAutomationTarget.backend}
                                           </span>
