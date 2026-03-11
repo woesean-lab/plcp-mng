@@ -3087,8 +3087,8 @@ export default function ProductsTab({
                                     </button>
                                   </div>
 
-                                  <div className="overflow-hidden rounded-lg border border-white/10 bg-ink-950/80">
-                                    <div className="no-scrollbar max-h-[180px] overflow-auto divide-y divide-white/5">
+                                  <div className="overflow-hidden rounded-lg border border-white/10 bg-gradient-to-b from-ink-950/95 to-ink-900/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                                    <div className="no-scrollbar max-h-[180px] overflow-auto divide-y divide-white/[0.04] p-1.5">
                                       {automationTargets.length === 0 ? (
                                         <p className="px-3 py-4 text-center text-[11px] text-slate-500">
                                           Henuz otomasyon satiri eklenmedi.
@@ -3114,8 +3114,10 @@ export default function ProductsTab({
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                              className={`flex cursor-pointer items-center gap-2 px-3 py-2 ${
-                                                isSelected ? "bg-accent-500/12" : "hover:bg-white/5"
+                                              className={`flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 transition ${
+                                                isSelected
+                                                  ? "border border-sky-300/45 bg-gradient-to-r from-sky-500/25 via-sky-500/15 to-transparent shadow-[inset_0_0_0_1px_rgba(56,189,248,0.28),0_8px_20px_rgba(2,132,199,0.16)]"
+                                                  : "border border-transparent bg-ink-950/70 hover:border-white/10 hover:bg-ink-900/80"
                                               }`}
                                               onClick={() =>
                                                 handleAutomationTargetSelect(offerId, targetRow.id)
@@ -3138,7 +3140,13 @@ export default function ProductsTab({
                                                 }
                                                 className="h-3 w-3 accent-accent-400"
                                               />
-                                              <span className="rounded border border-white/15 bg-ink-950/80 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-200">
+                                              <span
+                                                className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                                                  isSelected
+                                                    ? "border-sky-300/40 bg-sky-500/20 text-sky-50"
+                                                    : "border-white/15 bg-ink-950/80 text-slate-200"
+                                                }`}
+                                              >
                                                 {serviceLabel}
                                               </span>
                                               <div className="min-w-0 flex-1">
