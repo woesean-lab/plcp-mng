@@ -2945,9 +2945,16 @@ export default function ProductsTab({
                                         URL ve backend map kaydet, satiri secip calistir.
                                       </p>
                                     </div>
-                                    <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
-                                      {automationTargets.length} kayit
-                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span
+                                        className={`inline-flex h-6 items-center rounded-md border px-2 text-[10px] font-semibold uppercase tracking-[0.12em] ${automationConnectionClass}`}
+                                      >
+                                        {automationConnectionLabel}
+                                      </span>
+                                      <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                                        {automationTargets.length} kayit
+                                      </span>
+                                    </div>
                                   </div>
 
                                   <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(170px,0.8fr)_auto]">
@@ -3072,11 +3079,6 @@ export default function ProductsTab({
 
                                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-900/60 px-2.5 py-2">
                                     <div className="min-w-0">
-                                      <span
-                                        className={`mb-1 inline-flex h-5 items-center rounded border px-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${automationConnectionClass}`}
-                                      >
-                                        {automationConnectionLabel}
-                                      </span>
                                       {selectedAutomationTarget ? (
                                         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                                           <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
