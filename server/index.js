@@ -62,10 +62,10 @@ const eldoradoTopupsUrl =
       "https://www.eldorado.gg/users/PulcipStore/shop/TopUp?page=1",
     "TopUp",
   )
-const eldoradoItemsPagesRaw = Number(process.env.ELDORADO_ITEMS_PAGES ?? 15)
+const eldoradoItemsPagesRaw = Number(process.env.ELDORADO_ITEMS_PAGES ?? 25)
 const eldoradoTopupsPagesRaw = Number(process.env.ELDORADO_TOPUPS_PAGES ?? 1)
 const eldoradoItemsPages =
-  Number.isFinite(eldoradoItemsPagesRaw) && eldoradoItemsPagesRaw > 0 ? eldoradoItemsPagesRaw : 15
+  Number.isFinite(eldoradoItemsPagesRaw) && eldoradoItemsPagesRaw > 0 ? eldoradoItemsPagesRaw : 25
 const eldoradoTopupsPages =
   Number.isFinite(eldoradoTopupsPagesRaw) && eldoradoTopupsPagesRaw > 0 ? eldoradoTopupsPagesRaw : 1
 const eldoradoTitleSelector = process.env.ELDORADO_TITLE_SELECTOR ?? ".offer-title"
