@@ -141,6 +141,24 @@ const normalizeAutomationBackendOptions = (value) => {
   return normalized
 }
 
+const normalizeOfferAutomationTarget = (entry) => {
+  const id = String(entry?.id ?? "").trim()
+  const offerId = String(entry?.offerId ?? "").trim()
+  const backend = String(entry?.backend ?? "").trim()
+  const url = String(entry?.url ?? "").trim()
+  if (!id || !offerId || !backend || !url) return null
+  return { id, offerId, backend, url }
+}
+
+const normalizeOfferAutomationTargetInput = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null
+  const backend = String(value?.backend ?? "").trim()
+  const url = String(value?.url ?? "").trim()
+  if (!backend || !url) return null
+  if (backend.length > 120 || url.length > 2000) return null
+  return { backend, url }
+}
+
 const readJsonFile = async (filePath) => {
   try {
     const raw = await fs.readFile(filePath, "utf8")
@@ -330,6 +348,7 @@ const loadEldoradoStore = async () => {
     stockEnabled,
     automationConfig,
     offerAutomationRows,
+    offerAutomationTargetRows,
     offerPriceRows,
     offerPriceEnabledRows,
     offerNotes,
@@ -350,6 +369,9 @@ const loadEldoradoStore = async () => {
       select: { wsUrl: true, backendMaps: true },
     }),
     prisma.eldoradoOfferAutomation.findMany(),
+    prisma.eldoradoOfferAutomationTarget.findMany({
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    }),
     prisma.eldoradoOfferPrice.findMany(),
     prisma.eldoradoOfferPriceEnabled.findMany(),
     prisma.eldoradoOfferNote.findMany(),
@@ -396,6 +418,20 @@ const loadEldoradoStore = async () => {
       automationBackendsByOffer[entry.offerId] = Array.from(new Set(mergedBackends))
       automationBackendByOffer[entry.offerId] = automationBackendsByOffer[entry.offerId][0]
     }
+  })
+
+  const automationTargetsByOffer = {}
+  offerAutomationTargetRows.forEach((entry) => {
+    const normalized = normalizeOfferAutomationTarget(entry)
+    if (!normalized) return
+    if (!automationTargetsByOffer[normalized.offerId]) {
+      automationTargetsByOffer[normalized.offerId] = []
+    }
+    automationTargetsByOffer[normalized.offerId].push({
+      id: normalized.id,
+      backend: normalized.backend,
+      url: normalized.url,
+    })
   })
 
   const automationBackendOptions = normalizeAutomationBackendOptions(automationConfig?.backendMaps)
@@ -478,6 +514,7 @@ const loadEldoradoStore = async () => {
     automationEnabledByOffer,
     automationBackendByOffer,
     automationBackendsByOffer,
+    automationTargetsByOffer,
     automationBackendOptions,
     offerPriceEnabledByOffer,
     offerPrices,
@@ -2988,6 +3025,84 @@ app.put("/api/eldorado/offers/:id/automation", async (req, res) => {
     backend: String(saved.backend ?? "").trim(),
     backends: Array.isArray(saved.backends) ? saved.backends : [],
   })
+})
+
+app.get("/api/eldorado/offers/:id/automation-targets", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+
+  const rows = await prisma.eldoradoOfferAutomationTarget.findMany({
+    where: { offerId },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  })
+
+  res.json(
+    rows
+      .map(normalizeOfferAutomationTarget)
+      .filter(Boolean)
+      .map((entry) => ({ id: entry.id, backend: entry.backend, url: entry.url })),
+  )
+})
+
+app.post("/api/eldorado/offers/:id/automation-targets", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+
+  const normalizedInput = normalizeOfferAutomationTargetInput(req.body)
+  if (!normalizedInput) {
+    res.status(400).json({ error: "backend and url are required" })
+    return
+  }
+
+  const saved = await prisma.eldoradoOfferAutomationTarget.upsert({
+    where: {
+      offerId_backend_url: {
+        offerId,
+        backend: normalizedInput.backend,
+        url: normalizedInput.url,
+      },
+    },
+    update: {},
+    create: {
+      offerId,
+      backend: normalizedInput.backend,
+      url: normalizedInput.url,
+    },
+  })
+
+  res.status(201).json({
+    ok: true,
+    target: {
+      id: saved.id,
+      backend: saved.backend,
+      url: saved.url,
+    },
+  })
+})
+
+app.delete("/api/eldorado/offers/:id/automation-targets/:targetId", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  const targetId = String(req.params.targetId ?? "").trim()
+  if (!offerId || !targetId) {
+    res.status(400).json({ error: "offerId and targetId are required" })
+    return
+  }
+
+  const removed = await prisma.eldoradoOfferAutomationTarget.deleteMany({
+    where: { offerId, id: targetId },
+  })
+  if (removed.count === 0) {
+    res.status(404).json({ error: "automation target not found" })
+    return
+  }
+
+  res.json({ ok: true, offerId, targetId })
 })
 
 app.get("/api/eldorado/offers/:id/automation-logs", async (req, res) => {

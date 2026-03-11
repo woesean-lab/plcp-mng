@@ -175,6 +175,7 @@ export default function useAppData() {
   const [eldoradoAutomationWsUrl, setEldoradoAutomationWsUrl] = useState("")
   const [eldoradoAutomationEnabledByOffer, setEldoradoAutomationEnabledByOffer] = useState({})
   const [eldoradoAutomationBackendsByOffer, setEldoradoAutomationBackendsByOffer] = useState({})
+  const [eldoradoAutomationTargetsByOffer, setEldoradoAutomationTargetsByOffer] = useState({})
   const [eldoradoAutomationBackendOptions, setEldoradoAutomationBackendOptions] = useState([])
   const [eldoradoOfferPrices, setEldoradoOfferPrices] = useState({})
   const [eldoradoOfferPriceEnabledByOffer, setEldoradoOfferPriceEnabledByOffer] = useState({})
@@ -469,6 +470,30 @@ export default function useAppData() {
                 }, {})
               : {}
         setEldoradoAutomationBackendsByOffer(automationBackendsRaw)
+        const automationTargetsRaw =
+          data?.automationTargetsByOffer && typeof data.automationTargetsByOffer === "object"
+            ? data.automationTargetsByOffer
+            : {}
+        const normalizedAutomationTargets = Object.entries(automationTargetsRaw).reduce(
+          (acc, [offerId, list]) => {
+            const normalizedOfferId = String(offerId ?? "").trim()
+            if (!normalizedOfferId || !Array.isArray(list)) return acc
+            const normalizedList = list
+              .map((entry) => {
+                const id = String(entry?.id ?? "").trim()
+                const backend = String(entry?.backend ?? "").trim()
+                const url = String(entry?.url ?? "").trim()
+                if (!id || !backend || !url) return null
+                return { id, backend, url }
+              })
+              .filter(Boolean)
+            if (normalizedList.length === 0) return acc
+            acc[normalizedOfferId] = normalizedList
+            return acc
+          },
+          {},
+        )
+        setEldoradoAutomationTargetsByOffer(normalizedAutomationTargets)
         setEldoradoAutomationBackendOptions(
           Array.isArray(data?.automationBackendOptions) ? data.automationBackendOptions : [],
         )
@@ -2725,6 +2750,103 @@ const handleEldoradoNoteSave = useCallback(
     [apiFetch, readApiError],
   )
 
+  const handleEldoradoOfferAutomationTargetAdd = useCallback(
+    async (offerId, payload = {}) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      if (!normalizedOfferId) return null
+      const backend = String(payload?.backend ?? "").trim()
+      const url = String(payload?.url ?? "").trim()
+      if (!backend || !url) {
+        toast.error("URL ve backend map gereklidir.")
+        return null
+      }
+
+      try {
+        const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/automation-targets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ backend, url }),
+        })
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
+        const data = await res.json()
+        const targetId = String(data?.target?.id ?? "").trim()
+        const targetBackend = String(data?.target?.backend ?? "").trim()
+        const targetUrl = String(data?.target?.url ?? "").trim()
+        if (!targetId || !targetBackend || !targetUrl) {
+          throw new Error("invalid_target_payload")
+        }
+
+        const target = { id: targetId, backend: targetBackend, url: targetUrl }
+        setEldoradoAutomationTargetsByOffer((prev) => {
+          const current = Array.isArray(prev?.[normalizedOfferId]) ? prev[normalizedOfferId] : []
+          const withoutDuplicate = current.filter((item) => item.id !== targetId)
+          return {
+            ...prev,
+            [normalizedOfferId]: [...withoutDuplicate, target],
+          }
+        })
+        toast.success("Otomasyon satiri kaydedildi", {
+          duration: 1500,
+          position: "top-right",
+        })
+        return target
+      } catch (error) {
+        const detail = String(error?.message ?? "").trim()
+        toast.error(
+          detail
+            ? `Otomasyon satiri kaydedilemedi (${detail}).`
+            : "Otomasyon satiri kaydedilemedi (API/Server kontrol edin).",
+        )
+        return null
+      }
+    },
+    [apiFetch, readApiError],
+  )
+
+  const handleEldoradoOfferAutomationTargetDelete = useCallback(
+    async (offerId, targetId) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      const normalizedTargetId = String(targetId ?? "").trim()
+      if (!normalizedOfferId || !normalizedTargetId) return false
+
+      try {
+        const res = await apiFetch(
+          `/api/eldorado/offers/${normalizedOfferId}/automation-targets/${normalizedTargetId}`,
+          { method: "DELETE" },
+        )
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
+
+        setEldoradoAutomationTargetsByOffer((prev) => {
+          const current = Array.isArray(prev?.[normalizedOfferId]) ? prev[normalizedOfferId] : []
+          const nextRows = current.filter((entry) => String(entry?.id ?? "").trim() !== normalizedTargetId)
+          const next = { ...prev }
+          if (nextRows.length > 0) {
+            next[normalizedOfferId] = nextRows
+          } else {
+            delete next[normalizedOfferId]
+          }
+          return next
+        })
+        return true
+      } catch (error) {
+        const detail = String(error?.message ?? "").trim()
+        toast.error(
+          detail
+            ? `Otomasyon satiri silinemedi (${detail}).`
+            : "Otomasyon satiri silinemedi (API/Server kontrol edin).",
+        )
+        return false
+      }
+    },
+    [apiFetch, readApiError],
+  )
+
   const handleEldoradoOfferPriceSave = useCallback(
     async (offerId, base, percent, result) => {
       const normalizedOfferId = String(offerId ?? "").trim()
@@ -2941,6 +3063,11 @@ const handleEldoradoNoteSave = useCallback(
           return next
         })
         setEldoradoAutomationBackendsByOffer((prev) => {
+          const next = { ...prev }
+          delete next[normalizedOfferId]
+          return next
+        })
+        setEldoradoAutomationTargetsByOffer((prev) => {
           const next = { ...prev }
           delete next[normalizedOfferId]
           return next
@@ -3691,6 +3818,7 @@ const handleEldoradoNoteSave = useCallback(
       setEldoradoAutomationWsUrl("")
       setEldoradoAutomationEnabledByOffer({})
       setEldoradoAutomationBackendsByOffer({})
+      setEldoradoAutomationTargetsByOffer({})
       setEldoradoAutomationBackendOptions([])
       return
     }
@@ -5484,6 +5612,7 @@ const handleEldoradoNoteSave = useCallback(
     eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
     eldoradoAutomationBackendsByOffer,
+    eldoradoAutomationTargetsByOffer,
     eldoradoAutomationBackendOptions,
     eldoradoOfferPrices,
     eldoradoOfferPriceEnabledByOffer,
@@ -5516,6 +5645,8 @@ const handleEldoradoNoteSave = useCallback(
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
     handleEldoradoOfferAutomationSave,
+    handleEldoradoOfferAutomationTargetAdd,
+    handleEldoradoOfferAutomationTargetDelete,
     handleEldoradoOfferPriceSave,
     handleEldoradoOfferPriceToggle,
     handleEldoradoOfferStarToggle,

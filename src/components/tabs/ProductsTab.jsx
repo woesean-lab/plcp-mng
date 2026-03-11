@@ -87,15 +87,39 @@ const buildSocketIoWsUrl = (normalizedUrl, extraQuery = {}) => {
   }
 }
 
-const normalizeAutomationBackendList = (value) => {
-  const list = Array.isArray(value) ? value : value ? [value] : []
-  return Array.from(
-    new Set(
-      list
-        .map((item) => String(item ?? "").trim())
-        .filter(Boolean),
-    ),
-  )
+const normalizeAutomationTarget = (entry) => {
+  const id = String(entry?.id ?? "").trim()
+  const backend = String(entry?.backend ?? "").trim()
+  const url = String(entry?.url ?? "").trim()
+  if (!backend || !url) return null
+  return { id, backend, url }
+}
+
+const normalizeAutomationTargetList = (value) => {
+  const list = Array.isArray(value) ? value : []
+  const seenById = new Set()
+  const seenByPair = new Set()
+  const normalized = []
+  list.forEach((entry) => {
+    const item = normalizeAutomationTarget(entry)
+    if (!item) return
+    const pairKey = `${item.backend}::${item.url}`
+    if (item.id) {
+      if (seenById.has(item.id)) return
+      seenById.add(item.id)
+    } else if (seenByPair.has(pairKey)) {
+      return
+    }
+    seenByPair.add(pairKey)
+    normalized.push({
+      id:
+        item.id ||
+        `pair-${encodeURIComponent(item.backend).slice(0, 80)}-${encodeURIComponent(item.url).slice(0, 160)}`,
+      backend: item.backend,
+      url: item.url,
+    })
+  })
+  return normalized
 }
 
 function ProductsSkeleton({ panelClass }) {
@@ -208,7 +232,7 @@ export default function ProductsTab({
   stockEnabledByOffer = {},
   automationWsUrl = "",
   automationEnabledByOffer: automationEnabledByOfferProp = {},
-  automationBackendsByOffer: automationBackendsByOfferProp = {},
+  automationTargetsByOffer: automationTargetsByOfferProp = {},
   automationBackendOptions = [],
   priceEnabledByOffer: priceEnabledByOfferProp = {},
   savedPricesByOffer: savedPricesByOfferProp = {},
@@ -237,6 +261,8 @@ export default function ProductsTab({
   onRemoveMessageTemplate,
   onToggleStock,
   onSaveAutomation,
+  onAddAutomationTarget,
+  onDeleteAutomationTarget,
   onSavePrice,
   onTogglePrice,
   onToggleOfferStar,
@@ -294,14 +320,22 @@ export default function ProductsTab({
       ? automationEnabledByOfferProp
       : {},
   )
-  const [automationBackendsByOffer, setAutomationBackendsByOffer] = useState(
-    automationBackendsByOfferProp && typeof automationBackendsByOfferProp === "object"
-      ? automationBackendsByOfferProp
+  const [automationTargetsByOffer, setAutomationTargetsByOffer] = useState(
+    automationTargetsByOfferProp && typeof automationTargetsByOfferProp === "object"
+      ? Object.entries(automationTargetsByOfferProp).reduce((acc, [offerId, rows]) => {
+          const normalizedOfferId = String(offerId ?? "").trim()
+          if (!normalizedOfferId) return acc
+          const normalizedRows = normalizeAutomationTargetList(rows)
+          if (normalizedRows.length === 0) return acc
+          acc[normalizedOfferId] = normalizedRows
+          return acc
+        }, {})
       : {},
   )
-  const [automationBackendsDrafts, setAutomationBackendsDrafts] = useState({})
-  const [automationBackendSelectionDrafts, setAutomationBackendSelectionDrafts] = useState({})
-  const [automationRunBackendDrafts, setAutomationRunBackendDrafts] = useState({})
+  const [automationTargetDraftsByOffer, setAutomationTargetDraftsByOffer] = useState({})
+  const [automationSelectedTargetByOffer, setAutomationSelectedTargetByOffer] = useState({})
+  const [automationTargetSavingByOffer, setAutomationTargetSavingByOffer] = useState({})
+  const [automationTargetDeletingByOffer, setAutomationTargetDeletingByOffer] = useState({})
   const [automationResultPopup, setAutomationResultPopup] = useState({
     isOpen: false,
     offerId: "",
@@ -342,17 +376,20 @@ export default function ProductsTab({
     setAutomationEnabledByOffer(automationEnabledByOfferProp)
   }, [automationEnabledByOfferProp])
   useEffect(() => {
-    if (!automationBackendsByOfferProp || typeof automationBackendsByOfferProp !== "object") return
-    const normalized = Object.entries(automationBackendsByOfferProp).reduce((acc, [offerId, list]) => {
+    if (!automationTargetsByOfferProp || typeof automationTargetsByOfferProp !== "object") {
+      setAutomationTargetsByOffer({})
+      return
+    }
+    const normalized = Object.entries(automationTargetsByOfferProp).reduce((acc, [offerId, list]) => {
       const normalizedOfferId = String(offerId ?? "").trim()
       if (!normalizedOfferId) return acc
-      const normalizedList = normalizeAutomationBackendList(list)
+      const normalizedList = normalizeAutomationTargetList(list)
       if (normalizedList.length === 0) return acc
       acc[normalizedOfferId] = normalizedList
       return acc
     }, {})
-    setAutomationBackendsByOffer(normalized)
-  }, [automationBackendsByOfferProp])
+    setAutomationTargetsByOffer(normalized)
+  }, [automationTargetsByOfferProp])
   useEffect(() => {
     if (!savedPricesByOfferProp || typeof savedPricesByOfferProp !== "object") return
     setPriceDrafts((prev) => {
@@ -673,57 +710,140 @@ export default function ProductsTab({
       })
     }
   }
-  const getAutomationDraftBackends = (offerId) => {
+  const getAutomationTargets = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return []
-    const draftRaw = automationBackendsDrafts?.[normalizedId]
-    if (draftRaw !== undefined) {
-      return normalizeAutomationBackendList(draftRaw)
+    return normalizeAutomationTargetList(automationTargetsByOffer?.[normalizedId])
+  }
+  const getAutomationTargetDraft = (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return { url: "", backend: "" }
+    const draft = automationTargetDraftsByOffer?.[normalizedId]
+    const draftBackend = String(draft?.backend ?? "").trim()
+    const fallbackBackend =
+      String(getAutomationTargets(normalizedId)[0]?.backend ?? "").trim() ||
+      String(automationBackendOptions?.[0]?.key ?? "").trim()
+    return {
+      url: String(draft?.url ?? ""),
+      backend: draftBackend || fallbackBackend,
     }
-    return normalizeAutomationBackendList(automationBackendsByOffer?.[normalizedId])
   }
-  const handleAutomationBackendSelectionChange = (offerId, value) => {
+  const handleAutomationTargetDraftChange = (offerId, field, value) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    setAutomationBackendSelectionDrafts((prev) => ({ ...prev, [normalizedId]: value }))
+    if (!["url", "backend"].includes(field)) return
+    setAutomationTargetDraftsByOffer((prev) => ({
+      ...prev,
+      [normalizedId]: {
+        ...(prev?.[normalizedId] ?? { url: "", backend: "" }),
+        [field]: field === "url" ? String(value ?? "") : String(value ?? "").trim(),
+      },
+    }))
   }
-  const handleAutomationBackendAdd = (offerId) => {
+  const handleAutomationTargetSave = async (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    const selectedBackend = String(automationBackendSelectionDrafts?.[normalizedId] ?? "").trim()
-    if (!selectedBackend) {
+    if (!normalizedId || !canManageAutomation || typeof onAddAutomationTarget !== "function") return
+    const draft = getAutomationTargetDraft(normalizedId)
+    const backend = String(draft.backend ?? "").trim()
+    const url = String(draft.url ?? "").trim()
+    if (!url) {
+      toast.error("URL girin.")
+      return
+    }
+    if (!backend) {
       toast.error("Backend map secin.")
       return
     }
-    const current = getAutomationDraftBackends(normalizedId)
-    if (current.includes(selectedBackend)) {
+
+    const current = getAutomationTargets(normalizedId)
+    if (current.some((entry) => entry.backend === backend && entry.url === url)) {
+      toast.error("Bu URL ve backend map zaten ekli.")
       return
     }
-    const next = [...current, selectedBackend]
-    setAutomationBackendsDrafts((prev) => ({ ...prev, [normalizedId]: next }))
-    setAutomationRunBackendDrafts((prev) => ({
-      ...prev,
-      [normalizedId]: String(prev?.[normalizedId] ?? "").trim() || selectedBackend,
-    }))
+
+    setAutomationTargetSavingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+    try {
+      const saved = await onAddAutomationTarget(normalizedId, { backend, url })
+      if (!saved) return
+      const savedTarget = normalizeAutomationTarget(saved)
+      if (!savedTarget?.id) return
+      setAutomationTargetsByOffer((prev) => {
+        const rows = normalizeAutomationTargetList(prev?.[normalizedId])
+        const withoutDuplicate = rows.filter((entry) => entry.id !== savedTarget.id)
+        return {
+          ...prev,
+          [normalizedId]: [...withoutDuplicate, { ...savedTarget, id: savedTarget.id }],
+        }
+      })
+      setAutomationTargetDraftsByOffer((prev) => ({
+        ...prev,
+        [normalizedId]: {
+          url: "",
+          backend,
+        },
+      }))
+      setAutomationSelectedTargetByOffer((prev) => ({
+        ...prev,
+        [normalizedId]: savedTarget.id,
+      }))
+    } finally {
+      setAutomationTargetSavingByOffer((prev) => {
+        const next = { ...prev }
+        delete next[normalizedId]
+        return next
+      })
+    }
   }
-  const handleAutomationBackendRemove = (offerId, backend) => {
+  const handleAutomationTargetSelect = (offerId, targetId) => {
     const normalizedId = String(offerId ?? "").trim()
-    const normalizedBackend = String(backend ?? "").trim()
-    if (!normalizedId || !normalizedBackend) return
-    const current = getAutomationDraftBackends(normalizedId)
-    const next = current.filter((item) => item !== normalizedBackend)
-    setAutomationBackendsDrafts((prev) => ({ ...prev, [normalizedId]: next }))
-    setAutomationRunBackendDrafts((prev) => {
-      const currentRun = String(prev?.[normalizedId] ?? "").trim()
-      if (currentRun && currentRun !== normalizedBackend) return prev
-      const replacement = next[0] || ""
-      return { ...prev, [normalizedId]: replacement }
-    })
+    const normalizedTargetId = String(targetId ?? "").trim()
+    if (!normalizedId || !normalizedTargetId) return
+    setAutomationSelectedTargetByOffer((prev) => ({ ...prev, [normalizedId]: normalizedTargetId }))
   }
-  const handleAutomationRunBackendChange = (offerId, value) => {
+  const handleAutomationTargetDelete = async (offerId, targetId) => {
     const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setAutomationRunBackendDrafts((prev) => ({ ...prev, [normalizedId]: value }))
+    const normalizedTargetId = String(targetId ?? "").trim()
+    if (
+      !normalizedId ||
+      !normalizedTargetId ||
+      !canManageAutomation ||
+      typeof onDeleteAutomationTarget !== "function"
+    ) {
+      return
+    }
+    const deletingKey = `${normalizedId}:${normalizedTargetId}`
+    setAutomationTargetDeletingByOffer((prev) => ({ ...prev, [deletingKey]: true }))
+    try {
+      const ok = await onDeleteAutomationTarget(normalizedId, normalizedTargetId)
+      if (!ok) return
+      setAutomationTargetsByOffer((prev) => {
+        const current = normalizeAutomationTargetList(prev?.[normalizedId])
+        const nextRows = current.filter((entry) => entry.id !== normalizedTargetId)
+        const next = { ...prev }
+        if (nextRows.length > 0) {
+          next[normalizedId] = nextRows
+        } else {
+          delete next[normalizedId]
+        }
+        return next
+      })
+      setAutomationSelectedTargetByOffer((prev) => {
+        const currentSelection = String(prev?.[normalizedId] ?? "").trim()
+        if (currentSelection !== normalizedTargetId) return prev
+        const rows = getAutomationTargets(normalizedId).filter((entry) => entry.id !== normalizedTargetId)
+        const nextSelection = rows[0]?.id || ""
+        return {
+          ...prev,
+          [normalizedId]: nextSelection,
+        }
+      })
+    } finally {
+      setAutomationTargetDeletingByOffer((prev) => {
+        const next = { ...prev }
+        delete next[deletingKey]
+        return next
+      })
+    }
   }
   const persistAutomationRunLogEntry = async (offerId, entry) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -810,14 +930,19 @@ export default function ProductsTab({
     }
     delete automationSocketByOfferRef.current[normalizedId]
   }
-  const handleAutomationRun = (offerId, backendValue, automationName) => {
+  const handleAutomationRun = (offerId, target, automationName) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     if (!canManageAutomation) return
 
-    const backend = String(backendValue ?? "").trim()
+    const backend = String(target?.backend ?? "").trim()
+    const runUrl = String(target?.url ?? "").trim()
     if (!backend) {
       toast.error("Calistirmak icin backend map secin.")
+      return
+    }
+    if (!runUrl) {
+      toast.error("Calistirmak icin URL secin.")
       return
     }
 
@@ -827,7 +952,7 @@ export default function ProductsTab({
       return
     }
 
-    const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, { backend })
+    const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, { backend, url: runUrl })
     if (!triggerUrl) {
       toast.error("Socket.IO adresi olusturulamadi.")
       return
@@ -837,7 +962,11 @@ export default function ProductsTab({
     closeAutomationSocket(normalizedId)
     setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     setAutomationResultPopup((prev) => ({ ...prev, isOpen: false }))
-    appendAutomationRunLog(normalizedId, "running", `${label} tetikleniyor... backend=${backend}`)
+    appendAutomationRunLog(
+      normalizedId,
+      "running",
+      `${label} tetikleniyor... backend=${backend}, url=${runUrl}`,
+    )
 
     let settled = false
     let hasConnected = false
@@ -1026,42 +1155,6 @@ export default function ProductsTab({
       }
       complete("error", `${label} icin websocket baglantisi kapandi.`)
     })
-  }
-  const handleAutomationSave = async (offerId) => {
-    if (!canManageAutomation || typeof onSaveAutomation !== "function") return
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    const selectedBackends = getAutomationDraftBackends(normalizedId)
-    if (selectedBackends.length === 0) {
-      toast.error("En az bir backend map ekleyin.")
-      return
-    }
-    const saved = await onSaveAutomation(normalizedId, { backends: selectedBackends })
-    if (!saved) return
-    const savedBackends = normalizeAutomationBackendList(saved?.backends)
-    setAutomationBackendsByOffer((prev) => {
-      const next = { ...prev }
-      if (savedBackends.length > 0) {
-        next[normalizedId] = savedBackends
-      } else {
-        delete next[normalizedId]
-      }
-      return next
-    })
-    setAutomationBackendsDrafts((prev) => {
-      const next = { ...prev }
-      if (savedBackends.length > 0) {
-        next[normalizedId] = savedBackends
-      } else {
-        delete next[normalizedId]
-      }
-      return next
-    })
-    setAutomationRunBackendDrafts((prev) => ({
-      ...prev,
-      [normalizedId]: String(prev?.[normalizedId] ?? "").trim() || savedBackends[0] || "",
-    }))
-    toast.success("Otomasyon backendleri kaydedildi.")
   }
   const handlePriceDraftChange = (offerId, field, value) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -1546,34 +1639,42 @@ export default function ProductsTab({
     prevNoteGroupAssignments.current = next
   }, [noteGroupAssignments])
   useEffect(() => {
-    const nextBackends =
-      automationBackendsByOffer && typeof automationBackendsByOffer === "object"
-        ? automationBackendsByOffer
-        : {}
-    setAutomationBackendsDrafts((prev) => {
+    const defaultBackend = String(automationBackendOptions?.[0]?.key ?? "").trim()
+    setAutomationTargetDraftsByOffer((prev) => {
       const next = { ...prev }
-      Object.entries(next).forEach(([offerId, draftList]) => {
-        const assigned = normalizeAutomationBackendList(nextBackends?.[offerId])
-        const normalizedDraft = normalizeAutomationBackendList(draftList)
-        if (assigned.join("||") === normalizedDraft.join("||")) {
+      Object.entries(next).forEach(([offerId, draft]) => {
+        const backend = String(draft?.backend ?? "").trim()
+        if (backend) return
+        const rows = normalizeAutomationTargetList(automationTargetsByOffer?.[offerId])
+        const fallbackBackend = String(rows[0]?.backend ?? "").trim() || defaultBackend
+        if (!fallbackBackend) return
+        next[offerId] = {
+          url: String(draft?.url ?? ""),
+          backend: fallbackBackend,
+        }
+      })
+      return next
+    })
+    setAutomationSelectedTargetByOffer((prev) => {
+      const next = { ...prev }
+      const allOfferIds = new Set([
+        ...Object.keys(next),
+        ...Object.keys(automationTargetsByOffer || {}),
+      ])
+      allOfferIds.forEach((offerId) => {
+        const rows = normalizeAutomationTargetList(automationTargetsByOffer?.[offerId])
+        if (rows.length === 0) {
           delete next[offerId]
+          return
         }
-      })
-      return next
-    })
-    setAutomationRunBackendDrafts((prev) => {
-      const next = { ...prev }
-      Object.entries(nextBackends).forEach(([offerId, assignedList]) => {
-        const list = normalizeAutomationBackendList(assignedList)
-        if (list.length === 0) return
         const current = String(next?.[offerId] ?? "").trim()
-        if (!current || !list.includes(current)) {
-          next[offerId] = list[0]
+        if (!current || !rows.some((row) => row.id === current)) {
+          next[offerId] = rows[0].id
         }
       })
       return next
     })
-  }, [automationBackendsByOffer])
+  }, [automationBackendOptions, automationTargetsByOffer])
   useEffect(() => {
     if (page > totalPages) {
       setPage(totalPages)
@@ -1959,22 +2060,21 @@ export default function ProductsTab({
                   const availablePanels = ["inventory", "note", "messages"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
                   const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
-                  const savedAutomationBackends = normalizeAutomationBackendList(
-                    automationBackendsByOffer?.[offerId],
-                  )
-                  const draftAutomationBackends = getAutomationDraftBackends(offerId)
-                  const selectedBackendToAdd = String(
-                    automationBackendSelectionDrafts?.[offerId] ?? "",
+                  const automationTargets = getAutomationTargets(offerId)
+                  const automationTargetDraft = getAutomationTargetDraft(offerId)
+                  const selectedAutomationTargetId = String(
+                    automationSelectedTargetByOffer?.[offerId] ?? "",
                   ).trim()
-                  const isAutomationBackendsDirty =
-                    savedAutomationBackends.join("||") !== draftAutomationBackends.join("||")
-                  const runBackendDraft = String(
-                    automationRunBackendDrafts?.[offerId] ?? "",
-                  ).trim()
-                  const runBackendValue =
-                    runBackendDraft && draftAutomationBackends.includes(runBackendDraft)
-                      ? runBackendDraft
-                      : draftAutomationBackends[0] || ""
+                  const selectedAutomationTarget =
+                    automationTargets.find((entry) => entry.id === selectedAutomationTargetId) ||
+                    automationTargets[0] ||
+                    null
+                  const draftAutomationUrl = String(automationTargetDraft?.url ?? "")
+                  const draftAutomationBackend =
+                    String(automationTargetDraft?.backend ?? "").trim() ||
+                    String(selectedAutomationTarget?.backend ?? "").trim() ||
+                    String(automationBackendOptions?.[0]?.key ?? "").trim()
+                  const isAutomationTargetSaving = Boolean(automationTargetSavingByOffer?.[offerId])
                   const automationRunLogEntries = Array.isArray(automationRunLogByOffer?.[offerId])
                     ? automationRunLogByOffer[offerId]
                     : []
@@ -2801,28 +2901,38 @@ export default function ProductsTab({
                               <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
                                 <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
                                   <label className="text-[12px] font-semibold text-slate-100">
-                                    Backend mapler
+                                    URL + backend map
                                   </label>
-                                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                                    <select
-                                      value={selectedBackendToAdd}
+                                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <input
+                                      type="text"
+                                      value={draftAutomationUrl}
                                       onChange={(event) =>
-                                        handleAutomationBackendSelectionChange(offerId, event.target.value)
+                                        handleAutomationTargetDraftChange(offerId, "url", event.target.value)
+                                      }
+                                      placeholder="https://site.com/urun"
+                                      disabled={!canManageAutomation || isAutomationTargetSaving}
+                                      className="min-w-[240px] flex-[2] rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-[12px] text-slate-100 h-9 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                    />
+                                    <select
+                                      value={draftAutomationBackend}
+                                      onChange={(event) =>
+                                        handleAutomationTargetDraftChange(offerId, "backend", event.target.value)
                                       }
                                       disabled={!canManageAutomation || automationBackendOptions.length === 0}
-                                      className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="min-w-[170px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-[12px] text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       <option value="">
                                         {automationBackendOptions.length === 0
                                           ? "Backend map bulunamadi"
-                                          : "Backend map secip ekleyin"}
+                                          : "Backend map sec"}
                                       </option>
                                       {automationBackendOptions.map((option) => {
                                         const optionKey = String(option?.key ?? "").trim()
                                         if (!optionKey) return null
                                         const optionLabel = String(option?.label ?? "").trim() || optionKey
                                         return (
-                                          <option key={`${offerId}-automation-${optionKey}`} value={optionKey}>
+                                          <option key={`${offerId}-automation-target-${optionKey}`} value={optionKey}>
                                             {optionLabel}
                                           </option>
                                         )
@@ -2830,100 +2940,119 @@ export default function ProductsTab({
                                     </select>
                                     <button
                                       type="button"
-                                      onClick={() => handleAutomationBackendAdd(offerId)}
+                                      onClick={() => {
+                                        void handleAutomationTargetSave(offerId)
+                                      }}
                                       disabled={
                                         !canManageAutomation ||
-                                        !selectedBackendToAdd ||
-                                        draftAutomationBackends.includes(selectedBackendToAdd)
-                                      }
-                                      className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      EKLE
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleAutomationSave(offerId)}
-                                      disabled={
-                                        !canManageAutomation ||
-                                        draftAutomationBackends.length === 0 ||
-                                        !isAutomationBackendsDirty
+                                        !draftAutomationBackend ||
+                                        !String(draftAutomationUrl ?? "").trim() ||
+                                        isAutomationTargetSaving
                                       }
                                       className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-9 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      KAYDET
+                                      {isAutomationTargetSaving ? "KAYDEDILIYOR..." : "KAYDET"}
                                     </button>
                                   </div>
-                                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                                    {draftAutomationBackends.length === 0 ? (
-                                      <p className="text-[11px] text-slate-500">
-                                        Henuz backend map secilmedi.
-                                      </p>
-                                    ) : (
-                                      draftAutomationBackends.map((backend) => {
-                                        const matchingOption = automationBackendOptions.find(
-                                          (option) =>
-                                            String(option?.key ?? "").trim() === backend,
-                                        )
-                                        const backendLabel =
-                                          String(matchingOption?.label ?? "").trim() || backend
-                                        return (
-                                          <span
-                                            key={`${offerId}-selected-backend-${backend}`}
-                                            className="inline-flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 text-[11px] text-slate-100"
-                                          >
-                                            <span className="truncate">{backendLabel}</span>
-                                            <button
-                                              type="button"
-                                              onClick={() => handleAutomationBackendRemove(offerId, backend)}
-                                              disabled={!canManageAutomation}
-                                              className="inline-flex h-4 w-4 items-center justify-center rounded border border-white/10 text-[10px] text-slate-300 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                                              title="Kaldir"
-                                            >
-                                              x
-                                            </button>
-                                          </span>
-                                        )
-                                      })
-                                    )}
+                                  <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+                                    <div className="max-h-[180px] overflow-auto">
+                                      <table className="min-w-full text-left text-[11px] text-slate-200">
+                                        <thead className="sticky top-0 bg-ink-950/95 text-[10px] uppercase tracking-[0.14em] text-slate-400">
+                                          <tr>
+                                            <th className="w-12 px-3 py-2">Sec</th>
+                                            <th className="px-3 py-2">URL</th>
+                                            <th className="w-[180px] px-3 py-2">Backend</th>
+                                            <th className="w-16 px-3 py-2 text-right">Sil</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {automationTargets.length === 0 ? (
+                                            <tr>
+                                              <td colSpan={4} className="px-3 py-4 text-center text-slate-500">
+                                                Henuz otomasyon satiri eklenmedi.
+                                              </td>
+                                            </tr>
+                                          ) : (
+                                            automationTargets.map((targetRow) => {
+                                              const backendLabel =
+                                                String(
+                                                  automationBackendOptions.find(
+                                                    (option) =>
+                                                      String(option?.key ?? "").trim() === targetRow.backend,
+                                                  )?.label ?? "",
+                                                ).trim() || targetRow.backend
+                                              const isSelected = selectedAutomationTarget?.id === targetRow.id
+                                              const deleteKey = `${offerId}:${targetRow.id}`
+                                              const isDeleting = Boolean(
+                                                automationTargetDeletingByOffer?.[deleteKey],
+                                              )
+                                              return (
+                                                <tr
+                                                  key={`${offerId}-automation-target-row-${targetRow.id}`}
+                                                  className={`border-t border-white/5 ${
+                                                    isSelected ? "bg-accent-500/10" : "bg-transparent"
+                                                  }`}
+                                                >
+                                                  <td className="px-3 py-2 align-top">
+                                                    <input
+                                                      type="radio"
+                                                      name={`automation-target-select-${offerId}`}
+                                                      checked={isSelected}
+                                                      onChange={() =>
+                                                        handleAutomationTargetSelect(offerId, targetRow.id)
+                                                      }
+                                                      className="h-3.5 w-3.5 accent-accent-400"
+                                                    />
+                                                  </td>
+                                                  <td className="px-3 py-2 align-top">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                        handleAutomationTargetSelect(offerId, targetRow.id)
+                                                      }
+                                                      className="block w-full truncate text-left text-[11px] text-slate-100 transition hover:text-white"
+                                                      title={targetRow.url}
+                                                    >
+                                                      {targetRow.url}
+                                                    </button>
+                                                  </td>
+                                                  <td className="px-3 py-2 align-top text-slate-300">
+                                                    {backendLabel}
+                                                  </td>
+                                                  <td className="px-3 py-2 text-right align-top">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        void handleAutomationTargetDelete(offerId, targetRow.id)
+                                                      }}
+                                                      disabled={!canManageAutomation || isDeleting}
+                                                      className="rounded border border-rose-300/40 bg-rose-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    >
+                                                      {isDeleting ? "..." : "Sil"}
+                                                    </button>
+                                                  </td>
+                                                </tr>
+                                              )
+                                            })
+                                          )}
+                                        </tbody>
+                                      </table>
+                                    </div>
                                   </div>
-                                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                                    <select
-                                      value={runBackendValue}
-                                      onChange={(event) =>
-                                        handleAutomationRunBackendChange(offerId, event.target.value)
-                                      }
-                                      disabled={
-                                        !canManageAutomation ||
-                                        draftAutomationBackends.length === 0 ||
-                                        isAutomationRunning
-                                      }
-                                      className="min-w-[220px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      <option value="">
-                                        {draftAutomationBackends.length === 0
-                                          ? "Calistirmak icin backend ekleyin"
-                                          : "Calistirilacak backend sec"}
-                                      </option>
-                                      {draftAutomationBackends.map((backend) => {
-                                        const matchingOption = automationBackendOptions.find(
-                                          (option) =>
-                                            String(option?.key ?? "").trim() === backend,
-                                        )
-                                        const backendLabel =
-                                          String(matchingOption?.label ?? "").trim() || backend
-                                        return (
-                                          <option key={`${offerId}-run-backend-${backend}`} value={backend}>
-                                            {backendLabel}
-                                          </option>
-                                        )
-                                      })}
-                                    </select>
+                                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                                    <span className="text-[11px] text-slate-400">
+                                      {selectedAutomationTarget
+                                        ? `Secili: ${selectedAutomationTarget.backend}`
+                                        : "Calistirmak icin bir satir secin"}
+                                    </span>
                                     <button
                                       type="button"
-                                      onClick={() => handleAutomationRun(offerId, runBackendValue, name)}
+                                      onClick={() =>
+                                        handleAutomationRun(offerId, selectedAutomationTarget, name)
+                                      }
                                       disabled={
                                         !canManageAutomation ||
-                                        !runBackendValue ||
+                                        !selectedAutomationTarget ||
                                         isAutomationRunning
                                       }
                                       className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"

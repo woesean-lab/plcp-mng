@@ -193,6 +193,7 @@ function App() {
     eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
     eldoradoAutomationBackendsByOffer,
+    eldoradoAutomationTargetsByOffer,
     eldoradoAutomationBackendOptions,
     eldoradoOfferPrices,
     eldoradoOfferPriceEnabledByOffer,
@@ -223,6 +224,8 @@ function App() {
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
     handleEldoradoOfferAutomationSave,
+    handleEldoradoOfferAutomationTargetAdd,
+    handleEldoradoOfferAutomationTargetDelete,
     handleEldoradoOfferPriceSave,
     handleEldoradoOfferPriceToggle,
     handleEldoradoOfferStarToggle,
@@ -1093,6 +1096,7 @@ function App() {
               automationWsUrl={eldoradoAutomationWsUrl}
               automationEnabledByOffer={eldoradoAutomationEnabledByOffer}
               automationBackendsByOffer={eldoradoAutomationBackendsByOffer}
+              automationTargetsByOffer={eldoradoAutomationTargetsByOffer}
               automationBackendOptions={eldoradoAutomationBackendOptions}
               savedPricesByOffer={eldoradoOfferPrices}
               priceEnabledByOffer={eldoradoOfferPriceEnabledByOffer}
@@ -1121,6 +1125,8 @@ function App() {
               onSaveNote={handleEldoradoNoteSave}
               onToggleStock={handleEldoradoStockToggle}
               onSaveAutomation={handleEldoradoOfferAutomationSave}
+              onAddAutomationTarget={handleEldoradoOfferAutomationTargetAdd}
+              onDeleteAutomationTarget={handleEldoradoOfferAutomationTargetDelete}
               onSavePrice={handleEldoradoOfferPriceSave}
               onTogglePrice={handleEldoradoOfferPriceToggle}
               onToggleOfferStar={handleEldoradoOfferStarToggle}

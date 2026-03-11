@@ -91,6 +91,18 @@ model EldoradoOfferAutomation {
   updatedAt DateTime @updatedAt
 }
 
+model EldoradoOfferAutomationTarget {
+  id        String   @id @default(cuid())
+  offerId   String
+  backend   String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([offerId, backend, url])
+  @@index([offerId, createdAt])
+}
+
 model EldoradoSync {
   kind       String   @id
   lastSyncAt DateTime
