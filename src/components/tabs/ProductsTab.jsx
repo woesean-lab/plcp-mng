@@ -346,6 +346,7 @@ export default function ProductsTab({
   const [isAddingPopupStock, setIsAddingPopupStock] = useState(false)
   const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
+  const [automationConnectionStateByOffer, setAutomationConnectionStateByOffer] = useState({})
   const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [priceDrafts, setPriceDrafts] = useState({})
@@ -961,6 +962,7 @@ export default function ProductsTab({
     const label = String(automationName ?? "").trim() || "Otomasyon"
     closeAutomationSocket(normalizedId)
     setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+    setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connecting" }))
     setAutomationResultPopup((prev) => ({ ...prev, isOpen: false }))
     appendAutomationRunLog(
       normalizedId,
@@ -995,6 +997,17 @@ export default function ProductsTab({
       if (settled) return
       settled = true
       clearRunTimeout()
+      setAutomationConnectionStateByOffer((prev) => {
+        const next = { ...prev }
+        if (hasConnected) {
+          next[normalizedId] = "connected"
+        } else if (status === "error") {
+          next[normalizedId] = "error"
+        } else {
+          next[normalizedId] = "idle"
+        }
+        return next
+      })
       appendAutomationRunLog(normalizedId, status, message)
       setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: false }))
       closeAutomationSocket(normalizedId)
@@ -1039,7 +1052,11 @@ export default function ProductsTab({
         }
 
         if (packet.startsWith("40")) {
+          if (!hasConnected) {
+            appendAutomationRunLog(normalizedId, "running", "Baglanildi.")
+          }
           hasConnected = true
+          setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connected" }))
           resetRunTimeout(300000)
           continue
         }
@@ -1140,6 +1157,7 @@ export default function ProductsTab({
     })
 
     socket.addEventListener("error", () => {
+      setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "error" }))
       complete("error", `${label} icin websocket baglanti hatasi olustu.`)
     })
 
@@ -2075,6 +2093,24 @@ export default function ProductsTab({
                     String(selectedAutomationTarget?.backend ?? "").trim() ||
                     String(automationBackendOptions?.[0]?.key ?? "").trim()
                   const isAutomationTargetSaving = Boolean(automationTargetSavingByOffer?.[offerId])
+                  const automationConnectionState =
+                    String(automationConnectionStateByOffer?.[offerId] ?? "").trim() || "idle"
+                  const automationConnectionLabel =
+                    automationConnectionState === "connected"
+                      ? "Baglanildi"
+                      : automationConnectionState === "connecting"
+                        ? "Baglaniyor..."
+                        : automationConnectionState === "error"
+                          ? "Baglanti hatasi"
+                          : "Bagli degil"
+                  const automationConnectionClass =
+                    automationConnectionState === "connected"
+                      ? "border-emerald-300/40 bg-emerald-500/10 text-emerald-100"
+                      : automationConnectionState === "connecting"
+                        ? "border-amber-300/40 bg-amber-500/10 text-amber-100"
+                        : automationConnectionState === "error"
+                          ? "border-rose-300/40 bg-rose-500/10 text-rose-100"
+                          : "border-white/10 bg-white/5 text-slate-400"
                   const automationRunLogEntries = Array.isArray(automationRunLogByOffer?.[offerId])
                     ? automationRunLogByOffer[offerId]
                     : []
@@ -3036,6 +3072,11 @@ export default function ProductsTab({
 
                                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-900/60 px-2.5 py-2">
                                     <div className="min-w-0">
+                                      <span
+                                        className={`mb-1 inline-flex h-5 items-center rounded border px-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${automationConnectionClass}`}
+                                      >
+                                        {automationConnectionLabel}
+                                      </span>
                                       {selectedAutomationTarget ? (
                                         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                                           <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
