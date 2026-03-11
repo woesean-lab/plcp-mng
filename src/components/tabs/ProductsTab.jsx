@@ -3143,7 +3143,7 @@ export default function ProductsTab({
                                               <span
                                                 className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
                                                   isSelected
-                                                    ? "border-white/20 bg-white/[0.08] text-white"
+                                                    ? "automation-target-badge-selected"
                                                     : "border-white/15 bg-ink-950/70 text-slate-200"
                                                 }`}
                                               >
