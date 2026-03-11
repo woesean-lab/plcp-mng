@@ -3114,10 +3114,10 @@ export default function ProductsTab({
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                              className={`flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 transition ${
+                                              className={`flex w-full cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 transition-colors ${
                                                 isSelected
-                                                  ? "border border-white/15 bg-white/[0.07]"
-                                                  : "border border-transparent bg-transparent hover:bg-white/5"
+                                                  ? "border-white/30 bg-white/[0.12] hover:border-white/40 hover:bg-white/[0.16]"
+                                                  : "border-transparent bg-transparent hover:border-white/10 hover:bg-white/[0.05]"
                                               }`}
                                               onClick={() =>
                                                 handleAutomationTargetSelect(offerId, targetRow.id)
