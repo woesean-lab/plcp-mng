@@ -605,12 +605,6 @@
     background-color: #0b0f1999;
   }
 
-  .automation-target-badge-selected {
-    border-color: rgba(255, 255, 255, 0.2);
-    background-color: #0b0f1999;
-    color: #f8fafc;
-  }
-
   [data-theme='light'] .automation-target-row-selected {
     background-color: rgba(59, 130, 246, 0.24);
   }

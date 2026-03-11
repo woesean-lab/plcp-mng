@@ -3140,13 +3140,7 @@ export default function ProductsTab({
                                                 }
                                                 className="h-3 w-3 accent-accent-400"
                                               />
-                                              <span
-                                                className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
-                                                  isSelected
-                                                    ? "automation-target-badge-selected"
-                                                    : "border-white/15 bg-ink-950/70 text-slate-200"
-                                                }`}
-                                              >
+                                              <span className="rounded border border-white/15 bg-ink-950/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-200">
                                                 {serviceLabel}
                                               </span>
                                               <div className="min-w-0 flex-1">
