@@ -84,6 +84,7 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "products.price.manage",
   "products.price.details",
   "products.price.toggle",
+  "products.stock.fetch",
   "products.link.view",
   "products.star",
   "products.card.toggle",

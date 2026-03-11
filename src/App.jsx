@@ -419,7 +419,10 @@ function App() {
     PERMISSIONS.productsCardToggle,
     PERMISSIONS.productsManage,
   ])
-  const canManageProductAutomation = canToggleProductCard
+  const canManageProductAutomation = hasAnyPermission([
+    PERMISSIONS.productsStockFetch,
+    PERMISSIONS.productsManage,
+  ])
   const canViewProductLinks = hasAnyPermission([
     PERMISSIONS.productsLinkView,
     PERMISSIONS.productsManage,

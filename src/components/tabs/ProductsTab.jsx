@@ -959,7 +959,7 @@ export default function ProductsTab({
       return
     }
 
-    const label = String(automationName ?? "").trim() || "Stok Cek"
+    const label = String(automationName ?? "").trim() || "Stok çek"
     closeAutomationSocket(normalizedId)
     setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connecting" }))
@@ -1753,7 +1753,7 @@ export default function ProductsTab({
               Islem Basarili
             </p>
             <p className="mt-1 text-base font-semibold text-white">
-              {automationResultPopup.title || "Stok Cek"} tamamlandi.
+              {automationResultPopup.title || "Stok çek"} tamamlandi.
             </p>
             <p className="mt-1 text-xs text-slate-300">
               Sonuc: <span className="text-emerald-100">{automationResultPopup.backend || "-"}</span>
@@ -2635,7 +2635,7 @@ export default function ProductsTab({
                                   } ${!canManageAutomation ? "cursor-not-allowed opacity-60" : ""}`}
                                   aria-pressed={activePanel === "automation"}
                                 >
-                                  <span>Stok Cek</span>
+                                  <span>Stok çek</span>
                                 </button>
                               )}
                             </div>
@@ -2946,7 +2946,7 @@ export default function ProductsTab({
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div>
                                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                                        STOK CEK HEDEFLERI
+                                        STOK ÇEK HEDEFLERİ
                                       </p>
                                       <p className="mt-0.5 text-[11px] text-slate-400">
                                         URL ve backend map kaydet, satiri secip calistir.
