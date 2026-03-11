@@ -633,6 +633,9 @@ const runEldoradoScrape = ({ url, pages, outputPath }) => {
   return new Promise((resolve, reject) => {
     const env = {
       ...process.env,
+      // Force single-url mode from server refresh flow.
+      // If ELDORADO_URLS is set in host env, it would override ELDORADO_URL in scraper.
+      ELDORADO_URLS: "",
       ELDORADO_URL: url,
       ELDORADO_PAGES: String(pages),
       ELDORADO_OUTPUT: outputPath,
