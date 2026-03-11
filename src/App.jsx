@@ -449,6 +449,10 @@ function App() {
     PERMISSIONS.productsStockFetch,
     PERMISSIONS.productsManage,
   ])
+  const canViewProductAutomationTargetDetails = hasAnyPermission([
+    PERMISSIONS.productsStockFetchTargetDetailsView,
+    PERMISSIONS.productsManage,
+  ])
   const canViewProductLinks = hasAnyPermission([
     PERMISSIONS.productsLinkView,
     PERMISSIONS.productsManage,
@@ -1181,6 +1185,7 @@ function App() {
               canRunAutomation={canRunProductAutomation}
               canViewAutomationLogs={canViewProductAutomationLogs}
               canStarAutomationTargets={canStarProductAutomationTargets}
+              canViewAutomationTargetDetails={canViewProductAutomationTargetDetails}
               canViewLinks={canViewProductLinks}
               canStarOffers={canStarProducts}
               canDeleteOffers={canDeleteOffers}

@@ -124,6 +124,13 @@ const normalizeAutomationTargetList = (value) => {
   return normalized
 }
 
+const maskSensitiveText = (value, minLength = 8) => {
+  const raw = String(value ?? "").trim()
+  if (!raw) return "*".repeat(minLength)
+  const safeLength = Math.max(minLength, Math.min(raw.length, 48))
+  return "*".repeat(safeLength)
+}
+
 function ProductsSkeleton({ panelClass }) {
   return (
     <div className="space-y-6">
@@ -290,6 +297,7 @@ export default function ProductsTab({
   canRunAutomation: canRunAutomationProp,
   canViewAutomationLogs: canViewAutomationLogsProp,
   canStarAutomationTargets: canStarAutomationTargetsProp,
+  canViewAutomationTargetDetails: canViewAutomationTargetDetailsProp,
   canViewLinks = false,
   canStarOffers: canStarOffersProp,
   canDeleteOffers = false,
@@ -474,6 +482,10 @@ export default function ProductsTab({
     typeof canStarAutomationTargetsProp === "boolean"
       ? canStarAutomationTargetsProp
       : canManageAutomationTargets
+  const canViewAutomationTargetDetails =
+    typeof canViewAutomationTargetDetailsProp === "boolean"
+      ? canViewAutomationTargetDetailsProp
+      : true
   const apiFetchAutomationLog = async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
     if (typeof window !== "undefined") {
@@ -999,7 +1011,16 @@ export default function ProductsTab({
     const backend = String(target?.backend ?? "").trim()
     const runUrl = String(target?.url ?? "").trim()
     const isStarredBackend = Boolean(target?.starred)
-    const backendDisplay = isStarredBackend ? `★ ${backend}` : backend
+    const backendMasked = maskSensitiveText(backend, 8)
+    const backendDisplayRaw = isStarredBackend ? `★ ${backend}` : backend
+    const backendDisplay = canViewAutomationTargetDetails
+      ? backendDisplayRaw
+      : isStarredBackend
+        ? `★ ${backendMasked}`
+        : backendMasked
+    const runUrlDisplay = canViewAutomationTargetDetails
+      ? runUrl
+      : maskSensitiveText(runUrl, 16)
     if (!backend) {
       toast.error("Calistirmak icin backend map secin.")
       return
@@ -1029,7 +1050,7 @@ export default function ProductsTab({
     appendAutomationRunLog(
       normalizedId,
       "running",
-      `${label} tetikleniyor... backend=${backendDisplay}, url=${runUrl}`,
+      `${label} tetikleniyor... backend=${backendDisplay}, url=${runUrlDisplay}`,
     )
 
     let settled = false
@@ -1186,8 +1207,14 @@ export default function ProductsTab({
 
         if (eventName === "sonuc") {
           const rawResultBackend = String(firstArg?.backend ?? backend).trim() || backend
-          const resultBackend =
+          const resultBackendRaw =
             rawResultBackend === backend && isStarredBackend ? `★ ${rawResultBackend}` : rawResultBackend
+          const resultBackendMaskedBase = maskSensitiveText(rawResultBackend, 8)
+          const resultBackend = canViewAutomationTargetDetails
+            ? resultBackendRaw
+            : rawResultBackend === backend && isStarredBackend
+              ? `★ ${resultBackendMaskedBase}`
+              : resultBackendMaskedBase
           let rawValue = ""
           if (typeof firstArg?.value === "string") {
             rawValue = firstArg.value
@@ -2164,6 +2191,14 @@ export default function ProductsTab({
                     String(automationTargetDraft?.backend ?? "").trim() ||
                     String(selectedAutomationTarget?.backend ?? "").trim() ||
                     String(automationBackendOptions?.[0]?.key ?? "").trim()
+                  const isAutomationTargetDetailsHidden =
+                    !canViewAutomationTargetDetails && !canManageAutomationTargets
+                  const visibleDraftAutomationUrl = isAutomationTargetDetailsHidden
+                    ? maskSensitiveText(draftAutomationUrl, 16)
+                    : draftAutomationUrl
+                  const visibleDraftAutomationBackend = isAutomationTargetDetailsHidden
+                    ? ""
+                    : draftAutomationBackend
                   const isAutomationTargetSaving = Boolean(automationTargetSavingByOffer?.[offerId])
                   const automationConnectionState =
                     String(automationConnectionStateByOffer?.[offerId] ?? "").trim() || "idle"
@@ -3036,7 +3071,7 @@ export default function ProductsTab({
                                   <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(170px,0.8fr)_auto]">
                                     <input
                                       type="text"
-                                      value={draftAutomationUrl}
+                                      value={visibleDraftAutomationUrl}
                                       onChange={(event) =>
                                         handleAutomationTargetDraftChange(offerId, "url", event.target.value)
                                       }
@@ -3045,7 +3080,7 @@ export default function ProductsTab({
                                       className="h-8 rounded-md border border-white/10 bg-ink-900/80 px-2.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     />
                                     <select
-                                      value={draftAutomationBackend}
+                                      value={visibleDraftAutomationBackend}
                                       onChange={(event) =>
                                         handleAutomationTargetDraftChange(offerId, "backend", event.target.value)
                                       }
@@ -3111,6 +3146,14 @@ export default function ProductsTab({
                                           )
                                           const starKey = `${offerId}:${targetRow.id}`
                                           const isStarring = Boolean(automationTargetStarringByOffer?.[starKey])
+                                          const maskedUrl = maskSensitiveText(targetRow.url, 16)
+                                          const maskedBackend = maskSensitiveText(backendLabel, 8)
+                                          const urlDisplay = canViewAutomationTargetDetails
+                                            ? targetRow.url
+                                            : maskedUrl
+                                          const backendLabelDisplay = canViewAutomationTargetDetails
+                                            ? backendLabel
+                                            : maskedBackend
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
@@ -3144,19 +3187,28 @@ export default function ProductsTab({
                                                 {serviceLabel}
                                               </span>
                                               <div className="min-w-0 flex-1">
-                                                <a
-                                                  href={targetRow.url}
-                                                  target="_blank"
-                                                  rel="noreferrer"
-                                                  onClick={(event) => event.stopPropagation()}
-                                                  className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/5 hover:text-white"
-                                                  title={targetRow.url}
-                                                >
-                                                  <span className="truncate">{targetRow.url}</span>
-                                                </a>
+                                                {canViewAutomationTargetDetails ? (
+                                                  <a
+                                                    href={targetRow.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    onClick={(event) => event.stopPropagation()}
+                                                    className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/5 hover:text-white"
+                                                    title={targetRow.url}
+                                                  >
+                                                    <span className="truncate">{urlDisplay}</span>
+                                                  </a>
+                                                ) : (
+                                                  <span
+                                                    className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-300"
+                                                    title={urlDisplay}
+                                                  >
+                                                    <span className="truncate">{urlDisplay}</span>
+                                                  </span>
+                                                )}
                                               </div>
                                               <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
-                                                {isStarred ? `★ ${backendLabel}` : backendLabel}
+                                                {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                               </span>
                                               <button
                                                 type="button"
