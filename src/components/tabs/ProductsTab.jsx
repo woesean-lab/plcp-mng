@@ -959,7 +959,7 @@ export default function ProductsTab({
       return
     }
 
-    const label = String(automationName ?? "").trim() || "Otomasyon"
+    const label = String(automationName ?? "").trim() || "Stok Cek"
     closeAutomationSocket(normalizedId)
     setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connecting" }))
@@ -1753,7 +1753,7 @@ export default function ProductsTab({
               Islem Basarili
             </p>
             <p className="mt-1 text-base font-semibold text-white">
-              {automationResultPopup.title || "Otomasyon"} tamamlandi.
+              {automationResultPopup.title || "Stok Cek"} tamamlandi.
             </p>
             <p className="mt-1 text-xs text-slate-300">
               Sonuc: <span className="text-emerald-100">{automationResultPopup.backend || "-"}</span>
@@ -2334,8 +2334,8 @@ export default function ProductsTab({
                               } ${
                                 !offerId || !canManageAutomation ? "cursor-not-allowed opacity-60" : ""
                               }`}
-                              aria-label="Otomasyon ac/kapat"
-                              title={isAutomationEnabled ? "Otomasyon acik" : "Otomasyon kapali"}
+                              aria-label="Stok cek ac/kapat"
+                              title={isAutomationEnabled ? "Stok cek acik" : "Stok cek kapali"}
                             >
                               <span
                                 className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
@@ -2635,7 +2635,7 @@ export default function ProductsTab({
                                   } ${!canManageAutomation ? "cursor-not-allowed opacity-60" : ""}`}
                                   aria-pressed={activePanel === "automation"}
                                 >
-                                  <span>Otomasyon</span>
+                                  <span>Stok Cek</span>
                                 </button>
                               )}
                             </div>
@@ -2946,7 +2946,7 @@ export default function ProductsTab({
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div>
                                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                                        OTOMASYON HEDEFLERI
+                                        STOK CEK HEDEFLERI
                                       </p>
                                       <p className="mt-0.5 text-[11px] text-slate-400">
                                         URL ve backend map kaydet, satiri secip calistir.
@@ -3040,9 +3040,20 @@ export default function ProductsTab({
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                              className={`flex items-center gap-2 px-3 py-2 ${
+                                              className={`flex cursor-pointer items-center gap-2 px-3 py-2 ${
                                                 isSelected ? "bg-accent-500/12" : "hover:bg-white/5"
                                               }`}
+                                              onClick={() =>
+                                                handleAutomationTargetSelect(offerId, targetRow.id)
+                                              }
+                                              role="button"
+                                              tabIndex={0}
+                                              onKeyDown={(event) => {
+                                                if (event.key === "Enter" || event.key === " ") {
+                                                  event.preventDefault()
+                                                  handleAutomationTargetSelect(offerId, targetRow.id)
+                                                }
+                                              }}
                                             >
                                               <input
                                                 type="radio"
@@ -3061,7 +3072,8 @@ export default function ProductsTab({
                                                   href={targetRow.url}
                                                   target="_blank"
                                                   rel="noreferrer"
-                                                  className="text-[11px] text-slate-100 underline-offset-2 transition hover:text-sky-200 hover:underline"
+                                                  onClick={(event) => event.stopPropagation()}
+                                                  className="block max-w-full truncate rounded px-1.5 py-0.5 text-[11px] text-slate-100 transition-colors duration-150 hover:bg-sky-500/15 hover:text-sky-100"
                                                   title={targetRow.url}
                                                 >
                                                   {targetRow.url}
@@ -3072,7 +3084,8 @@ export default function ProductsTab({
                                               </span>
                                               <button
                                                 type="button"
-                                                onClick={() => {
+                                                onClick={(event) => {
+                                                  event.stopPropagation()
                                                   void handleAutomationTargetDelete(offerId, targetRow.id)
                                                 }}
                                                 disabled={!canManageAutomation || isDeleting}
