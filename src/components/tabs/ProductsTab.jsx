@@ -3116,7 +3116,7 @@ export default function ProductsTab({
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
                                               className={`flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 transition ${
                                                 isSelected
-                                                  ? "border border-sky-300/25 bg-sky-500/10"
+                                                  ? "border border-white/15 bg-white/[0.07]"
                                                   : "border border-transparent bg-transparent hover:bg-white/5"
                                               }`}
                                               onClick={() =>
@@ -3138,12 +3138,12 @@ export default function ProductsTab({
                                                 onChange={() =>
                                                   handleAutomationTargetSelect(offerId, targetRow.id)
                                                 }
-                                                className="h-3 w-3 accent-accent-400"
+                                                className="h-3 w-3 accent-slate-300"
                                               />
                                               <span
                                                 className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
                                                   isSelected
-                                                    ? "border-sky-300/25 bg-sky-500/10 text-sky-100"
+                                                    ? "border-white/20 bg-white/[0.08] text-white"
                                                     : "border-white/15 bg-ink-950/70 text-slate-200"
                                                 }`}
                                               >
