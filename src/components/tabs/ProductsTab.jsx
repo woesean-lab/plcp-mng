@@ -2899,11 +2899,22 @@ export default function ProductsTab({
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
                               <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
-                                <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
-                                  <label className="text-[12px] font-semibold text-slate-100">
-                                    URL + backend map
-                                  </label>
-                                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <div className="space-y-3">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                                        OTOMASYON HEDEFLERI
+                                      </p>
+                                      <p className="mt-0.5 text-[11px] text-slate-400">
+                                        URL ve backend map kaydet, satiri secip calistir.
+                                      </p>
+                                    </div>
+                                    <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                                      {automationTargets.length} kayit
+                                    </span>
+                                  </div>
+
+                                  <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(170px,0.8fr)_auto]">
                                     <input
                                       type="text"
                                       value={draftAutomationUrl}
@@ -2912,7 +2923,7 @@ export default function ProductsTab({
                                       }
                                       placeholder="https://site.com/urun"
                                       disabled={!canManageAutomation || isAutomationTargetSaving}
-                                      className="min-w-[240px] flex-[2] rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-[12px] text-slate-100 h-9 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="h-8 rounded-md border border-white/10 bg-ink-900/80 px-2.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     />
                                     <select
                                       value={draftAutomationBackend}
@@ -2920,12 +2931,12 @@ export default function ProductsTab({
                                         handleAutomationTargetDraftChange(offerId, "backend", event.target.value)
                                       }
                                       disabled={!canManageAutomation || automationBackendOptions.length === 0}
-                                      className="min-w-[170px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-[12px] text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="h-8 appearance-none rounded-md border border-white/10 bg-ink-900/80 px-2.5 text-[11px] text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       <option value="">
                                         {automationBackendOptions.length === 0
-                                          ? "Backend map bulunamadi"
-                                          : "Backend map sec"}
+                                          ? "Backend map yok"
+                                          : "Backend sec"}
                                       </option>
                                       {automationBackendOptions.map((option) => {
                                         const optionKey = String(option?.key ?? "").trim()
@@ -2949,102 +2960,100 @@ export default function ProductsTab({
                                         !String(draftAutomationUrl ?? "").trim() ||
                                         isAutomationTargetSaving
                                       }
-                                      className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-9 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="h-8 rounded-md border border-emerald-300/50 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      {isAutomationTargetSaving ? "KAYDEDILIYOR..." : "KAYDET"}
+                                      {isAutomationTargetSaving ? "..." : "Kaydet"}
                                     </button>
                                   </div>
-                                  <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
-                                    <div className="max-h-[180px] overflow-auto">
-                                      <table className="min-w-full text-left text-[11px] text-slate-200">
-                                        <thead className="sticky top-0 bg-ink-950/95 text-[10px] uppercase tracking-[0.14em] text-slate-400">
-                                          <tr>
-                                            <th className="w-12 px-3 py-2">Sec</th>
-                                            <th className="px-3 py-2">URL</th>
-                                            <th className="w-[180px] px-3 py-2">Backend</th>
-                                            <th className="w-16 px-3 py-2 text-right">Sil</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {automationTargets.length === 0 ? (
-                                            <tr>
-                                              <td colSpan={4} className="px-3 py-4 text-center text-slate-500">
-                                                Henuz otomasyon satiri eklenmedi.
-                                              </td>
-                                            </tr>
-                                          ) : (
-                                            automationTargets.map((targetRow) => {
-                                              const backendLabel =
-                                                String(
-                                                  automationBackendOptions.find(
-                                                    (option) =>
-                                                      String(option?.key ?? "").trim() === targetRow.backend,
-                                                  )?.label ?? "",
-                                                ).trim() || targetRow.backend
-                                              const isSelected = selectedAutomationTarget?.id === targetRow.id
-                                              const deleteKey = `${offerId}:${targetRow.id}`
-                                              const isDeleting = Boolean(
-                                                automationTargetDeletingByOffer?.[deleteKey],
-                                              )
-                                              return (
-                                                <tr
-                                                  key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                                  className={`border-t border-white/5 ${
-                                                    isSelected ? "bg-accent-500/10" : "bg-transparent"
-                                                  }`}
-                                                >
-                                                  <td className="px-3 py-2 align-top">
-                                                    <input
-                                                      type="radio"
-                                                      name={`automation-target-select-${offerId}`}
-                                                      checked={isSelected}
-                                                      onChange={() =>
-                                                        handleAutomationTargetSelect(offerId, targetRow.id)
-                                                      }
-                                                      className="h-3.5 w-3.5 accent-accent-400"
-                                                    />
-                                                  </td>
-                                                  <td className="px-3 py-2 align-top">
-                                                    <button
-                                                      type="button"
-                                                      onClick={() =>
-                                                        handleAutomationTargetSelect(offerId, targetRow.id)
-                                                      }
-                                                      className="block w-full truncate text-left text-[11px] text-slate-100 transition hover:text-white"
-                                                      title={targetRow.url}
-                                                    >
-                                                      {targetRow.url}
-                                                    </button>
-                                                  </td>
-                                                  <td className="px-3 py-2 align-top text-slate-300">
-                                                    {backendLabel}
-                                                  </td>
-                                                  <td className="px-3 py-2 text-right align-top">
-                                                    <button
-                                                      type="button"
-                                                      onClick={() => {
-                                                        void handleAutomationTargetDelete(offerId, targetRow.id)
-                                                      }}
-                                                      disabled={!canManageAutomation || isDeleting}
-                                                      className="rounded border border-rose-300/40 bg-rose-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    >
-                                                      {isDeleting ? "..." : "Sil"}
-                                                    </button>
-                                                  </td>
-                                                </tr>
-                                              )
-                                            })
-                                          )}
-                                        </tbody>
-                                      </table>
+
+                                  <div className="overflow-hidden rounded-lg border border-white/10 bg-ink-950/45">
+                                    <div className="no-scrollbar max-h-[180px] overflow-auto divide-y divide-white/5">
+                                      {automationTargets.length === 0 ? (
+                                        <p className="px-3 py-4 text-center text-[11px] text-slate-500">
+                                          Henuz otomasyon satiri eklenmedi.
+                                        </p>
+                                      ) : (
+                                        automationTargets.map((targetRow) => {
+                                          const backendLabel =
+                                            String(
+                                              automationBackendOptions.find(
+                                                (option) =>
+                                                  String(option?.key ?? "").trim() === targetRow.backend,
+                                              )?.label ?? "",
+                                            ).trim() || targetRow.backend
+                                          const isSelected = selectedAutomationTarget?.id === targetRow.id
+                                          const deleteKey = `${offerId}:${targetRow.id}`
+                                          const isDeleting = Boolean(
+                                            automationTargetDeletingByOffer?.[deleteKey],
+                                          )
+                                          return (
+                                            <div
+                                              key={`${offerId}-automation-target-row-${targetRow.id}`}
+                                              className={`flex items-center gap-2 px-3 py-2 ${
+                                                isSelected ? "bg-accent-500/12" : "hover:bg-white/5"
+                                              }`}
+                                            >
+                                              <input
+                                                type="radio"
+                                                name={`automation-target-select-${offerId}`}
+                                                checked={isSelected}
+                                                onChange={() =>
+                                                  handleAutomationTargetSelect(offerId, targetRow.id)
+                                                }
+                                                className="h-3 w-3 accent-accent-400"
+                                              />
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  handleAutomationTargetSelect(offerId, targetRow.id)
+                                                }
+                                                className="min-w-0 flex-1 text-left"
+                                                title={targetRow.url}
+                                              >
+                                                <span className="block truncate text-[11px] text-slate-100">
+                                                  {targetRow.url}
+                                                </span>
+                                              </button>
+                                              <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
+                                                {backendLabel}
+                                              </span>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  void handleAutomationTargetDelete(offerId, targetRow.id)
+                                                }}
+                                                disabled={!canManageAutomation || isDeleting}
+                                                className="rounded border border-rose-300/30 bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-rose-100 transition hover:border-rose-200/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                              >
+                                                {isDeleting ? "..." : "Sil"}
+                                              </button>
+                                            </div>
+                                          )
+                                        })
+                                      )}
                                     </div>
                                   </div>
-                                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                                    <span className="text-[11px] text-slate-400">
-                                      {selectedAutomationTarget
-                                        ? `Secili: ${selectedAutomationTarget.backend}`
-                                        : "Calistirmak icin bir satir secin"}
-                                    </span>
+
+                                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-900/60 px-2.5 py-2">
+                                    <div className="min-w-0">
+                                      {selectedAutomationTarget ? (
+                                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                                          <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
+                                            {selectedAutomationTarget.backend}
+                                          </span>
+                                          <span
+                                            className="max-w-[420px] truncate text-[11px] text-slate-300"
+                                            title={selectedAutomationTarget.url}
+                                          >
+                                            {selectedAutomationTarget.url}
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <span className="text-[11px] text-slate-500">
+                                          Calistirmak icin bir satir secin
+                                        </span>
+                                      )}
+                                    </div>
                                     <button
                                       type="button"
                                       onClick={() =>
@@ -3055,13 +3064,14 @@ export default function ProductsTab({
                                         !selectedAutomationTarget ||
                                         isAutomationRunning
                                       }
-                                      className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="h-8 rounded-md border border-sky-300/50 bg-sky-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      {isAutomationRunning ? "CALISIYOR..." : "CALISTIR"}
+                                      {isAutomationRunning ? "Calisiyor..." : "Calistir"}
                                     </button>
                                   </div>
+
                                   {!String(automationWsUrl ?? "").trim() && (
-                                    <p className="mt-2 text-[11px] text-amber-200/90">
+                                    <p className="text-[10px] text-amber-200/90">
                                       Websocket adresi yok. Stok cek sekmesinden baglanti adresini kaydet.
                                     </p>
                                   )}
