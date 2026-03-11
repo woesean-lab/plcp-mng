@@ -3053,26 +3053,21 @@ export default function ProductsTab({
                                                 }
                                                 className="h-3 w-3 accent-accent-400"
                                               />
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  handleAutomationTargetSelect(offerId, targetRow.id)
-                                                }
-                                                className="min-w-0 flex-1 text-left"
+                                              <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300">
+                                                {serviceLabel}
+                                              </span>
+                                              <a
+                                                href={targetRow.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="min-w-0 flex-1 truncate text-[11px] text-slate-100 underline-offset-2 transition hover:text-sky-200 hover:underline"
                                                 title={targetRow.url}
                                               >
-                                                <span className="block truncate text-[11px] text-slate-100">
-                                                  {targetRow.url}
-                                                </span>
-                                              </button>
-                                              <div className="flex items-center gap-1.5">
-                                                <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300">
-                                                  {serviceLabel}
-                                                </span>
-                                                <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
-                                                  {backendLabel}
-                                                </span>
-                                              </div>
+                                                {targetRow.url}
+                                              </a>
+                                              <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
+                                                {backendLabel}
+                                              </span>
                                               <button
                                                 type="button"
                                                 onClick={() => {
