@@ -3114,10 +3114,10 @@ export default function ProductsTab({
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                              className={`flex w-full cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 transition-colors ${
+                                              className={`flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 transition-colors ${
                                                 isSelected
-                                                  ? "border-accent-400/45 bg-accent-500/12 hover:border-accent-400/45 hover:bg-accent-400/12"
-                                                  : "border-transparent bg-transparent hover:border-white/10 hover:bg-white/[0.05]"
+                                                  ? "bg-accent-500/12 hover:bg-accent-400/12"
+                                                  : "bg-transparent hover:bg-white/[0.05]"
                                               }`}
                                               onClick={() =>
                                                 handleAutomationTargetSelect(offerId, targetRow.id)
@@ -3143,7 +3143,7 @@ export default function ProductsTab({
                                               <span
                                                 className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
                                                   isSelected
-                                                    ? "border-accent-300/35 bg-accent-500/15 text-accent-50"
+                                                    ? "border-white/20 bg-white/[0.08] text-white"
                                                     : "border-white/15 bg-ink-950/70 text-slate-200"
                                                 }`}
                                               >
