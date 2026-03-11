@@ -443,6 +443,10 @@ function App() {
     PERMISSIONS.productsStockFetch,
     PERMISSIONS.productsManage,
   ])
+  const canClearProductAutomationLogs = hasAnyPermission([
+    PERMISSIONS.productsStockFetchLogsClear,
+    PERMISSIONS.productsManage,
+  ])
   const canStarProductAutomationTargets = hasAnyPermission([
     PERMISSIONS.productsStockFetchStar,
     PERMISSIONS.productsStockFetchEdit,
@@ -1125,6 +1129,7 @@ function App() {
               messageGroupTemplates={eldoradoMessageGroupTemplates}
               messageTemplatesByOffer={eldoradoMessageTemplatesByOffer}
               templates={templates}
+              activeUsername={userName}
               stockEnabledByOffer={eldoradoStockEnabledByOffer}
               automationWsUrl={eldoradoAutomationWsUrl}
               automationEnabledByOffer={eldoradoAutomationEnabledByOffer}
@@ -1184,6 +1189,7 @@ function App() {
               canManageAutomationTargets={canManageProductAutomation}
               canRunAutomation={canRunProductAutomation}
               canViewAutomationLogs={canViewProductAutomationLogs}
+              canClearAutomationLogs={canClearProductAutomationLogs}
               canStarAutomationTargets={canStarProductAutomationTargets}
               canViewAutomationTargetDetails={canViewProductAutomationTargetDetails}
               canViewLinks={canViewProductLinks}

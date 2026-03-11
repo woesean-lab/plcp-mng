@@ -238,6 +238,7 @@ export default function ProductsTab({
   messageGroupTemplates = {},
   messageTemplatesByOffer = {},
   templates = [],
+  activeUsername = "",
   stockEnabledByOffer = {},
   automationWsUrl = "",
   automationEnabledByOffer: automationEnabledByOfferProp = {},
@@ -296,6 +297,7 @@ export default function ProductsTab({
   canManageAutomationTargets: canManageAutomationTargetsProp,
   canRunAutomation: canRunAutomationProp,
   canViewAutomationLogs: canViewAutomationLogsProp,
+  canClearAutomationLogs: canClearAutomationLogsProp,
   canStarAutomationTargets: canStarAutomationTargetsProp,
   canViewAutomationTargetDetails: canViewAutomationTargetDetailsProp,
   canViewLinks = false,
@@ -366,6 +368,7 @@ export default function ProductsTab({
   const [automationConnectionStateByOffer, setAutomationConnectionStateByOffer] = useState({})
   const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
+  const [automationLogsClearingByOffer, setAutomationLogsClearingByOffer] = useState({})
   const [priceDrafts, setPriceDrafts] = useState({})
   const [savedPricesByOffer, setSavedPricesByOffer] = useState(
     savedPricesByOfferProp && typeof savedPricesByOfferProp === "object"
@@ -478,6 +481,8 @@ export default function ProductsTab({
     typeof canViewAutomationLogsProp === "boolean"
       ? canViewAutomationLogsProp
       : canRunAutomation || canManageAutomationTargets
+  const canClearAutomationLogs =
+    typeof canClearAutomationLogsProp === "boolean" ? canClearAutomationLogsProp : false
   const canStarAutomationTargets =
     typeof canStarAutomationTargetsProp === "boolean"
       ? canStarAutomationTargetsProp
@@ -969,6 +974,35 @@ export default function ProductsTab({
       })
     }
   }
+  const clearAutomationRunLogs = async (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId || !canClearAutomationLogs) return false
+    setAutomationLogsClearingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+    try {
+      const res = await apiFetchAutomationLog(`/api/eldorado/offers/${normalizedId}/automation-logs`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        throw new Error("automation_logs_clear_failed")
+      }
+      setAutomationRunLogByOffer((prev) => ({
+        ...prev,
+        [normalizedId]: [],
+      }))
+      setAutomationLogsLoadedByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+      toast.success("CMD loglari temizlendi.")
+      return true
+    } catch {
+      toast.error("CMD loglari temizlenemedi.")
+      return false
+    } finally {
+      setAutomationLogsClearingByOffer((prev) => {
+        const next = { ...prev }
+        delete next[normalizedId]
+        return next
+      })
+    }
+  }
   const appendAutomationRunLog = (offerId, status, message, options = {}) => {
     const normalizedId = String(offerId ?? "").trim()
     const normalizedMessage = String(message ?? "").trim()
@@ -1043,10 +1077,12 @@ export default function ProductsTab({
     }
 
     const label = String(automationName ?? "").trim() || "Stok çek"
+    const starterUsername = String(activeUsername ?? "").trim() || "bilinmeyen-kullanici"
     closeAutomationSocket(normalizedId)
     setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connecting" }))
     setAutomationResultPopup((prev) => ({ ...prev, isOpen: false }))
+    appendAutomationRunLog(normalizedId, "running", `Baslatan: ${starterUsername}`)
     appendAutomationRunLog(
       normalizedId,
       "running",
@@ -2227,6 +2263,7 @@ export default function ProductsTab({
                     CMD_VISIBLE_ROWS - visibleAutomationRunLogEntries.length,
                   )
                   const isAutomationRunning = Boolean(automationIsRunningByOffer?.[offerId])
+                  const isAutomationLogsClearing = Boolean(automationLogsClearingByOffer?.[offerId])
                   if (isStockEnabled) {
                     availablePanels.push("stock-group")
                   }
@@ -3295,9 +3332,26 @@ export default function ProductsTab({
                                       <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                         CMD
                                       </span>
-                                      <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                                        {automationRunLogEntries.length} satir
-                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                                          {automationRunLogEntries.length} satir
+                                        </span>
+                                        {canClearAutomationLogs && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              void clearAutomationRunLogs(offerId)
+                                            }}
+                                            disabled={
+                                              isAutomationLogsClearing ||
+                                              automationRunLogEntries.length === 0
+                                            }
+                                            className="inline-flex h-6 items-center rounded border border-white/15 bg-white/5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                          >
+                                            {isAutomationLogsClearing ? "..." : "Log temizle"}
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
                                     <div className="no-scrollbar h-[336px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
                                       <div className="space-y-0.5">

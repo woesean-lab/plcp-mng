@@ -88,7 +88,9 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "products.stock.fetch.edit",
   "products.stock.fetch.run",
   "products.stock.fetch.logs.view",
+  "products.stock.fetch.logs.clear",
   "products.stock.fetch.star",
+  "products.stock.fetch.target.details.view",
   "products.link.view",
   "products.star",
   "products.card.toggle",
@@ -812,6 +814,10 @@ const PRODUCT_STOCK_FETCH_LOGS_PERMISSIONS = [
   "products.stock.fetch.logs.view",
   "products.stock.fetch.run",
   "products.stock.fetch",
+  "products.manage",
+]
+const PRODUCT_STOCK_FETCH_LOGS_CLEAR_PERMISSIONS = [
+  "products.stock.fetch.logs.clear",
   "products.manage",
 ]
 const PRODUCT_STOCK_FETCH_STAR_PERMISSIONS = [
@@ -3228,6 +3234,24 @@ app.get(
   })
 
   res.json(logs)
+  },
+)
+
+app.delete(
+  "/api/eldorado/offers/:id/automation-logs",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_LOGS_CLEAR_PERMISSIONS),
+  async (req, res) => {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+
+    const removed = await prisma.eldoradoAutomationRunLog.deleteMany({
+      where: { offerId },
+    })
+
+    res.json({ ok: true, offerId, deletedCount: removed.count })
   },
 )
 
