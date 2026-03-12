@@ -391,6 +391,7 @@ const run = async () => {
         category: String(item?.category ?? "").trim(),
         missing: Boolean(item?.missing) && missingStreak >= MISSING_STREAK_THRESHOLD,
         missingStreak,
+        seenInRun: false,
       }
     })
     .filter((item) => item.id || item.name)
@@ -441,10 +442,19 @@ const run = async () => {
       existingItem.category = category
       existingItem.missing = false
       existingItem.missingStreak = 0
+      existingItem.seenInRun = true
       usedExisting.add(existingItem)
       merged.push(existingItem)
     } else {
-      merged.push({ id: derivedId, name, href, category, missing: false, missingStreak: 0 })
+      merged.push({
+        id: derivedId,
+        name,
+        href,
+        category,
+        missing: false,
+        missingStreak: 0,
+        seenInRun: true,
+      })
     }
     seenIds.add(derivedId)
   })
@@ -471,6 +481,7 @@ const run = async () => {
       item.missingStreak = nextMissingStreak
       item.missing = nextMissingStreak >= MISSING_STREAK_THRESHOLD
     }
+    item.seenInRun = false
     merged.push(item)
   })
 

@@ -252,6 +252,22 @@ const normalizeEldoradoList = (value) => {
   return value.map(normalizeEldoradoOffer).filter(Boolean)
 }
 
+const normalizeEldoradoSyncOffer = (item) => {
+  const normalized = normalizeEldoradoOffer(item)
+  if (!normalized) return null
+  const seenInRunRaw = item?.seenInRun
+  const seenInRun =
+    typeof seenInRunRaw === "boolean"
+      ? seenInRunRaw
+      : normalized.missing
+        ? false
+        : true
+  return {
+    ...normalized,
+    seenInRun,
+  }
+}
+
 const normalizeEldoradoCatalog = (value) => ({
   items: Array.isArray(value?.items) ? value.items : [],
   topups: Array.isArray(value?.topups) ? value.topups : [],
@@ -260,7 +276,7 @@ const normalizeEldoradoCatalog = (value) => ({
   giftCards: Array.isArray(value?.giftCards) ? value.giftCards : [],
 })
 
-const mapEldoradoOffersToCatalog = (offers, syncByKind) => {
+const mapEldoradoOffersToCatalog = (offers) => {
   const items = []
   const topups = []
 
@@ -268,11 +284,9 @@ const mapEldoradoOffersToCatalog = (offers, syncByKind) => {
     const normalized = normalizeEldoradoOffer(offer)
     if (!normalized) return
     const kind = String(offer.kind ?? "items")
-    const lastSyncAt = syncByKind?.get(kind)
-    const seenAt = offer.lastSeenAt instanceof Date ? offer.lastSeenAt : null
-    if (!normalized.missing) {
-      normalized.missing = Boolean(lastSyncAt && (!seenAt || seenAt < lastSyncAt))
-    }
+    // Keep the missing flag persisted by scraper/sync logic.
+    // Do not override it here by lastSeenAt comparison, otherwise transient scrape misses
+    // appear as immediate false-positives in UI.
     if (kind === "topups") {
       topups.push(normalized)
     } else {
@@ -339,23 +353,14 @@ const buildEldoradoKeyCounts = async (offerIds, groupIds) => {
 
 const loadEldoradoCatalog = async () => {
   try {
-    const [offers, syncs] = await Promise.all([
-      prisma.eldoradoOffer.findMany({ orderBy: { name: "asc" } }),
-      prisma.eldoradoSync.findMany(),
-    ])
+    const offers = await prisma.eldoradoOffer.findMany({ orderBy: { name: "asc" } })
     if (offers.length > 0) {
       const { groups, assignments } = await loadEldoradoStockGroupMeta()
       const groupNameById = new Map(groups.map((group) => [group.id, group.name]))
       const groupIds = Array.from(new Set(Object.values(assignments)))
       const offerIds = offers.map((offer) => offer.id)
       const keyCounts = await buildEldoradoKeyCounts(offerIds, groupIds)
-      const syncByKind = new Map()
-      syncs.forEach((entry) => {
-        if (entry?.kind && entry?.lastSyncAt instanceof Date) {
-          syncByKind.set(entry.kind, entry.lastSyncAt)
-        }
-      })
-      const catalog = mapEldoradoOffersToCatalog(offers, syncByKind)
+      const catalog = mapEldoradoOffersToCatalog(offers)
       const withCounts = (list) =>
         Array.isArray(list)
           ? list.map((offer) => {
@@ -597,15 +602,37 @@ const loadEldoradoStore = async () => {
 }
 
 const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
-  const normalized = normalizeEldoradoList(offers)
+  const normalized = Array.isArray(offers)
+    ? offers.map(normalizeEldoradoSyncOffer).filter(Boolean)
+    : []
   if (normalized.length === 0) return 0
   const seenAt = seenAtOverride instanceof Date ? seenAtOverride : new Date()
+  const [existingRows, previousSync] = await Promise.all([
+    prisma.eldoradoOffer.findMany({
+      where: { id: { in: normalized.map((offer) => offer.id) } },
+      select: { id: true, lastSeenAt: true },
+    }),
+    prisma.eldoradoSync.findUnique({
+      where: { kind },
+      select: { lastSyncAt: true },
+    }),
+  ])
+  const existingById = new Map(existingRows.map((entry) => [entry.id, entry]))
+  const previousSyncAt = previousSync?.lastSyncAt instanceof Date ? previousSync.lastSyncAt : null
   const operations = normalized.map((offer) => {
+    const existing = existingById.get(offer.id)
+    const seenInRun = offer.seenInRun === true
+    const missing =
+      !seenInRun &&
+      Boolean(existing) &&
+      Boolean(previousSyncAt) &&
+      (!(existing?.lastSeenAt instanceof Date) || existing.lastSeenAt < previousSyncAt)
+    const nextLastSeenAt = seenInRun ? seenAt : existing?.lastSeenAt ?? null
     const update = {
       name: offer.name,
       kind,
-      lastSeenAt: seenAt,
-      missing: offer.missing === true,
+      lastSeenAt: nextLastSeenAt,
+      missing,
       href: offer.href || null,
       category: offer.category || null,
       price: null,
@@ -619,8 +646,8 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
         category: offer.category || null,
         href: offer.href || null,
         kind,
-        missing: offer.missing === true,
-        lastSeenAt: seenAt,
+        missing: false,
+        lastSeenAt: seenInRun ? seenAt : null,
       },
     })
   })
