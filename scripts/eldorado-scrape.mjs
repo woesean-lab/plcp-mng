@@ -33,7 +33,8 @@ const LOG_PATH = process.env.ELDORADO_LOG_PATH ?? ""
 const DEFAULT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH ?? path.resolve(process.cwd(), ".cache", "ms-playwright")
 const SKIP_BROWSER_DOWNLOAD = process.env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD === "1"
 const SKIP_PLAYWRIGHT_INSTALL = process.env.SKIP_PLAYWRIGHT_INSTALL === "1"
-const MAX_SCRAPE_RETRIES = Number(process.env.ELDORADO_RETRY_MAX ?? 1)
+// Intentionally fixed: scrape each category only once (no retry pass).
+const MAX_SCRAPE_RETRIES = 0
 const MIN_EXISTING_RATIO = Number(process.env.ELDORADO_MIN_EXISTING_RATIO ?? 0.95)
 const MIN_EXISTING_DELTA = Number(process.env.ELDORADO_MIN_EXISTING_DELTA ?? 5)
 const MISSING_STREAK_THRESHOLD_RAW = Number(process.env.ELDORADO_MISSING_STREAK_THRESHOLD ?? 2)
