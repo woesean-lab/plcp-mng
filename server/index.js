@@ -50,12 +50,34 @@ const normalizeEldoradoListingUrl = (rawUrl, fallbackCategory = "") => {
   }
 }
 
-const eldoradoItemsUrl =
-  normalizeEldoradoListingUrl(
-    process.env.ELDORADO_ITEMS_URL ??
-      "https://www.eldorado.gg/users/PulcipStore/shop/CustomItem?page=1",
-    "CustomItem",
-  )
+const eldoradoItemsUrls = Array.from(
+  new Set(
+    [
+      normalizeEldoradoListingUrl(
+        process.env.ELDORADO_ITEMS_URL ??
+          "https://www.eldorado.gg/users/PulcipStore/shop/CustomItem?page=1",
+        "CustomItem",
+      ),
+      normalizeEldoradoListingUrl(
+        process.env.ELDORADO_ACCOUNTS_URL ??
+          "https://www.eldorado.gg/users/PulcipStore/shop/Account?page=1",
+        "Account",
+      ),
+      normalizeEldoradoListingUrl(
+        process.env.ELDORADO_CURRENCY_URL ??
+          "https://www.eldorado.gg/users/PulcipStore/shop/Currency?page=1",
+        "Currency",
+      ),
+      normalizeEldoradoListingUrl(
+        process.env.ELDORADO_GIFTCARDS_URL ??
+          "https://www.eldorado.gg/users/PulcipStore/shop/GiftCard?page=1",
+        "GiftCard",
+      ),
+    ]
+      .map((value) => String(value ?? "").trim())
+      .filter(Boolean),
+  ),
+)
 const eldoradoTopupsUrl =
   normalizeEldoradoListingUrl(
     process.env.ELDORADO_TOPUPS_URL ??
@@ -678,14 +700,17 @@ const markEldoradoSync = async (kind, syncedAt) => {
   })
 }
 
-const runEldoradoScrape = ({ url, pages, outputPath }) => {
+const runEldoradoScrape = ({ url, urls, pages, outputPath }) => {
   return new Promise((resolve, reject) => {
+    const normalizedUrls = Array.isArray(urls)
+      ? urls.map((value) => String(value ?? "").trim()).filter(Boolean)
+      : []
+    const fallbackUrl = String(url ?? normalizedUrls[0] ?? "").trim()
     const env = {
       ...process.env,
-      // Force single-url mode from server refresh flow.
-      // If ELDORADO_URLS is set in host env, it would override ELDORADO_URL in scraper.
-      ELDORADO_URLS: "",
-      ELDORADO_URL: url,
+      // Set scrape URLs only from refresh flow.
+      ELDORADO_URLS: normalizedUrls.length > 0 ? normalizedUrls.join(",") : "",
+      ELDORADO_URL: fallbackUrl,
       ELDORADO_PAGES: String(pages),
       ELDORADO_OUTPUT: outputPath,
       ELDORADO_TITLE_SELECTOR: eldoradoTitleSelector,
@@ -727,7 +752,8 @@ const runEldoradoRefreshJob = async () => {
 
   try {
     await runEldoradoScrape({
-      url: eldoradoItemsUrl,
+      urls: eldoradoItemsUrls,
+      url: eldoradoItemsUrls[0] ?? "",
       pages: eldoradoItemsPages,
       outputPath: eldoradoItemsPath,
     })
