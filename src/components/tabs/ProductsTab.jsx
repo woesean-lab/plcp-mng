@@ -371,7 +371,7 @@ export default function ProductsTab({
   const [isAddingPopupStock, setIsAddingPopupStock] = useState(false)
   const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
-  const [automationConnectionStateByOffer, setAutomationConnectionStateByOffer] = useState({})
+  const [, setAutomationConnectionStateByOffer] = useState({})
   const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [automationLogsClearingByOffer, setAutomationLogsClearingByOffer] = useState({})
@@ -2257,24 +2257,6 @@ export default function ProductsTab({
                     ? ""
                     : draftAutomationBackend
                   const isAutomationTargetSaving = Boolean(automationTargetSavingByOffer?.[offerId])
-                  const automationConnectionState =
-                    String(automationConnectionStateByOffer?.[offerId] ?? "").trim() || "idle"
-                  const automationConnectionLabel =
-                    automationConnectionState === "connected"
-                      ? "Baglanildi"
-                      : automationConnectionState === "connecting"
-                        ? "Baglaniyor..."
-                        : automationConnectionState === "error"
-                          ? "Baglanti hatasi"
-                          : "Bagli degil"
-                  const automationConnectionClass =
-                    automationConnectionState === "connected"
-                      ? "border-emerald-300/40 bg-emerald-500/10 text-emerald-100"
-                      : automationConnectionState === "connecting"
-                        ? "border-amber-300/40 bg-amber-500/10 text-amber-100"
-                        : automationConnectionState === "error"
-                          ? "border-rose-300/40 bg-rose-500/10 text-rose-100"
-                          : "border-white/10 bg-white/5 text-slate-400"
                   const automationRunLogEntries = Array.isArray(automationRunLogByOffer?.[offerId])
                     ? automationRunLogByOffer[offerId]
                     : []
@@ -3105,27 +3087,6 @@ export default function ProductsTab({
                             {activePanel === "automation" && isAutomationEnabled && (
                               <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 overflow-x-hidden lg:col-span-2 animate-panelFade">
                                 <div className="space-y-3 min-w-0">
-                                  <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <div>
-                                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                                        STOK ÇEK HEDEFLERİ
-                                      </p>
-                                      <p className="mt-0.5 text-[11px] text-slate-400">
-                                        URL ve backend map kaydet, satiri secip calistir.
-                                      </p>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                      <span
-                                        className={`inline-flex h-6 items-center rounded-md border px-2 text-[10px] font-semibold uppercase tracking-[0.12em] ${automationConnectionClass}`}
-                                      >
-                                        {automationConnectionLabel}
-                                      </span>
-                                      <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
-                                        {automationTargets.length} kayit
-                                      </span>
-                                    </div>
-                                  </div>
-
                                   <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(170px,0.8fr)_auto]">
                                     <input
                                       type="text"
