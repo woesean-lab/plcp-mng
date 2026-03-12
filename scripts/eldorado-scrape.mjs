@@ -429,6 +429,7 @@ const run = async () => {
   const merged = []
   const usedExisting = new Set()
   const seenIds = new Set()
+  const seenHrefs = new Set()
 
   scraped.forEach((item) => {
     const name = String(item?.name ?? "").trim()
@@ -438,7 +439,8 @@ const run = async () => {
     if (!existingItem && name) {
       existingItem = existingByName.get(name.toLowerCase()) ?? null
     }
-    const resolvedId = existingItem?.id || scrapedId
+    // Always prefer the id derived from href to avoid resurrecting legacy "eld-*" ids.
+    const resolvedId = scrapedId || existingItem?.id
     if (!resolvedId) return
     if (seenIds.has(resolvedId)) return
     const href = scrapedHref || existingItem?.href || ""
@@ -470,6 +472,9 @@ const run = async () => {
       })
     }
     seenIds.add(resolvedId)
+    if (href) {
+      seenHrefs.add(normalizeHref(href))
+    }
   })
 
   const scrapedUniqueCount = seenIds.size
@@ -485,6 +490,7 @@ const run = async () => {
   existing.forEach((item) => {
     if (usedExisting.has(item)) return
     if (item.id && seenIds.has(item.id)) return
+    if (item.href && seenHrefs.has(normalizeHref(item.href))) return
     // Drop stale items without a link to avoid "other" category pollution.
     if (!item.href) return
     if (shouldKeepLegacy) {
