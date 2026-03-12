@@ -36,6 +36,11 @@ const SKIP_PLAYWRIGHT_INSTALL = process.env.SKIP_PLAYWRIGHT_INSTALL === "1"
 const MAX_SCRAPE_RETRIES = Number(process.env.ELDORADO_RETRY_MAX ?? 1)
 const MIN_EXISTING_RATIO = Number(process.env.ELDORADO_MIN_EXISTING_RATIO ?? 0.95)
 const MIN_EXISTING_DELTA = Number(process.env.ELDORADO_MIN_EXISTING_DELTA ?? 5)
+const MISSING_STREAK_THRESHOLD_RAW = Number(process.env.ELDORADO_MISSING_STREAK_THRESHOLD ?? 2)
+const MISSING_STREAK_THRESHOLD =
+  Number.isFinite(MISSING_STREAK_THRESHOLD_RAW) && MISSING_STREAK_THRESHOLD_RAW > 0
+    ? Math.floor(MISSING_STREAK_THRESHOLD_RAW)
+    : 2
 
 if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
   process.env.PLAYWRIGHT_BROWSERS_PATH = DEFAULT_BROWSERS_PATH
@@ -371,13 +376,23 @@ const run = async () => {
       : 0
 
   const existing = (await readExistingProducts())
-    .map((item) => ({
-      id: String(item?.id ?? "").trim(),
-      name: String(item?.name ?? "").trim(),
-      href: normalizeHref(item?.href ?? ""),
-      category: String(item?.category ?? "").trim(),
-      missing: Boolean(item?.missing),
-    }))
+    .map((item) => {
+      const rawMissingStreak = Number(item?.missingStreak)
+      const missingStreak =
+        Number.isFinite(rawMissingStreak) && rawMissingStreak > 0
+          ? Math.floor(rawMissingStreak)
+          : Boolean(item?.missing)
+            ? MISSING_STREAK_THRESHOLD
+            : 0
+      return {
+        id: String(item?.id ?? "").trim(),
+        name: String(item?.name ?? "").trim(),
+        href: normalizeHref(item?.href ?? ""),
+        category: String(item?.category ?? "").trim(),
+        missing: Boolean(item?.missing) && missingStreak >= MISSING_STREAK_THRESHOLD,
+        missingStreak,
+      }
+    })
     .filter((item) => item.id || item.name)
   const existingById = new Map()
   const legacyByName = new Map()
@@ -425,10 +440,11 @@ const run = async () => {
       existingItem.href = href
       existingItem.category = category
       existingItem.missing = false
+      existingItem.missingStreak = 0
       usedExisting.add(existingItem)
       merged.push(existingItem)
     } else {
-      merged.push({ id: derivedId, name, href, category, missing: false })
+      merged.push({ id: derivedId, name, href, category, missing: false, missingStreak: 0 })
     }
     seenIds.add(derivedId)
   })
@@ -447,8 +463,13 @@ const run = async () => {
     if (item.id && seenIds.has(item.id)) return
     // Drop stale items without a link to avoid "other" category pollution.
     if (!item.href) return
-    if (item.href) {
-      item.missing = true
+    if (shouldKeepLegacy) {
+      item.missing = false
+      item.missingStreak = 0
+    } else {
+      const nextMissingStreak = Math.max(0, Number(item?.missingStreak ?? 0)) + 1
+      item.missingStreak = nextMissingStreak
+      item.missing = nextMissingStreak >= MISSING_STREAK_THRESHOLD
     }
     merged.push(item)
   })
