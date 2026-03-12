@@ -38,6 +38,7 @@ const MAX_SCRAPE_RETRIES = 0
 const MIN_EXISTING_RATIO = Number(process.env.ELDORADO_MIN_EXISTING_RATIO ?? 0.95)
 const MIN_EXISTING_DELTA = Number(process.env.ELDORADO_MIN_EXISTING_DELTA ?? 5)
 const MISSING_STREAK_THRESHOLD_RAW = Number(process.env.ELDORADO_MISSING_STREAK_THRESHOLD ?? 2)
+const KEEP_LEGACY_MIN_RATIO = 0.5
 const MISSING_STREAK_THRESHOLD =
   Number.isFinite(MISSING_STREAK_THRESHOLD_RAW) && MISSING_STREAK_THRESHOLD_RAW > 0
     ? Math.floor(MISSING_STREAK_THRESHOLD_RAW)
@@ -462,7 +463,8 @@ const run = async () => {
 
   const scrapedUniqueCount = seenIds.size
   const shouldKeepLegacy =
-    existing.length > 0 && scrapedUniqueCount < Math.max(10, Math.floor(existing.length * 0.9))
+    existing.length > 0 &&
+    scrapedUniqueCount < Math.max(10, Math.floor(existing.length * KEEP_LEGACY_MIN_RATIO))
   if (shouldKeepLegacy) {
     console.warn(
       `[eldorado] scrape appears incomplete (${scrapedUniqueCount}/${existing.length}), keeping legacy items`,
