@@ -474,8 +474,8 @@ const run = async () => {
     // Drop stale items without a link to avoid "other" category pollution.
     if (!item.href) return
     if (shouldKeepLegacy) {
-      item.missing = false
-      item.missingStreak = 0
+      // Keep previous missing state when scrape is likely incomplete.
+      // This avoids resetting a valid streak on transient partial runs.
     } else {
       const nextMissingStreak = Math.max(0, Number(item?.missingStreak ?? 0)) + 1
       item.missingStreak = nextMissingStreak

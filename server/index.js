@@ -607,26 +607,15 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
     : []
   if (normalized.length === 0) return 0
   const seenAt = seenAtOverride instanceof Date ? seenAtOverride : new Date()
-  const [existingRows, previousSync] = await Promise.all([
-    prisma.eldoradoOffer.findMany({
-      where: { id: { in: normalized.map((offer) => offer.id) } },
-      select: { id: true, lastSeenAt: true },
-    }),
-    prisma.eldoradoSync.findUnique({
-      where: { kind },
-      select: { lastSyncAt: true },
-    }),
-  ])
+  const existingRows = await prisma.eldoradoOffer.findMany({
+    where: { id: { in: normalized.map((offer) => offer.id) } },
+    select: { id: true, lastSeenAt: true },
+  })
   const existingById = new Map(existingRows.map((entry) => [entry.id, entry]))
-  const previousSyncAt = previousSync?.lastSyncAt instanceof Date ? previousSync.lastSyncAt : null
   const operations = normalized.map((offer) => {
     const existing = existingById.get(offer.id)
     const seenInRun = offer.seenInRun === true
-    const missing =
-      !seenInRun &&
-      Boolean(existing) &&
-      Boolean(previousSyncAt) &&
-      (!(existing?.lastSeenAt instanceof Date) || existing.lastSeenAt < previousSyncAt)
+    const missing = offer.missing === true
     const nextLastSeenAt = seenInRun ? seenAt : existing?.lastSeenAt ?? null
     const update = {
       name: offer.name,
