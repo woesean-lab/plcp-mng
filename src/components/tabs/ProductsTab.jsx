@@ -3103,8 +3103,8 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
-                                <div className="space-y-3">
+                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 overflow-x-hidden lg:col-span-2 animate-panelFade">
+                                <div className="space-y-3 min-w-0">
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div>
                                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
@@ -3215,7 +3215,7 @@ export default function ProductsTab({
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                              className={`flex w-full cursor-pointer flex-wrap items-center gap-2 rounded-md px-2.5 py-2 transition-colors ${
+                                              className={`flex w-full cursor-pointer flex-wrap items-center gap-2 overflow-hidden rounded-md px-2.5 py-2 transition-colors ${
                                                 isSelected
                                                   ? "automation-target-row-selected"
                                                   : "bg-transparent hover:bg-white/[0.05]"
@@ -3251,21 +3251,21 @@ export default function ProductsTab({
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     onClick={(event) => event.stopPropagation()}
-                                                    className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/5 hover:text-white"
+                                                    className="inline-flex w-full min-w-0 items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/5 hover:text-white"
                                                     title={targetRow.url}
                                                   >
-                                                    <span className="truncate">{urlDisplay}</span>
+                                                    <span className="block w-full truncate">{urlDisplay}</span>
                                                   </a>
                                                 ) : (
                                                   <span
-                                                    className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-300"
+                                                    className="inline-flex w-full min-w-0 items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-300"
                                                     title={urlDisplay}
                                                   >
-                                                    <span className="truncate">{urlDisplay}</span>
+                                                    <span className="block w-full truncate">{urlDisplay}</span>
                                                   </span>
                                                 )}
                                               </div>
-                                              <span className="order-4 w-full rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:order-none sm:w-auto">
+                                              <span className="order-4 w-full truncate rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:order-none sm:w-auto sm:max-w-[220px]">
                                                 {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                               </span>
                                               <button
@@ -3309,7 +3309,7 @@ export default function ProductsTab({
                                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-900/60 px-2.5 py-2">
                                     <div className="min-w-0">
                                       {selectedAutomationTarget ? (
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="flex flex-wrap items-center gap-1.5">
                                           <span className="rounded border border-white/15 bg-ink-950/80 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-200">
                                             {selectedAutomationServiceLabel}
                                           </span>
