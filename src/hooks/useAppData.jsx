@@ -2321,15 +2321,11 @@ export default function useAppData() {
     setIsEldoradoRefreshing(true)
     const toastId = toast.loading("Urunler taraniyor...")
     try {
-      const res = await apiFetch("/api/eldorado/refresh", { method: "POST" })
-      if (!res.ok) {
-        if (res.status === 409) {
-          toast.error("Yenileme islemi zaten calisiyor.", { id: toastId })
-          return
-        }
+      const startRes = await apiFetch("/api/eldorado/refresh", { method: "POST" })
+      if (!startRes.ok && startRes.status !== 409) {
         let detail = ""
         try {
-          const payload = await res.json()
+          const payload = await startRes.json()
           detail = String(payload?.message || payload?.error || "").trim()
         } catch (parseError) {
           detail = ""
@@ -2339,10 +2335,39 @@ export default function useAppData() {
         }
         throw new Error("Urunler yenilenemedi (API/Server kontrol edin).")
       }
-      const data = await res.json()
+
+      const startedAt = Date.now()
+      const maxWaitMs = 1000 * 60 * 25
+      while (true) {
+        const statusRes = await apiFetch("/api/eldorado/refresh-status")
+        if (!statusRes.ok) {
+          throw new Error("Yenileme durumu alinamadi (API/Server kontrol edin).")
+        }
+        const statusPayload = await statusRes.json()
+        const inFlight = Boolean(statusPayload?.inFlight)
+        const status = String(statusPayload?.status ?? "").trim().toLowerCase()
+        const detail = String(statusPayload?.message ?? "").trim()
+
+        if (!inFlight) {
+          if (status === "error") {
+            throw new Error(
+              detail
+                ? `Yenileme hatasi: ${detail}`
+                : "Urunler yenilenemedi (API/Server kontrol edin).",
+            )
+          }
+          break
+        }
+
+        if (Date.now() - startedAt > maxWaitMs) {
+          throw new Error("Yenileme zaman asimina ugradi.")
+        }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 2500))
+      }
+
       toast.loading("Urunler ekleniyor...", { id: toastId })
-      const normalized = normalizeEldoradoCatalog(data?.catalog ?? data)
-      setEldoradoCatalog(applyEldoradoKeyCounts(normalized))
+      await loadEldoradoCatalog(undefined, { silent: true })
       toast.success("Urunler guncellendi", { id: toastId })
     } catch (error) {
       toast.error(error?.message || "Urunler yenilenemedi (API/Server kontrol edin).", {
@@ -2351,7 +2376,7 @@ export default function useAppData() {
     } finally {
       setIsEldoradoRefreshing(false)
     }
-  }, [apiFetch, applyEldoradoKeyCounts, isEldoradoRefreshing])
+  }, [apiFetch, isEldoradoRefreshing, loadEldoradoCatalog])
 
   const loadEldoradoLogs = useCallback(
     async (signal) => {

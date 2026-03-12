@@ -78,6 +78,12 @@ const eldoradoScriptPath = path.resolve(appRoot, "scripts", "eldorado-scrape.mjs
 const playwrightBrowsersPath =
   process.env.PLAYWRIGHT_BROWSERS_PATH ?? path.resolve(appRoot, ".cache", "ms-playwright")
 let eldoradoRefreshInFlight = false
+let eldoradoRefreshStatus = {
+  status: "idle",
+  startedAt: null,
+  finishedAt: null,
+  message: "",
+}
 
 const port = Number(process.env.PORT ?? 3000)
 const adminUsername = String(process.env.ADMIN_USERNAME ?? "admin").trim() || "admin"
@@ -665,6 +671,60 @@ const runEldoradoScrape = ({ url, pages, outputPath }) => {
       }
     })
   })
+}
+
+const runEldoradoRefreshJob = async () => {
+  const startedAtIso = new Date().toISOString()
+  eldoradoRefreshInFlight = true
+  eldoradoRefreshStatus = {
+    status: "running",
+    startedAt: startedAtIso,
+    finishedAt: null,
+    message: "",
+  }
+
+  try {
+    await runEldoradoScrape({
+      url: eldoradoItemsUrl,
+      pages: eldoradoItemsPages,
+      outputPath: eldoradoItemsPath,
+    })
+    await runEldoradoScrape({
+      url: eldoradoTopupsUrl,
+      pages: eldoradoTopupsPages,
+      outputPath: eldoradoTopupsPath,
+    })
+    const [items, topups] = await Promise.all([
+      readJsonFile(eldoradoItemsPath),
+      readJsonFile(eldoradoTopupsPath),
+    ])
+    const itemsSyncedAt = new Date()
+    const topupsSyncedAt = new Date()
+    await syncEldoradoOffers("items", items, itemsSyncedAt)
+    await syncEldoradoOffers("topups", topups, topupsSyncedAt)
+    await Promise.all([
+      markEldoradoSync("items", itemsSyncedAt),
+      markEldoradoSync("topups", topupsSyncedAt),
+    ])
+
+    eldoradoRefreshStatus = {
+      status: "success",
+      startedAt: startedAtIso,
+      finishedAt: new Date().toISOString(),
+      message: "",
+    }
+  } catch (error) {
+    const message = String(error?.message || "refresh_failed").trim()
+    console.error("Eldorado refresh failed", error)
+    eldoradoRefreshStatus = {
+      status: "error",
+      startedAt: startedAtIso,
+      finishedAt: new Date().toISOString(),
+      message,
+    }
+  } finally {
+    eldoradoRefreshInFlight = false
+  }
 }
 
 const issueAuthToken = (userId) => {
@@ -2369,44 +2429,33 @@ app.get("/api/eldorado/logs", async (req, res, next) => {
   }
 })
 
+app.get("/api/eldorado/refresh-status", async (_req, res) => {
+  res.json({
+    inFlight: Boolean(eldoradoRefreshInFlight),
+    status: String(eldoradoRefreshStatus?.status ?? "idle"),
+    startedAt: eldoradoRefreshStatus?.startedAt ?? null,
+    finishedAt: eldoradoRefreshStatus?.finishedAt ?? null,
+    message: String(eldoradoRefreshStatus?.message ?? ""),
+  })
+})
+
 app.post("/api/eldorado/refresh", async (_req, res, next) => {
   if (eldoradoRefreshInFlight) {
-    res.status(409).json({ error: "refresh_in_progress" })
+    res.status(409).json({
+      error: "refresh_in_progress",
+      inFlight: true,
+      status: String(eldoradoRefreshStatus?.status ?? "running"),
+      startedAt: eldoradoRefreshStatus?.startedAt ?? null,
+    })
     return
   }
-  eldoradoRefreshInFlight = true
-  try {
-    await runEldoradoScrape({
-      url: eldoradoItemsUrl,
-      pages: eldoradoItemsPages,
-      outputPath: eldoradoItemsPath,
-    })
-    await runEldoradoScrape({
-      url: eldoradoTopupsUrl,
-      pages: eldoradoTopupsPages,
-      outputPath: eldoradoTopupsPath,
-    })
-    const [items, topups] = await Promise.all([
-      readJsonFile(eldoradoItemsPath),
-      readJsonFile(eldoradoTopupsPath),
-    ])
-    const itemsSyncedAt = new Date()
-    const topupsSyncedAt = new Date()
-    await syncEldoradoOffers("items", items, itemsSyncedAt)
-    await syncEldoradoOffers("topups", topups, topupsSyncedAt)
-    await Promise.all([
-      markEldoradoSync("items", itemsSyncedAt),
-      markEldoradoSync("topups", topupsSyncedAt),
-    ])
-    const catalog = await loadEldoradoCatalog()
-    res.json({ ok: true, catalog })
-  } catch (error) {
-    const message = String(error?.message || "refresh_failed").trim()
-    console.error("Eldorado refresh failed", error)
-    res.status(500).json({ error: "refresh_failed", message })
-  } finally {
-    eldoradoRefreshInFlight = false
-  }
+  void runEldoradoRefreshJob()
+  res.status(202).json({
+    ok: true,
+    inFlight: true,
+    status: "running",
+    startedAt: eldoradoRefreshStatus?.startedAt ?? null,
+  })
 })
 
 app.get("/api/eldorado/store", async (_req, res, next) => {
