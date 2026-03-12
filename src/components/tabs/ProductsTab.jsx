@@ -3174,7 +3174,7 @@ export default function ProductsTab({
                                         !String(draftAutomationUrl ?? "").trim() ||
                                         isAutomationTargetSaving
                                       }
-                                      className="h-8 rounded-md border border-emerald-300/50 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="h-8 w-full rounded-md border border-emerald-300/50 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
                                     >
                                       {isAutomationTargetSaving ? "..." : "Kaydet"}
                                     </button>
@@ -3215,7 +3215,7 @@ export default function ProductsTab({
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                              className={`flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 transition-colors ${
+                                              className={`flex w-full cursor-pointer flex-wrap items-center gap-2 rounded-md px-2.5 py-2 transition-colors ${
                                                 isSelected
                                                   ? "automation-target-row-selected"
                                                   : "bg-transparent hover:bg-white/[0.05]"
@@ -3239,12 +3239,12 @@ export default function ProductsTab({
                                                 onChange={() =>
                                                   handleAutomationTargetSelect(offerId, targetRow.id)
                                                 }
-                                                className="h-3 w-3 accent-accent-400"
+                                                className="h-3 w-3 shrink-0 accent-accent-400"
                                               />
-                                              <span className="rounded border border-white/20 bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white">
+                                              <span className="shrink-0 rounded border border-white/20 bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white">
                                                 {serviceLabel}
                                               </span>
-                                              <div className="min-w-0 flex-1">
+                                              <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
                                                 {canViewAutomationTargetDetails ? (
                                                   <a
                                                     href={targetRow.url}
@@ -3265,7 +3265,7 @@ export default function ProductsTab({
                                                   </span>
                                                 )}
                                               </div>
-                                              <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:inline-block">
+                                              <span className="order-4 w-full rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:order-none sm:w-auto">
                                                 {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                               </span>
                                               <button
@@ -3279,7 +3279,7 @@ export default function ProductsTab({
                                                   )
                                                 }}
                                                 disabled={!canStarAutomationTargets || isStarring}
-                                                className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                                className={`ml-auto rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition disabled:cursor-not-allowed disabled:opacity-60 sm:ml-0 ${
                                                   isStarred
                                                     ? "border-amber-300/40 bg-amber-500/15 text-amber-100 hover:border-amber-200/60 hover:bg-amber-500/25"
                                                     : "border-white/15 bg-white/5 text-slate-300 hover:border-white/30 hover:bg-white/10"
@@ -3335,7 +3335,7 @@ export default function ProductsTab({
                                         !selectedAutomationTarget ||
                                         isAutomationRunning
                                       }
-                                      className="h-8 rounded-md border border-sky-300/50 bg-sky-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="h-8 w-full rounded-md border border-sky-300/50 bg-sky-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                                     >
                                       {isAutomationRunning ? "Calisiyor..." : "Calistir"}
                                     </button>
@@ -3349,11 +3349,11 @@ export default function ProductsTab({
                                 </div>
                                 {canViewAutomationLogs ? (
                                   <div className="mt-3 rounded-lg border border-white/10 bg-ink-900/60">
-                                    <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
                                       <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                         CMD
                                       </span>
-                                      <div className="flex items-center gap-2">
+                                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                                         <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                                           {automationRunLogEntries.length} satir
                                         </span>
@@ -3374,11 +3374,12 @@ export default function ProductsTab({
                                         )}
                                       </div>
                                     </div>
-                                    <div className="no-scrollbar h-[336px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
+                                    <div className="no-scrollbar h-[300px] overflow-auto px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                                       <div className="space-y-0.5">
                                         {visibleAutomationRunLogEntries.map((entry) => (
-                                          <div key={entry.id} className="flex items-start gap-2 text-slate-200">
-                                            <span className="flex-none text-slate-500">C:\plcp\automation&gt;</span>
+                                          <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                                            <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\automation&gt;</span>
+                                            <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                                             <span
                                               className={`flex-none ${
                                                 entry.status === "success"
@@ -3409,8 +3410,9 @@ export default function ProductsTab({
                                           </div>
                                         ))}
                                         {Array.from({ length: emptyAutomationRunLogRows }).map((_, index) => (
-                                          <div key={`automation-placeholder-${offerId}-${index}`} className="flex items-start gap-2 text-slate-700">
-                                            <span className="flex-none text-slate-600">C:\plcp\automation&gt;</span>
+                                          <div key={`automation-placeholder-${offerId}-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                                            <span className="hidden flex-none text-slate-600 sm:inline">C:\plcp\automation&gt;</span>
+                                            <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                                             <span className="flex-none text-slate-700">[--:--]</span>
                                             <span className="flex-none text-slate-700">--</span>
                                             <span
