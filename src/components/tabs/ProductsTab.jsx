@@ -25,8 +25,14 @@ const getCategoryKeyFromHref = (href) => {
       path = raw
     }
   }
-  const segment = path.split("?")[0].split("#")[0].split("/").filter(Boolean)[0]
-  return normalizeCategoryKey(segment)
+  const parts = path.split("?")[0].split("#")[0].split("/").filter(Boolean)
+  if (parts.length === 0) return ""
+  const lowered = parts.map((part) => String(part ?? "").trim().toLowerCase())
+  const shopIndex = lowered.indexOf("shop")
+  if (lowered[0] === "users" && shopIndex >= 0 && parts[shopIndex + 1]) {
+    return normalizeCategoryKey(parts[shopIndex + 1])
+  }
+  return normalizeCategoryKey(parts[0])
 }
 const getCategoryKey = (product) => {
   const direct = normalizeCategoryKey(product?.category)

@@ -228,6 +228,7 @@ const normalizeEldoradoOffer = (item) => {
   if (!id || !name) return null
   const hrefRaw = item?.href
   const href = hrefRaw === undefined || hrefRaw === null ? "" : String(hrefRaw).trim()
+  if (!href) return null
   const categoryRaw = item?.category
   const category = categoryRaw === undefined || categoryRaw === null ? "" : String(categoryRaw).trim()
   const missing = Boolean(item?.missing)

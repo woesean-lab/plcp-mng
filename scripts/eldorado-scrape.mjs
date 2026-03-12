@@ -305,14 +305,26 @@ const scrapeCategory = async (startUrl) => {
         })
         .filter((item) => item.name)
     })
-    await writeLogLine(`[eldorado] found ${pageItems.length} items`)
-    if (pageItems.length === 0) {
+    const normalizedPageItems = pageItems
+      .map((item) => ({
+        name: String(item?.name ?? "").trim(),
+        href: String(item?.href ?? "").trim(),
+      }))
+      .filter((item) => item.name)
+    const hrefItems = normalizedPageItems.filter((item) => item.href)
+    const missingHrefCount = normalizedPageItems.length - hrefItems.length
+
+    await writeLogLine(`[eldorado] found ${normalizedPageItems.length} items`)
+    if (missingHrefCount > 0) {
+      await writeLogLine(`[eldorado] skipped ${missingHrefCount} items without href`)
+    }
+    if (normalizedPageItems.length === 0) {
       emptyPages += 1
       if (!USE_TOTAL_PAGES && emptyPages >= 2) break
     } else {
       emptyPages = 0
     }
-    scraped.push(...pageItems.map((item) => ({ ...item, category: categoryHint })))
+    scraped.push(...hrefItems.map((item) => ({ ...item, category: categoryHint })))
     pageIndex += 1
   }
 
@@ -433,8 +445,8 @@ const run = async () => {
   existing.forEach((item) => {
     if (usedExisting.has(item)) return
     if (item.id && seenIds.has(item.id)) return
-    const isLegacy = !item.href && String(item.id ?? "").startsWith("eld-")
-    if (isLegacy && !shouldKeepLegacy) return
+    // Drop stale items without a link to avoid "other" category pollution.
+    if (!item.href) return
     if (item.href) {
       item.missing = true
     }
