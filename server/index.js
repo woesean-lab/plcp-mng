@@ -234,10 +234,10 @@ const normalizeEldoradoOffer = (item) => {
   if (!id || !name) return null
   const hrefRaw = item?.href
   const href = hrefRaw === undefined || hrefRaw === null ? "" : String(hrefRaw).trim()
-  if (!href) return null
+  const hasHref = Boolean(href)
   const categoryRaw = item?.category
   const category = categoryRaw === undefined || categoryRaw === null ? "" : String(categoryRaw).trim()
-  const missing = Boolean(item?.missing)
+  const missing = hasHref ? Boolean(item?.missing) : true
   return {
     id,
     name,
@@ -659,6 +659,14 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
       data: { missing: true },
     })
   }
+  // Always treat offers without URL as missing.
+  await prisma.eldoradoOffer.updateMany({
+    where: {
+      kind,
+      OR: [{ href: null }, { href: "" }],
+    },
+    data: { missing: true },
+  })
   return normalized.length
 }
 

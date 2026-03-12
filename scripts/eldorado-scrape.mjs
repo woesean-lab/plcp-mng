@@ -318,12 +318,11 @@ const scrapeCategory = async (startUrl) => {
         href: String(item?.href ?? "").trim(),
       }))
       .filter((item) => item.name)
-    const hrefItems = normalizedPageItems.filter((item) => item.href)
-    const missingHrefCount = normalizedPageItems.length - hrefItems.length
+    const missingHrefCount = normalizedPageItems.filter((item) => !item.href).length
 
     await writeLogLine(`[eldorado] found ${normalizedPageItems.length} items`)
     if (missingHrefCount > 0) {
-      await writeLogLine(`[eldorado] skipped ${missingHrefCount} items without href`)
+      await writeLogLine(`[eldorado] ${missingHrefCount} items without href (name fallback enabled)`)
     }
     if (normalizedPageItems.length === 0) {
       emptyPages += 1
@@ -331,7 +330,7 @@ const scrapeCategory = async (startUrl) => {
     } else {
       emptyPages = 0
     }
-    scraped.push(...hrefItems.map((item) => ({ ...item, category: categoryHint })))
+    scraped.push(...normalizedPageItems.map((item) => ({ ...item, category: categoryHint })))
     pageIndex += 1
   }
 
@@ -398,12 +397,17 @@ const run = async () => {
     })
     .filter((item) => item.id || item.name)
   const existingById = new Map()
-  const legacyByName = new Map()
+  const existingByName = new Map()
   existing.forEach((item) => {
     if (item.id) existingById.set(item.id, item)
-    if (!item.href && item.name) {
-      legacyByName.set(item.name.toLowerCase(), item)
+    const nameKey = item.name.toLowerCase()
+    if (!nameKey) return
+    if (!existingByName.has(nameKey)) {
+      existingByName.set(nameKey, item)
+      return
     }
+    // Name is not unique; disable fallback for this key to avoid wrong matches.
+    existingByName.set(nameKey, null)
   })
 
   const minExpected =
@@ -428,17 +432,23 @@ const run = async () => {
 
   scraped.forEach((item) => {
     const name = String(item?.name ?? "").trim()
-    const href = normalizeHref(item?.href ?? "")
-    const derivedId = buildDerivedId(name, href)
-    if (!derivedId) return
-    if (seenIds.has(derivedId)) return
-    const category = extractCategoryFromHref(href) || item.category || extractCategoryFromUrl(href)
-    let existingItem = existingById.get(derivedId)
+    const scrapedHref = normalizeHref(item?.href ?? "")
+    const scrapedId = buildDerivedId(name, scrapedHref)
+    let existingItem = scrapedId ? existingById.get(scrapedId) : null
     if (!existingItem && name) {
-      existingItem = legacyByName.get(name.toLowerCase())
+      existingItem = existingByName.get(name.toLowerCase()) ?? null
     }
+    const resolvedId = existingItem?.id || scrapedId
+    if (!resolvedId) return
+    if (seenIds.has(resolvedId)) return
+    const href = scrapedHref || existingItem?.href || ""
+    const category =
+      extractCategoryFromHref(href) ||
+      item.category ||
+      extractCategoryFromUrl(href) ||
+      String(existingItem?.category ?? "").trim()
     if (existingItem) {
-      existingItem.id = derivedId
+      existingItem.id = resolvedId
       existingItem.name = name
       existingItem.href = href
       existingItem.category = category
@@ -448,8 +458,9 @@ const run = async () => {
       usedExisting.add(existingItem)
       merged.push(existingItem)
     } else {
+      if (!href) return
       merged.push({
-        id: derivedId,
+        id: resolvedId,
         name,
         href,
         category,
@@ -458,7 +469,7 @@ const run = async () => {
         seenInRun: true,
       })
     }
-    seenIds.add(derivedId)
+    seenIds.add(resolvedId)
   })
 
   const scrapedUniqueCount = seenIds.size
