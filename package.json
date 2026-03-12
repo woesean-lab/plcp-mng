@@ -9,6 +9,7 @@
     "build": "vite build",
     "start": "node scripts/playwright-install.mjs && node server/index.js",
     "products:sync": "node scripts/eldorado-scrape.mjs",
+    "eldorado:dedupe": "node scripts/eldorado-dedupe.mjs",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
