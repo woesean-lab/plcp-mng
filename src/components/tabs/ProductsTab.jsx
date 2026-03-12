@@ -3181,7 +3181,7 @@ export default function ProductsTab({
                                   </div>
 
                                   <div className="overflow-hidden rounded-lg border border-white/10 bg-ink-950/45">
-                                    <div className="no-scrollbar max-h-[180px] overflow-auto divide-y divide-white/[0.05]">
+                                    <div className="no-scrollbar max-h-[180px] overflow-y-auto overflow-x-hidden divide-y divide-white/[0.05]">
                                       {automationTargets.length === 0 ? (
                                         <p className="px-3 py-4 text-center text-[11px] text-slate-500">
                                           Henuz otomasyon satiri eklenmedi.
@@ -3265,7 +3265,7 @@ export default function ProductsTab({
                                                   </span>
                                                 )}
                                               </div>
-                                              <span className="order-4 w-full truncate rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:order-none sm:w-auto sm:max-w-[220px]">
+                                              <span className="order-4 block w-full truncate rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:order-none sm:w-auto sm:max-w-[220px]">
                                                 {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                               </span>
                                               <button
@@ -3374,7 +3374,7 @@ export default function ProductsTab({
                                         )}
                                       </div>
                                     </div>
-                                    <div className="no-scrollbar h-[300px] overflow-auto px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                                    <div className="no-scrollbar h-[300px] overflow-y-auto overflow-x-hidden px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                                       <div className="space-y-0.5">
                                         {visibleAutomationRunLogEntries.map((entry) => (
                                           <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
