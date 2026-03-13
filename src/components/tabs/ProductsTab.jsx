@@ -1231,6 +1231,7 @@ export default function ProductsTab({
     let settled = false
     let hasConnected = false
     let hasResult = false
+    let copyValueFromScriptLog = ""
     let timeoutId = null
 
     const clearRunTimeout = () => {
@@ -1269,6 +1270,20 @@ export default function ProductsTab({
       appendAutomationRunLog(normalizedId, status, message)
       setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: false }))
       closeAutomationSocket(normalizedId)
+    }
+
+    const captureCopyValueFromScriptLog = (rawMessage) => {
+      const text = String(rawMessage ?? "")
+      if (!text) return
+      const marker = "COPY_VALUE:"
+      const markerIndex = text.indexOf(marker)
+      if (markerIndex < 0) return
+      const candidate = text
+        .slice(markerIndex + marker.length)
+        .replace(/\r/g, "")
+        .trim()
+      if (!candidate) return
+      copyValueFromScriptLog = candidate
     }
 
     let socket
@@ -1346,9 +1361,13 @@ export default function ProductsTab({
 
         if (eventName === "script-log") {
           const stream = String(firstArg?.stream ?? "").trim().toLowerCase()
-          const message = String(firstArg?.message ?? "").trim()
-          if (message) {
-            const lines = message.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+          const rawMessage = String(firstArg?.message ?? "")
+          if (rawMessage) {
+            captureCopyValueFromScriptLog(rawMessage)
+            const lines = rawMessage
+              .split(/\r?\n/)
+              .map((line) => line.trim())
+              .filter(Boolean)
             lines.forEach((line) => {
               appendAutomationRunLog(
                 normalizedId,
@@ -1400,7 +1419,16 @@ export default function ProductsTab({
               rawValue = String(firstArg.value)
             }
           }
-          const valueText = String(rawValue ?? "").trim()
+          const normalizedRawValue = String(rawValue ?? "")
+          const normalizedLogValue = String(copyValueFromScriptLog ?? "")
+          const trimmedRawValue = normalizedRawValue.trim()
+          const trimmedLogValue = normalizedLogValue.trim()
+          const useLogValueAsFallback =
+            Boolean(trimmedLogValue) &&
+            (!trimmedRawValue ||
+              (!normalizedRawValue.includes("\n") && trimmedLogValue.length > trimmedRawValue.length))
+          const finalRawValue = useLogValueAsFallback ? trimmedLogValue : normalizedRawValue
+          const valueText = String(finalRawValue ?? "").trim()
           appendAutomationRunLog(
             normalizedId,
             "success",
@@ -1411,7 +1439,7 @@ export default function ProductsTab({
             offerId: normalizedId,
             title: label,
             backend: resultBackend,
-            value: rawValue || "-",
+            value: finalRawValue || "-",
           })
           hasResult = true
           complete("success", `${label} tamamlandi.`)
