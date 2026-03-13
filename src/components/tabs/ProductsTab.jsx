@@ -230,18 +230,6 @@ function ProductsSkeleton({ panelClass }) {
         <SkeletonBlock className="mt-4 h-8 w-56 rounded-full" />
         <SkeletonBlock className="mt-3 h-4 w-2/3 rounded-full" />
       </header>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 sm:gap-4">
-        {Array.from({ length: 5 }).map((_, idx) => (
-          <div
-            key={`product-metric-${idx}`}
-            className="min-h-[88px] rounded-2xl border border-white/20 bg-ink-900/70 p-4 shadow-inner"
-          >
-            <SkeletonBlock className="h-3 w-20 rounded-full" />
-            <SkeletonBlock className="mt-3 h-6 w-16 rounded-full" />
-            <SkeletonBlock className="mt-3 h-3 w-24 rounded-full" />
-          </div>
-        ))}
-      </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
         <aside className={`${panelClass} bg-ink-900/80`}>
           <SkeletonBlock className="h-3 w-24 rounded-full" />
@@ -2212,7 +2200,7 @@ export default function ProductsTab({
   return (
     <div className="space-y-6">
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
-        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1.5 sm:space-y-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
               Ürün listesi
@@ -2224,77 +2212,62 @@ export default function ProductsTab({
               Ürün adlarını gör ve filtrele.
             </p>
           </div>
-          <div className="flex w-full justify-start md:w-auto md:justify-end">
-            <div className="rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-                Kategori
-              </p>
-              <p className="mt-2 text-lg font-semibold text-white">
-                {activeCategory?.label ?? "Tümü"}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-400">
-                <span>{list.length} ürün</span>
-                <span>{paginatedList.length} gösterilen</span>
-                <span>
-                  {page}/{totalPages}
-                </span>
+          <div className="w-full md:max-w-[760px]">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
+                <div className="relative">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Toplam urun
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-white">{productStats.totalOffers}</p>
+                  <p className="text-[11px] text-slate-400">Katalogdaki teklifler</p>
+                </div>
+              </div>
+              <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(59,130,246,0.18),transparent)]" />
+                <div className="relative">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Stok acik
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-white">{productStats.stockEnabled}</p>
+                  <p className="text-[11px] text-slate-400">Stok takibi acik urun</p>
+                </div>
+              </div>
+              <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(16,185,129,0.18),transparent)]" />
+                <div className="relative">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Toplam stok
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-white">{productStats.totalStock}</p>
+                  <p className="text-[11px] text-slate-400">Kayitli anahtar</p>
+                </div>
+              </div>
+              <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(245,158,11,0.18),transparent)]" />
+                <div className="relative">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Kullanilan stok
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-white">{productStats.usedStock}</p>
+                  <p className="text-[11px] text-slate-400">Isaretlenen anahtar</p>
+                </div>
+              </div>
+              <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(20,184,166,0.18),transparent)]" />
+                <div className="relative">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Otomasyon acik
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-white">{productStats.automationEnabled}</p>
+                  <p className="text-[11px] text-slate-400">Aktif stok cek urunu - {automationWsSummary.label}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </header>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 sm:gap-4">
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
-          <div className="relative">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Toplam Ürün
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-white">{productStats.totalOffers}</p>
-            <p className="mt-1 text-xs text-slate-400">Katalogdaki teklifler</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(59,130,246,0.18),transparent)]" />
-          <div className="relative">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Stok açık
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-white">{productStats.stockEnabled}</p>
-            <p className="mt-1 text-xs text-slate-400">Stok takibi açık ürün</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(16,185,129,0.18),transparent)]" />
-          <div className="relative">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Toplam stok
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-white">{productStats.totalStock}</p>
-            <p className="mt-1 text-xs text-slate-400">Kayıtlı anahtar</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(245,158,11,0.18),transparent)]" />
-          <div className="relative">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Kullanılan stok
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-white">{productStats.usedStock}</p>
-            <p className="mt-1 text-xs text-slate-400">İşaretlenen anahtar</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(20,184,166,0.18),transparent)]" />
-          <div className="relative">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Otomasyon açık
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-white">{productStats.automationEnabled}</p>
-            <p className="mt-1 text-xs text-slate-400">Aktif stok cek urunu - {automationWsSummary.label}</p>
-          </div>
-        </div>
-      </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
         <aside className={`${panelClass} bg-ink-900/80`}>
           <div className="flex items-center justify-between gap-3">
