@@ -2372,17 +2372,6 @@ export default function ProductsTab({
               <p className="mt-1 text-sm text-slate-400">
                 {activeCategory?.label ?? "Tümü"} - {list.length} ürün
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
-                  Toplam: {list.length}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
-                  Gösterilen: {paginatedList.length}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-xs text-slate-200">
-                  Sayfa: {page}/{totalPages}
-                </span>
-              </div>
             </div>
             <div className="flex w-full flex-col gap-2">
               <div className="flex h-11 w-full items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
