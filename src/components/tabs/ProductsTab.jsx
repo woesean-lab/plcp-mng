@@ -460,7 +460,7 @@ export default function ProductsTab({
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
   const [automationConnectionStateByOffer, setAutomationConnectionStateByOffer] = useState({})
   const [automationWsProbeStatus, setAutomationWsProbeStatus] = useState("idle")
-  const [automationWsProbeMessage, setAutomationWsProbeMessage] = useState("")
+  const [, setAutomationWsProbeMessage] = useState("")
   const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [automationLogsClearingByOffer, setAutomationLogsClearingByOffer] = useState({})
@@ -833,55 +833,13 @@ export default function ProductsTab({
       .map((value) => String(value ?? "").trim().toLowerCase())
       .filter(Boolean)
     const connectedCount = values.filter((value) => value === "connected").length
-    const connectingCount = values.filter((value) => value === "connecting").length
-    const errorCount = values.filter((value) => value === "error").length
     const hasWsUrl = Boolean(String(automationWsUrl ?? "").trim())
     const probeStatus = String(automationWsProbeStatus ?? "").trim().toLowerCase()
-    const probeMessage = String(automationWsProbeMessage ?? "").trim()
-
-    if (connectedCount > 0 || probeStatus === "connected") {
-      const detailText =
-        connectedCount > 0
-          ? `${connectedCount} urunde websocket baglantisi kuruldu`
-          : probeMessage || "Websocket sunucusuna baglandi."
-      return {
-        label: "Baglandi",
-        detail: detailText,
-        badgeClass: "border-emerald-300/40 bg-emerald-500/10 text-emerald-100",
-        dotClass: "bg-emerald-300",
-      }
-    }
-    if (connectingCount > 0 || probeStatus === "connecting") {
-      return {
-        label: "Baglaniyor",
-        detail: probeMessage || "Websocket baglantisi deneniyor",
-        badgeClass: "border-amber-300/40 bg-amber-500/10 text-amber-100",
-        dotClass: "bg-amber-300",
-      }
-    }
-    if (errorCount > 0 || probeStatus === "error") {
-      return {
-        label: "Baglanti hatasi",
-        detail: probeMessage || "Son websocket denemesi basarisiz",
-        badgeClass: "border-rose-300/40 bg-rose-500/10 text-rose-100",
-        dotClass: "bg-rose-300",
-      }
-    }
-    if (!hasWsUrl) {
-      return {
-        label: "WS ayarsiz",
-        detail: "Websocket adresi kayitli degil",
-        badgeClass: "border-white/15 bg-white/5 text-slate-300",
-        dotClass: "bg-slate-400",
-      }
-    }
+    const isConnected = hasWsUrl && (connectedCount > 0 || probeStatus === "connected")
     return {
-      label: "Bagli degil",
-      detail: "Websocket baglantisi bekleniyor",
-      badgeClass: "border-white/15 bg-white/5 text-slate-300",
-      dotClass: "bg-slate-400",
+      label: isConnected ? "Baglanildi" : "Baglanilmadi",
     }
-  }, [automationConnectionStateByOffer, automationWsProbeMessage, automationWsProbeStatus, automationWsUrl])
+  }, [automationConnectionStateByOffer, automationWsProbeStatus, automationWsUrl])
   const toggleOfferOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
@@ -2334,13 +2292,7 @@ export default function ProductsTab({
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.automationEnabled}</p>
             <p className="mt-1 text-xs text-slate-400">Aktif stok çek ürünü</p>
-            <div
-              className={`mt-2 inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${automationWsSummary.badgeClass}`}
-            >
-              <span className={`h-1.5 w-1.5 rounded-full ${automationWsSummary.dotClass}`} />
-              WS {automationWsSummary.label}
-            </div>
-            <p className="mt-1 text-[11px] text-slate-500">{automationWsSummary.detail}</p>
+            <p className="mt-2 text-xs font-semibold text-slate-300">{automationWsSummary.label}</p>
           </div>
         </div>
       </div>
