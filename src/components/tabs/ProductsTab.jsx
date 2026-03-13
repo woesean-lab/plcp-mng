@@ -3212,17 +3212,21 @@ export default function ProductsTab({
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     onClick={(event) => event.stopPropagation()}
-                                                    className="inline-flex w-full min-w-0 items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/5 hover:text-white"
+                                                    className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/5 hover:text-white"
                                                     title={targetRow.url}
                                                   >
-                                                    <span className="block w-full truncate">{urlDisplay}</span>
+                                                    <span className="inline-block max-w-full truncate">
+                                                      {urlDisplay}
+                                                    </span>
                                                   </a>
                                                 ) : (
                                                   <span
-                                                    className="inline-flex w-full min-w-0 items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-300"
+                                                    className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-300"
                                                     title={urlDisplay}
                                                   >
-                                                    <span className="block w-full truncate">{urlDisplay}</span>
+                                                    <span className="inline-block max-w-full truncate">
+                                                      {urlDisplay}
+                                                    </span>
                                                   </span>
                                                 )}
                                               </div>
