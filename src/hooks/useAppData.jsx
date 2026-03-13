@@ -508,7 +508,7 @@ export default function useAppData() {
         )
       } catch (error) {
         if (error?.name === "AbortError") return
-        toast.error("Eldorado ayarlari alinamadi (API/Server kontrol edin).")
+        toast.error("Ayarlar alinamadi (API/Server kontrol edin).")
       }
     },
     [apiFetch, readApiError],
@@ -2303,7 +2303,7 @@ export default function useAppData() {
       } catch (error) {
         if (error?.name === "AbortError") return
         setEldoradoCatalog(applyEldoradoKeyCounts(null))
-        toast.error("Eldorado urunleri alinamadi (API/Server kontrol edin).")
+        toast.error("Urunler alinamadi (API/Server kontrol edin).")
       } finally {
         if (!options.silent) {
           setIsEldoradoLoading(false)
@@ -2406,7 +2406,7 @@ export default function useAppData() {
       } catch (error) {
         if (error?.name === "AbortError") return
         setEldoradoLogs([])
-        toast.error("Eldorado loglari alinamadi (API/Server kontrol edin).")
+        toast.error("Loglar alinamadi (API/Server kontrol edin).")
       } finally {
         setIsEldoradoLogsLoading(false)
       }
