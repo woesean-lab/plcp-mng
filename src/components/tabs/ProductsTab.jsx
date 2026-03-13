@@ -137,6 +137,36 @@ const maskSensitiveText = (value, minLength = 8) => {
   return "*".repeat(safeLength)
 }
 
+const escapeRegExp = (value) => String(value ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+const maskAutomationLogMessage = (message, backendCandidates = []) => {
+  const raw = String(message ?? "")
+  if (!raw) return raw
+
+  let masked = raw
+
+  masked = masked.replace(/(?:https?|wss?):\/\/[^\s)]+/gi, (url) => maskSensitiveText(url, 16))
+
+  masked = masked.replace(
+    /(backend\s*[=:]\s*)([^\s,]+)/gi,
+    (_, prefix, backendValue) => `${prefix}${maskSensitiveText(backendValue, 8)}`,
+  )
+
+  const backendList = Array.from(
+    new Set(
+      (Array.isArray(backendCandidates) ? backendCandidates : [])
+        .map((entry) => String(entry ?? "").trim())
+        .filter(Boolean),
+    ),
+  ).sort((a, b) => b.length - a.length)
+
+  backendList.forEach((backendKey) => {
+    masked = masked.replace(new RegExp(escapeRegExp(backendKey), "g"), maskSensitiveText(backendKey, 8))
+  })
+
+  return masked
+}
+
 function ProductsSkeleton({ panelClass }) {
   return (
     <div className="space-y-6">
@@ -2260,7 +2290,23 @@ export default function ProductsTab({
                   const automationRunLogEntries = Array.isArray(automationRunLogByOffer?.[offerId])
                     ? automationRunLogByOffer[offerId]
                     : []
-                  const visibleAutomationRunLogEntries = automationRunLogEntries.slice(0, CMD_VISIBLE_ROWS)
+                  const automationSensitiveBackendKeys = Array.from(
+                    new Set(
+                      [
+                        ...automationTargets.map((entry) => String(entry?.backend ?? "").trim()),
+                        ...automationBackendOptions.map((option) => String(option?.key ?? "").trim()),
+                        ...automationBackendOptions.map((option) => String(option?.label ?? "").trim()),
+                      ].filter(Boolean),
+                    ),
+                  )
+                  const visibleAutomationRunLogEntries = automationRunLogEntries
+                    .slice(0, CMD_VISIBLE_ROWS)
+                    .map((entry) => ({
+                      ...entry,
+                      visibleMessage: canViewAutomationTargetDetails
+                        ? String(entry?.message ?? "")
+                        : maskAutomationLogMessage(entry?.message, automationSensitiveBackendKeys),
+                    }))
                   const emptyAutomationRunLogRows = Math.max(
                     0,
                     CMD_VISIBLE_ROWS - visibleAutomationRunLogEntries.length,
@@ -3371,7 +3417,9 @@ export default function ProductsTab({
                                                   ? "ERR"
                                                   : "RUN"}
                                             </span>
-                                            <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                                            <span className="min-w-0 break-words text-slate-100">
+                                              {entry.visibleMessage}
+                                            </span>
                                           </div>
                                         ))}
                                         {Array.from({ length: emptyAutomationRunLogRows }).map((_, index) => (
