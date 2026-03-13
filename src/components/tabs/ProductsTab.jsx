@@ -657,7 +657,7 @@ export default function ProductsTab({
       if (cancelled || automationWsProbeAttemptRef.current !== attemptId) return
       if (result?.ok) {
         setAutomationWsProbeStatus("connected")
-        setAutomationWsProbeMessage("Websocket sunucusuna baglanildi.")
+        setAutomationWsProbeMessage("Websocket sunucusuna baglandi.")
         return
       }
       setAutomationWsProbeStatus("error")
@@ -843,9 +843,9 @@ export default function ProductsTab({
       const detailText =
         connectedCount > 0
           ? `${connectedCount} urunde websocket baglantisi kuruldu`
-          : probeMessage || "Websocket sunucusuna baglanildi."
+          : probeMessage || "Websocket sunucusuna baglandi."
       return {
-        label: "Baglanildi",
+        label: "Baglandi",
         detail: detailText,
         badgeClass: "border-emerald-300/40 bg-emerald-500/10 text-emerald-100",
         dotClass: "bg-emerald-300",
@@ -1365,7 +1365,7 @@ export default function ProductsTab({
 
         if (packet.startsWith("40")) {
           if (!hasConnected) {
-            appendAutomationRunLog(normalizedId, "running", "Baglanildi.")
+            appendAutomationRunLog(normalizedId, "running", "Baglandi.")
           }
           hasConnected = true
           setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connected" }))
