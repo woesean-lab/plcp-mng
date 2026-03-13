@@ -93,6 +93,61 @@ const buildSocketIoWsUrl = (normalizedUrl, extraQuery = {}) => {
   }
 }
 
+const testSocketIoConnection = (socketIoUrl) =>
+  new Promise((resolve) => {
+    let settled = false
+    let socket = null
+    let timeoutId = null
+    let handshakeTimeoutId = null
+
+    const finish = (ok, reason) => {
+      if (settled) return
+      settled = true
+      if (timeoutId) window.clearTimeout(timeoutId)
+      if (handshakeTimeoutId) window.clearTimeout(handshakeTimeoutId)
+      try {
+        socket?.close()
+      } catch {
+        // Ignore close errors.
+      }
+      resolve({ ok, reason })
+    }
+
+    try {
+      socket = new WebSocket(socketIoUrl)
+    } catch {
+      finish(false, "invalid_url")
+      return
+    }
+
+    timeoutId = window.setTimeout(() => {
+      finish(false, "timeout")
+    }, 6000)
+
+    socket.addEventListener("open", () => {
+      handshakeTimeoutId = window.setTimeout(() => {
+        finish(false, "socketio_handshake_timeout")
+      }, 1800)
+    })
+
+    socket.addEventListener("message", (event) => {
+      if (settled) return
+      const payload = typeof event.data === "string" ? event.data : ""
+      if (payload.startsWith("0{") || payload.includes("\"sid\"")) {
+        finish(true, "socketio_open")
+      }
+    })
+
+    socket.addEventListener("error", () => {
+      finish(false, "error")
+    })
+
+    socket.addEventListener("close", () => {
+      if (settled) return
+      finish(false, "closed")
+    })
+  })
+
 const normalizeAutomationTarget = (entry) => {
   const id = String(entry?.id ?? "").trim()
   const backend = String(entry?.backend ?? "").trim()
@@ -399,9 +454,13 @@ export default function ProductsTab({
     value: "",
   })
   const [isAddingPopupStock, setIsAddingPopupStock] = useState(false)
+  const [isPopupValueEditing, setIsPopupValueEditing] = useState(false)
+  const [popupValueDraft, setPopupValueDraft] = useState("")
   const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
   const [automationConnectionStateByOffer, setAutomationConnectionStateByOffer] = useState({})
+  const [automationWsProbeStatus, setAutomationWsProbeStatus] = useState("idle")
+  const [automationWsProbeMessage, setAutomationWsProbeMessage] = useState("")
   const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [automationLogsClearingByOffer, setAutomationLogsClearingByOffer] = useState({})
@@ -416,6 +475,9 @@ export default function ProductsTab({
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
+  const popupValueEditorRef = useRef(null)
+  const popupValueCopyTimerRef = useRef(null)
+  const automationWsProbeAttemptRef = useRef(0)
   const automationSocketByOfferRef = useRef({})
   const prevNoteGroupAssignments = useRef(noteGroupAssignments)
   const prevGroupAssignments = useRef(groupAssignments)
@@ -570,6 +632,42 @@ export default function ProductsTab({
       automationSocketByOfferRef.current = {}
     }
   }, [])
+  useEffect(() => {
+    const normalizedWsUrl = String(automationWsUrl ?? "").trim()
+    if (!normalizedWsUrl) {
+      setAutomationWsProbeStatus("idle")
+      setAutomationWsProbeMessage("Websocket adresi kayitli degil.")
+      return
+    }
+
+    const socketIoUrl = buildSocketIoWsUrl(normalizedWsUrl)
+    if (!socketIoUrl) {
+      setAutomationWsProbeStatus("error")
+      setAutomationWsProbeMessage("Websocket adresi gecersiz.")
+      return
+    }
+
+    const attemptId = automationWsProbeAttemptRef.current + 1
+    automationWsProbeAttemptRef.current = attemptId
+    setAutomationWsProbeStatus("connecting")
+    setAutomationWsProbeMessage("Websocket baglantisi deneniyor...")
+
+    let cancelled = false
+    void testSocketIoConnection(socketIoUrl).then((result) => {
+      if (cancelled || automationWsProbeAttemptRef.current !== attemptId) return
+      if (result?.ok) {
+        setAutomationWsProbeStatus("connected")
+        setAutomationWsProbeMessage("Websocket sunucusuna baglanildi.")
+        return
+      }
+      setAutomationWsProbeStatus("error")
+      setAutomationWsProbeMessage("Websocket baglantisi kurulamadi.")
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [automationWsUrl])
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   const triggerKeyFade = (keyId) => {
     const normalizedId = String(keyId ?? "").trim()
@@ -738,27 +836,33 @@ export default function ProductsTab({
     const connectingCount = values.filter((value) => value === "connecting").length
     const errorCount = values.filter((value) => value === "error").length
     const hasWsUrl = Boolean(String(automationWsUrl ?? "").trim())
+    const probeStatus = String(automationWsProbeStatus ?? "").trim().toLowerCase()
+    const probeMessage = String(automationWsProbeMessage ?? "").trim()
 
-    if (connectedCount > 0) {
+    if (connectedCount > 0 || probeStatus === "connected") {
+      const detailText =
+        connectedCount > 0
+          ? `${connectedCount} urunde websocket baglantisi kuruldu`
+          : probeMessage || "Websocket sunucusuna baglanildi."
       return {
         label: "Baglanildi",
-        detail: `${connectedCount} urunde websocket baglantisi kuruldu`,
+        detail: detailText,
         badgeClass: "border-emerald-300/40 bg-emerald-500/10 text-emerald-100",
         dotClass: "bg-emerald-300",
       }
     }
-    if (connectingCount > 0) {
+    if (connectingCount > 0 || probeStatus === "connecting") {
       return {
         label: "Baglaniyor",
-        detail: "Websocket baglantisi deneniyor",
+        detail: probeMessage || "Websocket baglantisi deneniyor",
         badgeClass: "border-amber-300/40 bg-amber-500/10 text-amber-100",
         dotClass: "bg-amber-300",
       }
     }
-    if (errorCount > 0) {
+    if (errorCount > 0 || probeStatus === "error") {
       return {
         label: "Baglanti hatasi",
-        detail: "Son websocket denemesi basarisiz",
+        detail: probeMessage || "Son websocket denemesi basarisiz",
         badgeClass: "border-rose-300/40 bg-rose-500/10 text-rose-100",
         dotClass: "bg-rose-300",
       }
@@ -777,7 +881,7 @@ export default function ProductsTab({
       badgeClass: "border-white/15 bg-white/5 text-slate-300",
       dotClass: "bg-slate-400",
     }
-  }, [automationConnectionStateByOffer, automationWsUrl])
+  }, [automationConnectionStateByOffer, automationWsProbeMessage, automationWsProbeStatus, automationWsUrl])
   const toggleOfferOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
@@ -1914,6 +2018,72 @@ export default function ProductsTab({
       setPage(totalPages)
     }
   }, [page, totalPages])
+  useEffect(() => {
+    if (!automationResultPopup.isOpen) {
+      setIsPopupValueEditing(false)
+      setPopupValueDraft("")
+      if (popupValueCopyTimerRef.current) {
+        window.clearTimeout(popupValueCopyTimerRef.current)
+        popupValueCopyTimerRef.current = null
+      }
+      return
+    }
+    if (!isPopupValueEditing) {
+      setPopupValueDraft(String(automationResultPopup.value ?? ""))
+    }
+  }, [automationResultPopup.isOpen, automationResultPopup.value, isPopupValueEditing])
+  useEffect(() => {
+    if (!isPopupValueEditing) return
+    popupValueEditorRef.current?.focus()
+    popupValueEditorRef.current?.select?.()
+  }, [isPopupValueEditing])
+  useEffect(() => {
+    return () => {
+      if (popupValueCopyTimerRef.current) {
+        window.clearTimeout(popupValueCopyTimerRef.current)
+        popupValueCopyTimerRef.current = null
+      }
+    }
+  }, [])
+  const copyPopupValueToClipboard = async () => {
+    const valueToCopy = String(automationResultPopup.value || "-")
+    try {
+      await navigator.clipboard.writeText(valueToCopy)
+      toast.success("Sonuc kopyalandi", { position: "top-right" })
+    } catch {
+      toast.error("Sonuc kopyalanamadi", { position: "top-right" })
+    }
+  }
+  const schedulePopupValueCopy = () => {
+    if (isPopupValueEditing) return
+    if (popupValueCopyTimerRef.current) {
+      window.clearTimeout(popupValueCopyTimerRef.current)
+      popupValueCopyTimerRef.current = null
+    }
+    popupValueCopyTimerRef.current = window.setTimeout(() => {
+      popupValueCopyTimerRef.current = null
+      void copyPopupValueToClipboard()
+    }, 220)
+  }
+  const startPopupValueEditing = () => {
+    if (popupValueCopyTimerRef.current) {
+      window.clearTimeout(popupValueCopyTimerRef.current)
+      popupValueCopyTimerRef.current = null
+    }
+    setPopupValueDraft(String(automationResultPopup.value ?? ""))
+    setIsPopupValueEditing(true)
+  }
+  const cancelPopupValueEditing = () => {
+    setPopupValueDraft(String(automationResultPopup.value ?? ""))
+    setIsPopupValueEditing(false)
+  }
+  const savePopupValueEditing = () => {
+    setAutomationResultPopup((prev) => ({
+      ...prev,
+      value: String(popupValueDraft ?? ""),
+    }))
+    setIsPopupValueEditing(false)
+  }
   const handlePopupAddToStock = async () => {
     if (typeof onAddKeys !== "function") {
       toast.error("Stoga ekleme islemi kullanilamiyor.")
@@ -1921,7 +2091,10 @@ export default function ProductsTab({
     }
 
     const offerId = String(automationResultPopup.offerId ?? "").trim()
-    const valueToAdd = String(automationResultPopup.value ?? "").trim()
+    const rawValueToAdd = isPopupValueEditing
+      ? String(popupValueDraft ?? "")
+      : String(automationResultPopup.value ?? "")
+    const valueToAdd = String(rawValueToAdd).trim()
     if (!offerId) {
       toast.error("Aktif urun bulunamadi.")
       return
@@ -1929,6 +2102,13 @@ export default function ProductsTab({
     if (!valueToAdd || valueToAdd === "-") {
       toast.error("Eklenecek deger bulunamadi.")
       return
+    }
+    if (isPopupValueEditing) {
+      setAutomationResultPopup((prev) => ({
+        ...prev,
+        value: rawValueToAdd,
+      }))
+      setIsPopupValueEditing(false)
     }
 
     setIsAddingPopupStock(true)
@@ -1978,22 +2158,71 @@ export default function ProductsTab({
         </div>
 
         <div
-          className="mt-4 cursor-copy rounded-xl border border-white/10 bg-black/25 p-3"
-          title="Sonucu kopyalamak icin tikla"
-          onClick={async () => {
-            const valueToCopy = String(automationResultPopup.value || "-")
-            try {
-              await navigator.clipboard.writeText(valueToCopy)
-              toast.success("Sonuc kopyalandi", { position: "top-right" })
-            } catch {
-              toast.error("Sonuc kopyalanamadi", { position: "top-right" })
-            }
+          className={`mt-4 rounded-xl border border-white/10 bg-black/25 p-3 ${
+            isPopupValueEditing ? "" : "cursor-copy"
+          }`}
+          title={isPopupValueEditing ? "Duzenleme modu" : "Tek tikla kopyala, cift tikla duzenle"}
+          onClick={() => {
+            schedulePopupValueCopy()
+          }}
+          onDoubleClick={(event) => {
+            event.preventDefault()
+            if (isPopupValueEditing) return
+            startPopupValueEditing()
           }}
         >
-          <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-100">
-            {automationResultPopup.value || "-"}
-          </pre>
+          {isPopupValueEditing ? (
+            <div className="space-y-2">
+              <textarea
+                ref={popupValueEditorRef}
+                value={popupValueDraft}
+                onChange={(event) => setPopupValueDraft(event.target.value)}
+                rows={6}
+                className="w-full resize-y rounded-md border border-white/15 bg-ink-950/70 px-2.5 py-2 font-mono text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+                placeholder="Sonuc degeri"
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => {
+                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                    event.preventDefault()
+                    savePopupValueEditing()
+                    return
+                  }
+                  if (event.key === "Escape") {
+                    event.preventDefault()
+                    cancelPopupValueEditing()
+                  }
+                }}
+              />
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-white/20 bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/35 hover:bg-white/10"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    cancelPopupValueEditing()
+                  }}
+                >
+                  Iptal
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-500/25"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    savePopupValueEditing()
+                  }}
+                >
+                  Kaydet
+                </button>
+              </div>
+            </div>
+          ) : (
+            <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-100">
+              {automationResultPopup.value || "-"}
+            </pre>
+          )}
         </div>
+        <p className="mt-1 text-[11px] text-slate-500">Tek tikla kopyala, cift tikla duzenle</p>
 
         <div className="mt-4 flex items-center justify-between gap-2">
           <button
