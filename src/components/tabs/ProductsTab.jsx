@@ -1232,6 +1232,8 @@ export default function ProductsTab({
     let hasConnected = false
     let hasResult = false
     let copyValueFromScriptLog = ""
+    let copyValueCaptureActive = false
+    let copyValueLines = []
     let timeoutId = null
 
     const clearRunTimeout = () => {
@@ -1273,17 +1275,33 @@ export default function ProductsTab({
     }
 
     const captureCopyValueFromScriptLog = (rawMessage) => {
-      const text = String(rawMessage ?? "")
+      const text = String(rawMessage ?? "").replace(/\r/g, "")
       if (!text) return
       const marker = "COPY_VALUE:"
       const markerIndex = text.indexOf(marker)
-      if (markerIndex < 0) return
-      const candidate = text
-        .slice(markerIndex + marker.length)
-        .replace(/\r/g, "")
-        .trim()
-      if (!candidate) return
-      copyValueFromScriptLog = candidate
+      if (markerIndex >= 0) {
+        copyValueCaptureActive = true
+        copyValueLines = []
+        const seededLines = text
+          .slice(markerIndex + marker.length)
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+        if (seededLines.length > 0) {
+          copyValueLines.push(...seededLines)
+          copyValueFromScriptLog = copyValueLines.join("\n")
+        }
+        return
+      }
+      if (!copyValueCaptureActive) return
+      const appendedLines = text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .filter((line) => !/^\[[^\]]+\]/.test(line) && !line.startsWith("Script "))
+      if (appendedLines.length === 0) return
+      copyValueLines.push(...appendedLines)
+      copyValueFromScriptLog = copyValueLines.join("\n").trim()
     }
 
     let socket
@@ -1381,6 +1399,7 @@ export default function ProductsTab({
         }
 
         if (eventName === "script-exit") {
+          copyValueCaptureActive = false
           const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
           if (Number.isFinite(exitCode)) {
             appendAutomationRunLog(
@@ -1423,9 +1442,12 @@ export default function ProductsTab({
           const normalizedLogValue = String(copyValueFromScriptLog ?? "")
           const trimmedRawValue = normalizedRawValue.trim()
           const trimmedLogValue = normalizedLogValue.trim()
+          const hasMultilineLogValue =
+            copyValueLines.length > 1 || normalizedLogValue.includes("\n")
           const useLogValueAsFallback =
             Boolean(trimmedLogValue) &&
-            (!trimmedRawValue ||
+            (hasMultilineLogValue ||
+              !trimmedRawValue ||
               (!normalizedRawValue.includes("\n") && trimmedLogValue.length > trimmedRawValue.length))
           const finalRawValue = useLogValueAsFallback ? trimmedLogValue : normalizedRawValue
           const valueText = String(finalRawValue ?? "").trim()
@@ -1441,6 +1463,7 @@ export default function ProductsTab({
             backend: resultBackend,
             value: finalRawValue || "-",
           })
+          copyValueCaptureActive = false
           hasResult = true
           complete("success", `${label} tamamlandi.`)
           return
