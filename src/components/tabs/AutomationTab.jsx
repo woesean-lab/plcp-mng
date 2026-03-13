@@ -78,31 +78,12 @@ function AutomationSkeleton({ panelClass }) {
           <SkeletonBlock className="h-7 w-20 rounded-full" />
         </div>
       </div>
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
+      <div className="grid items-start gap-5">
         <div className={`${panelClass} bg-ink-900/60`}>
           <SkeletonBlock className="h-4 w-28" />
           <SkeletonBlock className="mt-4 h-11 w-full" />
           <SkeletonBlock className="mt-3 h-10 w-40" />
           <SkeletonBlock className="mt-4 h-56 w-full" />
-        </div>
-        <div className="space-y-4">
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <SkeletonBlock className="h-4 w-24" />
-            <SkeletonBlock className="mt-4 h-10 w-full" />
-            <SkeletonBlock className="mt-3 h-10 w-full" />
-          </div>
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <SkeletonBlock className="h-4 w-28" />
-            <SkeletonBlock className="mt-4 h-10 w-full" />
-            <SkeletonBlock className="mt-3 h-10 w-full" />
-            <SkeletonBlock className="mt-4 h-10 w-full" />
-          </div>
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <SkeletonBlock className="h-4 w-24" />
-            <SkeletonBlock className="mt-4 h-10 w-full" />
-            <SkeletonBlock className="mt-3 h-10 w-full" />
-            <SkeletonBlock className="mt-4 h-10 w-full" />
-          </div>
         </div>
       </div>
     </div>
@@ -111,8 +92,8 @@ function AutomationSkeleton({ panelClass }) {
 
 export default function AutomationTab({ panelClass, isLoading = false }) {
   const [backendOptions, setBackendOptions] = useState([])
-  const [backendListStatus, setBackendListStatus] = useState("idle")
-  const [backendListMessage, setBackendListMessage] = useState(
+  const [_backendListStatus, setBackendListStatus] = useState("idle")
+  const [_backendListMessage, setBackendListMessage] = useState(
     "Baglanti kuruldugunda backend map listesi alinacak.",
   )
   const [selectedBackendKey, setSelectedBackendKey] = useState("")
@@ -128,10 +109,10 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
   })
   const [wsUrl, setWsUrl] = useState("")
   const [savedWsUrl, setSavedWsUrl] = useState("")
-  const [wsTestStatus, setWsTestStatus] = useState(() => readStoredWsConnectionState().status)
-  const [wsTestMessage, setWsTestMessage] = useState(() => readStoredWsConnectionState().message)
-  const [lastTestedWsUrl, setLastTestedWsUrl] = useState(() => readStoredWsConnectionState().url)
-  const [isWsTesting, setIsWsTesting] = useState(false)
+  const [_wsTestStatus, setWsTestStatus] = useState(() => readStoredWsConnectionState().status)
+  const [_wsTestMessage, setWsTestMessage] = useState(() => readStoredWsConnectionState().message)
+  const [_lastTestedWsUrl, setLastTestedWsUrl] = useState(() => readStoredWsConnectionState().url)
+  const [_isWsTesting, setIsWsTesting] = useState(false)
   const wsSocketRef = useRef(null)
   const hasAutoConnectedRef = useRef(false)
   const toastStyle = DEFAULT_TOAST_STYLE
@@ -366,56 +347,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }
   }, [])
 
-  const saveWsUrl = async () => {
-    const normalized = wsUrl.trim()
-    if (!normalized) {
-      toast.error("Websocket adresi girin.", { style: toastStyle, position: "top-right" })
-      return
-    }
-    if (!isValidWsUrl(normalized)) {
-      toast.error("Gecerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
-      return
-    }
-
-    try {
-      const res = await apiFetchAutomation("/api/automation/config", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ wsUrl: normalized }),
-      })
-      if (!res.ok) {
-        const apiError = await readApiError(res)
-        throw new Error(apiError || "Kaydedilemedi.")
-      }
-
-      const payload = await res.json()
-      const persistedWsUrl = String(payload?.wsUrl ?? normalized).trim()
-      setWsUrl(persistedWsUrl)
-      setSavedWsUrl(persistedWsUrl)
-
-      if (persistedWsUrl !== lastTestedWsUrl) {
-        setLastTestedWsUrl("")
-        setWsTestStatus("idle")
-        const message = "Kaydedildi. Baglanti kur butonunu kullan."
-        setWsTestMessage(message)
-        persistWsConnectionState("", "idle", message)
-      } else if (wsTestStatus === "success") {
-        const message = "Kaydedildi. Son baglanti sonucu: baglanti basarili."
-        setWsTestMessage(message)
-        persistWsConnectionState(persistedWsUrl, "success", message)
-      } else if (wsTestStatus === "error") {
-        const message = "Kaydedildi. Son baglanti sonucu: baglanti basarisiz."
-        setWsTestMessage(message)
-        persistWsConnectionState(persistedWsUrl, "error", message)
-      } else {
-        persistWsConnectionState("", "idle", wsTestMessage)
-      }
-
-      toast.success("Websocket adresi kaydedildi", { style: toastStyle, position: "top-right" })
-    } catch (error) {
-      toast.error(error?.message || "Kaydedilemedi.", { style: toastStyle, position: "top-right" })
-    }
-  }
   const buildSocketIoWsUrl = useCallback((normalizedUrl, extraQuery = {}) => {
     try {
       const socketIoUrl = new URL(normalizedUrl)
@@ -804,93 +735,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     }, 0)
     return () => window.clearTimeout(timeoutId)
   }, [savedWsUrl, connectSocketIo])
-
-  const wsStatusMeta = (() => {
-    const normalizedCurrentWsUrl = wsUrl.trim()
-    const isCurrentUrlTested = normalizedCurrentWsUrl && normalizedCurrentWsUrl === lastTestedWsUrl
-
-    if (!normalizedCurrentWsUrl) {
-      return {
-        dot: "bg-slate-400",
-        badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
-        label: "Baglanti yok",
-      }
-    }
-    if (wsTestStatus === "success") {
-      return {
-        dot: "bg-emerald-400",
-        badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-100",
-        label: "Baglanildi",
-      }
-    }
-    if (wsTestStatus === "testing") {
-      return {
-        dot: "bg-amber-300",
-        badge: "border-amber-300/50 bg-amber-500/15 text-amber-100",
-        label: "Baglaniyor",
-      }
-    }
-    if (wsTestStatus === "idle") {
-      return {
-        dot: "bg-slate-400",
-        badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
-        label: "Baglanilmadi",
-      }
-    }
-    if (!isCurrentUrlTested) {
-      return {
-        dot: "bg-slate-400",
-        badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
-        label: "Baglanilmadi",
-      }
-    }
-    return {
-      dot: "bg-rose-400",
-      badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
-      label: "Baglanti hatasi",
-    }
-  })()
-
-  const backendStatusMeta = (() => {
-    if (backendListStatus === "success") {
-      return {
-        badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-100",
-        label: "Map hazir",
-      }
-    }
-    if (backendListStatus === "loading") {
-      return {
-        badge: "border-amber-300/50 bg-amber-500/15 text-amber-100",
-        label: "Map aliniyor",
-      }
-    }
-    if (backendListStatus === "error") {
-      return {
-        badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
-        label: "Map hatasi",
-      }
-    }
-    return {
-      badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
-      label: "Map bekleniyor",
-    }
-  })()
-
-  const handleWsUrlChange = (event) => {
-    const nextValue = event.target.value
-    setWsUrl(nextValue)
-    setBackendListStatus("idle")
-    setBackendListMessage("Bu adres icin backend map listesi alinmadi.")
-    setBackendOptions([])
-    if (nextValue.trim() !== lastTestedWsUrl) {
-      setLastTestedWsUrl("")
-      setWsTestStatus("idle")
-      const message = "Bu adres için bağlantı kurulmadı."
-      setWsTestMessage(message)
-      persistWsConnectionState("", "idle", message)
-    }
-  }
-
   const runAutomation = (selectedOption) => {
     if (!selectedOption) return
     const backend = String(selectedOption.key ?? "").trim()
@@ -1122,13 +966,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
     "rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
   const secondaryButtonClass =
     "rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10"
-  const wsActionButtonBaseClass =
-    "w-full min-w-0 rounded-lg px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase tracking-[0.04em] transition sm:text-[10px]"
-  const wsActionPrimaryButtonClass =
-    `${wsActionButtonBaseClass} border border-emerald-300/60 bg-emerald-500/15 text-emerald-50 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60`
-  const wsActionSecondaryButtonClass =
-    `${wsActionButtonBaseClass} border border-white/15 bg-white/[0.06] text-slate-200 hover:border-white/25 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60`
-
   const confirmModalContent = isConfirmOpen ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/75 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
@@ -1261,7 +1098,7 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
           </div>
         </header>
 
-        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
+        <div className="grid items-start gap-5">
           <section className={`${panelClass} bg-ink-900/60`}>
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Calistir</p>
@@ -1378,86 +1215,6 @@ export default function AutomationTab({ panelClass, isLoading = false }) {
               </div>
             </div>
           </section>
-
-          <aside className="space-y-4">
-            <section className={`${panelClass} bg-ink-900/60`}>
-              <div className="flex items-start justify-between gap-2.5">
-                <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                    Websocket
-                  </p>
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Proxy adresini kaydet, baglan ve backend mapleri cek.
-                  </p>
-                </div>
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${wsStatusMeta.badge}`}
-                >
-                  <span className={`h-2 w-2 rounded-full ${wsStatusMeta.dot}`} />
-                  {wsStatusMeta.label}
-                </span>
-              </div>
-
-              <div className="mt-2.5 space-y-2">
-                <label
-                  htmlFor="ws-url"
-                  className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500"
-                >
-                  Sunucu adresi
-                </label>
-                <input
-                  id="ws-url"
-                  type="text"
-                  placeholder="wss://ornek.com/ws"
-                  value={wsUrl}
-                  onChange={handleWsUrlChange}
-                  className={`${fieldClass} !bg-ink-950/80 !px-3 !py-2 !text-xs`}
-                />
-              </div>
-
-              <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-                <button type="button" onClick={saveWsUrl} className={wsActionSecondaryButtonClass}>
-                  Kaydet
-                </button>
-                <button
-                  type="button"
-                  onClick={connectSocketIo}
-                  disabled={isWsTesting}
-                  className={wsActionPrimaryButtonClass}
-                >
-                  {isWsTesting ? "Baglaniyor..." : "Baglan"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void refreshBackendMaps({ silent: false })
-                  }}
-                  disabled={backendListStatus === "loading" || wsTestStatus !== "success"}
-                  className={wsActionSecondaryButtonClass}
-                >
-                  {backendListStatus === "loading" ? "Map aliniyor..." : "Mapleri cek"}
-                </button>
-              </div>
-
-              <div className="mt-2.5 border-t border-white/10 pt-2.5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Kayitli adres
-                </p>
-                <p className="mt-1 break-all font-mono text-[10px] text-slate-200">{savedWsUrl || "-"}</p>
-                <p className="mt-2 text-[10px] text-slate-300">{wsTestMessage}</p>
-
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="text-[10px] text-slate-400">{backendListMessage}</span>
-                  <span
-                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${backendStatusMeta.badge}`}
-                  >
-                    {backendStatusMeta.label}
-                  </span>
-                </div>
-              </div>
-            </section>
-
-          </aside>
         </div>
       </div>
 
