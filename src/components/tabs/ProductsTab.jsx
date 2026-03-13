@@ -2339,11 +2339,8 @@ export default function ProductsTab({
         <div className={`${panelClass} bg-ink-800/60`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                Ürün kataloğu
-              </p>
-              <p className="mt-1 text-sm text-slate-400">
-                {activeCategory?.label ?? "Tümü"} - {list.length} ürün
+              <p className="text-sm font-semibold text-slate-300">
+                {activeCategory?.label ?? "Tumu"} - {list.length} urun
               </p>
             </div>
             <div className="flex w-full flex-col gap-2">
