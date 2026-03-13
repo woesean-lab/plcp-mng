@@ -2291,7 +2291,7 @@ export default function ProductsTab({
               Otomasyon açık
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">{productStats.automationEnabled}</p>
-            <p className="mt-1 text-xs text-slate-300">Aktif stok cek urunu - {automationWsSummary.label}</p>
+            <p className="mt-1 text-xs text-slate-400">Aktif stok cek urunu - {automationWsSummary.label}</p>
           </div>
         </div>
       </div>
