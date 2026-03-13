@@ -37,7 +37,6 @@ import {
   toColumnLabel,
 } from "../utils/listUtils"
 import { getStockStatus, splitStocks } from "../utils/stockUtils"
-import { getInitialTheme } from "../utils/theme"
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -45,7 +44,7 @@ export default function useAppData() {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [isTabLoading, setIsTabLoading] = useState(false)
   const tabLoadingTimerRef = useRef(null)
-  const [theme, setTheme] = useState(() => getInitialTheme())
+  const theme = "dark"
   const [authToken, setAuthToken] = useState(() => {
     if (typeof window === "undefined") return ""
     try {
@@ -229,7 +228,7 @@ export default function useAppData() {
   const [salesForm, setSalesForm] = useState(() => buildSalesForm())
   const [salesRange, setSalesRange] = useState("daily")
 
-  const isLight = theme === "light"
+  const isLight = false
   const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
   const hasPermission = useCallback((permission) => permissions.includes(permission), [permissions])
   const hasAnyPermission = useCallback(
@@ -2125,10 +2124,6 @@ export default function useAppData() {
     }
     setConfirmUserDelete(userId)
     toast("Silmek i\u00E7in tekrar t\u0131kla", { position: "top-right" })
-  }
-
-  const handleThemeToggle = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"))
   }
 
   const handleDragStart = (event, productId) => {
@@ -4769,44 +4764,7 @@ const handleEldoradoNoteSave = useCallback(
 
   const isAuthBusy = isAuthChecking || isAuthLoading
 
-  const themeToggleButton = (
-    <button
-      type="button"
-      onClick={handleThemeToggle}
-      className="inline-flex items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
-      aria-label="Tema degistir"
-    >
-      <span className="sr-only">Tema degistir</span>
-      {isLight ? (
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="4.5" />
-          <path d="M12 2.5v2.5M12 19v2.5M4.3 4.3l1.8 1.8M17.9 17.9l1.8 1.8M2.5 12h2.5M19 12h2.5M4.3 19.7l1.8-1.8M17.9 6.1l1.8-1.8" />
-        </svg>
-      ) : (
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M19 14.5a7.5 7.5 0 0 1-9.5-9.5A8.5 8.5 0 1 0 19 14.5Z" />
-        </svg>
-      )}
-    </button>
-  )
+  const themeToggleButton = null
 
   const categoryColors = useMemo(() => {
     const map = {}
