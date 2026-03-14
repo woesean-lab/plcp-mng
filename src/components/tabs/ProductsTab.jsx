@@ -3505,7 +3505,7 @@ export default function ProductsTab({
                                       </div>
                                     </section>
 
-                                    <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-950/45">
+                                    <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-950/55">
                                       <div className="border-b border-white/10 px-3 py-2">
                                         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                                           Kayitli servisler
@@ -3660,7 +3660,7 @@ export default function ProductsTab({
                                     </section>
                                   </div>
 
-                                  <aside className="rounded-2xl border border-white/10 bg-ink-950/65 p-3.5">
+                                  <aside className="rounded-2xl border border-white/10 bg-ink-950/55 p-3.5">
                                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                                       Kontrol paneli
                                     </p>
