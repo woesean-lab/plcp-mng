@@ -2092,7 +2092,13 @@ export default function ProductsTab({
     const rawValueToAdd = isPopupValueEditing
       ? String(popupValueDraft ?? "")
       : String(automationResultPopup.value ?? "")
-    const valueToAdd = String(rawValueToAdd).trim()
+    const valueToAdd = String(rawValueToAdd)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s{2,}/g, " ")
+      .trim()
     if (!offerId) {
       toast.error("Aktif urun bulunamadi.")
       return
@@ -2113,14 +2119,10 @@ export default function ProductsTab({
     try {
       const ok = await onAddKeys(offerId, valueToAdd)
       if (!ok) return
-      const addedCount = valueToAdd
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean).length
       appendAutomationRunLog(
         offerId,
         "success",
-        `Stoga eklendi: ${Math.max(1, addedCount)} satir`,
+        "Stoga eklendi: 1 satir",
       )
       setAutomationResultPopup((prev) => ({
         ...prev,
