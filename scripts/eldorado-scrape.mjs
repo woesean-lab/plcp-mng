@@ -304,11 +304,53 @@ const scrapeCategory = async (startUrl) => {
         return ""
       }
 
+      const normalizeImageUrl = (value) => {
+        const raw = String(value ?? "").trim()
+        if (!raw) return ""
+        if (raw.startsWith("data:")) return ""
+        try {
+          return new URL(raw, window.location.origin).toString()
+        } catch (error) {
+          return raw
+        }
+      }
+
+      const firstSrcFromSrcset = (value) => {
+        const raw = String(value ?? "").trim()
+        if (!raw) return ""
+        const first = raw.split(",")[0] ?? ""
+        return String(first).trim().split(/\s+/)[0] ?? ""
+      }
+
+      const pickImageFromScope = (scope) => {
+        if (!scope) return ""
+        const image =
+          scope.querySelector?.("eld-image img[src]") ??
+          scope.querySelector?.("img[src]")
+        if (!image) return ""
+        const src = normalizeImageUrl(image.getAttribute("src"))
+        if (src) return src
+        return normalizeImageUrl(firstSrcFromSrcset(image.getAttribute("srcset")))
+      }
+
+      const findImageUrl = (node) => {
+        let current = node
+        for (let depth = 0; depth < 8 && current; depth += 1) {
+          const fromCurrent = pickImageFromScope(current)
+          if (fromCurrent) return fromCurrent
+          const fromPrev = pickImageFromScope(current.previousElementSibling)
+          if (fromPrev) return fromPrev
+          current = current.parentElement
+        }
+        return ""
+      }
+
       return nodes
         .map((node) => {
           const name = node.textContent?.trim() ?? ""
           const href = findHref(node)
-          return { name, href }
+          const imageUrl = findImageUrl(node)
+          return { name, href, imageUrl }
         })
         .filter((item) => item.name)
     })
@@ -316,6 +358,7 @@ const scrapeCategory = async (startUrl) => {
       .map((item) => ({
         name: String(item?.name ?? "").trim(),
         href: String(item?.href ?? "").trim(),
+        imageUrl: String(item?.imageUrl ?? "").trim(),
       }))
       .filter((item) => item.name)
     const missingHrefCount = normalizedPageItems.filter((item) => !item.href).length
@@ -389,6 +432,7 @@ const run = async () => {
         id: String(item?.id ?? "").trim(),
         name: String(item?.name ?? "").trim(),
         href: normalizeHref(item?.href ?? ""),
+        imageUrl: String(item?.imageUrl ?? "").trim(),
         category: String(item?.category ?? "").trim(),
         missing: Boolean(item?.missing) && missingStreak >= MISSING_STREAK_THRESHOLD,
         missingStreak,
@@ -444,6 +488,7 @@ const run = async () => {
     if (!resolvedId) return
     if (seenIds.has(resolvedId)) return
     const href = scrapedHref || existingItem?.href || ""
+    const imageUrl = String(item?.imageUrl ?? "").trim() || String(existingItem?.imageUrl ?? "").trim()
     const category =
       extractCategoryFromHref(href) ||
       item.category ||
@@ -453,6 +498,7 @@ const run = async () => {
       existingItem.id = resolvedId
       existingItem.name = name
       existingItem.href = href
+      existingItem.imageUrl = imageUrl
       existingItem.category = category
       existingItem.missing = false
       existingItem.missingStreak = 0
@@ -465,6 +511,7 @@ const run = async () => {
         id: resolvedId,
         name,
         href,
+        imageUrl,
         category,
         missing: false,
         missingStreak: 0,

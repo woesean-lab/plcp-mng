@@ -59,6 +59,7 @@ model EldoradoOffer {
   price     String?
   category  String?
   href      String?
+  imageUrl  String?
   kind      String
   missing   Boolean  @default(false)
   lastSeenAt DateTime?

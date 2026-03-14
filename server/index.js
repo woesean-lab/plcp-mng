@@ -256,6 +256,9 @@ const normalizeEldoradoOffer = (item) => {
   if (!id || !name) return null
   const hrefRaw = item?.href
   const href = hrefRaw === undefined || hrefRaw === null ? "" : String(hrefRaw).trim()
+  const imageUrlRaw = item?.imageUrl
+  const imageUrl =
+    imageUrlRaw === undefined || imageUrlRaw === null ? "" : String(imageUrlRaw).trim()
   const hasHref = Boolean(href)
   const categoryRaw = item?.category
   const category = categoryRaw === undefined || categoryRaw === null ? "" : String(categoryRaw).trim()
@@ -264,6 +267,7 @@ const normalizeEldoradoOffer = (item) => {
     id,
     name,
     href,
+    imageUrl,
     category,
     missing,
   }
@@ -652,6 +656,7 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
       lastSeenAt: nextLastSeenAt,
       missing,
       href: offer.href || null,
+      imageUrl: offer.imageUrl || null,
       category: offer.category || null,
       price: null,
     }
@@ -663,6 +668,7 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
         name: offer.name,
         category: offer.category || null,
         href: offer.href || null,
+        imageUrl: offer.imageUrl || null,
         kind,
         missing: false,
         lastSeenAt: seenInRun ? seenAt : null,

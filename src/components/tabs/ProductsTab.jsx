@@ -2652,6 +2652,13 @@ export default function ProductsTab({
                       ? rawHref
                       : `https://www.eldorado.gg${rawHref.startsWith("/") ? "" : "/"}${rawHref}`
                     : ""
+                  const rawImageUrl = String(product?.imageUrl ?? "").trim()
+                  const imageUrl = rawImageUrl
+                    ? rawImageUrl.startsWith("http://") || rawImageUrl.startsWith("https://")
+                      ? rawImageUrl
+                      : `https://www.eldorado.gg${rawImageUrl.startsWith("/") ? "" : "/"}${rawImageUrl}`
+                    : ""
+                  const productInitial = name.charAt(0).toUpperCase() || "?"
                   return (
                     <div
                       key={key}
@@ -2684,6 +2691,26 @@ export default function ProductsTab({
                           }`}
                         >
                           <div className="flex min-h-[36px] flex-wrap items-center gap-2">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white/10 text-[10px] font-semibold text-slate-200">
+                              {imageUrl ? (
+                                <>
+                                  <img
+                                    src={imageUrl}
+                                    alt={name}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover"
+                                    onError={(event) => {
+                                      event.currentTarget.style.display = "none"
+                                      const fallback = event.currentTarget.nextElementSibling
+                                      if (fallback) fallback.classList.remove("hidden")
+                                    }}
+                                  />
+                                  <span className="hidden">{productInitial}</span>
+                                </>
+                              ) : (
+                                productInitial
+                              )}
+                            </span>
                             <span
                               className={`min-w-0 flex-1 break-words font-body text-[13px] font-semibold leading-snug text-white sm:text-sm ${
                                 isMissing
