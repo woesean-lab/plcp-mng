@@ -3450,7 +3450,7 @@ export default function ProductsTab({
                                           {automationTargets.length} servis
                                         </span>
                                       </div>
-                                      <div className="grid gap-2.5 md:grid-cols-[minmax(0,1.4fr)_minmax(180px,0.8fr)_auto]">
+                                      <div className="grid gap-2.5 md:grid-cols-[minmax(0,1.85fr)_minmax(130px,0.45fr)_auto]">
                                         <input
                                           type="text"
                                           value={visibleDraftAutomationUrl}
@@ -3459,7 +3459,7 @@ export default function ProductsTab({
                                           }
                                           placeholder="https://site.com/urun"
                                           disabled={!canManageAutomationTargets || isAutomationTargetSaving}
-                                          className="h-10 rounded-xl border border-white/10 bg-ink-900/80 px-3 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="h-9 rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         />
                                         <select
                                           value={visibleDraftAutomationBackend}
@@ -3469,7 +3469,7 @@ export default function ProductsTab({
                                           disabled={
                                             !canManageAutomationTargets || automationBackendOptions.length === 0
                                           }
-                                          className="h-10 appearance-none rounded-xl border border-white/10 bg-ink-900/80 px-3 text-[11px] text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="h-9 appearance-none rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                           <option value="">
                                             {automationBackendOptions.length === 0
@@ -3498,7 +3498,7 @@ export default function ProductsTab({
                                             !String(draftAutomationUrl ?? "").trim() ||
                                             isAutomationTargetSaving
                                           }
-                                          className="h-10 w-full rounded-xl border border-emerald-300/60 bg-emerald-500/15 px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
+                                          className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
                                         >
                                           {isAutomationTargetSaving ? "..." : "Kaydet"}
                                         </button>
@@ -3698,7 +3698,7 @@ export default function ProductsTab({
                                           !selectedAutomationTarget ||
                                           isAutomationRunning
                                         }
-                                        className="h-10 w-full rounded-xl border border-emerald-300/60 bg-emerald-500/15 px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         {isAutomationRunning ? "Calisiyor..." : "Calistir"}
                                       </button>
