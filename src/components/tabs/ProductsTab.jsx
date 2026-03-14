@@ -3436,7 +3436,7 @@ export default function ProductsTab({
                               <div className="relative -mt-2 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#111624] p-4 shadow-card lg:col-span-2 sm:p-5 animate-panelFade">
                                 <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
                                   <div className="space-y-3">
-                                    <section className="rounded-2xl border border-white/10 bg-ink-950/55 p-3.5">
+                                    <section className="rounded-2xl border border-white/10 bg-ink-950/65 p-3.5">
                                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                                         <div>
                                           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -3660,7 +3660,7 @@ export default function ProductsTab({
                                     </section>
                                   </div>
 
-                                  <aside className="rounded-2xl border border-white/10 bg-ink-950/55 p-3.5">
+                                  <aside className="rounded-2xl border border-white/10 bg-ink-950/65 p-3.5">
                                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                                       Kontrol paneli
                                     </p>
