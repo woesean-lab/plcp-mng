@@ -3431,63 +3431,75 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 overflow-x-hidden lg:col-span-2 animate-panelFade">
-                                <div className="space-y-3 min-w-0">
-                                  <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(170px,0.8fr)_auto]">
-                                    <input
-                                      type="text"
-                                      value={visibleDraftAutomationUrl}
-                                      onChange={(event) =>
-                                        handleAutomationTargetDraftChange(offerId, "url", event.target.value)
-                                      }
-                                      placeholder="https://site.com/urun"
-                                      disabled={!canManageAutomationTargets || isAutomationTargetSaving}
-                                      className="h-8 rounded-md border border-white/10 bg-ink-900/80 px-2.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                    />
-                                    <select
-                                      value={visibleDraftAutomationBackend}
-                                      onChange={(event) =>
-                                        handleAutomationTargetDraftChange(offerId, "backend", event.target.value)
-                                      }
-                                      disabled={
-                                        !canManageAutomationTargets || automationBackendOptions.length === 0
-                                      }
-                                      className="h-8 appearance-none rounded-md border border-white/10 bg-ink-900/80 px-2.5 text-[11px] text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      <option value="">
-                                        {automationBackendOptions.length === 0
-                                          ? "Backend map yok"
-                                          : "Backend sec"}
-                                      </option>
-                                      {automationBackendOptions.map((option) => {
-                                        const optionKey = String(option?.key ?? "").trim()
-                                        if (!optionKey) return null
-                                        const optionLabel = String(option?.label ?? "").trim() || optionKey
-                                        return (
-                                          <option key={`${offerId}-automation-target-${optionKey}`} value={optionKey}>
-                                            {optionLabel}
-                                          </option>
-                                        )
-                                      })}
-                                    </select>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        void handleAutomationTargetSave(offerId)
-                                      }}
-                                      disabled={
-                                        !canManageAutomationTargets ||
-                                        !draftAutomationBackend ||
-                                        !String(draftAutomationUrl ?? "").trim() ||
-                                        isAutomationTargetSaving
-                                      }
-                                      className="h-8 w-full rounded-md border border-emerald-300/50 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
-                                    >
-                                      {isAutomationTargetSaving ? "..." : "Kaydet"}
-                                    </button>
+                              <div className="relative -mt-2 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card lg:col-span-2 animate-panelFade">
+                                <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_72%)]" />
+                                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02)_0%,transparent_30%,transparent_100%)]" />
+                                <div className="relative min-w-0 space-y-3.5">
+                                  <div className="rounded-xl border border-white/10 bg-ink-950/55 p-3">
+                                    <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                                        Hedef ekle
+                                      </span>
+                                      <span className="text-[10px] text-slate-500">
+                                        URL + backend map
+                                      </span>
+                                    </div>
+                                    <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(170px,0.8fr)_auto]">
+                                      <input
+                                        type="text"
+                                        value={visibleDraftAutomationUrl}
+                                        onChange={(event) =>
+                                          handleAutomationTargetDraftChange(offerId, "url", event.target.value)
+                                        }
+                                        placeholder="https://site.com/urun"
+                                        disabled={!canManageAutomationTargets || isAutomationTargetSaving}
+                                        className="h-9 rounded-lg border border-white/10 bg-ink-900/80 px-3 text-[11px] text-slate-100 placeholder:text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                      />
+                                      <select
+                                        value={visibleDraftAutomationBackend}
+                                        onChange={(event) =>
+                                          handleAutomationTargetDraftChange(offerId, "backend", event.target.value)
+                                        }
+                                        disabled={
+                                          !canManageAutomationTargets || automationBackendOptions.length === 0
+                                        }
+                                        className="h-9 appearance-none rounded-lg border border-white/10 bg-ink-900/80 px-3 text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                      >
+                                        <option value="">
+                                          {automationBackendOptions.length === 0
+                                            ? "Backend map yok"
+                                            : "Backend sec"}
+                                        </option>
+                                        {automationBackendOptions.map((option) => {
+                                          const optionKey = String(option?.key ?? "").trim()
+                                          if (!optionKey) return null
+                                          const optionLabel = String(option?.label ?? "").trim() || optionKey
+                                          return (
+                                            <option key={`${offerId}-automation-target-${optionKey}`} value={optionKey}>
+                                              {optionLabel}
+                                            </option>
+                                          )
+                                        })}
+                                      </select>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          void handleAutomationTargetSave(offerId)
+                                        }}
+                                        disabled={
+                                          !canManageAutomationTargets ||
+                                          !draftAutomationBackend ||
+                                          !String(draftAutomationUrl ?? "").trim() ||
+                                          isAutomationTargetSaving
+                                        }
+                                        className="h-9 w-full rounded-lg border border-emerald-300/50 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+                                      >
+                                        {isAutomationTargetSaving ? "..." : "Kaydet"}
+                                      </button>
+                                    </div>
                                   </div>
 
-                                  <div className="overflow-hidden rounded-lg border border-white/10 bg-ink-950/45">
+                                  <div className="overflow-hidden rounded-xl border border-white/10 bg-ink-950/45">
                                     <div className="no-scrollbar max-h-[180px] overflow-y-auto overflow-x-hidden divide-y divide-white/[0.05]">
                                       {automationTargets.length === 0 ? (
                                         <p className="px-3 py-4 text-center text-[11px] text-slate-500">
@@ -3522,7 +3534,7 @@ export default function ProductsTab({
                                           return (
                                             <div
                                               key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                              className={`flex w-full cursor-pointer flex-wrap items-center gap-2 overflow-hidden rounded-md px-2.5 py-2 transition-colors ${
+                                              className={`flex w-full cursor-pointer flex-wrap items-center gap-2.5 overflow-hidden rounded-lg px-3 py-2.5 transition-colors ${
                                                 isSelected
                                                   ? "automation-target-row-selected"
                                                   : "bg-transparent hover:bg-white/[0.05]"
@@ -3546,9 +3558,9 @@ export default function ProductsTab({
                                                 onChange={() =>
                                                   handleAutomationTargetSelect(offerId, targetRow.id)
                                                 }
-                                                className="h-3 w-3 shrink-0 accent-accent-400"
+                                                className="h-3.5 w-3.5 shrink-0 accent-accent-400"
                                               />
-                                              <span className="shrink-0 rounded border border-white/20 bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white">
+                                              <span className="shrink-0 rounded-md bg-[#111827] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-100">
                                                 {serviceLabel}
                                               </span>
                                               <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
@@ -3558,7 +3570,7 @@ export default function ProductsTab({
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     onClick={(event) => event.stopPropagation()}
-                                                    className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/5 hover:text-white"
+                                                    className="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/[0.06] hover:text-white"
                                                     title={targetRow.url}
                                                   >
                                                     <span className="inline-block max-w-full truncate">
@@ -3567,7 +3579,7 @@ export default function ProductsTab({
                                                   </a>
                                                 ) : (
                                                   <span
-                                                    className="inline-flex max-w-full items-center rounded px-1 py-0.5 font-mono text-[11px] text-slate-300"
+                                                    className="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] text-slate-300"
                                                     title={urlDisplay}
                                                   >
                                                     <span className="inline-block max-w-full truncate">
@@ -3576,7 +3588,7 @@ export default function ProductsTab({
                                                   </span>
                                                 )}
                                               </div>
-                                              <span className="order-4 block w-full truncate rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 sm:order-none sm:w-auto sm:max-w-[220px]">
+                                              <span className="order-4 block w-full truncate rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] text-slate-300 sm:order-none sm:w-auto sm:max-w-[220px]">
                                                 {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                               </span>
                                               <button
@@ -3590,7 +3602,7 @@ export default function ProductsTab({
                                                   )
                                                 }}
                                                 disabled={!canStarAutomationTargets || isStarring}
-                                                className={`ml-auto rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition disabled:cursor-not-allowed disabled:opacity-60 sm:ml-0 ${
+                                                className={`ml-auto rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition disabled:cursor-not-allowed disabled:opacity-60 sm:ml-0 ${
                                                   isStarred
                                                     ? "border-amber-300/40 bg-amber-500/15 text-amber-100 hover:border-amber-200/60 hover:bg-amber-500/25"
                                                     : "border-white/15 bg-white/5 text-slate-300 hover:border-white/30 hover:bg-white/10"
@@ -3606,7 +3618,7 @@ export default function ProductsTab({
                                                   void handleAutomationTargetDelete(offerId, targetRow.id)
                                                 }}
                                                 disabled={!canManageAutomationTargets || isDeleting}
-                                                className="rounded border border-rose-300/30 bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-rose-100 transition hover:border-rose-200/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="rounded-md border border-rose-300/30 bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-rose-100 transition hover:border-rose-200/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                               >
                                                 {isDeleting ? "..." : "Sil"}
                                               </button>
@@ -3617,15 +3629,15 @@ export default function ProductsTab({
                                     </div>
                                   </div>
 
-                                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-900/60 px-2.5 py-2">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2.5">
                                     <div className="min-w-0">
                                       {selectedAutomationTarget ? (
                                         <div className="flex flex-wrap items-center gap-1.5">
-                                          <span className="rounded border border-white/15 bg-ink-950/80 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-200">
+                                          <span className="rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-200">
                                             {selectedAutomationServiceLabel}
                                           </span>
                                           {selectedAutomationTargetIsStarred && (
-                                            <span className="rounded border border-amber-300/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-100">
+                                            <span className="rounded-md border border-amber-300/40 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100">
                                               ★ Yildizli
                                             </span>
                                           )}
@@ -3646,24 +3658,29 @@ export default function ProductsTab({
                                         !selectedAutomationTarget ||
                                         isAutomationRunning
                                       }
-                                      className="h-8 w-full rounded-md border border-sky-300/50 bg-sky-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                                      className="h-9 w-full rounded-lg border border-sky-300/50 bg-sky-500/15 px-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                                     >
                                       {isAutomationRunning ? "Calisiyor..." : "Calistir"}
                                     </button>
                                   </div>
 
                                   {!String(automationWsUrl ?? "").trim() && (
-                                    <p className="text-[10px] text-amber-200/90">
+                                    <p className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
                                       Websocket adresi yok. Stok çek sekmesinden baglanti adresini kaydet.
                                     </p>
                                   )}
                                 </div>
                                 {canViewAutomationLogs ? (
-                                  <div className="mt-3 rounded-lg border border-white/10 bg-ink-900/60">
-                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
-                                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                        CMD
-                                      </span>
+                                  <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-ink-900/60">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                                        <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                                        <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                                          CMD
+                                        </span>
+                                      </div>
                                       <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                                         <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                                           {automationRunLogEntries.length} satir
@@ -3678,14 +3695,14 @@ export default function ProductsTab({
                                               isAutomationLogsClearing ||
                                               automationRunLogEntries.length === 0
                                             }
-                                            className="inline-flex h-6 items-center rounded border border-white/15 bg-white/5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                                           >
                                             {isAutomationLogsClearing ? "..." : "Log temizle"}
                                           </button>
                                         )}
                                       </div>
                                     </div>
-                                    <div className="no-scrollbar h-[300px] overflow-y-auto overflow-x-hidden px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                                    <div className="no-scrollbar h-[300px] overflow-y-auto overflow-x-hidden bg-ink-950/30 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                                       <div className="space-y-0.5">
                                         {visibleAutomationRunLogEntries.map((entry) => (
                                           <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
@@ -3743,7 +3760,7 @@ export default function ProductsTab({
                                     </div>
                                   </div>
                                 ) : (
-                                  <div className="mt-3 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-3 text-[11px] text-slate-400">
+                                  <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/60 px-3 py-3 text-[11px] text-slate-400">
                                     CMD loglarini goruntuleme izniniz yok.
                                   </div>
                                 )}
