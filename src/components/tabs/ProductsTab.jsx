@@ -1196,11 +1196,11 @@ export default function ProductsTab({
       ? runUrl
       : maskSensitiveText(runUrl, 16)
     if (!backend) {
-      toast.error("Calistirmak icin backend map secin.")
+      toast.error("Baslatmak icin backend map secin.")
       return
     }
     if (!runUrl) {
-      toast.error("Calistirmak icin URL secin.")
+      toast.error("Baslatmak icin URL secin.")
       return
     }
 
@@ -3644,7 +3644,7 @@ export default function ProductsTab({
                                         </div>
                                       ) : (
                                         <span className="text-[11px] text-slate-500">
-                                          Calistirmak icin bir satir secin
+                                          Baslatmak icin bir satir secin
                                         </span>
                                       )}
                                     </div>
@@ -3660,7 +3660,7 @@ export default function ProductsTab({
                                       }
                                       className="h-9 w-full rounded-lg border border-sky-300/50 bg-sky-500/15 px-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                                     >
-                                      {isAutomationRunning ? "Calisiyor..." : "Calistir"}
+                                      {isAutomationRunning ? "Baslatiliyor..." : "Baslat"}
                                     </button>
                                   </div>
 
