@@ -3028,6 +3028,26 @@ export default function ProductsTab({
                                   {availableCount} / {usedCount}
                                 </span>
                               </button>
+                              {isAutomationEnabled && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!canViewAutomationPanel) return
+                                    setActivePanel(offerId, "automation")
+                                    if (canViewAutomationLogs) {
+                                      void loadAutomationRunLogs(offerId)
+                                    }
+                                  }}
+                                  className={`flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
+                                    activePanel === "automation"
+                                      ? "border-accent-400 text-white"
+                                      : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
+                                  } ${!canViewAutomationPanel ? "cursor-not-allowed opacity-60" : ""}`}
+                                  aria-pressed={activePanel === "automation"}
+                                >
+                                  <span>Stok çek</span>
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "note")}
@@ -3108,26 +3128,6 @@ export default function ProductsTab({
                                   aria-pressed={activePanel === "price"}
                                 >
                                   <span>Fiyat</span>
-                                </button>
-                              )}
-                              {isAutomationEnabled && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (!canViewAutomationPanel) return
-                                    setActivePanel(offerId, "automation")
-                                    if (canViewAutomationLogs) {
-                                      void loadAutomationRunLogs(offerId)
-                                    }
-                                  }}
-                                  className={`flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
-                                    activePanel === "automation"
-                                      ? "border-accent-400 text-white"
-                                      : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
-                                  } ${!canViewAutomationPanel ? "cursor-not-allowed opacity-60" : ""}`}
-                                  aria-pressed={activePanel === "automation"}
-                                >
-                                  <span>Stok çek</span>
                                 </button>
                               )}
                             </div>
