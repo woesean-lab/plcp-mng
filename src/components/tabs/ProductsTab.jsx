@@ -3434,7 +3434,6 @@ export default function ProductsTab({
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
                               <div className="relative -mt-2 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#111624] p-4 shadow-card lg:col-span-2 sm:p-5 animate-panelFade">
-                                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_0%,rgba(56,189,248,0.12),transparent_36%),radial-gradient(circle_at_88%_12%,rgba(16,185,129,0.1),transparent_34%)]" />
                                 <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
                                   <div className="space-y-3">
                                     <section className="rounded-2xl border border-white/10 bg-ink-950/55 p-3.5">
@@ -3592,14 +3591,27 @@ export default function ProductsTab({
                                                           )
                                                         }}
                                                         disabled={!canStarAutomationTargets || isStarring}
-                                                        className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                                        className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition disabled:cursor-not-allowed disabled:opacity-60 ${
                                                           isStarred
                                                             ? "border-amber-300/40 bg-amber-500/15 text-amber-100 hover:border-amber-200/60 hover:bg-amber-500/25"
                                                             : "border-white/15 bg-white/5 text-slate-300 hover:border-white/30 hover:bg-white/10"
                                                         }`}
                                                         title={isStarred ? "Yildizi kaldir" : "Yildizla"}
                                                       >
-                                                        {isStarring ? "..." : isStarred ? "?" : "?"}
+                                                        {isStarring ? (
+                                                          "..."
+                                                        ) : (
+                                                          <svg
+                                                            viewBox="0 0 20 20"
+                                                            className="h-3.5 w-3.5"
+                                                            fill={isStarred ? "currentColor" : "none"}
+                                                            stroke="currentColor"
+                                                            strokeWidth="1.8"
+                                                            aria-hidden="true"
+                                                          >
+                                                            <path d="M10 2.8 12.3 7.5l5.2.8-3.8 3.8.9 5.2L10 14.9 5.4 17.3l.9-5.2-3.8-3.8 5.2-.8z" />
+                                                          </svg>
+                                                        )}
                                                       </button>
                                                       <button
                                                         type="button"
