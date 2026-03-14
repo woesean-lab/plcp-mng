@@ -3436,7 +3436,7 @@ export default function ProductsTab({
                               <div className="relative -mt-2 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#111624] p-4 shadow-card lg:col-span-2 sm:p-5 animate-panelFade">
                                 <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
                                   <div className="space-y-3">
-                                    <section className="rounded-2xl border border-white/10 bg-ink-950/75 p-3.5">
+                                    <section className="rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
                                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                                         <div>
                                           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -3505,7 +3505,7 @@ export default function ProductsTab({
                                       </div>
                                     </section>
 
-                                    <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-950/75">
+                                    <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f1980]">
                                       <div className="border-b border-white/10 px-3 py-2">
                                         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                                           Kayitli servisler
@@ -3660,7 +3660,7 @@ export default function ProductsTab({
                                     </section>
                                   </div>
 
-                                  <aside className="rounded-2xl border border-white/10 bg-ink-950/75 p-3.5">
+                                  <aside className="rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
                                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                                       Kontrol paneli
                                     </p>
