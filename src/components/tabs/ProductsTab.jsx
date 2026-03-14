@@ -3433,7 +3433,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
-                              <div className="relative -mt-2 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#111624] p-4 shadow-card lg:col-span-2 sm:p-5 animate-panelFade">
+                              <div className="relative -mt-2 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card lg:col-span-2 sm:p-5 animate-panelFade">
                                 <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
                                   <div className="space-y-3">
                                     <section className="rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
