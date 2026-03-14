@@ -2685,7 +2685,7 @@ export default function ProductsTab({
                         >
                           <div className="flex min-h-[36px] flex-wrap items-center gap-2">
                             <span
-                              className={`min-w-0 flex-1 break-words font-display text-[13px] font-semibold leading-snug text-white sm:text-sm ${
+                              className={`min-w-0 flex-1 break-words font-body text-[13px] font-semibold leading-snug text-white sm:text-sm ${
                                 isMissing
                                   ? "text-orange-50"
                                   : isOutOfStock
