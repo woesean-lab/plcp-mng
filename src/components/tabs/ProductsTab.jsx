@@ -3439,7 +3439,7 @@ export default function ProductsTab({
                                     <section className="rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
                                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                                         <div>
-                                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                             Hedef yonetimi
                                           </p>
                                           <p className="mt-1 text-[11px] text-slate-500">
@@ -3507,7 +3507,7 @@ export default function ProductsTab({
 
                                     <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f1980]">
                                       <div className="border-b border-white/10 px-3 py-2">
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                           Kayitli servisler
                                         </p>
                                       </div>
@@ -3661,7 +3661,7 @@ export default function ProductsTab({
                                   </div>
 
                                   <aside className="rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                       Kontrol paneli
                                     </p>
                                     <div className="mt-3 space-y-2.5">
