@@ -713,6 +713,7 @@ export default function ProductsTab({
     ]
   }, [allProducts, categoryMap])
   const [activeCategoryKey, setActiveCategoryKey] = useState("all")
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(true)
   const activeCategory = categories.find((category) => category.key === activeCategoryKey) ?? categories[0]
   const canRefresh = typeof onRefresh === "function"
   const baseList =
@@ -2322,70 +2323,97 @@ export default function ProductsTab({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
         <aside className={`${panelClass} bg-ink-900/80`}>
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-                Kategoriler
-              </p>
-              <p className="mt-1 text-xs text-slate-500">Ürünleri filtrele.</p>
-            </div>
-            {canRefresh && (
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+              Kategoriler
+            </p>
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={onRefresh}
-                disabled={isRefreshing}
-                className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-300 transition ${
-                  isRefreshing
-                    ? "cursor-not-allowed border-white/5 text-slate-600"
-                    : "hover:border-white/20 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white"
-                }`}
-                title="Ürünleri yenile"
-                aria-label="Ürünleri yenile"
+                onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
+                title={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
+                aria-label={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
+                aria-expanded={isCategoryMenuOpen}
               >
                 <svg
                   viewBox="0 0 24 24"
                   aria-hidden="true"
-                  className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  className={`h-4 w-4 transition-transform ${isCategoryMenuOpen ? "" : "rotate-180"}`}
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M4 12a8 8 0 1 0 2.35-5.65" />
-                  <path d="M4 4v4h4" />
+                  <path d="m6 14 6-6 6 6" />
                 </svg>
               </button>
-            )}
-          </div>
-          <div className="mt-4 space-y-2">
-            {categories.map((category) => {
-              const isActive = activeCategoryKey === category.key
-              return (
+              {canRefresh && (
                 <button
-                  key={category.key}
                   type="button"
-                  onClick={() => {
-                    setActiveCategoryKey(category.key)
-                    setPage(1)
-                  }}
-                  className={`group flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] transition ${
-                    isActive
-                      ? "border-accent-400/60 bg-accent-500/15 text-accent-50 shadow-glow"
-                      : "border-white/10 bg-ink-900/60 text-slate-200 hover:border-white/20 hover:bg-white/5 hover:text-white"
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition ${
+                    isRefreshing
+                      ? "cursor-not-allowed border-white/5 text-slate-600"
+                      : "hover:border-white/20 hover:bg-white/5 hover:text-slate-100 focus-visible:bg-white/5 focus-visible:text-slate-100"
                   }`}
+                  title="Ürünleri yenile"
+                  aria-label="Ürünleri yenile"
                 >
-                  <span>{category.label}</span>
-                  <span
-                    className={`text-[11px] ${
-                      isActive ? "text-accent-100" : "text-slate-400 group-hover:text-slate-200"
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 12a8 8 0 1 0 2.35-5.65" />
+                    <path d="M4 4v4h4" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+          {isCategoryMenuOpen ? (
+            <div className="mt-3 space-y-1.5">
+              {categories.map((category) => {
+                const isActive = activeCategoryKey === category.key
+                const categoryCount = category.key === "missing" ? missingTotal : category.items.length
+                return (
+                  <button
+                    key={category.key}
+                    type="button"
+                    onClick={() => {
+                      setActiveCategoryKey(category.key)
+                      setPage(1)
+                    }}
+                    className={`group flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      isActive
+                        ? "border-accent-400/40 bg-accent-500/10 text-slate-100"
+                        : "border-white/5 bg-ink-900/40 text-slate-300 hover:border-white/15 hover:bg-white/5 hover:text-slate-100"
                     }`}
                   >
-                    ({category.key === "missing" ? missingTotal : category.items.length})
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+                    <span className="truncate pr-2">{category.label}</span>
+                    <span
+                      className={`inline-flex min-w-[24px] items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${
+                        isActive
+                          ? "bg-white/10 text-slate-100"
+                          : "bg-white/5 text-slate-500 group-hover:text-slate-300"
+                      }`}
+                    >
+                      {categoryCount}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-slate-500">Kategori menusu kapali.</p>
+          )}
         </aside>
         <div className={`${panelClass} bg-ink-800/60`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
