@@ -2691,7 +2691,7 @@ export default function ProductsTab({
                           }`}
                         >
                           <div className="flex min-h-[36px] flex-wrap items-center gap-2">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white/10 text-[10px] font-semibold text-slate-200">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 text-[11px] font-semibold text-slate-200">
                               {imageUrl ? (
                                 <>
                                   <img
