@@ -3546,10 +3546,10 @@ export default function ProductsTab({
                                               return (
                                                 <div
                                                   key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                                  className={`group w-full cursor-pointer overflow-hidden rounded-xl border px-3 py-3 transition-colors ${
+                                                  className={`group w-full cursor-pointer overflow-hidden rounded-xl border border-white/[0.08] px-3 py-3 transition-colors ${
                                                     isSelected
-                                                      ? "border-emerald-200/60 bg-emerald-500/10"
-                                                      : "border-emerald-300/30 bg-emerald-500/5 hover:border-emerald-200/60 hover:bg-emerald-500/10"
+                                                      ? "automation-target-row-selected"
+                                                      : "bg-ink-900/65 hover:bg-ink-900/85"
                                                   }`}
                                                   onClick={() =>
                                                     handleAutomationTargetSelect(offerId, targetRow.id)
@@ -3576,7 +3576,7 @@ export default function ProductsTab({
                                                     <span className="rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-100">
                                                       {serviceLabel}
                                                     </span>
-                                                    <span className="max-w-full truncate rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+                                                    <span className="max-w-full truncate rounded-md border border-white/10 bg-ink-900/80 px-2 py-0.5 text-[10px] text-slate-300">
                                                       {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                                     </span>
                                                     <div className="ml-auto flex items-center gap-1.5">
@@ -3633,7 +3633,7 @@ export default function ProductsTab({
                                                         target="_blank"
                                                         rel="noreferrer"
                                                         onClick={(event) => event.stopPropagation()}
-                                                        className="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/[0.08] hover:text-white"
+                                                        className="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-ink-900/90 hover:text-white"
                                                         title={targetRow.url}
                                                       >
                                                         <span className="inline-block max-w-full truncate">
