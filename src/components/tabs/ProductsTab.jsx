@@ -3868,47 +3868,6 @@ export default function ProductsTab({
                                       >
                                         {isAutomationRunning ? "Calisiyor..." : "Calistir"}
                                       </button>
-                                      {hasAutomationTwoFactorPrompt && (
-                                        <div className="rounded-xl border border-amber-300/40 bg-amber-500/10 p-2.5">
-                                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100">
-                                            Iki faktor gerekli
-                                          </p>
-                                          <p className="mt-1 break-words text-[11px] text-amber-100/90">
-                                            {automationTwoFactorBackendDisplay}
-                                            {automationTwoFactorMessage
-                                              ? `: ${automationTwoFactorMessage}`
-                                              : ": Kod bekleniyor."}
-                                          </p>
-                                          <div className="mt-2 flex items-center gap-2">
-                                            <input
-                                              type="text"
-                                              value={automationTwoFactorCodeValue}
-                                              onChange={(event) =>
-                                                setAutomationTwoFactorCodeByOffer((prev) => ({
-                                                  ...prev,
-                                                  [offerId]: event.target.value,
-                                                }))
-                                              }
-                                              onKeyDown={(event) => {
-                                                if (event.key === "Enter") {
-                                                  event.preventDefault()
-                                                  handleAutomationTwoFactorCodeSubmit(offerId)
-                                                }
-                                              }}
-                                              placeholder="2FA kodu"
-                                              className="h-8 min-w-0 flex-1 rounded-md border border-amber-300/40 bg-ink-950/60 px-2.5 text-[11px] text-amber-50 placeholder:text-amber-200/50 focus:border-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-300/40"
-                                            />
-                                            <button
-                                              type="button"
-                                              onClick={() => handleAutomationTwoFactorCodeSubmit(offerId)}
-                                              disabled={!canRunAutomation || !automationTwoFactorCodeValue.trim()}
-                                              className="h-8 rounded-md border border-amber-300/50 bg-amber-500/15 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-50 transition hover:border-amber-200 hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                              Gonder
-                                            </button>
-                                          </div>
-                                        </div>
-                                      )}
                                       {!String(automationWsUrl ?? "").trim() && (
                                         <p className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
                                           Websocket adresi yok. Stok cek sekmesinden kaydedin.
@@ -3951,6 +3910,45 @@ export default function ProductsTab({
                                       </div>
                                       <div className="no-scrollbar h-[300px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                                         <div className="space-y-0.5">
+                                          {hasAutomationTwoFactorPrompt && (
+                                            <div className="mb-2 rounded-md border border-amber-300/40 bg-amber-500/10 px-2 py-1.5">
+                                              <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap">
+                                                <span className="hidden flex-none text-amber-200/80 sm:inline">
+                                                  C:\plcp\automation&gt;
+                                                </span>
+                                                <span className="flex-none text-amber-200/80 sm:hidden">&gt;</span>
+                                                <span className="flex-none text-amber-200">
+                                                  {automationTwoFactorBackendDisplay}
+                                                </span>
+                                                <input
+                                                  type="text"
+                                                  value={automationTwoFactorCodeValue}
+                                                  onChange={(event) =>
+                                                    setAutomationTwoFactorCodeByOffer((prev) => ({
+                                                      ...prev,
+                                                      [offerId]: event.target.value,
+                                                    }))
+                                                  }
+                                                  onKeyDown={(event) => {
+                                                    if (event.key === "Enter") {
+                                                      event.preventDefault()
+                                                      handleAutomationTwoFactorCodeSubmit(offerId)
+                                                    }
+                                                  }}
+                                                  placeholder={automationTwoFactorMessage || "2FA kodu yaz"}
+                                                  className="h-7 min-w-[120px] flex-1 rounded border border-amber-300/40 bg-ink-950/60 px-2 text-[11px] text-amber-50 placeholder:text-amber-200/50 focus:border-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-300/40"
+                                                />
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleAutomationTwoFactorCodeSubmit(offerId)}
+                                                  disabled={!canRunAutomation || !automationTwoFactorCodeValue.trim()}
+                                                  className="inline-flex h-7 items-center rounded border border-amber-300/50 bg-amber-500/15 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-50 transition hover:border-amber-200 hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                  Gonder
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
                                           {visibleAutomationRunLogEntries.map((entry) => (
                                             <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
                                               <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\automation&gt;</span>
