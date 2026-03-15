@@ -3911,16 +3911,16 @@ export default function ProductsTab({
                                       <div className="no-scrollbar h-[300px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                                         <div className="space-y-0.5">
                                           {hasAutomationTwoFactorPrompt && (
-                                            <div className="mb-2 border-b border-amber-300/25 pb-1.5">
-                                              <div className="flex min-w-0 flex-wrap items-center gap-2 text-amber-200 sm:flex-nowrap">
-                                                <span className="flex-none text-amber-200/80">
+                                            <div className="mb-2 border-b border-white/10 pb-1.5">
+                                              <div className="flex min-w-0 flex-wrap items-center gap-2 text-slate-300 sm:flex-nowrap">
+                                                <span className="flex-none text-emerald-300">
                                                   [2FA]
                                                 </span>
-                                                <span className="hidden flex-none text-amber-200/80 sm:inline">
+                                                <span className="hidden flex-none text-slate-500 sm:inline">
                                                   C:\plcp\automation&gt;
                                                 </span>
-                                                <span className="flex-none text-amber-200/80 sm:hidden">&gt;</span>
-                                                <span className="flex-none text-amber-200/90">
+                                                <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                                                <span className="flex-none text-slate-300">
                                                   iki-faktor-kodu {automationTwoFactorBackendDisplay}
                                                 </span>
                                                 <input
@@ -3940,7 +3940,7 @@ export default function ProductsTab({
                                                   }}
                                                   autoFocus={hasAutomationTwoFactorPrompt}
                                                   placeholder={automationTwoFactorMessage || "kodu yaz ve Enter"}
-                                                  className="h-7 min-w-[140px] flex-1 border-0 border-b border-amber-300/35 bg-transparent px-1 text-[11px] text-amber-50 placeholder:text-amber-200/45 focus:border-amber-200 focus:outline-none focus:ring-0"
+                                                  className="h-7 min-w-[140px] flex-1 border-0 border-b border-white/20 bg-transparent px-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-0"
                                                 />
                                               </div>
                                             </div>
