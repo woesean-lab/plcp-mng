@@ -1399,6 +1399,47 @@ export default function ProductsTab({
           continue
         }
 
+        if (eventName === "durum") {
+          const rawDurumBackend = String(firstArg?.backend ?? backend).trim() || backend
+          const durumBackendRaw =
+            rawDurumBackend === backend && isStarredBackend ? `★ ${rawDurumBackend}` : rawDurumBackend
+          const durumBackendMaskedBase = maskSensitiveText(rawDurumBackend, 8)
+          const durumBackend = canViewAutomationTargetDetails
+            ? durumBackendRaw
+            : rawDurumBackend === backend && isStarredBackend
+              ? `★ ${durumBackendMaskedBase}`
+              : durumBackendMaskedBase
+
+          let rawDurumMessage = ""
+          if (typeof firstArg?.message === "string") {
+            rawDurumMessage = firstArg.message
+          } else if (firstArg?.message !== null && firstArg?.message !== undefined) {
+            try {
+              rawDurumMessage = JSON.stringify(firstArg.message)
+            } catch {
+              rawDurumMessage = String(firstArg.message)
+            }
+          } else if (typeof firstArg === "string") {
+            rawDurumMessage = firstArg
+          }
+
+          const durumLines = String(rawDurumMessage ?? "")
+            .replace(/\r/g, "")
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+
+          if (durumLines.length === 0) {
+            appendAutomationRunLog(normalizedId, "running", `${durumBackend} => -`)
+          } else {
+            durumLines.forEach((line) => {
+              appendAutomationRunLog(normalizedId, "running", `${durumBackend} => ${line}`)
+            })
+          }
+          resetRunTimeout(300000)
+          continue
+        }
+
         if (eventName === "script-exit") {
           copyValueCaptureActive = false
           const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
