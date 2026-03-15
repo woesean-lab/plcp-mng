@@ -447,6 +447,8 @@ export default function ProductsTab({
   const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
   const [automationConnectionStateByOffer, setAutomationConnectionStateByOffer] = useState({})
+  const [automationTwoFactorPromptByOffer, setAutomationTwoFactorPromptByOffer] = useState({})
+  const [automationTwoFactorCodeByOffer, setAutomationTwoFactorCodeByOffer] = useState({})
   const [automationWsProbeStatus, setAutomationWsProbeStatus] = useState("idle")
   const [, setAutomationWsProbeMessage] = useState("")
   const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
@@ -1169,13 +1171,76 @@ export default function ProductsTab({
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const socket = automationSocketByOfferRef.current[normalizedId]
-    if (!socket) return
-    try {
-      socket.close()
-    } catch {
-      // Ignore close errors.
+    if (socket) {
+      try {
+        socket.close()
+      } catch {
+        // Ignore close errors.
+      }
+      delete automationSocketByOfferRef.current[normalizedId]
     }
-    delete automationSocketByOfferRef.current[normalizedId]
+    setAutomationTwoFactorPromptByOffer((prev) => {
+      if (!prev?.[normalizedId]) return prev
+      const next = { ...prev }
+      delete next[normalizedId]
+      return next
+    })
+    setAutomationTwoFactorCodeByOffer((prev) => {
+      if (!prev?.[normalizedId]) return prev
+      const next = { ...prev }
+      delete next[normalizedId]
+      return next
+    })
+  }
+  const handleAutomationTwoFactorCodeSubmit = (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId || !canRunAutomation) return
+
+    const prompt = automationTwoFactorPromptByOffer?.[normalizedId]
+    const backend = String(prompt?.backend ?? "").trim()
+    if (!backend) {
+      toast.error("Iki faktor istegi bulunamadi.")
+      return
+    }
+
+    const code = String(automationTwoFactorCodeByOffer?.[normalizedId] ?? "").trim()
+    if (!code) {
+      toast.error("Iki faktor kodunu girin.")
+      return
+    }
+
+    const socket = automationSocketByOfferRef.current[normalizedId]
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      appendAutomationRunLog(normalizedId, "error", "Iki faktor kodu gonderilemedi: baglanti kapali.")
+      toast.error("Websocket baglantisi acik degil.")
+      return
+    }
+
+    const backendDisplay = canViewAutomationTargetDetails
+      ? backend
+      : maskSensitiveText(backend, 8)
+
+    try {
+      socket.send(
+        `42${JSON.stringify([
+          "iki-faktor-kodu",
+          {
+            backend,
+            code,
+          },
+        ])}`,
+      )
+      appendAutomationRunLog(normalizedId, "running", `${backendDisplay} => Iki faktor kodu gonderildi.`)
+      setAutomationTwoFactorCodeByOffer((prev) => ({ ...prev, [normalizedId]: "" }))
+      setAutomationTwoFactorPromptByOffer((prev) => {
+        const next = { ...prev }
+        delete next[normalizedId]
+        return next
+      })
+    } catch {
+      appendAutomationRunLog(normalizedId, "error", `${backendDisplay} => Iki faktor kodu gonderilemedi.`)
+      toast.error("Iki faktor kodu gonderilemedi.")
+    }
   }
   const handleAutomationRun = (offerId, target, automationName) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -1395,6 +1460,52 @@ export default function ProductsTab({
               )
             })
           }
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "iki-faktor-gerekli") {
+          const rawTwoFactorBackend = String(firstArg?.backend ?? backend).trim() || backend
+          const twoFactorBackendRaw =
+            rawTwoFactorBackend === backend && isStarredBackend
+              ? `★ ${rawTwoFactorBackend}`
+              : rawTwoFactorBackend
+          const twoFactorBackendMaskedBase = maskSensitiveText(rawTwoFactorBackend, 8)
+          const twoFactorBackend = canViewAutomationTargetDetails
+            ? twoFactorBackendRaw
+            : rawTwoFactorBackend === backend && isStarredBackend
+              ? `★ ${twoFactorBackendMaskedBase}`
+              : twoFactorBackendMaskedBase
+
+          let twoFactorMessage = ""
+          if (typeof firstArg?.message === "string") {
+            twoFactorMessage = firstArg.message
+          } else if (firstArg?.message !== null && firstArg?.message !== undefined) {
+            try {
+              twoFactorMessage = JSON.stringify(firstArg.message)
+            } catch {
+              twoFactorMessage = String(firstArg.message)
+            }
+          } else if (typeof firstArg === "string") {
+            twoFactorMessage = firstArg
+          }
+
+          const normalizedTwoFactorMessage =
+            String(twoFactorMessage ?? "").replace(/\s+/g, " ").trim() || "Iki faktor kodu gerekli."
+
+          setAutomationTwoFactorPromptByOffer((prev) => ({
+            ...prev,
+            [normalizedId]: {
+              backend: rawTwoFactorBackend,
+              message: normalizedTwoFactorMessage,
+            },
+          }))
+          setAutomationTwoFactorCodeByOffer((prev) => ({ ...prev, [normalizedId]: "" }))
+          appendAutomationRunLog(
+            normalizedId,
+            "running",
+            `${twoFactorBackend} => ${normalizedTwoFactorMessage}`,
+          )
           resetRunTimeout(300000)
           continue
         }
@@ -2629,6 +2740,20 @@ export default function ProductsTab({
                   )
                   const isAutomationRunning = Boolean(automationIsRunningByOffer?.[offerId])
                   const isAutomationLogsClearing = Boolean(automationLogsClearingByOffer?.[offerId])
+                  const automationTwoFactorPrompt = automationTwoFactorPromptByOffer?.[offerId] ?? null
+                  const automationTwoFactorBackendRaw = String(
+                    automationTwoFactorPrompt?.backend ?? "",
+                  ).trim()
+                  const automationTwoFactorMessage = String(
+                    automationTwoFactorPrompt?.message ?? "",
+                  ).trim()
+                  const hasAutomationTwoFactorPrompt = Boolean(automationTwoFactorBackendRaw)
+                  const automationTwoFactorBackendDisplay = canViewAutomationTargetDetails
+                    ? automationTwoFactorBackendRaw
+                    : maskSensitiveText(automationTwoFactorBackendRaw, 8)
+                  const automationTwoFactorCodeValue = String(
+                    automationTwoFactorCodeByOffer?.[offerId] ?? "",
+                  )
                   if (isStockEnabled) {
                     availablePanels.push("stock-group")
                   }
@@ -3743,6 +3868,47 @@ export default function ProductsTab({
                                       >
                                         {isAutomationRunning ? "Calisiyor..." : "Calistir"}
                                       </button>
+                                      {hasAutomationTwoFactorPrompt && (
+                                        <div className="rounded-xl border border-amber-300/40 bg-amber-500/10 p-2.5">
+                                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100">
+                                            Iki faktor gerekli
+                                          </p>
+                                          <p className="mt-1 break-words text-[11px] text-amber-100/90">
+                                            {automationTwoFactorBackendDisplay}
+                                            {automationTwoFactorMessage
+                                              ? `: ${automationTwoFactorMessage}`
+                                              : ": Kod bekleniyor."}
+                                          </p>
+                                          <div className="mt-2 flex items-center gap-2">
+                                            <input
+                                              type="text"
+                                              value={automationTwoFactorCodeValue}
+                                              onChange={(event) =>
+                                                setAutomationTwoFactorCodeByOffer((prev) => ({
+                                                  ...prev,
+                                                  [offerId]: event.target.value,
+                                                }))
+                                              }
+                                              onKeyDown={(event) => {
+                                                if (event.key === "Enter") {
+                                                  event.preventDefault()
+                                                  handleAutomationTwoFactorCodeSubmit(offerId)
+                                                }
+                                              }}
+                                              placeholder="2FA kodu"
+                                              className="h-8 min-w-0 flex-1 rounded-md border border-amber-300/40 bg-ink-950/60 px-2.5 text-[11px] text-amber-50 placeholder:text-amber-200/50 focus:border-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-300/40"
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() => handleAutomationTwoFactorCodeSubmit(offerId)}
+                                              disabled={!canRunAutomation || !automationTwoFactorCodeValue.trim()}
+                                              className="h-8 rounded-md border border-amber-300/50 bg-amber-500/15 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-50 transition hover:border-amber-200 hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                              Gonder
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
                                       {!String(automationWsUrl ?? "").trim() && (
                                         <p className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
                                           Websocket adresi yok. Stok cek sekmesinden kaydedin.
