@@ -3747,7 +3747,7 @@ export default function ProductsTab({
                                                       }
                                                       className="h-3.5 w-3.5 shrink-0 accent-accent-400"
                                                     />
-                                                    <span className="rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-100">
+                                                    <span className="shrink-0 rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-100">
                                                       {serviceLabel}
                                                     </span>
                                                     <span className="max-w-full truncate rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
@@ -3843,7 +3843,7 @@ export default function ProductsTab({
                                         {selectedAutomationTarget ? (
                                           <div className="space-y-2">
                                             <div className="flex flex-wrap items-center gap-1.5">
-                                              <span className="rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-slate-200">
+                                              <span className="shrink-0 rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-slate-200">
                                                 {selectedAutomationServiceLabel}
                                               </span>
                                               {selectedAutomationTargetIsStarred && (
