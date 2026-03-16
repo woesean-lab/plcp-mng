@@ -1287,7 +1287,7 @@ export default function ProductsTab({
     setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connecting" }))
     setAutomationResultPopup((prev) => ({ ...prev, isOpen: false }))
-    toast(`${label} calistiriliyor...`, { duration: 1200, position: "top-right" })
+    const runToastId = toast.loading(`${label} calistiriliyor...`, { position: "top-right" })
     appendAutomationRunLog(normalizedId, "running", `Calistiran: ${starterUsername}`)
     appendAutomationRunLog(
       normalizedId,
@@ -1325,6 +1325,13 @@ export default function ProductsTab({
       if (settled) return
       settled = true
       clearRunTimeout()
+      if (status === "success") {
+        toast.success(message, { id: runToastId, position: "top-right" })
+      } else if (status === "error") {
+        toast.error(message, { id: runToastId, position: "top-right" })
+      } else {
+        toast.dismiss(runToastId)
+      }
       setAutomationConnectionStateByOffer((prev) => {
         const next = { ...prev }
         if (hasConnected) {
