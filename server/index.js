@@ -184,27 +184,46 @@ const normalizePermissions = (value) => {
     .filter((perm) => perm && allowedPermissions.has(perm))
 }
 
+const normalizeAutomationBackendKind = (value) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+
 const normalizeAutomationBackendOption = (entry) => {
   if (typeof entry === "string") {
     const key = entry.trim()
     if (!key) return null
-    return { key, label: key }
+    return { key, label: key, kind: "" }
   }
   if (!entry || typeof entry !== "object") return null
   const key = String(entry?.key ?? entry?.backend ?? entry?.id ?? "").trim()
   if (!key) return null
   const label = String(entry?.label ?? entry?.title ?? entry?.name ?? key).trim() || key
-  return { key, label }
+  const kind = normalizeAutomationBackendKind(entry?.kind ?? entry?.group ?? entry?.type)
+  return { key, label, kind }
 }
 
 const normalizeAutomationBackendOptions = (value) => {
   const list = Array.isArray(value)
     ? value
-    : value && typeof value === "object"
-      ? Object.entries(value).map(([key, rawLabel]) => ({
-        key,
-        label: String(rawLabel ?? key).trim() || key,
-      }))
+      : value && typeof value === "object"
+      ? Object.entries(value).map(([key, rawValue]) => {
+          if (rawValue && typeof rawValue === "object") {
+            return {
+              key,
+              label: String(rawValue?.label ?? rawValue?.name ?? key).trim() || key,
+              kind: normalizeAutomationBackendKind(
+                rawValue?.kind ?? rawValue?.group ?? rawValue?.type,
+              ),
+            }
+          }
+          return {
+            key,
+            label: String(rawValue ?? key).trim() || key,
+            kind: "",
+          }
+        })
       : []
 
   const seenKeys = new Set()

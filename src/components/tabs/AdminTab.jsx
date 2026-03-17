@@ -170,17 +170,27 @@ export default function AdminTab({
     }
   }, [])
 
+  const normalizeBackendKind = useCallback(
+    (value) =>
+      String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-"),
+    [],
+  )
+
   const normalizeBackendOption = useCallback((entry) => {
     if (typeof entry === "string") {
       const key = entry.trim()
       if (!key) return null
-      return { key, label: key }
+      return { key, label: key, kind: "" }
     }
     const key = String(entry?.key ?? entry?.backend ?? entry?.id ?? "").trim()
     if (!key) return null
     const label = String(entry?.label ?? entry?.title ?? entry?.name ?? key).trim() || key
-    return { key, label }
-  }, [])
+    const kind = normalizeBackendKind(entry?.kind ?? entry?.group ?? entry?.type)
+    return { key, label, kind }
+  }, [normalizeBackendKind])
 
   useEffect(() => {
     let isMounted = true
@@ -333,11 +343,12 @@ export default function AdminTab({
       if (Array.isArray(payload.data)) return payload.data
       return Object.entries(payload).map(([key, value]) => ({
         key,
-        label: String(value?.label ?? key).trim() || key,
+        label: String(value?.label ?? value?.name ?? value ?? key).trim() || key,
+        kind: normalizeBackendKind(value?.kind ?? value?.group ?? value?.type),
       }))
     }
     return []
-  }, [])
+  }, [normalizeBackendKind])
 
   const fetchBackendMapsFromSocketIo = useCallback((socketIoUrl) =>
     new Promise((resolve) => {

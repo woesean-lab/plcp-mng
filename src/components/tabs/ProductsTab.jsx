@@ -42,6 +42,12 @@ const getCategoryKey = (product) => {
 }
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const CMD_VISIBLE_ROWS = 15
+const normalizeBackendKind = (value) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "")
+const isStockFetchBackendKind = (value) => normalizeBackendKind(value) === "stokcek"
 
 const normalizeAutomationTarget = (entry) => {
   const id = String(entry?.id ?? "").trim()
@@ -486,6 +492,21 @@ export default function ProductsTab({
     setAutomationResultPopup,
     maxAutomationRunLogEntries: MAX_AUTOMATION_RUN_LOG_ENTRIES,
   })
+  const stockFetchAutomationBackendOptions = useMemo(() => {
+    const rawList = Array.isArray(automationBackendOptions) ? automationBackendOptions : []
+    const seen = new Set()
+    const normalizedList = rawList
+      .map((entry) => {
+        const key = String(entry?.key ?? entry?.backend ?? entry?.id ?? entry ?? "").trim()
+        if (!key || seen.has(key)) return null
+        seen.add(key)
+        const label = String(entry?.label ?? entry?.title ?? entry?.name ?? key).trim() || key
+        const kind = normalizeBackendKind(entry?.kind ?? entry?.group ?? entry?.type)
+        return { key, label, kind }
+      })
+      .filter(Boolean)
+    return normalizedList.filter((entry) => isStockFetchBackendKind(entry.kind))
+  }, [automationBackendOptions])
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   const triggerKeyFade = (keyId) => {
     const normalizedId = String(keyId ?? "").trim()
@@ -737,7 +758,7 @@ export default function ProductsTab({
     const draftBackend = String(draft?.backend ?? "").trim()
     const fallbackBackend =
       String(getAutomationTargets(normalizedId)[0]?.backend ?? "").trim() ||
-      String(automationBackendOptions?.[0]?.key ?? "").trim()
+      String(stockFetchAutomationBackendOptions?.[0]?.key ?? "").trim()
     return {
       url: String(draft?.url ?? ""),
       backend: draftBackend || fallbackBackend,
@@ -1376,7 +1397,7 @@ export default function ProductsTab({
     prevNoteGroupAssignments.current = next
   }, [noteGroupAssignments])
   useEffect(() => {
-    const defaultBackend = String(automationBackendOptions?.[0]?.key ?? "").trim()
+    const defaultBackend = String(stockFetchAutomationBackendOptions?.[0]?.key ?? "").trim()
     setAutomationTargetDraftsByOffer((prev) => {
       const next = { ...prev }
       Object.entries(next).forEach(([offerId, draft]) => {
@@ -1411,7 +1432,7 @@ export default function ProductsTab({
       })
       return next
     })
-  }, [automationBackendOptions, automationTargetsByOffer])
+  }, [automationTargetsByOffer, stockFetchAutomationBackendOptions])
   useEffect(() => {
     if (page > totalPages) {
       setPage(totalPages)
@@ -1953,7 +1974,7 @@ export default function ProductsTab({
                   const draftAutomationBackend =
                     String(automationTargetDraft?.backend ?? "").trim() ||
                     String(selectedAutomationTarget?.backend ?? "").trim() ||
-                    String(automationBackendOptions?.[0]?.key ?? "").trim()
+                    String(stockFetchAutomationBackendOptions?.[0]?.key ?? "").trim()
                   const isAutomationTargetDetailsHidden =
                     !canViewAutomationTargetDetails && !canManageAutomationTargets
                   const visibleDraftAutomationUrl = isAutomationTargetDetailsHidden
@@ -1970,8 +1991,8 @@ export default function ProductsTab({
                     new Set(
                       [
                         ...automationTargets.map((entry) => String(entry?.backend ?? "").trim()),
-                        ...automationBackendOptions.map((option) => String(option?.key ?? "").trim()),
-                        ...automationBackendOptions.map((option) => String(option?.label ?? "").trim()),
+                        ...stockFetchAutomationBackendOptions.map((option) => String(option?.key ?? "").trim()),
+                        ...stockFetchAutomationBackendOptions.map((option) => String(option?.label ?? "").trim()),
                       ].filter(Boolean),
                     ),
                   )
@@ -2882,16 +2903,17 @@ export default function ProductsTab({
                                             handleAutomationTargetDraftChange(offerId, "backend", event.target.value)
                                           }
                                           disabled={
-                                            !canManageAutomationTargets || automationBackendOptions.length === 0
+                                            !canManageAutomationTargets ||
+                                            stockFetchAutomationBackendOptions.length === 0
                                           }
                                           className="h-9 appearance-none rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                           <option value="">
-                                            {automationBackendOptions.length === 0
+                                            {stockFetchAutomationBackendOptions.length === 0
                                               ? "Backend map yok"
                                               : "Backend sec"}
                                           </option>
-                                          {automationBackendOptions.map((option) => {
+                                          {stockFetchAutomationBackendOptions.map((option) => {
                                             const optionKey = String(option?.key ?? "").trim()
                                             if (!optionKey) return null
                                             const optionLabel = String(option?.label ?? "").trim() || optionKey
