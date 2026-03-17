@@ -216,50 +216,85 @@ export default function ApplicationsTab({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <section className={`${panelClass} bg-ink-900/60`}>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-              Uygulama Ekle
-            </p>
-            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-300">
-              Form
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                Uygulama Ekle
+              </p>
+              <p className="mt-1 text-sm text-slate-400">Yeni uygulama kaydi olustur.</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+              {applications.length} kayit
             </span>
           </div>
 
-          <div className="mt-4 space-y-3">
-            <input
-              type="text"
-              value={appNameDraft}
-              onChange={(event) => setAppNameDraft(event.target.value)}
-              placeholder="Uygulama adi"
-              className="h-10 w-full rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
-            />
-            <textarea
-              rows={3}
-              value={appAboutDraft}
-              onChange={(event) => setAppAboutDraft(event.target.value)}
-              placeholder="Uygulama hakkinda"
-              className="w-full resize-y rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
-            />
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <select
-                value={backendDraft}
-                onChange={(event) => setBackendDraft(event.target.value)}
-                disabled={applicationBackendOptions.length === 0}
-                className="h-10 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <option value="">
-                  {applicationBackendOptions.length === 0 ? "Uygulama backend map yok" : "Backend sec"}
-                </option>
-                {applicationBackendOptions.map((entry) => (
-                  <option key={`application-backend-${entry.key}`} value={entry.key}>
-                    {entry.label}
+          <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                  Uygulama adi
+                </label>
+                <input
+                  type="text"
+                  value={appNameDraft}
+                  onChange={(event) => setAppNameDraft(event.target.value)}
+                  placeholder="Orn: Telegram bot runner"
+                  className="h-10 w-full rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                  Backend map
+                </label>
+                <select
+                  value={backendDraft}
+                  onChange={(event) => setBackendDraft(event.target.value)}
+                  disabled={applicationBackendOptions.length === 0}
+                  className="h-10 w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">
+                    {applicationBackendOptions.length === 0 ? "Uygulama backend map yok" : "Backend sec"}
                   </option>
-                ))}
-              </select>
+                  {applicationBackendOptions.map((entry) => (
+                    <option key={`application-backend-${entry.key}`} value={entry.key}>
+                      {entry.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                Uygulama hakkinda
+              </label>
+              <textarea
+                rows={4}
+                value={appAboutDraft}
+                onChange={(event) => setAppAboutDraft(event.target.value)}
+                placeholder="Uygulamanin amaci ve kisaca ne yaptigi..."
+                className="w-full resize-y rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+              />
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-ink-950/45 px-3 py-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Onizleme</p>
+              <p className="mt-1 text-sm font-semibold text-slate-100">{appNameDraft.trim() || "Uygulama adi bekleniyor"}</p>
+              <p className="mt-1 text-[11px] text-slate-400">
+                {applicationBackendOptions.find((entry) => entry.key === backendDraft)?.label || "Backend secilmedi"}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <p className="text-[11px] text-slate-400">
+                {applicationBackendOptions.length === 0
+                  ? "Admin tarafindan kind=uygulama mapi gelmeli."
+                  : `${applicationBackendOptions.length} backend map hazir.`}
+              </p>
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={applicationBackendOptions.length === 0}
-                className="h-10 rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-10 rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Kaydet
               </button>
@@ -269,62 +304,100 @@ export default function ApplicationsTab({
 
         <section className={`${panelClass} bg-ink-900/60`}>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-              Uygulama Calistir
-            </p>
-            <button
-              type="button"
-              onClick={handleRun}
-              disabled={!selectedApplication || isRunning}
-              className="h-9 rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isRunning ? "Calisiyor..." : "Calistir"}
-            </button>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                Uygulama Calistir
+              </p>
+              <p className="mt-1 text-sm text-slate-400">Kayitli uygulamayi secip tetikle.</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+              {hasApplications ? `${applications.length} uygulama` : "bos"}
+            </span>
           </div>
 
           <div className="mt-4 space-y-3">
-            <select
-              value={selectedApplicationId}
-              onChange={(event) => setSelectedApplicationId(event.target.value)}
-              disabled={!hasApplications}
-              className="h-10 w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <option value="">{hasApplications ? "Uygulama sec" : "Kayitli uygulama yok"}</option>
-              {applications.map((entry) => (
-                <option key={`app-select-${entry.id}`} value={entry.id}>
-                  {entry.name}
-                </option>
-              ))}
-            </select>
+            <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3">
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_120px] sm:items-end">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                    Uygulama sec
+                  </label>
+                  <select
+                    value={selectedApplicationId}
+                    onChange={(event) => setSelectedApplicationId(event.target.value)}
+                    disabled={!hasApplications}
+                    className="h-10 w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <option value="">{hasApplications ? "Uygulama sec" : "Kayitli uygulama yok"}</option>
+                    {applications.map((entry) => (
+                      <option key={`app-select-${entry.id}`} value={entry.id}>
+                        {entry.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRun}
+                  disabled={!selectedApplication || isRunning}
+                  className="h-10 rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isRunning ? "Calisiyor..." : "Calistir"}
+                </button>
+              </div>
+            </div>
 
-            <div className="no-scrollbar max-h-[220px] space-y-2 overflow-y-auto pr-1">
-              {hasApplications ? (
-                applications.map((entry) => {
-                  const isSelected = entry.id === selectedApplicationId
-                  return (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      onClick={() => setSelectedApplicationId(entry.id)}
-                      className={`w-full rounded-xl border px-3 py-2 text-left transition ${
-                        isSelected
-                          ? "border-accent-300/70 bg-accent-500/12"
-                          : "border-white/10 bg-ink-900/70 hover:border-white/25"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-slate-100">{entry.name}</span>
-                        <span className="text-[11px] text-slate-400">{entry.backendLabel}</span>
-                      </div>
-                      <p className="mt-1 text-[11px] text-slate-400">{entry.about}</p>
-                    </button>
-                  )
-                })
+            <div className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2.5">
+              {selectedApplication ? (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-slate-100">{selectedApplication.name}</p>
+                    <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">
+                      {selectedApplication.backendLabel}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-400">{selectedApplication.about}</p>
+                </>
               ) : (
-                <p className="rounded-xl border border-dashed border-white/10 px-3 py-8 text-center text-[11px] text-slate-500">
-                  Henuz uygulama kaydi yok.
-                </p>
+                <p className="text-[11px] text-slate-500">Calistirmadan once bir uygulama secin.</p>
               )}
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-ink-900/55 p-2.5">
+              <p className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Kayitli Uygulamalar
+              </p>
+              <div className="no-scrollbar mt-2 max-h-[205px] space-y-2 overflow-y-auto pr-1">
+                {hasApplications ? (
+                  applications.map((entry) => {
+                    const isSelected = entry.id === selectedApplicationId
+                    return (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        onClick={() => setSelectedApplicationId(entry.id)}
+                        className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                          isSelected
+                            ? "border-accent-300/70 bg-accent-500/12"
+                            : "border-white/10 bg-ink-900/80 hover:border-white/25"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-sm font-semibold text-slate-100">{entry.name}</span>
+                          <span className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">
+                            {entry.backendLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[11px] text-slate-400">{entry.about}</p>
+                      </button>
+                    )
+                  })
+                ) : (
+                  <p className="rounded-xl border border-dashed border-white/10 px-3 py-8 text-center text-[11px] text-slate-500">
+                    Henuz uygulama kaydi yok.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </section>
