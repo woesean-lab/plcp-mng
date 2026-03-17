@@ -35,14 +35,14 @@ function ApplicationsSkeleton({ panelClass }) {
         <SkeletonBlock className="mt-3 h-4 w-2/3 rounded-full" />
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
-        <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 lg:col-span-2">
           <SkeletonBlock className="m-3 h-8 w-[220px] rounded-lg" />
           <SkeletonBlock className="m-3 mt-0 h-10 w-auto rounded-lg" />
           <SkeletonBlock className="m-3 mt-0 h-[320px] w-auto rounded-xl" />
         </section>
 
-        <section className={`${panelClass} bg-ink-900/60`}>
+        <section className={`${panelClass} bg-ink-900/60 lg:col-span-1`}>
           <SkeletonBlock className="h-4 w-36 rounded-full" />
           <SkeletonBlock className="mt-4 h-10 w-full rounded-lg" />
           <SkeletonBlock className="mt-2 h-20 w-full rounded-lg" />
@@ -207,8 +207,8 @@ export default function ApplicationsTab({
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
-        <section className="order-2 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 lg:order-1">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="order-2 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 lg:order-1 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-rose-300/80" />
@@ -324,7 +324,7 @@ export default function ApplicationsTab({
           </div>
         </section>
 
-        <section className={`order-1 ${panelClass} bg-ink-900/60 lg:order-2`}>
+        <section className={`order-1 ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Uygulama Ekle</p>
