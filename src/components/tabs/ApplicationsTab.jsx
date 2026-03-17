@@ -35,25 +35,17 @@ function ApplicationsSkeleton({ panelClass }) {
         <SkeletonBlock className="mt-3 h-4 w-2/3 rounded-full" />
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section className={`${panelClass} bg-ink-900/60`}>
-          <SkeletonBlock className="h-4 w-36 rounded-full" />
-          <SkeletonBlock className="mt-4 h-10 w-full rounded-lg" />
-          <SkeletonBlock className="mt-2 h-20 w-full rounded-lg" />
-          <SkeletonBlock className="mt-2 h-10 w-full rounded-lg" />
-          <SkeletonBlock className="mt-3 h-10 w-24 rounded-lg" />
-        </section>
-
-        <section className={`${panelClass} bg-ink-900/60`}>
-          <SkeletonBlock className="h-4 w-32 rounded-full" />
-          <SkeletonBlock className="mt-4 h-10 w-full rounded-lg" />
-          <SkeletonBlock className="mt-2 h-24 w-full rounded-lg" />
-          <SkeletonBlock className="mt-2 h-10 w-full rounded-lg" />
-        </section>
-      </div>
+      <section className={`${panelClass} bg-ink-900/60`}>
+        <SkeletonBlock className="h-4 w-36 rounded-full" />
+        <SkeletonBlock className="mt-4 h-10 w-full rounded-lg" />
+        <SkeletonBlock className="mt-2 h-20 w-full rounded-lg" />
+        <SkeletonBlock className="mt-2 h-10 w-full rounded-lg" />
+        <SkeletonBlock className="mt-3 h-10 w-24 rounded-lg" />
+      </section>
 
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
         <SkeletonBlock className="m-3 h-8 w-[220px] rounded-lg" />
+        <SkeletonBlock className="m-3 mt-0 h-10 w-auto rounded-lg" />
         <SkeletonBlock className="m-3 mt-0 h-[320px] w-auto rounded-xl" />
       </section>
     </div>
@@ -68,8 +60,8 @@ export default function ApplicationsTab({
   const [appNameDraft, setAppNameDraft] = useState("")
   const [appAboutDraft, setAppAboutDraft] = useState("")
   const [backendDraft, setBackendDraft] = useState("")
+  const [runBackendDraft, setRunBackendDraft] = useState("")
   const [applications, setApplications] = useState([])
-  const [selectedApplicationId, setSelectedApplicationId] = useState("")
   const [isRunning, setIsRunning] = useState(false)
   const [runLogs, setRunLogs] = useState([])
   const runTimerRef = useRef(null)
@@ -93,12 +85,16 @@ export default function ApplicationsTab({
   useEffect(() => {
     if (applicationBackendOptions.length === 0) {
       setBackendDraft("")
+      setRunBackendDraft("")
       return
     }
     if (!backendDraft || !applicationBackendOptions.some((entry) => entry.key === backendDraft)) {
       setBackendDraft(applicationBackendOptions[0].key)
     }
-  }, [applicationBackendOptions, backendDraft])
+    if (!runBackendDraft || !applicationBackendOptions.some((entry) => entry.key === runBackendDraft)) {
+      setRunBackendDraft(applicationBackendOptions[0].key)
+    }
+  }, [applicationBackendOptions, backendDraft, runBackendDraft])
 
   useEffect(() => {
     return () => {
@@ -142,32 +138,29 @@ export default function ApplicationsTab({
       backendKey
     const id = `app-${Date.now()}-${Math.random().toString(16).slice(2)}`
     setApplications((prev) => [{ id, name, about, backendKey, backendLabel }, ...prev])
-    setSelectedApplicationId(id)
     setAppNameDraft("")
     setAppAboutDraft("")
     appendLog("success", `Uygulama kaydedildi: ${name} (${backendLabel})`)
     toast.success("Uygulama kaydedildi.")
   }
 
-  const selectedApplication = useMemo(
-    () => applications.find((entry) => entry.id === selectedApplicationId) || null,
-    [applications, selectedApplicationId],
-  )
-
   const handleRun = () => {
-    if (!selectedApplication) {
-      toast.error("Calistirmak icin bir uygulama secin.")
+    const backendKey = String(runBackendDraft ?? "").trim()
+    if (!backendKey) {
+      toast.error("Calistirmak icin backend map secin.")
       return
     }
     if (isRunning) return
+    const backendLabel =
+      String(applicationBackendOptions.find((entry) => entry.key === backendKey)?.label ?? "").trim() ||
+      backendKey
 
     setIsRunning(true)
-    appendLog("running", `Calistiriliyor: ${selectedApplication.name}`)
-    appendLog("running", `Backend map: ${selectedApplication.backendLabel}`)
+    appendLog("running", `Backend map secildi: ${backendLabel}`)
     appendLog("running", "Komut tetiklendi. (UI demo)")
 
     runTimerRef.current = window.setTimeout(() => {
-      appendLog("success", `Tamamlandi: ${selectedApplication.name}`)
+      appendLog("success", `Tamamlandi: ${backendLabel}`)
       setIsRunning(false)
       runTimerRef.current = null
     }, 900)
@@ -178,7 +171,6 @@ export default function ApplicationsTab({
     toast.success("CMD loglari temizlendi.")
   }
 
-  const hasApplications = applications.length > 0
   const visibleLogs = runLogs.slice(0, CMD_VISIBLE_ROWS)
   const emptyRows = Math.max(0, CMD_VISIBLE_ROWS - visibleLogs.length)
 
@@ -196,7 +188,7 @@ export default function ApplicationsTab({
             </span>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Uygulamalar</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Uygulama ekle, sec ve calistir.
+              Uygulama ekle, backend map sec ve calistir.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -213,7 +205,7 @@ export default function ApplicationsTab({
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <div className="grid gap-6">
         <section className={`${panelClass} bg-ink-900/60`}>
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -286,96 +278,6 @@ export default function ApplicationsTab({
             </button>
           </div>
         </section>
-
-        <section className={`${panelClass} bg-ink-900/60`}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                Uygulama Calistir
-              </p>
-              <p className="text-sm text-slate-400">Kayitli uygulamayi sec ve calistir.</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleRun}
-              disabled={!selectedApplication || isRunning}
-              className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isRunning ? "Calisiyor..." : "Calistir"}
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200">Uygulama sec</label>
-                <select
-                  value={selectedApplicationId}
-                  onChange={(event) => setSelectedApplicationId(event.target.value)}
-                  disabled={!hasApplications}
-                  className="h-10 w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <option value="">{hasApplications ? "Uygulama sec" : "Kayitli uygulama yok"}</option>
-                  {applications.map((entry) => (
-                    <option key={`app-select-${entry.id}`} value={entry.id}>
-                      {entry.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3">
-                {selectedApplication ? (
-                  <>
-                    <p className="text-sm font-semibold text-slate-100">{selectedApplication.name}</p>
-                    <p className="mt-1 text-[11px] text-slate-400">{selectedApplication.backendLabel}</p>
-                    <p className="mt-2 text-[11px] text-slate-400">{selectedApplication.about}</p>
-                  </>
-                ) : (
-                  <p className="text-[11px] text-slate-500">Secim bekleniyor.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-ink-900/70">
-              <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                  Kayitli Uygulamalar
-                </p>
-                <span className="text-[10px] text-slate-500">{applications.length} adet</span>
-              </div>
-              <div className="no-scrollbar max-h-[252px] space-y-2 overflow-y-auto p-2.5">
-                {hasApplications ? (
-                  applications.map((entry) => {
-                    const isSelected = entry.id === selectedApplicationId
-                    return (
-                      <button
-                        key={entry.id}
-                        type="button"
-                        onClick={() => setSelectedApplicationId(entry.id)}
-                        className={`w-full rounded-lg border px-3 py-2 text-left transition ${
-                          isSelected
-                            ? "border-accent-300/70 bg-accent-500/12"
-                            : "border-white/10 bg-ink-900 hover:border-white/25"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-semibold text-slate-100">{entry.name}</span>
-                          <span className="text-[10px] text-slate-400">{entry.backendLabel}</span>
-                        </div>
-                        <p className="mt-1 text-[11px] text-slate-400">{entry.about}</p>
-                      </button>
-                    )
-                  })
-                ) : (
-                  <p className="rounded-lg border border-dashed border-white/10 px-3 py-8 text-center text-[11px] text-slate-500">
-                    Henuz uygulama kaydi yok.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
@@ -392,11 +294,48 @@ export default function ApplicationsTab({
             <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
               {runLogs.length} satir
             </span>
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                isRunning
+                  ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
+                  : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
+              }`}
+            >
+              {isRunning ? "Calisiyor" : "Hazir"}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-2 border-b border-white/10 bg-ink-900/45 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_120px_auto]">
+          <select
+            value={runBackendDraft}
+            onChange={(event) => setRunBackendDraft(event.target.value)}
+            disabled={applicationBackendOptions.length === 0 || isRunning}
+            className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="">
+              {applicationBackendOptions.length === 0 ? "Uygulama backend map yok" : "Backend map sec"}
+            </option>
+            {applicationBackendOptions.map((entry) => (
+              <option key={`run-backend-${entry.key}`} value={entry.key}>
+                {entry.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleRun}
+            disabled={!runBackendDraft || isRunning}
+            className="inline-flex h-9 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isRunning ? "Calisiyor..." : "Calistir"}
+          </button>
+          <div className="flex items-center justify-end">
             <button
               type="button"
               onClick={handleClearLogs}
               disabled={runLogs.length === 0}
-              className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-9 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Log temizle
             </button>
