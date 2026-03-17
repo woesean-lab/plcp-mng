@@ -11,7 +11,10 @@ const normalizeBackendKind = (value) =>
     .toLowerCase()
     .replace(/[\s_-]+/g, "")
 
-const isApplicationBackendKind = (value) => normalizeBackendKind(value) === "uygulama"
+const isApplicationBackendKind = (value) => {
+  const normalized = normalizeBackendKind(value)
+  return normalized === "uygulama" || normalized === "servis"
+}
 
 const formatLogTime = () =>
   new Date().toLocaleString("tr-TR", {
@@ -176,7 +179,7 @@ export default function ApplicationsTab({
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Uygulama listesi alinamadi.")
+          throw new Error(apiError || "Servis listesi alinamadi.")
         }
         const payload = await res.json()
         if (!isMounted) return
@@ -186,7 +189,7 @@ export default function ApplicationsTab({
         setApplications(normalized)
       } catch (error) {
         if (!isMounted || controller.signal.aborted) return
-        toast.error(error?.message || "Uygulama listesi alinamadi.")
+        toast.error(error?.message || "Servis listesi alinamadi.")
       } finally {
         if (isMounted) setIsApplicationsLoading(false)
       }
@@ -309,18 +312,18 @@ export default function ApplicationsTab({
 
   const handleSave = async () => {
     if (!canManageApplications) {
-      toast.error("Uygulama yonetme yetkiniz yok.")
+      toast.error("Servis yonetme yetkiniz yok.")
       return
     }
     const name = String(appNameDraft ?? "").trim()
     const about = String(appAboutDraft ?? "").trim()
     const backendKey = String(backendDraft ?? "").trim()
     if (!name) {
-      toast.error("Uygulama adi girin.")
+      toast.error("Servis adi girin.")
       return
     }
     if (!about) {
-      toast.error("Uygulama hakkinda alani bos olamaz.")
+      toast.error("Servis hakkinda alani bos olamaz.")
       return
     }
     if (!backendKey) {
@@ -340,14 +343,14 @@ export default function ApplicationsTab({
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Uygulama guncellenemedi.")
+          throw new Error(apiError || "Servis guncellenemedi.")
         }
         const saved = normalizeApplicationEntry(await res.json())
-        if (!saved) throw new Error("Guncellenen uygulama verisi gecersiz.")
+        if (!saved) throw new Error("Guncellenen servis verisi gecersiz.")
         setApplications((prev) => prev.map((entry) => (entry.id === saved.id ? saved : entry)))
         setSelectedApplicationId(saved.id)
-        void persistLog(saved.id, "success", `Uygulama guncellendi: ${saved.name} (${saved.backendLabel})`)
-        toast.success("Uygulama guncellendi.")
+        void persistLog(saved.id, "success", `Servis guncellendi: ${saved.name} (${saved.backendLabel})`)
+        toast.success("Servis guncellendi.")
       } else {
         const res = await apiFetchApplications("/api/applications", {
           method: "POST",
@@ -356,17 +359,17 @@ export default function ApplicationsTab({
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Uygulama kaydedilemedi.")
+          throw new Error(apiError || "Servis kaydedilemedi.")
         }
         const saved = normalizeApplicationEntry(await res.json())
-        if (!saved) throw new Error("Kaydedilen uygulama verisi gecersiz.")
+        if (!saved) throw new Error("Kaydedilen servis verisi gecersiz.")
         setApplications((prev) => [saved, ...prev])
         setSelectedApplicationId(saved.id)
-        void persistLog(saved.id, "success", `Uygulama kaydedildi: ${saved.name} (${saved.backendLabel})`)
-        toast.success("Uygulama kaydedildi.")
+        void persistLog(saved.id, "success", `Servis kaydedildi: ${saved.name} (${saved.backendLabel})`)
+        toast.success("Servis kaydedildi.")
       }
     } catch (error) {
-      toast.error(error?.message || "Uygulama kaydedilemedi.")
+      toast.error(error?.message || "Servis kaydedilemedi.")
       return
     }
 
@@ -398,7 +401,7 @@ export default function ApplicationsTab({
 
   const handleToggleActive = async (appId) => {
     if (!canManageApplications) {
-      toast.error("Uygulama yonetme yetkiniz yok.")
+      toast.error("Servis yonetme yetkiniz yok.")
       return
     }
     const target = applications.find((entry) => entry.id === appId)
@@ -412,7 +415,7 @@ export default function ApplicationsTab({
       })
       if (!res.ok) {
         const apiError = await readApiError(res)
-        throw new Error(apiError || "Uygulama durumu guncellenemedi.")
+        throw new Error(apiError || "Servis durumu guncellenemedi.")
       }
       const saved = normalizeApplicationEntry(await res.json())
       if (!saved) throw new Error("Guncellenen durum verisi gecersiz.")
@@ -422,15 +425,15 @@ export default function ApplicationsTab({
         "running",
         `${saved.name} ${saved.isActive ? "aktif edildi" : "kapatildi"}.`,
       )
-      toast.success(saved.isActive ? "Uygulama aktif edildi." : "Uygulama kapatildi.")
+      toast.success(saved.isActive ? "Servis aktif edildi." : "Servis kapatildi.")
     } catch (error) {
-      toast.error(error?.message || "Uygulama durumu guncellenemedi.")
+      toast.error(error?.message || "Servis durumu guncellenemedi.")
     }
   }
 
   const handleDelete = async (appId) => {
     if (!canManageApplications) {
-      toast.error("Uygulama yonetme yetkiniz yok.")
+      toast.error("Servis yonetme yetkiniz yok.")
       return
     }
     if (!appId) return
@@ -445,7 +448,7 @@ export default function ApplicationsTab({
       })
       if (!res.ok && res.status !== 404) {
         const apiError = await readApiError(res)
-        throw new Error(apiError || "Uygulama silinemedi.")
+        throw new Error(apiError || "Servis silinemedi.")
       }
       setApplications((prev) => prev.filter((entry) => entry.id !== appId))
       if (editingApplicationId === appId) {
@@ -458,23 +461,23 @@ export default function ApplicationsTab({
         return next
       })
       setDeleteConfirmId("")
-      toast.success("Uygulama silindi.")
+      toast.success("Servis silindi.")
     } catch (error) {
-      toast.error(error?.message || "Uygulama silinemedi.")
+      toast.error(error?.message || "Servis silinemedi.")
     }
   }
 
   const handleRun = () => {
     if (!canRunApplications) {
-      toast.error("Uygulama calistirma yetkiniz yok.")
+      toast.error("Servis calistirma yetkiniz yok.")
       return
     }
     if (!selectedApplication) {
-      toast.error("Calistirmak icin uygulama secin.")
+      toast.error("Calistirmak icin servis secin.")
       return
     }
     if (!selectedApplication.isActive) {
-      toast.error("Secilen uygulama kapali. Once aktif edin.")
+      toast.error("Secilen servis kapali. Once aktif edin.")
       return
     }
     if (isRunning) return
@@ -538,11 +541,11 @@ export default function ApplicationsTab({
         <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1.5 sm:space-y-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              Uygulamalar
+              Servisler
             </span>
-            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Uygulamalar</h1>
+            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Servisler</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Uygulama ekle, uygulama sec ve calistir.
+              Servis ekle, servis sec ve calistir.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -597,7 +600,7 @@ export default function ApplicationsTab({
               disabled={!hasApplications || isRunning}
               className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <option value="">{hasApplications ? "Uygulama sec" : "Kayitli uygulama yok"}</option>
+              <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
               {applications.map((entry) => (
                 <option key={`run-app-${entry.id}`} value={entry.id}>
                   {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
@@ -631,11 +634,11 @@ export default function ApplicationsTab({
                   {selectedApplication.name} ({selectedApplication.backendLabel})
                 </p>
                 <p className="mt-1 text-[10px] text-slate-400">
-                  {selectedApplication.about || "Uygulama aciklamasi yok."}
+                  {selectedApplication.about || "Servis aciklamasi yok."}
                 </p>
               </>
             ) : (
-              "Calistirmak icin uygulama secin."
+              "Calistirmak icin servis secin."
             )}
           </div>
 
@@ -700,7 +703,7 @@ export default function ApplicationsTab({
         <section className={`order-1 self-start ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-300/85">Uygulama Yonet</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-300/85">Servis Yonet</p>
               <p className="text-xs text-slate-400">Kisa kayit ve hizli yonetim.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
@@ -711,7 +714,7 @@ export default function ApplicationsTab({
           <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/55 p-3">
             <div className="space-y-2.5">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-300">Uygulama adi</label>
+                <label className="text-[11px] font-semibold text-slate-300">Servis adi</label>
                 <input
                   type="text"
                   value={appNameDraft}
@@ -731,7 +734,7 @@ export default function ApplicationsTab({
                   className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-2.5 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="">
-                    {applicationBackendOptions.length === 0 ? "Uygulama backend map yok" : "Backend sec"}
+                    {applicationBackendOptions.length === 0 ? "Servis backend map yok" : "Backend sec"}
                   </option>
                   {applicationBackendOptions.map((entry) => (
                     <option key={`application-backend-${entry.key}`} value={entry.key}>
@@ -742,7 +745,7 @@ export default function ApplicationsTab({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-300">Uygulama hakkinda</label>
+                <label className="text-[11px] font-semibold text-slate-300">Servis hakkinda</label>
                 <textarea
                   rows={2}
                   value={appAboutDraft}
@@ -757,7 +760,7 @@ export default function ApplicationsTab({
                 <span>Map</span>
                 <span>
                   {applicationBackendOptions.length === 0
-                    ? "kind=uygulama map yok"
+                    ? "kind=servis map yok"
                     : `${applicationBackendOptions.length} map hazir`}
                 </span>
               </div>
@@ -785,13 +788,13 @@ export default function ApplicationsTab({
           </div>
 
           {!canManageApplications && (
-            <p className="mt-2 text-[11px] text-amber-200/80">Uygulama yonetme yetkiniz yok.</p>
+            <p className="mt-2 text-[11px] text-amber-200/80">Servis yonetme yetkiniz yok.</p>
           )}
 
           <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/55 p-2.5">
             <div className="flex items-center justify-between gap-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                Kayitli uygulamalar
+                Kayitli servisler
               </p>
               <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
                 {applications.length}
@@ -801,7 +804,7 @@ export default function ApplicationsTab({
             <div className="no-scrollbar mt-2 max-h-[170px] space-y-1.5 overflow-y-auto pr-1">
               {applications.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-white/10 px-2.5 py-5 text-center text-[11px] text-slate-500">
-                  Henuz uygulama kaydi yok.
+                  Henuz servis kaydi yok.
                 </p>
               ) : (
                 applications.map((entry) => {
@@ -876,10 +879,10 @@ export default function ApplicationsTab({
               {selectedApplication ? (
                 <>
                   <p className="text-[11px] font-semibold text-slate-200">{selectedApplication.name}</p>
-                  <p className="mt-1 break-words">{selectedApplication.about || "Uygulama aciklamasi yok."}</p>
+                  <p className="mt-1 break-words">{selectedApplication.about || "Servis aciklamasi yok."}</p>
                 </>
               ) : (
-                "Detay icin uygulama secin."
+                "Detay icin servis secin."
               )}
             </div>
           </div>

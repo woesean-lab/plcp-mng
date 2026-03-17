@@ -228,11 +228,11 @@ export const PERMISSION_GROUPS = [
     ],
   },
   {
-    title: "Uygulamalar",
+    title: "Servisler",
     items: [
       { id: PERMISSIONS.applicationsView, label: "Paneli goruntule" },
-      { id: PERMISSIONS.applicationsManage, label: "Uygulama yonet" },
-      { id: PERMISSIONS.applicationsRun, label: "Uygulama calistir" },
+      { id: PERMISSIONS.applicationsManage, label: "Servis yonet" },
+      { id: PERMISSIONS.applicationsRun, label: "Servis calistir" },
       { id: PERMISSIONS.applicationsLogsView, label: "CMD log gor" },
       { id: PERMISSIONS.applicationsLogsClear, label: "CMD log temizle" },
     ],
