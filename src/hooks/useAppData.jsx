@@ -251,6 +251,7 @@ export default function useAppData() {
   const availableTabs = useMemo(() => {
     const tabs = []
     if (isAuthed) tabs.push("dashboard")
+    if (isAuthed) tabs.push("applications")
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
     if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
     if (canViewSales) tabs.push("sales")

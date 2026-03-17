@@ -14,6 +14,7 @@ import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
 import AutomationTab from "./components/tabs/AutomationTab"
+import ApplicationsTab from "./components/tabs/ApplicationsTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
 
@@ -519,6 +520,7 @@ function App() {
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
       { key: "automation", label: "Otomasyon", canView: canViewAutomation },
+      { key: "applications", label: "Uygulamalar", canView: canViewDashboard },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
@@ -1024,6 +1026,12 @@ function App() {
         {activeTab === "automation" && canViewAutomation && (
           <div className={getTabSlideClass("automation")}>
             <AutomationTab panelClass={panelClass} isLoading={isAutomationTabLoading} />
+          </div>
+        )}
+
+        {activeTab === "applications" && canViewDashboard && (
+          <div className={getTabSlideClass("applications")}>
+            <ApplicationsTab panelClass={panelClass} />
           </div>
         )}
 
