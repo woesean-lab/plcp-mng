@@ -4,6 +4,7 @@ import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
 const CMD_VISIBLE_ROWS = 14
 const MAX_LOG_ENTRIES = 300
+const MASKED_BACKEND_TEXT = "******"
 
 const normalizeBackendKind = (value) =>
   String(value ?? "")
@@ -66,6 +67,7 @@ export default function ApplicationsTab({
   canRunApplications = false,
   canViewApplicationLogs = false,
   canClearApplicationLogs = false,
+  canViewApplicationBackendMap = false,
 }) {
   const [appNameDraft, setAppNameDraft] = useState("")
   const [appAboutDraft, setAppAboutDraft] = useState("")
@@ -81,6 +83,15 @@ export default function ApplicationsTab({
   const runTimerRef = useRef(null)
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
+
+  const getBackendLabelForDisplay = useCallback(
+    (value) => {
+      const normalized = String(value ?? "").trim()
+      if (!normalized) return MASKED_BACKEND_TEXT
+      return canViewApplicationBackendMap ? normalized : MASKED_BACKEND_TEXT
+    },
+    [canViewApplicationBackendMap],
+  )
 
   const normalizeApplicationEntry = useCallback((entry) => {
     const id = String(entry?.id ?? "").trim()
@@ -116,6 +127,35 @@ export default function ApplicationsTab({
       .filter(Boolean)
       .filter((entry) => isApplicationBackendKind(entry.kind))
   }, [backendOptions])
+
+  const backendMaskTokens = useMemo(() => {
+    const tokenSet = new Set()
+    applicationBackendOptions.forEach((entry) => {
+      const label = String(entry?.label ?? "").trim()
+      const key = String(entry?.key ?? "").trim()
+      if (label) tokenSet.add(label)
+      if (key) tokenSet.add(key)
+    })
+    applications.forEach((entry) => {
+      const backendLabel = String(entry?.backendLabel ?? "").trim()
+      const backendKey = String(entry?.backendKey ?? "").trim()
+      if (backendLabel) tokenSet.add(backendLabel)
+      if (backendKey) tokenSet.add(backendKey)
+    })
+    return Array.from(tokenSet).sort((a, b) => b.length - a.length)
+  }, [applicationBackendOptions, applications])
+
+  const sanitizeLogMessage = useCallback(
+    (value) => {
+      const message = String(value ?? "")
+      if (!message || canViewApplicationBackendMap) return message
+      return backendMaskTokens.reduce(
+        (acc, token) => (token ? acc.split(token).join(MASKED_BACKEND_TEXT) : acc),
+        message,
+      )
+    },
+    [backendMaskTokens, canViewApplicationBackendMap],
+  )
 
   useEffect(() => {
     if (applicationBackendOptions.length === 0) {
@@ -236,7 +276,7 @@ export default function ApplicationsTab({
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "CMD loglari alinamadi.")
+          throw new Error(apiError || "Servis Konsolu loglari alinamadi.")
         }
         const payload = await res.json()
         if (!isMounted) return
@@ -246,7 +286,7 @@ export default function ApplicationsTab({
         setRunLogsByApplication((prev) => ({ ...prev, [appId]: normalized }))
       } catch (error) {
         if (!isMounted || controller.signal.aborted) return
-        toast.error(error?.message || "CMD loglari alinamadi.")
+        toast.error(error?.message || "Servis Konsolu loglari alinamadi.")
       } finally {
         if (isMounted) setIsLogsLoading(false)
       }
@@ -349,7 +389,11 @@ export default function ApplicationsTab({
         if (!saved) throw new Error("Guncellenen servis verisi gecersiz.")
         setApplications((prev) => prev.map((entry) => (entry.id === saved.id ? saved : entry)))
         setSelectedApplicationId(saved.id)
-        void persistLog(saved.id, "success", `Servis guncellendi: ${saved.name} (${saved.backendLabel})`)
+        void persistLog(
+          saved.id,
+          "success",
+          `Servis guncellendi: ${saved.name} (${getBackendLabelForDisplay(saved.backendLabel)})`,
+        )
         toast.success("Servis guncellendi.")
       } else {
         const res = await apiFetchApplications("/api/applications", {
@@ -365,7 +409,11 @@ export default function ApplicationsTab({
         if (!saved) throw new Error("Kaydedilen servis verisi gecersiz.")
         setApplications((prev) => [saved, ...prev])
         setSelectedApplicationId(saved.id)
-        void persistLog(saved.id, "success", `Servis kaydedildi: ${saved.name} (${saved.backendLabel})`)
+        void persistLog(
+          saved.id,
+          "success",
+          `Servis kaydedildi: ${saved.name} (${getBackendLabelForDisplay(saved.backendLabel)})`,
+        )
         toast.success("Servis kaydedildi.")
       }
     } catch (error) {
@@ -484,7 +532,11 @@ export default function ApplicationsTab({
 
     setIsRunning(true)
     void persistLog(selectedApplication.id, "running", `Calistiriliyor: ${selectedApplication.name}`)
-    void persistLog(selectedApplication.id, "running", `Backend map: ${selectedApplication.backendLabel}`)
+    void persistLog(
+      selectedApplication.id,
+      "running",
+      `Backend map: ${getBackendLabelForDisplay(selectedApplication.backendLabel)}`,
+    )
     void persistLog(selectedApplication.id, "running", "Komut tetiklendi. (UI demo)")
 
     runTimerRef.current = window.setTimeout(() => {
@@ -511,11 +563,11 @@ export default function ApplicationsTab({
       })
       if (!res.ok) {
         const apiError = await readApiError(res)
-        throw new Error(apiError || "CMD loglari temizlenemedi.")
+        throw new Error(apiError || "Servis Konsolu loglari temizlenemedi.")
       }
-      toast.success("CMD loglari temizlendi.")
+      toast.success("Servis Konsolu loglari temizlendi.")
     } catch (error) {
-      toast.error(error?.message || "CMD loglari temizlenemedi.")
+      toast.error(error?.message || "Servis Konsolu loglari temizlenemedi.")
     }
   }
 
@@ -570,7 +622,7 @@ export default function ApplicationsTab({
               <span className="h-2 w-2 rounded-full bg-amber-300/80" />
               <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
               <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                CMD
+                Servis Konsolu
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -631,7 +683,7 @@ export default function ApplicationsTab({
             {selectedApplication ? (
               <>
                 <p className="text-[11px] font-semibold text-slate-200">
-                  {selectedApplication.name} ({selectedApplication.backendLabel})
+                  {selectedApplication.name} ({getBackendLabelForDisplay(selectedApplication.backendLabel)})
                 </p>
                 <p className="mt-1 text-[10px] text-slate-400">
                   {selectedApplication.about || "Servis aciklamasi yok."}
@@ -645,7 +697,7 @@ export default function ApplicationsTab({
           <div className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
             {!canViewApplicationLogs ? (
               <div className="flex h-full items-center justify-center text-slate-500">
-                CMD log goruntuleme yetkiniz yok.
+                Servis Konsolu log goruntuleme yetkiniz yok.
               </div>
             ) : isLogsLoading ? (
               <div className="flex h-full items-center justify-center text-slate-500">Loglar yukleniyor...</div>
@@ -677,7 +729,9 @@ export default function ApplicationsTab({
                     >
                       {entry.status === "success" ? "OK" : entry.status === "error" ? "ERR" : "RUN"}
                     </span>
-                    <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                    <span className="min-w-0 break-words text-slate-100">
+                      {sanitizeLogMessage(entry.message)}
+                    </span>
                   </div>
                 ))}
                 {Array.from({ length: emptyRows }).map((_, index) => (
@@ -737,11 +791,11 @@ export default function ApplicationsTab({
                     {applicationBackendOptions.length === 0 ? "Servis backend map yok" : "Backend sec"}
                   </option>
                   {applicationBackendOptions.map((entry) => (
-                    <option key={`application-backend-${entry.key}`} value={entry.key}>
-                      {entry.label}
-                    </option>
-                  ))}
-                </select>
+                  <option key={`application-backend-${entry.key}`} value={entry.key}>
+                      {getBackendLabelForDisplay(entry.label)}
+                  </option>
+                ))}
+              </select>
               </div>
 
               <div className="space-y-1.5">
@@ -816,7 +870,9 @@ export default function ApplicationsTab({
                       <div className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left">
                         <span className="min-w-0">
                           <span className="block truncate text-xs font-semibold text-slate-100">{entry.name}</span>
-                          <span className="block truncate text-[10px] text-slate-400">{entry.backendLabel}</span>
+                          <span className="block truncate text-[10px] text-slate-400">
+                            {getBackendLabelForDisplay(entry.backendLabel)}
+                          </span>
                         </span>
                         <span
                           className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] ${

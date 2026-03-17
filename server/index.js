@@ -170,6 +170,7 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "applications.run",
   "applications.logs.view",
   "applications.logs.clear",
+  "applications.backend.view",
   "admin.roles.manage",
   "admin.users.manage",
 ]

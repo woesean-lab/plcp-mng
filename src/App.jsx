@@ -493,6 +493,10 @@ function App() {
     PERMISSIONS.applicationsManage,
     PERMISSIONS.adminManage,
   ])
+  const canViewApplicationBackendMap = hasAnyPermission([
+    PERMISSIONS.applicationsBackendView,
+    PERMISSIONS.adminManage,
+  ])
   const productSummary = useMemo(() => {
     const items = Array.isArray(eldoradoCatalog?.items) ? eldoradoCatalog.items : []
     const topups = Array.isArray(eldoradoCatalog?.topups) ? eldoradoCatalog.topups : []
@@ -1230,6 +1234,7 @@ function App() {
               canRunApplications={canRunApplications}
               canViewApplicationLogs={canViewApplicationLogs}
               canClearApplicationLogs={canClearApplicationLogs}
+              canViewApplicationBackendMap={canViewApplicationBackendMap}
             />
           </div>
         )}
