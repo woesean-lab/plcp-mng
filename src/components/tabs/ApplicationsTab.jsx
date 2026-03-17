@@ -791,17 +791,30 @@ export default function ApplicationsTab({
             <p className="mt-2 text-[11px] text-amber-200/80">Servis yonetme yetkiniz yok.</p>
           )}
 
-          <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/55 p-2.5">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                Kayitli servisler
-              </p>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
-                {applications.length}
-              </span>
+          <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-ink-900/55">
+            <div className="border-b border-white/10 bg-gradient-to-r from-white/5 via-white/0 to-white/5 px-2.5 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                  Kayitli servisler
+                </p>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+                  {applications.length}
+                </span>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-1.5 text-[10px]">
+                <span className="rounded-md border border-white/10 bg-ink-900/60 px-1.5 py-1 text-center text-slate-300">
+                  Toplam: {applications.length}
+                </span>
+                <span className="rounded-md border border-emerald-300/40 bg-emerald-500/10 px-1.5 py-1 text-center text-emerald-100">
+                  Aktif: {applications.filter((entry) => entry.isActive).length}
+                </span>
+                <span className="rounded-md border border-slate-300/30 bg-slate-500/10 px-1.5 py-1 text-center text-slate-300">
+                  Kapali: {applications.filter((entry) => !entry.isActive).length}
+                </span>
+              </div>
             </div>
 
-            <div className="no-scrollbar mt-2 max-h-[170px] space-y-1.5 overflow-y-auto pr-1">
+            <div className="no-scrollbar max-h-[230px] space-y-2 overflow-y-auto p-2.5">
               {applications.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-white/10 px-2.5 py-5 text-center text-[11px] text-slate-500">
                   Henuz servis kaydi yok.
@@ -809,35 +822,50 @@ export default function ApplicationsTab({
               ) : (
                 applications.map((entry) => {
                   const isSelected = entry.id === selectedApplicationId
+                  const aboutPreview = entry.about.length > 84 ? `${entry.about.slice(0, 84)}...` : entry.about
                   return (
                     <div
                       key={`manage-app-${entry.id}`}
-                      className={`rounded-lg border ${
-                        isSelected ? "border-accent-300/40 bg-accent-500/10" : "border-white/10 bg-ink-900/70"
+                      className={`relative overflow-hidden rounded-xl border transition ${
+                        isSelected
+                          ? "border-accent-300/50 bg-accent-500/10 shadow-[0_0_0_1px_rgba(56,189,248,0.16)]"
+                          : "border-white/10 bg-ink-900/70 hover:border-white/20"
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() => setSelectedApplicationId(entry.id)}
-                        className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left"
+                        className="relative w-full px-3 py-2.5 text-left"
                       >
-                        <span className="min-w-0">
-                          <span className="block truncate text-xs font-semibold text-slate-100">{entry.name}</span>
-                          <span className="block truncate text-[10px] text-slate-400">{entry.backendLabel}</span>
-                        </span>
-                        <span
-                          className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] ${
-                            entry.isActive
-                              ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
-                              : "border-slate-300/40 bg-slate-500/10 text-slate-300"
-                          }`}
-                        >
-                          {entry.isActive ? "Aktif" : "Kapali"}
-                        </span>
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-semibold text-slate-100">{entry.name}</span>
+                            <span className="mt-0.5 block truncate text-[10px] text-slate-400">{entry.backendLabel}</span>
+                          </span>
+                          <span className="flex flex-col items-end gap-1">
+                            <span
+                              className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] ${
+                                entry.isActive
+                                  ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
+                                  : "border-slate-300/40 bg-slate-500/10 text-slate-300"
+                              }`}
+                            >
+                              {entry.isActive ? "Aktif" : "Kapali"}
+                            </span>
+                            {isSelected && (
+                              <span className="rounded-full border border-accent-300/40 bg-accent-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-accent-100">
+                                Secili
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <p className="mt-2 break-words text-[10px] leading-relaxed text-slate-400">
+                          {aboutPreview || "Servis aciklamasi yok."}
+                        </p>
                       </button>
 
                       {canManageApplications && (
-                        <div className="grid grid-cols-3 gap-1.5 px-2.5 pb-2">
+                        <div className="grid grid-cols-3 gap-1.5 border-t border-white/10 px-3 pb-2.5 pt-2">
                           <button
                             type="button"
                             onClick={() => handleToggleActive(entry.id)}
@@ -875,14 +903,15 @@ export default function ApplicationsTab({
               )}
             </div>
 
-            <div className="mt-2 rounded-lg border border-white/10 bg-ink-900/65 px-2.5 py-2 text-[10px] text-slate-400">
+            <div className="border-t border-white/10 bg-ink-900/65 px-2.5 py-2 text-[10px] text-slate-400">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Secili servis</p>
               {selectedApplication ? (
                 <>
-                  <p className="text-[11px] font-semibold text-slate-200">{selectedApplication.name}</p>
+                  <p className="mt-1 text-[11px] font-semibold text-slate-200">{selectedApplication.name}</p>
                   <p className="mt-1 break-words">{selectedApplication.about || "Servis aciklamasi yok."}</p>
                 </>
               ) : (
-                "Detay icin servis secin."
+                <p className="mt-1">Detay icin servis secin.</p>
               )}
             </div>
           </div>
