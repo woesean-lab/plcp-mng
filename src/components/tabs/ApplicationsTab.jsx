@@ -151,8 +151,6 @@ export default function ApplicationsTab({ panelClass }) {
     "w-full rounded-lg border border-white/10 bg-ink-900 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 hover:border-white/20"
   const primaryButtonClass =
     "rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-  const secondaryButtonClass =
-    "rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
 
   return (
     <div className="space-y-6">
@@ -189,83 +187,120 @@ export default function ApplicationsTab({ panelClass }) {
         </div>
       </header>
 
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <section className={`${panelClass} bg-ink-900/60`}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Uygulama ekle</p>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              Kayitli: {applications.length}
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Uygulama Adi
+              </label>
+              <input
+                type="text"
+                value={appName}
+                onChange={(event) => setAppName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault()
+                    handleSaveApplication()
+                  }
+                }}
+                placeholder="Uygulama Adi"
+                className={fieldClass}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Backendmap
+              </label>
+              <input
+                type="text"
+                value={backendMap}
+                onChange={(event) => setBackendMap(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault()
+                    handleSaveApplication()
+                  }
+                }}
+                placeholder="Backendmap"
+                className={fieldClass}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveApplication}
+              className={`w-full ${primaryButtonClass}`}
+            >
+              Kaydet
+            </button>
+          </div>
+        </section>
+
+        <section className={`${panelClass} bg-ink-900/60`}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Uygulama calistir</p>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              Son: {lastSuccess?.time ?? "--:--"}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <select
+              value={selectedAppId}
+              onChange={(event) => setSelectedAppId(event.target.value)}
+              className={fieldClass}
+            >
+              <option value="">Uygulama sec</option>
+              {applications.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name} - {item.backendMap}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={!selectedApp || isRunning}
+              onClick={handleRunSelected}
+              className={`min-w-[130px] ${primaryButtonClass}`}
+            >
+              {isRunning ? "Calisiyor..." : "Calistir"}
+            </button>
+          </div>
+
+          <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Secili Uygulama</p>
+            <p className="mt-1 truncate text-sm text-slate-100">
+              {selectedApp?.name ?? "Secim yok"}
+            </p>
+            <p className="truncate text-xs text-slate-400">
+              {selectedApp?.backendMap
+                ? `Backend map: ${selectedApp.backendMap}`
+                : "Backend map secilmedi"}
+            </p>
+          </div>
+        </section>
+      </div>
+
       <section className={`${panelClass} bg-ink-900/60`}>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Yonetim</p>
-          <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
-            Kayitli: {applications.length}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-          <input
-            type="text"
-            value={appName}
-            onChange={(event) => setAppName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault()
-                handleSaveApplication()
-              }
-            }}
-            placeholder="Uygulama Adi"
-            className={fieldClass}
-          />
-          <input
-            type="text"
-            value={backendMap}
-            onChange={(event) => setBackendMap(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault()
-                handleSaveApplication()
-              }
-            }}
-            placeholder="Backendmap"
-            className={fieldClass}
-          />
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">CMD</p>
           <button
             type="button"
-            onClick={handleSaveApplication}
-            className={`min-w-[120px] ${primaryButtonClass}`}
+            onClick={() => setRunLog([])}
+            disabled={runLog.length === 0}
+            className="rounded border border-rose-300/40 bg-rose-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-100 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Kaydet
+            Log temizle
           </button>
-        </div>
-
-        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <select
-            value={selectedAppId}
-            onChange={(event) => setSelectedAppId(event.target.value)}
-            className={fieldClass}
-          >
-            <option value="">Uygulama sec</option>
-            {applications.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name} - {item.backendMap}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            disabled={!selectedApp || isRunning}
-            onClick={handleRunSelected}
-            className={`min-w-[130px] ${primaryButtonClass}`}
-          >
-            {isRunning ? "Calisiyor..." : "Calistir"}
-          </button>
-        </div>
-
-        <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Secili Uygulama</p>
-          <p className="mt-1 truncate text-sm text-slate-100">
-            {selectedApp?.name ?? "Secim yok"}
-          </p>
-          <p className="truncate text-xs text-slate-400">
-            {selectedApp?.backendMap
-              ? `Backend map: ${selectedApp.backendMap}`
-              : "Backend map secilmedi"}
-          </p>
         </div>
 
         <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-ink-900/80 shadow-inner">
@@ -278,14 +313,9 @@ export default function ApplicationsTab({ panelClass }) {
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-400">
               applications.cmd
             </p>
-            <button
-              type="button"
-              onClick={() => setRunLog([])}
-              disabled={runLog.length === 0}
-              className={secondaryButtonClass}
-            >
-              Log temizle
-            </button>
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-slate-500">
+              {runLog.length} satir
+            </span>
           </div>
 
           <div className="no-scrollbar h-[384px] overflow-auto px-3 py-3 font-mono text-[12px] leading-6">
@@ -333,4 +363,3 @@ export default function ApplicationsTab({ panelClass }) {
     </div>
   )
 }
-
