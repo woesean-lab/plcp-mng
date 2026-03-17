@@ -4751,6 +4751,7 @@ const handleEldoradoNoteSave = useCallback(
   const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
   const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
   const isProductsTabLoading = isEldoradoLoading || (activeTab === "products" && isTabLoading)
+  const isApplicationsTabLoading = activeTab === "applications" && isTabLoading
   const isProblemsTabLoading = isProblemsLoading || (activeTab === "problems" && isTabLoading)
   const isAdminTabLoading = isAdminLoading || (activeTab === "admin" && isTabLoading)
 
@@ -5636,6 +5637,7 @@ const handleEldoradoNoteSave = useCallback(
     handleListDeleteColumn,
     isStockTabLoading,
     isProductsTabLoading,
+    isApplicationsTabLoading,
     stockSummary,
     eldoradoCatalog,
     eldoradoKeysByOffer,

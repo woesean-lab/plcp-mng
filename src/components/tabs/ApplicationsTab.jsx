@@ -617,7 +617,7 @@ export default function ApplicationsTab({
                 type="button"
                 onClick={handleClearLogs}
                 disabled={!canClearApplicationLogs || !canViewApplicationLogs || runLogs.length === 0}
-                className="inline-flex h-9 items-center rounded-md border border-rose-300/60 bg-rose-500/15 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-50 transition hover:border-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-9 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Log temizle
               </button>
@@ -700,109 +700,130 @@ export default function ApplicationsTab({
         <section className={`order-1 self-start ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Uygulama Yonet</p>
-              <p className="text-sm text-slate-400">Ad, aciklama ve backend map secimi.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-300/85">Uygulama Yonet</p>
+              <p className="text-xs text-slate-400">Kisa kayit ve hizli yonetim.</p>
             </div>
-            {canManageApplications && editingApplicationId ? (
-              <button
-                type="button"
-                onClick={handleEditCancel}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50"
-              >
-                Iptal
-              </button>
-            ) : (
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                {applications.length} kayit
-              </span>
-            )}
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
+              {applications.length} kayit
+            </span>
           </div>
 
-          <div className="mt-4 space-y-3">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-200">Uygulama adi</label>
-              <input
-                type="text"
-                value={appNameDraft}
-                onChange={(event) => setAppNameDraft(event.target.value)}
-                placeholder="Orn: Telegram bot runner"
-                disabled={!canManageApplications}
-                className="h-10 w-full rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
-              />
-            </div>
+          <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/55 p-3">
+            <div className="space-y-2.5">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-slate-300">Uygulama adi</label>
+                <input
+                  type="text"
+                  value={appNameDraft}
+                  onChange={(event) => setAppNameDraft(event.target.value)}
+                  placeholder="Orn: Telegram bot runner"
+                  disabled={!canManageApplications}
+                  className="h-9 w-full rounded-md border border-white/10 bg-ink-900 px-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-200">Uygulama hakkinda</label>
-              <textarea
-                rows={4}
-                value={appAboutDraft}
-                onChange={(event) => setAppAboutDraft(event.target.value)}
-                placeholder="Uygulamanin ne is yaptigini yaz."
-                disabled={!canManageApplications}
-                className="w-full resize-y rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-200">Backend map</label>
-              <select
-                value={backendDraft}
-                onChange={(event) => setBackendDraft(event.target.value)}
-                disabled={applicationBackendOptions.length === 0 || !canManageApplications}
-                className="h-10 w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <option value="">
-                  {applicationBackendOptions.length === 0 ? "Uygulama backend map yok" : "Backend sec"}
-                </option>
-                {applicationBackendOptions.map((entry) => (
-                  <option key={`application-backend-${entry.key}`} value={entry.key}>
-                    {entry.label}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-slate-300">Backend map</label>
+                <select
+                  value={backendDraft}
+                  onChange={(event) => setBackendDraft(event.target.value)}
+                  disabled={applicationBackendOptions.length === 0 || !canManageApplications}
+                  className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-2.5 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">
+                    {applicationBackendOptions.length === 0 ? "Uygulama backend map yok" : "Backend sec"}
                   </option>
-                ))}
-              </select>
-            </div>
+                  {applicationBackendOptions.map((entry) => (
+                    <option key={`application-backend-${entry.key}`} value={entry.key}>
+                      {entry.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-slate-300">
-              <span>Map durumu</span>
-              <span>
-                {applicationBackendOptions.length === 0
-                  ? "kind=uygulama map yok"
-                  : `${applicationBackendOptions.length} map hazir`}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-slate-300">Uygulama hakkinda</label>
+                <textarea
+                  rows={2}
+                  value={appAboutDraft}
+                  onChange={(event) => setAppAboutDraft(event.target.value)}
+                  placeholder="Kisa aciklama yaz."
+                  disabled={!canManageApplications}
+                  className="w-full resize-none rounded-md border border-white/10 bg-ink-900 px-2.5 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+                />
+              </div>
+
+              <div className="flex items-center justify-between rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-[10px] text-slate-300">
+                <span>Map</span>
+                <span>
+                  {applicationBackendOptions.length === 0
+                    ? "kind=uygulama map yok"
+                    : `${applicationBackendOptions.length} map hazir`}
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={applicationBackendOptions.length === 0 || !canManageApplications}
+                  className="flex-1 rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {editingApplicationId ? "Guncelle" : "Kaydet"}
+                </button>
+                {canManageApplications && editingApplicationId && (
+                  <button
+                    type="button"
+                    onClick={handleEditCancel}
+                    className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-200 transition hover:border-white/30 hover:bg-white/10"
+                  >
+                    Iptal
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {!canManageApplications && (
+            <p className="mt-2 text-[11px] text-amber-200/80">Uygulama yonetme yetkiniz yok.</p>
+          )}
+
+          <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/55 p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Kayitli uygulamalar
+              </p>
+              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+                {applications.length}
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={applicationBackendOptions.length === 0 || !canManageApplications}
-              className="w-full rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {editingApplicationId ? "Guncelle" : "Kaydet"}
-            </button>
-
-            {!canManageApplications && (
-              <p className="text-[11px] text-amber-200/80">Uygulama yonetme yetkiniz yok.</p>
-            )}
-
-            <div className="space-y-2 border-t border-white/10 pt-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                Kayitli uygulamalar
-              </p>
-              <div className="no-scrollbar max-h-[260px] space-y-2 overflow-y-auto pr-1">
-                {applications.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-white/10 px-3 py-6 text-center text-[11px] text-slate-500">
-                    Henuz uygulama kaydi yok.
-                  </p>
-                ) : (
-                  applications.map((entry) => (
+            <div className="no-scrollbar mt-2 max-h-[170px] space-y-1.5 overflow-y-auto pr-1">
+              {applications.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-white/10 px-2.5 py-5 text-center text-[11px] text-slate-500">
+                  Henuz uygulama kaydi yok.
+                </p>
+              ) : (
+                applications.map((entry) => {
+                  const isSelected = entry.id === selectedApplicationId
+                  return (
                     <div
                       key={`manage-app-${entry.id}`}
-                      className="rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2"
+                      className={`rounded-lg border ${
+                        isSelected ? "border-accent-300/40 bg-accent-500/10" : "border-white/10 bg-ink-900/70"
+                      }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-sm font-semibold text-slate-100">{entry.name}</p>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedApplicationId(entry.id)}
+                        className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-xs font-semibold text-slate-100">{entry.name}</span>
+                          <span className="block truncate text-[10px] text-slate-400">{entry.backendLabel}</span>
+                        </span>
                         <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                          className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] ${
                             entry.isActive
                               ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
                               : "border-slate-300/40 bg-slate-500/10 text-slate-300"
@@ -810,33 +831,32 @@ export default function ApplicationsTab({
                         >
                           {entry.isActive ? "Aktif" : "Kapali"}
                         </span>
-                      </div>
-                      <p className="mt-1 text-[10px] text-slate-400">{entry.backendLabel}</p>
-                      <p className="mt-1 text-[11px] text-slate-400">{entry.about}</p>
+                      </button>
+
                       {canManageApplications && (
-                        <div className="mt-2 grid grid-cols-3 gap-1.5">
+                        <div className="grid grid-cols-3 gap-1.5 px-2.5 pb-2">
                           <button
                             type="button"
                             onClick={() => handleToggleActive(entry.id)}
-                            className={`rounded-md border px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition ${
+                            className={`rounded-md border px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] transition ${
                               entry.isActive
                                 ? "border-amber-300/60 bg-amber-500/15 text-amber-100 hover:border-amber-200 hover:bg-amber-500/25"
                                 : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100 hover:border-emerald-200 hover:bg-emerald-500/25"
                             }`}
                           >
-                            {entry.isActive ? "Kapat" : "Aktif Et"}
+                            {entry.isActive ? "Kapat" : "Aktif"}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleEditStart(entry)}
-                            className="rounded-md border border-sky-300/60 bg-sky-500/15 px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
+                            className="rounded-md border border-sky-300/60 bg-sky-500/15 px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
                           >
                             Duzenle
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(entry.id)}
-                            className={`rounded-md border px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition ${
+                            className={`rounded-md border px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] transition ${
                               deleteConfirmId === entry.id
                                 ? "border-rose-300 bg-rose-500/25 text-rose-50"
                                 : "border-rose-300/60 bg-rose-500/10 text-rose-100 hover:border-rose-200 hover:bg-rose-500/20"
@@ -847,9 +867,20 @@ export default function ApplicationsTab({
                         </div>
                       )}
                     </div>
-                  ))
-                )}
-              </div>
+                  )
+                })
+              )}
+            </div>
+
+            <div className="mt-2 rounded-lg border border-white/10 bg-ink-900/65 px-2.5 py-2 text-[10px] text-slate-400">
+              {selectedApplication ? (
+                <>
+                  <p className="text-[11px] font-semibold text-slate-200">{selectedApplication.name}</p>
+                  <p className="mt-1 break-words">{selectedApplication.about || "Uygulama aciklamasi yok."}</p>
+                </>
+              ) : (
+                "Detay icin uygulama secin."
+              )}
             </div>
           </div>
         </section>

@@ -173,6 +173,7 @@ function App() {
     handleListInsertColumn,
     handleListDeleteColumn,
     isProductsTabLoading,
+    isApplicationsTabLoading,
     eldoradoCatalog,
     eldoradoKeysByOffer,
     eldoradoKeysLoading,
@@ -1223,7 +1224,7 @@ function App() {
           <div className={getTabSlideClass("applications")}>
             <ApplicationsTab
               panelClass={panelClass}
-              isLoading={isProductsTabLoading}
+              isLoading={isApplicationsTabLoading}
               backendOptions={eldoradoAutomationBackendOptions}
               canManageApplications={canManageApplications}
               canRunApplications={canRunApplications}
