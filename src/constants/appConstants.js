@@ -142,10 +142,6 @@ export const PERMISSIONS = {
 
 export const PERMISSION_GROUPS = [
   {
-    title: "Otomasyon",
-    items: [{ id: PERMISSIONS.automationView, label: "Goruntule" }],
-  },
-  {
     title: "Urunler",
     items: [
       { id: PERMISSIONS.productsView, label: "Goruntule" },
@@ -161,13 +157,13 @@ export const PERMISSION_GROUPS = [
       { id: PERMISSIONS.productsPriceManage, label: "Fiyat ayarla" },
       { id: PERMISSIONS.productsPriceDetails, label: "Fiyat yuzde gor" },
       { id: PERMISSIONS.productsPriceToggle, label: "Fiyat ac/kapat" },
-      { id: PERMISSIONS.productsStockFetch, label: "Otomasyon paneli (eski)" },
-      { id: PERMISSIONS.productsStockFetchEdit, label: "Otomasyon hedef yonet" },
-      { id: PERMISSIONS.productsStockFetchRun, label: "Otomasyon calistir" },
-      { id: PERMISSIONS.productsStockFetchLogsView, label: "Otomasyon CMD gor" },
-      { id: PERMISSIONS.productsStockFetchLogsClear, label: "Otomasyon log temizle" },
-      { id: PERMISSIONS.productsStockFetchStar, label: "Otomasyon hedef yildizla" },
-      { id: PERMISSIONS.productsStockFetchTargetDetailsView, label: "Otomasyon URL/backend gor" },
+      { id: PERMISSIONS.productsStockFetch, label: "Stok cek panelini gor" },
+      { id: PERMISSIONS.productsStockFetchEdit, label: "Stok cek hedef yonet" },
+      { id: PERMISSIONS.productsStockFetchRun, label: "Stok cek calistir" },
+      { id: PERMISSIONS.productsStockFetchLogsView, label: "Stok cek CMD gor" },
+      { id: PERMISSIONS.productsStockFetchLogsClear, label: "Stok cek log temizle" },
+      { id: PERMISSIONS.productsStockFetchStar, label: "Stok cek hedef yildizla" },
+      { id: PERMISSIONS.productsStockFetchTargetDetailsView, label: "Stok cek URL/backend gor" },
       { id: PERMISSIONS.productsLinkView, label: "Link goruntule" },
       { id: PERMISSIONS.productsStar, label: "Yildizla" },
       { id: PERMISSIONS.productsCardToggle, label: "Kart ac/kapat" },
@@ -229,6 +225,7 @@ export const PERMISSION_GROUPS = [
   {
     title: "Admin",
     items: [
+      { id: PERMISSIONS.automationView, label: "Websocket ayarlari" },
       { id: PERMISSIONS.adminRolesManage, label: "Rol yonetimi" },
       { id: PERMISSIONS.adminUsersManage, label: "Kullanici yonetimi" },
       { id: PERMISSIONS.adminManage, label: "Tum yetki (eski)" },
