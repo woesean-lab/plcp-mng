@@ -808,19 +808,12 @@ export default function ApplicationsTab({
                 </p>
               ) : (
                 applications.map((entry) => {
-                  const isSelected = entry.id === selectedApplicationId
                   return (
                     <div
                       key={`manage-app-${entry.id}`}
-                      className={`rounded-lg border ${
-                        isSelected ? "border-accent-300/40 bg-accent-500/10" : "border-white/10 bg-ink-900/70"
-                      }`}
+                      className="rounded-lg border border-white/10 bg-ink-900/70"
                     >
-                      <button
-                        type="button"
-                        onClick={() => setSelectedApplicationId(entry.id)}
-                        className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left"
-                      >
+                      <div className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left">
                         <span className="min-w-0">
                           <span className="block truncate text-xs font-semibold text-slate-100">{entry.name}</span>
                           <span className="block truncate text-[10px] text-slate-400">{entry.backendLabel}</span>
@@ -834,7 +827,7 @@ export default function ApplicationsTab({
                         >
                           {entry.isActive ? "Aktif" : "Kapali"}
                         </span>
-                      </button>
+                      </div>
 
                       {canManageApplications && (
                         <div className="grid grid-cols-3 gap-1.5 px-2.5 pb-2">
