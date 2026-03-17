@@ -35,7 +35,7 @@ function ApplicationsSkeleton({ panelClass }) {
         <SkeletonBlock className="mt-3 h-4 w-2/3 rounded-full" />
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid items-start gap-6 lg:grid-cols-3">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 lg:col-span-2">
           <SkeletonBlock className="m-3 h-8 w-[220px] rounded-lg" />
           <SkeletonBlock className="m-3 mt-0 h-10 w-auto rounded-lg" />
@@ -320,7 +320,7 @@ export default function ApplicationsTab({
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid items-start gap-6 lg:grid-cols-3">
         <section className="order-2 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 lg:order-1 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
             <div className="flex items-center gap-2">
@@ -446,12 +446,10 @@ export default function ApplicationsTab({
           </div>
         </section>
 
-        <section className={`order-1 ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
+        <section className={`order-1 self-start ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                {editingApplicationId ? "Uygulama Duzenle" : "Uygulama Ekle"}
-              </p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Uygulama Yonet</p>
               <p className="text-sm text-slate-400">Ad, aciklama ve backend map secimi.</p>
             </div>
             {editingApplicationId ? (
