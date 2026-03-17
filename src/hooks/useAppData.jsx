@@ -241,7 +241,6 @@ export default function useAppData() {
   const canManageRoles = hasAnyPermission([PERMISSIONS.adminRolesManage, PERMISSIONS.adminManage])
   const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
   const canManageAdmin = canManageRoles || canManageUsers
-  const canViewAutomation = hasPermission(PERMISSIONS.automationView)
   const canViewSales = isAuthed && hasAnyPermission([
     PERMISSIONS.salesView,
     PERMISSIONS.salesCreate,
@@ -251,20 +250,17 @@ export default function useAppData() {
   const availableTabs = useMemo(() => {
     const tabs = []
     if (isAuthed) tabs.push("dashboard")
-    if (isAuthed) tabs.push("applications")
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
     if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
     if (canViewSales) tabs.push("sales")
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (canViewProductsTab) tabs.push("products")
-    if (canViewAutomation) tabs.push("automation")
     if (canManageAdmin) tabs.push("admin")
     return tabs
   }, [
     permissions,
     canManageAdmin,
-    canViewAutomation,
     canViewSales,
     canViewProductsTab,
     isAuthed,
@@ -4742,7 +4738,6 @@ const handleEldoradoNoteSave = useCallback(
 
   const showLoading = isLoading || !delayDone || (activeTab === "messages" && isTabLoading)
   const isTasksTabLoading = isTasksLoading || (activeTab === "tasks" && isTabLoading)
-  const isAutomationTabLoading = activeTab === "automation" && isTabLoading
   const isSalesTabLoading = isSalesLoading || (activeTab === "sales" && isTabLoading)
   const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
   const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
@@ -5543,7 +5538,6 @@ const handleEldoradoNoteSave = useCallback(
     handleAdd,
     setSelectedCategory,
     isTasksTabLoading,
-    isAutomationTabLoading,
     taskCountText,
     taskStats,
     ownedTaskStats,

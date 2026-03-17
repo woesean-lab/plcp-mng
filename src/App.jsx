@@ -13,8 +13,6 @@ import SalesTab from "./components/tabs/SalesTab"
 import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
-import AutomationTab from "./components/tabs/AutomationTab"
-import ApplicationsTab from "./components/tabs/ApplicationsTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
 
@@ -86,7 +84,6 @@ function App() {
     handleAdd,
     setSelectedCategory,
     isTasksTabLoading,
-    isAutomationTabLoading,
     taskCountText,
     taskStats,
     ownedTaskStats,
@@ -331,7 +328,6 @@ function App() {
   }, [])
 
   const canViewDashboard = isAuthed
-  const canViewAutomation = hasPermission(PERMISSIONS.automationView)
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
   const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
   const canEditMessages = hasAnyPermission([PERMISSIONS.messagesTemplateEdit, PERMISSIONS.messagesEdit])
@@ -519,8 +515,6 @@ function App() {
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
-      { key: "automation", label: "Otomasyon", canView: canViewAutomation },
-      { key: "applications", label: "Uygulamalar", canView: canViewDashboard },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
@@ -528,7 +522,6 @@ function App() {
       canViewDashboard,
       canViewLists,
       canViewMessages,
-      canViewAutomation,
       canViewProblems,
       canViewSales,
       canViewProducts,
@@ -1020,18 +1013,6 @@ function App() {
               resetTaskForm={resetTaskForm}
               focusTask={focusTask}
             />
-          </div>
-        )}
-
-        {activeTab === "automation" && canViewAutomation && (
-          <div className={getTabSlideClass("automation")}>
-            <AutomationTab panelClass={panelClass} isLoading={isAutomationTabLoading} />
-          </div>
-        )}
-
-        {activeTab === "applications" && canViewDashboard && (
-          <div className={getTabSlideClass("applications")}>
-            <ApplicationsTab panelClass={panelClass} />
           </div>
         )}
 
