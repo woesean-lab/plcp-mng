@@ -13,6 +13,7 @@ import SalesTab from "./components/tabs/SalesTab"
 import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
+import ApplicationsTab from "./components/tabs/ApplicationsTab"
 import useAppData from "./hooks/useAppData"
 import { PERMISSIONS } from "./constants/appConstants"
 
@@ -463,6 +464,7 @@ function App() {
     PERMISSIONS.productsManage,
   ])
   const canDeleteOffers = hasAnyPermission([PERMISSIONS.productsManage])
+  const canViewApplications = canViewProducts
   const productSummary = useMemo(() => {
     const items = Array.isArray(eldoradoCatalog?.items) ? eldoradoCatalog.items : []
     const topups = Array.isArray(eldoradoCatalog?.topups) ? eldoradoCatalog.topups : []
@@ -515,9 +517,11 @@ function App() {
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
+      { key: "applications", label: "Uygulamalar", canView: canViewApplications },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
+      canViewApplications,
       canViewAdmin,
       canViewDashboard,
       canViewLists,
@@ -1184,6 +1188,16 @@ function App() {
               canViewLinks={canViewProductLinks}
               canStarOffers={canStarProducts}
               canDeleteOffers={canDeleteOffers}
+            />
+          </div>
+        )}
+
+        {activeTab === "applications" && canViewApplications && (
+          <div className={getTabSlideClass("applications")}>
+            <ApplicationsTab
+              panelClass={panelClass}
+              isLoading={isProductsTabLoading}
+              backendOptions={eldoradoAutomationBackendOptions}
             />
           </div>
         )}
