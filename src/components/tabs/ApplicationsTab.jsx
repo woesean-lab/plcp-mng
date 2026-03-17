@@ -64,6 +64,8 @@ export default function ApplicationsTab({
   const [backendDraft, setBackendDraft] = useState("")
   const [applications, setApplications] = useState([])
   const [selectedApplicationId, setSelectedApplicationId] = useState("")
+  const [editingApplicationId, setEditingApplicationId] = useState("")
+  const [deleteConfirmId, setDeleteConfirmId] = useState("")
   const [isRunning, setIsRunning] = useState(false)
   const [runLogs, setRunLogs] = useState([])
   const runTimerRef = useRef(null)
@@ -134,23 +136,114 @@ export default function ApplicationsTab({
     const backendLabel =
       String(applicationBackendOptions.find((entry) => entry.key === backendKey)?.label ?? "").trim() ||
       backendKey
-    const id = `app-${Date.now()}-${Math.random().toString(16).slice(2)}`
-    setApplications((prev) => [{ id, name, about, backendKey, backendLabel }, ...prev])
-    setSelectedApplicationId(id)
+    if (editingApplicationId) {
+      setApplications((prev) =>
+        prev.map((entry) =>
+          entry.id === editingApplicationId
+            ? { ...entry, name, about, backendKey, backendLabel }
+            : entry,
+        ),
+      )
+      setSelectedApplicationId(editingApplicationId)
+      appendLog("success", `Uygulama guncellendi: ${name} (${backendLabel})`)
+      toast.success("Uygulama guncellendi.")
+    } else {
+      const id = `app-${Date.now()}-${Math.random().toString(16).slice(2)}`
+      setApplications((prev) => [{ id, name, about, backendKey, backendLabel, isActive: true }, ...prev])
+      setSelectedApplicationId(id)
+      appendLog("success", `Uygulama kaydedildi: ${name} (${backendLabel})`)
+      toast.success("Uygulama kaydedildi.")
+    }
+
+    setEditingApplicationId("")
+    setDeleteConfirmId("")
     setAppNameDraft("")
     setAppAboutDraft("")
-    appendLog("success", `Uygulama kaydedildi: ${name} (${backendLabel})`)
-    toast.success("Uygulama kaydedildi.")
   }
+
+  const activeApplications = useMemo(
+    () => applications.filter((entry) => Boolean(entry?.isActive)),
+    [applications],
+  )
+
+  useEffect(() => {
+    if (activeApplications.length === 0) {
+      setSelectedApplicationId("")
+      return
+    }
+    if (!selectedApplicationId || !activeApplications.some((entry) => entry.id === selectedApplicationId)) {
+      setSelectedApplicationId(activeApplications[0].id)
+    }
+  }, [activeApplications, selectedApplicationId])
 
   const selectedApplication = useMemo(
     () => applications.find((entry) => entry.id === selectedApplicationId) || null,
     [applications, selectedApplicationId],
   )
 
+  const handleEditStart = (entry) => {
+    if (!entry || !entry.id) return
+    setEditingApplicationId(entry.id)
+    setDeleteConfirmId("")
+    setAppNameDraft(String(entry.name ?? ""))
+    setAppAboutDraft(String(entry.about ?? ""))
+    setBackendDraft(String(entry.backendKey ?? ""))
+  }
+
+  const handleEditCancel = () => {
+    setEditingApplicationId("")
+    setAppNameDraft("")
+    setAppAboutDraft("")
+    if (applicationBackendOptions.length > 0) {
+      setBackendDraft(applicationBackendOptions[0].key)
+    } else {
+      setBackendDraft("")
+    }
+  }
+
+  const handleToggleActive = (appId) => {
+    let toggled = null
+    setApplications((prev) =>
+      prev.map((entry) => {
+        if (entry.id !== appId) return entry
+        toggled = { ...entry, isActive: !entry.isActive }
+        return toggled
+      }),
+    )
+    if (!toggled) return
+    appendLog(
+      "running",
+      `${toggled.name} ${toggled.isActive ? "aktif edildi" : "kapatildi"}.`,
+    )
+    toast.success(toggled.isActive ? "Uygulama aktif edildi." : "Uygulama kapatildi.")
+  }
+
+  const handleDelete = (appId) => {
+    if (!appId) return
+    if (deleteConfirmId !== appId) {
+      setDeleteConfirmId(appId)
+      toast("Silmek icin tekrar tikla.", { position: "top-right" })
+      return
+    }
+    const deletingApp = applications.find((entry) => entry.id === appId)
+    setApplications((prev) => prev.filter((entry) => entry.id !== appId))
+    if (editingApplicationId === appId) {
+      handleEditCancel()
+    }
+    setDeleteConfirmId("")
+    if (deletingApp) {
+      appendLog("error", `Uygulama silindi: ${deletingApp.name}`)
+    }
+    toast.success("Uygulama silindi.")
+  }
+
   const handleRun = () => {
     if (!selectedApplication) {
       toast.error("Calistirmak icin uygulama secin.")
+      return
+    }
+    if (!selectedApplication.isActive) {
+      toast.error("Secilen uygulama kapali. Once aktif edin.")
       return
     }
     if (isRunning) return
@@ -172,7 +265,7 @@ export default function ApplicationsTab({
     toast.success("CMD loglari temizlendi.")
   }
 
-  const hasApplications = applications.length > 0
+  const hasApplications = activeApplications.length > 0
   const visibleLogs = runLogs.slice(0, CMD_VISIBLE_ROWS)
   const emptyRows = Math.max(0, CMD_VISIBLE_ROWS - visibleLogs.length)
 
@@ -201,7 +294,7 @@ export default function ApplicationsTab({
               Map: {applicationBackendOptions.length}
             </span>
             <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Durum: {isRunning ? "Calisiyor" : "Hazir"}
+              Durum: {isRunning ? "Baglaniliyor" : "Baglanildi"}
             </span>
           </div>
         </div>
@@ -225,11 +318,11 @@ export default function ApplicationsTab({
               <span
                 className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
                   isRunning
-                    ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
+                    ? "border-sky-300/60 bg-sky-500/15 text-sky-100"
                     : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
                 }`}
               >
-                {isRunning ? "Calisiyor" : "Hazir"}
+                {isRunning ? "Baglaniliyor" : "Baglanildi"}
               </span>
             </div>
           </div>
@@ -241,8 +334,8 @@ export default function ApplicationsTab({
               disabled={!hasApplications || isRunning}
               className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <option value="">{hasApplications ? "Uygulama sec" : "Kayitli uygulama yok"}</option>
-              {applications.map((entry) => (
+              <option value="">{hasApplications ? "Uygulama sec" : "Aktif uygulama yok"}</option>
+              {activeApplications.map((entry) => (
                 <option key={`run-app-${entry.id}`} value={entry.id}>
                   {entry.name}
                 </option>
@@ -261,17 +354,26 @@ export default function ApplicationsTab({
                 type="button"
                 onClick={handleClearLogs}
                 disabled={runLogs.length === 0}
-                className="inline-flex h-9 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-9 items-center rounded-md border border-rose-300/60 bg-rose-500/15 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-50 transition hover:border-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Log temizle
               </button>
             </div>
           </div>
 
-          <div className="border-b border-white/10 bg-ink-900/30 px-3 py-1.5 text-[10px] text-slate-400">
-            {selectedApplication
-              ? `Secili: ${selectedApplication.name} (${selectedApplication.backendLabel})`
-              : "Calistirmak icin uygulama secin."}
+          <div className="border-b border-white/10 bg-ink-900/30 px-3 py-2 text-[10px] text-slate-400">
+            {selectedApplication ? (
+              <>
+                <p className="text-[11px] font-semibold text-slate-200">
+                  {selectedApplication.name} ({selectedApplication.backendLabel})
+                </p>
+                <p className="mt-1 text-[10px] text-slate-400">
+                  {selectedApplication.about || "Uygulama aciklamasi yok."}
+                </p>
+              </>
+            ) : (
+              "Calistirmak icin uygulama secin."
+            )}
           </div>
 
           <div className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
@@ -327,12 +429,24 @@ export default function ApplicationsTab({
         <section className={`order-1 ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Uygulama Ekle</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                {editingApplicationId ? "Uygulama Duzenle" : "Uygulama Ekle"}
+              </p>
               <p className="text-sm text-slate-400">Ad, aciklama ve backend map secimi.</p>
             </div>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-              {applications.length} kayit
-            </span>
+            {editingApplicationId ? (
+              <button
+                type="button"
+                onClick={handleEditCancel}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50"
+              >
+                Iptal
+              </button>
+            ) : (
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                {applications.length} kayit
+              </span>
+            )}
           </div>
 
           <div className="mt-4 space-y-3">
@@ -392,8 +506,74 @@ export default function ApplicationsTab({
               disabled={applicationBackendOptions.length === 0}
               className="w-full rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Kaydet
+              {editingApplicationId ? "Guncelle" : "Kaydet"}
             </button>
+
+            <div className="space-y-2 border-t border-white/10 pt-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Kayitli uygulamalar
+              </p>
+              <div className="no-scrollbar max-h-[260px] space-y-2 overflow-y-auto pr-1">
+                {applications.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-white/10 px-3 py-6 text-center text-[11px] text-slate-500">
+                    Henuz uygulama kaydi yok.
+                  </p>
+                ) : (
+                  applications.map((entry) => (
+                    <div
+                      key={`manage-app-${entry.id}`}
+                      className="rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate text-sm font-semibold text-slate-100">{entry.name}</p>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                            entry.isActive
+                              ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
+                              : "border-slate-300/40 bg-slate-500/10 text-slate-300"
+                          }`}
+                        >
+                          {entry.isActive ? "Aktif" : "Kapali"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[10px] text-slate-400">{entry.backendLabel}</p>
+                      <p className="mt-1 text-[11px] text-slate-400">{entry.about}</p>
+                      <div className="mt-2 grid grid-cols-3 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(entry.id)}
+                          className={`rounded-md border px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition ${
+                            entry.isActive
+                              ? "border-amber-300/60 bg-amber-500/15 text-amber-100 hover:border-amber-200 hover:bg-amber-500/25"
+                              : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100 hover:border-emerald-200 hover:bg-emerald-500/25"
+                          }`}
+                        >
+                          {entry.isActive ? "Kapat" : "Aktif Et"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditStart(entry)}
+                          className="rounded-md border border-sky-300/60 bg-sky-500/15 px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
+                        >
+                          Duzenle
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(entry.id)}
+                          className={`rounded-md border px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition ${
+                            deleteConfirmId === entry.id
+                              ? "border-rose-300 bg-rose-500/25 text-rose-50"
+                              : "border-rose-300/60 bg-rose-500/10 text-rose-100 hover:border-rose-200 hover:bg-rose-500/20"
+                          }`}
+                        >
+                          {deleteConfirmId === entry.id ? "Onayla" : "Sil"}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </section>
       </div>
