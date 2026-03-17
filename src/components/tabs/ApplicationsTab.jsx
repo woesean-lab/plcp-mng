@@ -868,14 +868,6 @@ export default function ApplicationsTab({
               )}
             </div>
 
-            <div className="mt-2 rounded-lg border border-white/10 bg-ink-900/65 px-2.5 py-2 text-[10px] text-slate-400">
-              {selectedApplication ? (
-                <>
-                  <p className="text-[11px] font-semibold text-slate-200">{selectedApplication.name}</p>
-                  <p className="mt-1 break-words">{selectedApplication.about || "Servis aciklamasi yok."}</p>
-                </>
-              ) : null}
-            </div>
           </div>
         </section>
       </div>
