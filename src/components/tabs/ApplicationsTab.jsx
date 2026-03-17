@@ -35,19 +35,21 @@ function ApplicationsSkeleton({ panelClass }) {
         <SkeletonBlock className="mt-3 h-4 w-2/3 rounded-full" />
       </header>
 
-      <section className={`${panelClass} bg-ink-900/60`}>
-        <SkeletonBlock className="h-4 w-36 rounded-full" />
-        <SkeletonBlock className="mt-4 h-10 w-full rounded-lg" />
-        <SkeletonBlock className="mt-2 h-20 w-full rounded-lg" />
-        <SkeletonBlock className="mt-2 h-10 w-full rounded-lg" />
-        <SkeletonBlock className="mt-3 h-10 w-24 rounded-lg" />
-      </section>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
+          <SkeletonBlock className="m-3 h-8 w-[220px] rounded-lg" />
+          <SkeletonBlock className="m-3 mt-0 h-10 w-auto rounded-lg" />
+          <SkeletonBlock className="m-3 mt-0 h-[320px] w-auto rounded-xl" />
+        </section>
 
-      <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
-        <SkeletonBlock className="m-3 h-8 w-[220px] rounded-lg" />
-        <SkeletonBlock className="m-3 mt-0 h-10 w-auto rounded-lg" />
-        <SkeletonBlock className="m-3 mt-0 h-[320px] w-auto rounded-xl" />
-      </section>
+        <section className={`${panelClass} bg-ink-900/60`}>
+          <SkeletonBlock className="h-4 w-36 rounded-full" />
+          <SkeletonBlock className="mt-4 h-10 w-full rounded-lg" />
+          <SkeletonBlock className="mt-2 h-20 w-full rounded-lg" />
+          <SkeletonBlock className="mt-2 h-10 w-full rounded-lg" />
+          <SkeletonBlock className="mt-3 h-10 w-24 rounded-lg" />
+        </section>
+      </div>
     </div>
   )
 }
@@ -60,8 +62,8 @@ export default function ApplicationsTab({
   const [appNameDraft, setAppNameDraft] = useState("")
   const [appAboutDraft, setAppAboutDraft] = useState("")
   const [backendDraft, setBackendDraft] = useState("")
-  const [runBackendDraft, setRunBackendDraft] = useState("")
   const [applications, setApplications] = useState([])
+  const [selectedApplicationId, setSelectedApplicationId] = useState("")
   const [isRunning, setIsRunning] = useState(false)
   const [runLogs, setRunLogs] = useState([])
   const runTimerRef = useRef(null)
@@ -85,16 +87,12 @@ export default function ApplicationsTab({
   useEffect(() => {
     if (applicationBackendOptions.length === 0) {
       setBackendDraft("")
-      setRunBackendDraft("")
       return
     }
     if (!backendDraft || !applicationBackendOptions.some((entry) => entry.key === backendDraft)) {
       setBackendDraft(applicationBackendOptions[0].key)
     }
-    if (!runBackendDraft || !applicationBackendOptions.some((entry) => entry.key === runBackendDraft)) {
-      setRunBackendDraft(applicationBackendOptions[0].key)
-    }
-  }, [applicationBackendOptions, backendDraft, runBackendDraft])
+  }, [applicationBackendOptions, backendDraft])
 
   useEffect(() => {
     return () => {
@@ -138,29 +136,32 @@ export default function ApplicationsTab({
       backendKey
     const id = `app-${Date.now()}-${Math.random().toString(16).slice(2)}`
     setApplications((prev) => [{ id, name, about, backendKey, backendLabel }, ...prev])
+    setSelectedApplicationId(id)
     setAppNameDraft("")
     setAppAboutDraft("")
     appendLog("success", `Uygulama kaydedildi: ${name} (${backendLabel})`)
     toast.success("Uygulama kaydedildi.")
   }
 
+  const selectedApplication = useMemo(
+    () => applications.find((entry) => entry.id === selectedApplicationId) || null,
+    [applications, selectedApplicationId],
+  )
+
   const handleRun = () => {
-    const backendKey = String(runBackendDraft ?? "").trim()
-    if (!backendKey) {
-      toast.error("Calistirmak icin backend map secin.")
+    if (!selectedApplication) {
+      toast.error("Calistirmak icin uygulama secin.")
       return
     }
     if (isRunning) return
-    const backendLabel =
-      String(applicationBackendOptions.find((entry) => entry.key === backendKey)?.label ?? "").trim() ||
-      backendKey
 
     setIsRunning(true)
-    appendLog("running", `Backend map secildi: ${backendLabel}`)
+    appendLog("running", `Calistiriliyor: ${selectedApplication.name}`)
+    appendLog("running", `Backend map: ${selectedApplication.backendLabel}`)
     appendLog("running", "Komut tetiklendi. (UI demo)")
 
     runTimerRef.current = window.setTimeout(() => {
-      appendLog("success", `Tamamlandi: ${backendLabel}`)
+      appendLog("success", `Tamamlandi: ${selectedApplication.name}`)
       setIsRunning(false)
       runTimerRef.current = null
     }, 900)
@@ -171,6 +172,7 @@ export default function ApplicationsTab({
     toast.success("CMD loglari temizlendi.")
   }
 
+  const hasApplications = applications.length > 0
   const visibleLogs = runLogs.slice(0, CMD_VISIBLE_ROWS)
   const emptyRows = Math.max(0, CMD_VISIBLE_ROWS - visibleLogs.length)
 
@@ -188,7 +190,7 @@ export default function ApplicationsTab({
             </span>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Uygulamalar</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Uygulama ekle, backend map sec ve calistir.
+              Uygulama ekle, uygulama sec ve calistir.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -205,8 +207,124 @@ export default function ApplicationsTab({
         </div>
       </header>
 
-      <div className="grid gap-6">
-        <section className={`${panelClass} bg-ink-900/60`}>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
+        <section className="order-2 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 lg:order-1">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+              <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+              <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+              <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                CMD
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                {runLogs.length} satir
+              </span>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                  isRunning
+                    ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
+                    : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
+                }`}
+              >
+                {isRunning ? "Calisiyor" : "Hazir"}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-2 border-b border-white/10 bg-ink-900/45 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_120px_auto]">
+            <select
+              value={selectedApplicationId}
+              onChange={(event) => setSelectedApplicationId(event.target.value)}
+              disabled={!hasApplications || isRunning}
+              className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <option value="">{hasApplications ? "Uygulama sec" : "Kayitli uygulama yok"}</option>
+              {applications.map((entry) => (
+                <option key={`run-app-${entry.id}`} value={entry.id}>
+                  {entry.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleRun}
+              disabled={!selectedApplication || isRunning}
+              className="inline-flex h-9 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRunning ? "Calisiyor..." : "Calistir"}
+            </button>
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={handleClearLogs}
+                disabled={runLogs.length === 0}
+                className="inline-flex h-9 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Log temizle
+              </button>
+            </div>
+          </div>
+
+          <div className="border-b border-white/10 bg-ink-900/30 px-3 py-1.5 text-[10px] text-slate-400">
+            {selectedApplication
+              ? `Secili: ${selectedApplication.name} (${selectedApplication.backendLabel})`
+              : "Calistirmak icin uygulama secin."}
+          </div>
+
+          <div className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+            <div className="space-y-0.5">
+              {visibleLogs.map((entry) => (
+                <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                  <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
+                  <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                  <span
+                    className={`flex-none ${
+                      entry.status === "success"
+                        ? "text-emerald-300"
+                        : entry.status === "error"
+                          ? "text-rose-300"
+                          : "text-amber-300"
+                    }`}
+                  >
+                    [{entry.time}]
+                  </span>
+                  <span
+                    className={`flex-none ${
+                      entry.status === "success"
+                        ? "text-emerald-300"
+                        : entry.status === "error"
+                          ? "text-rose-300"
+                          : "text-amber-300"
+                    }`}
+                  >
+                    {entry.status === "success" ? "OK" : entry.status === "error" ? "ERR" : "RUN"}
+                  </span>
+                  <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                </div>
+              ))}
+              {Array.from({ length: emptyRows }).map((_, index) => (
+                <div key={`applications-log-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                  <span className="hidden flex-none text-slate-600 sm:inline">C:\plcp\applications&gt;</span>
+                  <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                  <span className="flex-none text-slate-700">[--:--]</span>
+                  <span className="flex-none text-slate-700">--</span>
+                  <span
+                    className={`truncate text-slate-700 ${
+                      runLogs.length === 0 && index === 0 ? "text-slate-500" : "opacity-0"
+                    }`}
+                  >
+                    {runLogs.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={`order-1 ${panelClass} bg-ink-900/60 lg:order-2`}>
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Uygulama Ekle</p>
@@ -279,117 +397,6 @@ export default function ApplicationsTab({
           </div>
         </section>
       </div>
-
-      <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-            <span className="h-2 w-2 rounded-full bg-amber-300/80" />
-            <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-            <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-              CMD
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-              {runLogs.length} satir
-            </span>
-            <span
-              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
-                isRunning
-                  ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
-                  : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
-              }`}
-            >
-              {isRunning ? "Calisiyor" : "Hazir"}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid gap-2 border-b border-white/10 bg-ink-900/45 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_120px_auto]">
-          <select
-            value={runBackendDraft}
-            onChange={(event) => setRunBackendDraft(event.target.value)}
-            disabled={applicationBackendOptions.length === 0 || isRunning}
-            className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="">
-              {applicationBackendOptions.length === 0 ? "Uygulama backend map yok" : "Backend map sec"}
-            </option>
-            {applicationBackendOptions.map((entry) => (
-              <option key={`run-backend-${entry.key}`} value={entry.key}>
-                {entry.label}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={handleRun}
-            disabled={!runBackendDraft || isRunning}
-            className="inline-flex h-9 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isRunning ? "Calisiyor..." : "Calistir"}
-          </button>
-          <div className="flex items-center justify-end">
-            <button
-              type="button"
-              onClick={handleClearLogs}
-              disabled={runLogs.length === 0}
-              className="inline-flex h-9 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Log temizle
-            </button>
-          </div>
-        </div>
-        <div className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
-          <div className="space-y-0.5">
-            {visibleLogs.map((entry) => (
-              <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
-                <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                <span
-                  className={`flex-none ${
-                    entry.status === "success"
-                      ? "text-emerald-300"
-                      : entry.status === "error"
-                        ? "text-rose-300"
-                        : "text-amber-300"
-                  }`}
-                >
-                  [{entry.time}]
-                </span>
-                <span
-                  className={`flex-none ${
-                    entry.status === "success"
-                      ? "text-emerald-300"
-                      : entry.status === "error"
-                        ? "text-rose-300"
-                        : "text-amber-300"
-                  }`}
-                >
-                  {entry.status === "success" ? "OK" : entry.status === "error" ? "ERR" : "RUN"}
-                </span>
-                <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
-              </div>
-            ))}
-            {Array.from({ length: emptyRows }).map((_, index) => (
-              <div key={`applications-log-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                <span className="hidden flex-none text-slate-600 sm:inline">C:\plcp\applications&gt;</span>
-                <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                <span className="flex-none text-slate-700">[--:--]</span>
-                <span className="flex-none text-slate-700">--</span>
-                <span
-                  className={`truncate text-slate-700 ${
-                    runLogs.length === 0 && index === 0 ? "text-slate-500" : "opacity-0"
-                  }`}
-                >
-                  {runLogs.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   )
 }
