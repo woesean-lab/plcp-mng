@@ -67,7 +67,7 @@ export default function ApplicationsTab({
   const [editingApplicationId, setEditingApplicationId] = useState("")
   const [deleteConfirmId, setDeleteConfirmId] = useState("")
   const [isRunning, setIsRunning] = useState(false)
-  const [runLogs, setRunLogs] = useState([])
+  const [runLogsByApplication, setRunLogsByApplication] = useState({})
   const runTimerRef = useRef(null)
 
   const applicationBackendOptions = useMemo(() => {
@@ -105,7 +105,9 @@ export default function ApplicationsTab({
     }
   }, [])
 
-  const appendLog = (status, message) => {
+  const appendLog = (appId, status, message) => {
+    const normalizedAppId = String(appId ?? "").trim()
+    if (!normalizedAppId) return
     const normalizedMessage = String(message ?? "").trim()
     if (!normalizedMessage) return
     const nextEntry = {
@@ -114,7 +116,13 @@ export default function ApplicationsTab({
       status: String(status ?? "").trim() || "running",
       message: normalizedMessage,
     }
-    setRunLogs((prev) => [nextEntry, ...prev].slice(0, MAX_LOG_ENTRIES))
+    setRunLogsByApplication((prev) => {
+      const currentLogs = Array.isArray(prev[normalizedAppId]) ? prev[normalizedAppId] : []
+      return {
+        ...prev,
+        [normalizedAppId]: [nextEntry, ...currentLogs].slice(0, MAX_LOG_ENTRIES),
+      }
+    })
   }
 
   const handleSave = () => {
@@ -145,13 +153,13 @@ export default function ApplicationsTab({
         ),
       )
       setSelectedApplicationId(editingApplicationId)
-      appendLog("success", `Uygulama guncellendi: ${name} (${backendLabel})`)
+      appendLog(editingApplicationId, "success", `Uygulama guncellendi: ${name} (${backendLabel})`)
       toast.success("Uygulama guncellendi.")
     } else {
       const id = `app-${Date.now()}-${Math.random().toString(16).slice(2)}`
       setApplications((prev) => [{ id, name, about, backendKey, backendLabel, isActive: true }, ...prev])
       setSelectedApplicationId(id)
-      appendLog("success", `Uygulama kaydedildi: ${name} (${backendLabel})`)
+      appendLog(id, "success", `Uygulama kaydedildi: ${name} (${backendLabel})`)
       toast.success("Uygulama kaydedildi.")
     }
 
@@ -161,20 +169,15 @@ export default function ApplicationsTab({
     setAppAboutDraft("")
   }
 
-  const activeApplications = useMemo(
-    () => applications.filter((entry) => Boolean(entry?.isActive)),
-    [applications],
-  )
-
   useEffect(() => {
-    if (activeApplications.length === 0) {
+    if (applications.length === 0) {
       setSelectedApplicationId("")
       return
     }
-    if (!selectedApplicationId || !activeApplications.some((entry) => entry.id === selectedApplicationId)) {
-      setSelectedApplicationId(activeApplications[0].id)
+    if (!selectedApplicationId || !applications.some((entry) => entry.id === selectedApplicationId)) {
+      setSelectedApplicationId(applications[0].id)
     }
-  }, [activeApplications, selectedApplicationId])
+  }, [applications, selectedApplicationId])
 
   const selectedApplication = useMemo(
     () => applications.find((entry) => entry.id === selectedApplicationId) || null,
@@ -212,6 +215,7 @@ export default function ApplicationsTab({
     )
     if (!toggled) return
     appendLog(
+      appId,
       "running",
       `${toggled.name} ${toggled.isActive ? "aktif edildi" : "kapatildi"}.`,
     )
@@ -232,7 +236,12 @@ export default function ApplicationsTab({
     }
     setDeleteConfirmId("")
     if (deletingApp) {
-      appendLog("error", `Uygulama silindi: ${deletingApp.name}`)
+      setRunLogsByApplication((prev) => {
+        if (!Object.prototype.hasOwnProperty.call(prev, appId)) return prev
+        const next = { ...prev }
+        delete next[appId]
+        return next
+      })
     }
     toast.success("Uygulama silindi.")
   }
@@ -249,23 +258,34 @@ export default function ApplicationsTab({
     if (isRunning) return
 
     setIsRunning(true)
-    appendLog("running", `Calistiriliyor: ${selectedApplication.name}`)
-    appendLog("running", `Backend map: ${selectedApplication.backendLabel}`)
-    appendLog("running", "Komut tetiklendi. (UI demo)")
+    appendLog(selectedApplication.id, "running", `Calistiriliyor: ${selectedApplication.name}`)
+    appendLog(selectedApplication.id, "running", `Backend map: ${selectedApplication.backendLabel}`)
+    appendLog(selectedApplication.id, "running", "Komut tetiklendi. (UI demo)")
 
     runTimerRef.current = window.setTimeout(() => {
-      appendLog("success", `Tamamlandi: ${selectedApplication.name}`)
+      appendLog(selectedApplication.id, "success", `Tamamlandi: ${selectedApplication.name}`)
       setIsRunning(false)
       runTimerRef.current = null
     }, 900)
   }
 
   const handleClearLogs = () => {
-    setRunLogs([])
+    const targetAppId = String(selectedApplicationId ?? "").trim()
+    if (!targetAppId) return
+    setRunLogsByApplication((prev) => ({
+      ...prev,
+      [targetAppId]: [],
+    }))
     toast.success("CMD loglari temizlendi.")
   }
 
-  const hasApplications = activeApplications.length > 0
+  const hasApplications = applications.length > 0
+  const runLogs = useMemo(() => {
+    const targetAppId = String(selectedApplicationId ?? "").trim()
+    if (!targetAppId) return []
+    const logs = runLogsByApplication[targetAppId]
+    return Array.isArray(logs) ? logs : []
+  }, [runLogsByApplication, selectedApplicationId])
   const visibleLogs = runLogs.slice(0, CMD_VISIBLE_ROWS)
   const emptyRows = Math.max(0, CMD_VISIBLE_ROWS - visibleLogs.length)
 
@@ -334,17 +354,17 @@ export default function ApplicationsTab({
               disabled={!hasApplications || isRunning}
               className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <option value="">{hasApplications ? "Uygulama sec" : "Aktif uygulama yok"}</option>
-              {activeApplications.map((entry) => (
+              <option value="">{hasApplications ? "Uygulama sec" : "Kayitli uygulama yok"}</option>
+              {applications.map((entry) => (
                 <option key={`run-app-${entry.id}`} value={entry.id}>
-                  {entry.name}
+                  {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
                 </option>
               ))}
             </select>
             <button
               type="button"
               onClick={handleRun}
-              disabled={!selectedApplication || isRunning}
+              disabled={!selectedApplication || !selectedApplication.isActive || isRunning}
               className="inline-flex h-9 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRunning ? "Calisiyor..." : "Calistir"}
