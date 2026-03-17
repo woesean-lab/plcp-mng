@@ -165,6 +165,11 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "products.star",
   "products.card.toggle",
   "products.manage",
+  "applications.view",
+  "applications.manage",
+  "applications.run",
+  "applications.logs.view",
+  "applications.logs.clear",
   "admin.roles.manage",
   "admin.users.manage",
 ]
@@ -901,6 +906,7 @@ const initialAutomations = [
 ]
 const AUTOMATION_LOG_LIMIT = 300
 const ELDORADO_AUTOMATION_LOG_LIMIT = 300
+const APPLICATION_LOG_LIMIT = 300
 
 async function ensureDefaults() {
   await prisma.category.upsert({
@@ -919,11 +925,23 @@ async function ensureDefaults() {
     await prisma.template.createMany({ data: initialTemplates })
   }
 
-  const adminRole =
-    (await prisma.role.findUnique({ where: { name: "Admin" } })) ||
-    (await prisma.role.create({
+  let adminRole = await prisma.role.findUnique({ where: { name: "Admin" } })
+  if (!adminRole) {
+    adminRole = await prisma.role.create({
       data: { name: "Admin", permissions: DEFAULT_ADMIN_PERMISSIONS },
-    }))
+    })
+  } else {
+    const normalizedCurrentPermissions = normalizePermissions(adminRole.permissions)
+    const mergedPermissions = Array.from(
+      new Set([...normalizedCurrentPermissions, ...DEFAULT_ADMIN_PERMISSIONS]),
+    )
+    if (mergedPermissions.length !== normalizedCurrentPermissions.length) {
+      adminRole = await prisma.role.update({
+        where: { id: adminRole.id },
+        data: { permissions: mergedPermissions },
+      })
+    }
+  }
 
   const automationCount = await prisma.automation.count()
   if (automationCount === 0) {
@@ -1025,6 +1043,34 @@ const PRODUCT_STOCK_FETCH_STAR_PERMISSIONS = [
   "products.stock.fetch",
   "products.manage",
 ]
+const APPLICATION_VIEW_PERMISSIONS = [
+  "applications.view",
+  "applications.manage",
+  "applications.run",
+  "applications.logs.view",
+  "admin.manage",
+]
+const APPLICATION_MANAGE_PERMISSIONS = [
+  "applications.manage",
+  "admin.manage",
+]
+const APPLICATION_RUN_PERMISSIONS = [
+  "applications.run",
+  "applications.manage",
+  "admin.manage",
+]
+const APPLICATION_LOGS_VIEW_PERMISSIONS = [
+  "applications.logs.view",
+  "applications.run",
+  "applications.manage",
+  "applications.view",
+  "admin.manage",
+]
+const APPLICATION_LOGS_CLEAR_PERMISSIONS = [
+  "applications.logs.clear",
+  "applications.manage",
+  "admin.manage",
+]
 
 const normalizeAutomationRunLogEntry = (entry) => {
   const id = String(entry?.id ?? "").trim()
@@ -1043,6 +1089,43 @@ const normalizeEldoradoAutomationRunLogEntry = (entry, offerIdFromRoute = "") =>
   const message = String(entry?.message ?? "").trim()
   if (!offerId || !id || !time || !status || !message) return null
   return { offerId, id, time, status, message }
+}
+
+const normalizeApplicationPayload = (value) => {
+  const name = String(value?.name ?? "").trim()
+  const about = String(value?.about ?? "").trim()
+  const backendKey = String(value?.backendKey ?? "").trim()
+  const backendLabel = String(value?.backendLabel ?? "").trim() || backendKey
+  const isActiveRaw = value?.isActive
+  const isActive =
+    typeof isActiveRaw === "boolean"
+      ? isActiveRaw
+      : String(isActiveRaw ?? "").trim()
+        ? String(isActiveRaw).toLowerCase() === "true"
+        : true
+  if (!name || !about || !backendKey) return null
+  return { name, about, backendKey, backendLabel, isActive }
+}
+
+const serializeApplication = (entry) => ({
+  id: String(entry?.id ?? "").trim(),
+  name: String(entry?.name ?? "").trim(),
+  about: String(entry?.about ?? "").trim(),
+  backendKey: String(entry?.backendKey ?? "").trim(),
+  backendLabel: String(entry?.backendLabel ?? "").trim(),
+  isActive: Boolean(entry?.isActive),
+  createdAt: entry?.createdAt instanceof Date ? entry.createdAt.toISOString() : null,
+  updatedAt: entry?.updatedAt instanceof Date ? entry.updatedAt.toISOString() : null,
+})
+
+const normalizeApplicationRunLogEntry = (entry, applicationIdFromRoute = "") => {
+  const applicationId = String(applicationIdFromRoute || entry?.applicationId || "").trim()
+  const id = String(entry?.id ?? "").trim()
+  const time = String(entry?.time ?? "").trim()
+  const status = String(entry?.status ?? "").trim()
+  const message = String(entry?.message ?? "").trim()
+  if (!applicationId || !id || !time || !status || !message) return null
+  return { applicationId, id, time, status, message }
 }
 
 app.get("/api/health", (_req, res) => {
@@ -1273,6 +1356,202 @@ app.post("/api/automation/logs", requirePermission("automation.view"), async (re
 app.delete("/api/automation/logs", requirePermission("automation.view"), async (_req, res) => {
   await prisma.automationRunLog.deleteMany({})
   res.json({ ok: true })
+})
+
+app.get("/api/applications", requireAnyPermission(APPLICATION_VIEW_PERMISSIONS), async (_req, res) => {
+  const rows = await prisma.application.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  })
+  res.json(rows.map(serializeApplication))
+})
+
+app.post("/api/applications", requireAnyPermission(APPLICATION_MANAGE_PERMISSIONS), async (req, res) => {
+  const normalized = normalizeApplicationPayload(req.body)
+  if (!normalized) {
+    res.status(400).json({ error: "name, about and backendKey are required" })
+    return
+  }
+
+  const created = await prisma.application.create({
+    data: {
+      name: normalized.name,
+      about: normalized.about,
+      backendKey: normalized.backendKey,
+      backendLabel: normalized.backendLabel,
+      isActive: Boolean(normalized.isActive),
+    },
+  })
+
+  res.status(201).json(serializeApplication(created))
+})
+
+app.put("/api/applications/:id", requireAnyPermission(APPLICATION_MANAGE_PERMISSIONS), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+
+  const normalized = normalizeApplicationPayload(req.body)
+  if (!normalized) {
+    res.status(400).json({ error: "name, about and backendKey are required" })
+    return
+  }
+
+  try {
+    const updated = await prisma.application.update({
+      where: { id },
+      data: {
+        name: normalized.name,
+        about: normalized.about,
+        backendKey: normalized.backendKey,
+        backendLabel: normalized.backendLabel,
+        isActive: Boolean(normalized.isActive),
+      },
+    })
+    res.json(serializeApplication(updated))
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "application_not_found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.post("/api/applications/:id/active", requireAnyPermission(APPLICATION_MANAGE_PERMISSIONS), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(req.body ?? {}, "isActive")) {
+    res.status(400).json({ error: "isActive is required" })
+    return
+  }
+
+  const isActiveRaw = req.body?.isActive
+  const isActive =
+    typeof isActiveRaw === "boolean"
+      ? isActiveRaw
+      : String(isActiveRaw ?? "").toLowerCase() === "true"
+
+  try {
+    const updated = await prisma.application.update({
+      where: { id },
+      data: { isActive },
+    })
+    res.json(serializeApplication(updated))
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "application_not_found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.delete("/api/applications/:id", requireAnyPermission(APPLICATION_MANAGE_PERMISSIONS), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+
+  try {
+    await prisma.application.delete({ where: { id } })
+    res.json({ ok: true, id })
+  } catch (error) {
+    if (error?.code === "P2025") {
+      res.status(404).json({ error: "application_not_found" })
+      return
+    }
+    throw error
+  }
+})
+
+app.get("/api/applications/:id/logs", requireAnyPermission(APPLICATION_LOGS_VIEW_PERMISSIONS), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+
+  const appRow = await prisma.application.findUnique({
+    where: { id },
+    select: { id: true },
+  })
+  if (!appRow) {
+    res.status(404).json({ error: "application_not_found" })
+    return
+  }
+
+  const logs = await prisma.applicationRunLog.findMany({
+    where: { applicationId: id },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: APPLICATION_LOG_LIMIT,
+  })
+  res.json(logs)
+})
+
+app.post("/api/applications/:id/logs", requireAnyPermission(APPLICATION_RUN_PERMISSIONS), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+
+  const appRow = await prisma.application.findUnique({
+    where: { id },
+    select: { id: true },
+  })
+  if (!appRow) {
+    res.status(404).json({ error: "application_not_found" })
+    return
+  }
+
+  const normalized = normalizeApplicationRunLogEntry(req.body, id)
+  if (!normalized) {
+    res.status(400).json({ error: "id, time, status and message are required" })
+    return
+  }
+
+  await prisma.applicationRunLog.upsert({
+    where: { id: normalized.id },
+    create: normalized,
+    update: {
+      applicationId: normalized.applicationId,
+      time: normalized.time,
+      status: normalized.status,
+      message: normalized.message,
+    },
+  })
+
+  const overflow = await prisma.applicationRunLog.findMany({
+    where: { applicationId: id },
+    select: { id: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    skip: APPLICATION_LOG_LIMIT,
+  })
+  if (overflow.length > 0) {
+    await prisma.applicationRunLog.deleteMany({
+      where: { id: { in: overflow.map((entry) => entry.id) } },
+    })
+  }
+
+  res.status(201).json({ ok: true })
+})
+
+app.delete("/api/applications/:id/logs", requireAnyPermission(APPLICATION_LOGS_CLEAR_PERMISSIONS), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+
+  await prisma.applicationRunLog.deleteMany({ where: { applicationId: id } })
+  res.json({ ok: true, id })
 })
 
 app.get("/api/templates", async (req, res) => {

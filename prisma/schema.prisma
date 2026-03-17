@@ -283,6 +283,30 @@ model Sale {
   updatedAt DateTime @updatedAt
 }
 
+model Application {
+  id           String              @id @default(cuid())
+  name         String
+  about        String
+  backendKey   String
+  backendLabel String
+  isActive     Boolean             @default(true)
+  logs         ApplicationRunLog[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model ApplicationRunLog {
+  id            String      @id
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  time          String
+  status        String
+  message       String
+  createdAt     DateTime    @default(now())
+
+  @@index([applicationId, createdAt])
+}
+
 model Role {
   id          Int      @id @default(autoincrement())
   name        String   @unique

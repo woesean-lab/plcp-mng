@@ -464,7 +464,34 @@ function App() {
     PERMISSIONS.productsManage,
   ])
   const canDeleteOffers = hasAnyPermission([PERMISSIONS.productsManage])
-  const canViewApplications = canViewProducts
+  const canViewApplications = hasAnyPermission([
+    PERMISSIONS.applicationsView,
+    PERMISSIONS.applicationsManage,
+    PERMISSIONS.applicationsRun,
+    PERMISSIONS.applicationsLogsView,
+    PERMISSIONS.adminManage,
+  ])
+  const canManageApplications = hasAnyPermission([
+    PERMISSIONS.applicationsManage,
+    PERMISSIONS.adminManage,
+  ])
+  const canRunApplications = hasAnyPermission([
+    PERMISSIONS.applicationsRun,
+    PERMISSIONS.applicationsManage,
+    PERMISSIONS.adminManage,
+  ])
+  const canViewApplicationLogs = hasAnyPermission([
+    PERMISSIONS.applicationsLogsView,
+    PERMISSIONS.applicationsRun,
+    PERMISSIONS.applicationsManage,
+    PERMISSIONS.applicationsView,
+    PERMISSIONS.adminManage,
+  ])
+  const canClearApplicationLogs = hasAnyPermission([
+    PERMISSIONS.applicationsLogsClear,
+    PERMISSIONS.applicationsManage,
+    PERMISSIONS.adminManage,
+  ])
   const productSummary = useMemo(() => {
     const items = Array.isArray(eldoradoCatalog?.items) ? eldoradoCatalog.items : []
     const topups = Array.isArray(eldoradoCatalog?.topups) ? eldoradoCatalog.topups : []
@@ -1198,6 +1225,10 @@ function App() {
               panelClass={panelClass}
               isLoading={isProductsTabLoading}
               backendOptions={eldoradoAutomationBackendOptions}
+              canManageApplications={canManageApplications}
+              canRunApplications={canRunApplications}
+              canViewApplicationLogs={canViewApplicationLogs}
+              canClearApplicationLogs={canClearApplicationLogs}
             />
           </div>
         )}

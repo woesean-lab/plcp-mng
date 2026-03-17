@@ -247,6 +247,13 @@ export default function useAppData() {
     PERMISSIONS.adminManage,
   ])
   const canViewProductsTab = hasPermission(PERMISSIONS.productsView)
+  const canViewApplicationsTab = hasAnyPermission([
+    PERMISSIONS.applicationsView,
+    PERMISSIONS.applicationsManage,
+    PERMISSIONS.applicationsRun,
+    PERMISSIONS.applicationsLogsView,
+    PERMISSIONS.adminManage,
+  ])
   const availableTabs = useMemo(() => {
     const tabs = []
     if (isAuthed) tabs.push("dashboard")
@@ -256,12 +263,13 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (canViewProductsTab) tabs.push("products")
-    if (canViewProductsTab) tabs.push("applications")
+    if (canViewApplicationsTab) tabs.push("applications")
     if (canManageAdmin) tabs.push("admin")
     return tabs
   }, [
     permissions,
     canManageAdmin,
+    canViewApplicationsTab,
     canViewSales,
     canViewProductsTab,
     isAuthed,

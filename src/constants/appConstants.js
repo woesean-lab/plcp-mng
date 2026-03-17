@@ -108,6 +108,11 @@ export const PERMISSIONS = {
   productsStar: "products.star",
   productsCardToggle: "products.card.toggle",
   productsManage: "products.manage",
+  applicationsView: "applications.view",
+  applicationsManage: "applications.manage",
+  applicationsRun: "applications.run",
+  applicationsLogsView: "applications.logs.view",
+  applicationsLogsClear: "applications.logs.clear",
   messagesView: "messages.view",
   messagesCreate: "messages.create",
   messagesTemplateEdit: "messages.template.edit",
@@ -220,6 +225,16 @@ export const PERMISSION_GROUPS = [
       { id: PERMISSIONS.listsCellsEdit, label: "Hucre duzenle" },
       { id: PERMISSIONS.listsStructureEdit, label: "Satir/sutun duzenle" },
       { id: PERMISSIONS.listsEdit, label: "Tum yetki (eski)" },
+    ],
+  },
+  {
+    title: "Uygulamalar",
+    items: [
+      { id: PERMISSIONS.applicationsView, label: "Paneli goruntule" },
+      { id: PERMISSIONS.applicationsManage, label: "Uygulama yonet" },
+      { id: PERMISSIONS.applicationsRun, label: "Uygulama calistir" },
+      { id: PERMISSIONS.applicationsLogsView, label: "CMD log gor" },
+      { id: PERMISSIONS.applicationsLogsClear, label: "CMD log temizle" },
     ],
   },
   {
