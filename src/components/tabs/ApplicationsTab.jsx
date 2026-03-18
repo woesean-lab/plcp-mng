@@ -124,6 +124,7 @@ export default function ApplicationsTab({
   const [pendingUserInputValue, setPendingUserInputValue] = useState("")
   const activeSocketRef = useRef(null)
   const activeRunApplicationIdRef = useRef("")
+  const completeActiveRunRef = useRef(null)
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -649,6 +650,7 @@ export default function ApplicationsTab({
     const completeRun = (status, message) => {
       if (settled) return
       settled = true
+      completeActiveRunRef.current = null
       if (message) {
         void persistLog(selectedApplication.id, status, message)
       }
@@ -672,6 +674,7 @@ export default function ApplicationsTab({
       activeRunApplicationIdRef.current = ""
       closeActiveSocket()
     }
+    completeActiveRunRef.current = completeRun
 
     let socket
     try {
@@ -828,6 +831,21 @@ export default function ApplicationsTab({
       completeRun("error", `${serviceLabel} icin websocket baglantisi kapandi.`)
     })
   }
+
+  const handleCancelRun = useCallback(() => {
+    if (!isRunning) return
+    if (typeof completeActiveRunRef.current === "function") {
+      completeActiveRunRef.current("error", "Islem kullanici tarafindan iptal edildi.")
+      return
+    }
+    closeActiveSocket()
+    setPendingUserInput(null)
+    setPendingUserInputValue("")
+    setIsRunning(false)
+    setConnectionState("idle")
+    activeRunApplicationIdRef.current = ""
+    toast("Islem iptal edildi.", { position: "top-right" })
+  }, [closeActiveSocket, isRunning])
 
   const handleUserInputSubmit = useCallback(
     (forcedValue = "") => {
@@ -1024,13 +1042,19 @@ export default function ApplicationsTab({
             </select>
             <button
               type="button"
-              onClick={handleRun}
+              onClick={isRunning ? handleCancelRun : handleRun}
               disabled={
-                !canRunApplications || !selectedApplication || !selectedApplication.isActive || isRunning || !hasWsUrl
+                isRunning
+                  ? false
+                  : !canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl
               }
-              className="inline-flex h-9 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-[10px] font-semibold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                isRunning
+                  ? "border-rose-300/60 bg-rose-500/15 text-rose-50 hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
+                  : "border-emerald-300/60 bg-emerald-500/15 text-emerald-50 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25"
+              }`}
             >
-              {isRunning ? "Calisiyor..." : "Calistir"}
+              {isRunning ? "Islemi Iptal Et" : "Calistir"}
             </button>
             <div className="flex items-center justify-end">
               <button
