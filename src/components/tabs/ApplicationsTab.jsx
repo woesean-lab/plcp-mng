@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
+import {
+  buildSocketIoWsUrl,
+  parseSocketIoEventPacket,
+  splitEnginePackets,
+} from "../../utils/socketIoClient"
 
 const CMD_VISIBLE_ROWS = 14
 const MAX_LOG_ENTRIES = 300
@@ -26,6 +31,39 @@ const formatLogTime = () =>
     minute: "2-digit",
     second: "2-digit",
   })
+
+const normalizeEventMessage = (value) => {
+  if (typeof value === "string") return value
+  if (value === null || value === undefined) return ""
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+const normalizePromptOptions = (value) => {
+  const raw = Array.isArray(value) ? value : []
+  return raw
+    .map((entry) => {
+      if (entry && typeof entry === "object") {
+        const optionValue = String(entry.value ?? entry.key ?? "").trim()
+        const optionLabel = String(entry.label ?? entry.name ?? optionValue).trim() || optionValue
+        if (!optionValue) return null
+        return { value: optionValue, label: optionLabel }
+      }
+      const normalized = String(entry ?? "").trim()
+      if (!normalized) return null
+      return { value: normalized, label: normalized }
+    })
+    .filter(Boolean)
+}
+
+const normalizeInputType = (value) => {
+  const normalized = String(value ?? "").trim().toLowerCase()
+  if (normalized === "choice" || normalized === "confirm" || normalized === "text") return normalized
+  return "text"
+}
 
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -63,6 +101,7 @@ export default function ApplicationsTab({
   panelClass = "",
   isLoading = false,
   backendOptions = [],
+  automationWsUrl = "",
   canManageApplications = false,
   canRunApplications = false,
   canViewApplicationLogs = false,
@@ -77,10 +116,14 @@ export default function ApplicationsTab({
   const [editingApplicationId, setEditingApplicationId] = useState("")
   const [deleteConfirmId, setDeleteConfirmId] = useState("")
   const [isRunning, setIsRunning] = useState(false)
+  const [connectionState, setConnectionState] = useState("idle")
   const [runLogsByApplication, setRunLogsByApplication] = useState({})
   const [isApplicationsLoading, setIsApplicationsLoading] = useState(true)
   const [isLogsLoading, setIsLogsLoading] = useState(false)
-  const runTimerRef = useRef(null)
+  const [pendingUserInput, setPendingUserInput] = useState(null)
+  const [pendingUserInputValue, setPendingUserInputValue] = useState("")
+  const activeSocketRef = useRef(null)
+  const activeRunApplicationIdRef = useRef("")
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -167,14 +210,23 @@ export default function ApplicationsTab({
     }
   }, [applicationBackendOptions, backendDraft])
 
-  useEffect(() => {
-    return () => {
-      if (runTimerRef.current) {
-        window.clearTimeout(runTimerRef.current)
-        runTimerRef.current = null
+  const closeActiveSocket = useCallback(() => {
+    const socket = activeSocketRef.current
+    if (socket) {
+      try {
+        socket.close()
+      } catch {
+        // Ignore close errors.
       }
     }
+    activeSocketRef.current = null
   }, [])
+
+  useEffect(() => {
+    return () => {
+      closeActiveSocket()
+    }
+  }, [closeActiveSocket])
 
   const apiFetchApplications = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -256,6 +308,34 @@ export default function ApplicationsTab({
   const selectedApplication = useMemo(
     () => applications.find((entry) => entry.id === selectedApplicationId) || null,
     [applications, selectedApplicationId],
+  )
+
+  const normalizeUserInputPrompt = useCallback(
+    (payload, backend) => {
+      const inputType = normalizeInputType(payload?.inputType)
+      const message =
+        String(payload?.message ?? "").trim() ||
+        (inputType === "choice"
+          ? "Bir secim yapin."
+          : inputType === "confirm"
+            ? "Onay verin."
+            : "Metin girin.")
+      const options = normalizePromptOptions(payload?.options)
+      const normalizedBackend = String(backend ?? "").trim()
+      const step = String(payload?.step ?? "").trim()
+      const placeholder = String(payload?.placeholder ?? "").trim()
+      if (!normalizedBackend) return null
+      if (inputType === "choice" && options.length === 0) return null
+      return {
+        backend: normalizedBackend,
+        step,
+        inputType,
+        message,
+        options,
+        placeholder,
+      }
+    },
+    [],
   )
 
   useEffect(() => {
@@ -530,21 +610,285 @@ export default function ApplicationsTab({
     }
     if (isRunning) return
 
-    setIsRunning(true)
-    void persistLog(selectedApplication.id, "running", `Calistiriliyor: ${selectedApplication.name}`)
-    void persistLog(
-      selectedApplication.id,
-      "running",
-      `Backend map: ${getBackendLabelForDisplay(selectedApplication.backendLabel)}`,
-    )
-    void persistLog(selectedApplication.id, "running", "Komut tetiklendi. (UI demo)")
+    const wsBaseUrl = String(automationWsUrl ?? "").trim()
+    if (!wsBaseUrl) {
+      toast.error("Websocket adresi bulunamadi. Admin panelinden kaydedin.")
+      return
+    }
 
-    runTimerRef.current = window.setTimeout(() => {
-      void persistLog(selectedApplication.id, "success", `Tamamlandi: ${selectedApplication.name}`)
+    const backendKey = String(selectedApplication.backendKey ?? "").trim()
+    if (!backendKey) {
+      toast.error("Servis backend map anahtari bulunamadi.")
+      return
+    }
+
+    const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, { backend: backendKey })
+    if (!triggerUrl) {
+      toast.error("Socket.IO adresi olusturulamadi.")
+      return
+    }
+
+    closeActiveSocket()
+    setPendingUserInput(null)
+    setPendingUserInputValue("")
+    setConnectionState("connecting")
+    setIsRunning(true)
+    activeRunApplicationIdRef.current = selectedApplication.id
+
+    const backendDisplay = getBackendLabelForDisplay(selectedApplication.backendLabel)
+    const serviceLabel = selectedApplication.name
+
+    void persistLog(selectedApplication.id, "running", `Calistiriliyor: ${serviceLabel}`)
+    void persistLog(selectedApplication.id, "running", `Backend map: ${backendDisplay}`)
+
+    let settled = false
+    let hasConnected = false
+    let hasResult = false
+
+    const completeRun = (status, message) => {
+      if (settled) return
+      settled = true
+      if (message) {
+        void persistLog(selectedApplication.id, status, message)
+      }
       setIsRunning(false)
-      runTimerRef.current = null
-    }, 900)
+      setPendingUserInput(null)
+      setPendingUserInputValue("")
+      if (status === "error") {
+        setConnectionState("error")
+      } else if (hasConnected) {
+        setConnectionState("connected")
+      } else {
+        setConnectionState("idle")
+      }
+      activeRunApplicationIdRef.current = ""
+      closeActiveSocket()
+    }
+
+    let socket
+    try {
+      socket = new WebSocket(triggerUrl)
+    } catch {
+      completeRun("error", `${serviceLabel} icin websocket baglantisi baslatilamadi.`)
+      return
+    }
+    activeSocketRef.current = socket
+
+    socket.addEventListener("message", (event) => {
+      if (settled) return
+      const payload = typeof event.data === "string" ? event.data : ""
+      if (!payload) return
+      const packets = splitEnginePackets(payload)
+
+      for (const packet of packets) {
+        if (settled) return
+
+        if (packet === "2") {
+          try {
+            socket.send("3")
+          } catch {
+            // Ignore pong send errors.
+          }
+          continue
+        }
+
+        if (packet.startsWith("0{")) {
+          try {
+            socket.send("40")
+          } catch {
+            completeRun("error", `${serviceLabel} icin Socket.IO baglantisi baslatilamadi.`)
+          }
+          continue
+        }
+
+        if (packet.startsWith("40")) {
+          if (!hasConnected) {
+            void persistLog(selectedApplication.id, "running", `${serviceLabel} baglandi.`)
+          }
+          hasConnected = true
+          setConnectionState("connected")
+          continue
+        }
+
+        if (packet.startsWith("41")) {
+          if (hasResult) {
+            completeRun("success", `${serviceLabel} tamamlandi.`)
+          } else {
+            completeRun("error", `${serviceLabel} baglantisi sonuc alinmadan kapandi.`)
+          }
+          return
+        }
+
+        if (packet.startsWith("44")) {
+          completeRun("error", `${serviceLabel} tetiklenemedi. backend=${backendDisplay}`)
+          return
+        }
+
+        const eventPacket = parseSocketIoEventPacket(packet)
+        if (!eventPacket) continue
+        const eventName = String(eventPacket.event ?? "").trim().toLowerCase()
+        const firstArg = eventPacket.args[0]
+
+        if (eventName === "script-triggered" || eventName === "script-started") {
+          void persistLog(selectedApplication.id, "running", `${backendDisplay} script baslatildi.`)
+          continue
+        }
+
+        if (eventName === "durum") {
+          const lines = normalizeEventMessage(firstArg?.message ?? firstArg)
+            .replace(/\r/g, "")
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+          if (lines.length === 0) {
+            void persistLog(selectedApplication.id, "running", `${backendDisplay} => -`)
+          } else {
+            lines.forEach((line) => {
+              void persistLog(selectedApplication.id, "running", `${backendDisplay} => ${line}`)
+            })
+          }
+          continue
+        }
+
+        if (eventName === "script-log") {
+          const stream = String(firstArg?.stream ?? "").trim().toLowerCase()
+          const lines = String(firstArg?.message ?? "")
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+          lines.forEach((line) => {
+            void persistLog(
+              selectedApplication.id,
+              stream === "stderr" ? "error" : "running",
+              line,
+            )
+          })
+          continue
+        }
+
+        if (eventName === "kullanici-girdisi-gerekli") {
+          const promptBackend = String(firstArg?.backend ?? backendKey).trim() || backendKey
+          const prompt = normalizeUserInputPrompt(firstArg, promptBackend)
+          if (prompt) {
+            setPendingUserInput(prompt)
+            setPendingUserInputValue("")
+            const promptMessage = String(prompt.message ?? "").trim() || "Kullanici girdisi gerekli."
+            void persistLog(selectedApplication.id, "running", `${backendDisplay} => ${promptMessage}`)
+          }
+          continue
+        }
+
+        if (eventName === "sonuc") {
+          const valueText = normalizeEventMessage(firstArg?.value ?? firstArg).trim()
+          void persistLog(selectedApplication.id, "success", `${backendDisplay} => ${valueText || "-"}`)
+          hasResult = true
+          completeRun("success", `${serviceLabel} tamamlandi.`)
+          return
+        }
+
+        if (eventName === "script-exit") {
+          const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
+          if (Number.isFinite(exitCode)) {
+            void persistLog(
+              selectedApplication.id,
+              exitCode === 0 ? "success" : "error",
+              `Script cikti. Kod: ${exitCode}`,
+            )
+          }
+          if (!hasResult) {
+            completeRun("error", `${serviceLabel} cikti ancak sonuc alinmadi.`)
+            return
+          }
+        }
+      }
+    })
+
+    socket.addEventListener("error", () => {
+      completeRun("error", `${serviceLabel} icin websocket baglanti hatasi olustu.`)
+    })
+
+    socket.addEventListener("close", () => {
+      if (settled) return
+      if (hasResult) {
+        completeRun("success", `${serviceLabel} tamamlandi.`)
+        return
+      }
+      if (hasConnected) {
+        completeRun("error", `${serviceLabel} baglantisi acildi ancak sonuc gelmedi.`)
+        return
+      }
+      completeRun("error", `${serviceLabel} icin websocket baglantisi kapandi.`)
+    })
   }
+
+  const handleUserInputSubmit = useCallback(
+    (forcedValue = "") => {
+      if (!pendingUserInput || !isRunning) return
+      const socket = activeSocketRef.current
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        toast.error("Websocket baglantisi acik degil.")
+        return
+      }
+      const runningAppId = String(activeRunApplicationIdRef.current ?? "").trim()
+      const runningApp =
+        applications.find((entry) => entry.id === runningAppId) ||
+        applications.find((entry) => entry.id === String(selectedApplicationId ?? "").trim()) ||
+        null
+      const backend = String(
+        pendingUserInput.backend || runningApp?.backendKey || selectedApplication?.backendKey || "",
+      ).trim()
+      if (!backend) {
+        toast.error("Backend bilgisi bulunamadi.")
+        return
+      }
+
+      const inputType = normalizeInputType(pendingUserInput.inputType)
+      const normalizedForced = String(forcedValue ?? "").trim()
+      let valueToSend = normalizedForced
+
+      if (!valueToSend) {
+        if (inputType === "text") {
+          valueToSend = String(pendingUserInputValue ?? "").trim()
+        } else if (inputType === "choice") {
+          valueToSend = String(pendingUserInputValue ?? "").trim()
+        }
+      }
+
+      if (!valueToSend) {
+        toast.error("Cevap girin.")
+        return
+      }
+
+      try {
+        socket.send(
+          `42${JSON.stringify([
+            "kullanici-girdisi",
+            {
+              backend,
+              value: valueToSend,
+            },
+          ])}`,
+        )
+        const runAppId = String(activeRunApplicationIdRef.current || selectedApplicationId || "").trim()
+        if (runAppId) {
+          void persistLog(runAppId, "running", `> ${valueToSend}`)
+        }
+        setPendingUserInput(null)
+        setPendingUserInputValue("")
+      } catch {
+        toast.error("Kullanici girdisi gonderilemedi.")
+      }
+    },
+    [
+      applications,
+      isRunning,
+      pendingUserInput,
+      pendingUserInputValue,
+      persistLog,
+      selectedApplication?.backendKey,
+      selectedApplicationId,
+    ],
+  )
 
   const handleClearLogs = async () => {
     if (!canClearApplicationLogs) {
@@ -582,6 +926,21 @@ export default function ApplicationsTab({
   const visibleLogs = runLogs.slice(0, CMD_VISIBLE_ROWS)
   const emptyRows = Math.max(0, CMD_VISIBLE_ROWS - visibleLogs.length)
   const isTabLoading = isLoading || isApplicationsLoading
+  const hasWsUrl = String(automationWsUrl ?? "").trim().length > 0
+  const connectionLabel = hasWsUrl
+    ? connectionState === "connecting"
+      ? "Baglaniliyor"
+      : connectionState === "error"
+        ? "Baglanti hatasi"
+        : "Baglanildi"
+    : "Baglanti yok"
+  const connectionBadgeClass = !hasWsUrl
+    ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
+    : connectionState === "connecting"
+      ? "border-sky-300/60 bg-sky-500/15 text-sky-100"
+      : connectionState === "error"
+        ? "border-rose-300/60 bg-rose-500/15 text-rose-100"
+        : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -608,7 +967,7 @@ export default function ApplicationsTab({
               Map: {applicationBackendOptions.length}
             </span>
             <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Durum: {isRunning ? "Baglaniliyor" : "Baglanildi"}
+              Durum: {connectionLabel}
             </span>
           </div>
         </div>
@@ -634,13 +993,9 @@ export default function ApplicationsTab({
                   : "log yetkisi yok"}
               </span>
               <span
-                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
-                  isRunning
-                    ? "border-sky-300/60 bg-sky-500/15 text-sky-100"
-                    : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
-                }`}
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${connectionBadgeClass}`}
               >
-                {isRunning ? "Baglaniliyor" : "Baglanildi"}
+                {connectionLabel}
               </span>
             </div>
           </div>
@@ -662,7 +1017,9 @@ export default function ApplicationsTab({
             <button
               type="button"
               onClick={handleRun}
-              disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || isRunning}
+              disabled={
+                !canRunApplications || !selectedApplication || !selectedApplication.isActive || isRunning || !hasWsUrl
+              }
               className="inline-flex h-9 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRunning ? "Calisiyor..." : "Calistir"}
@@ -692,6 +1049,11 @@ export default function ApplicationsTab({
             ) : (
               "Calistirmak icin servis secin."
             )}
+            {!hasWsUrl && (
+              <p className="mt-2 rounded-md border border-amber-300/30 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100">
+                Websocket adresi yok. Admin panelinden kaydedin.
+              </p>
+            )}
           </div>
 
           <div className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
@@ -703,6 +1065,79 @@ export default function ApplicationsTab({
               <div className="flex h-full items-center justify-center text-slate-500">Loglar yukleniyor...</div>
             ) : (
               <div className="space-y-0.5">
+                {pendingUserInput && isRunning && (
+                  <div className="mb-2 rounded-md border border-white/10 bg-white/5 px-2 py-2">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 text-slate-300 sm:flex-nowrap">
+                      <span className="flex-none text-emerald-300">[INPUT]</span>
+                      <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
+                      <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                      <span className="min-w-0 break-words text-slate-200">
+                        {pendingUserInput.message}
+                      </span>
+                    </div>
+                    {pendingUserInput.step && (
+                      <p className="mt-1 text-[10px] text-slate-500">Step: {pendingUserInput.step}</p>
+                    )}
+                    <div className="mt-2">
+                      {pendingUserInput.inputType === "choice" && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {pendingUserInput.options.map((option) => (
+                            <button
+                              key={`choice-${option.value}`}
+                              type="button"
+                              onClick={() => handleUserInputSubmit(option.value)}
+                              className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-100 transition hover:border-white/30 hover:bg-white/10"
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {pendingUserInput.inputType === "confirm" && (
+                        <div className="flex flex-wrap gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleUserInputSubmit("evet")}
+                            className="rounded-md border border-emerald-300/50 bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-500/25"
+                          >
+                            Evet
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUserInputSubmit("hayir")}
+                            className="rounded-md border border-rose-300/50 bg-rose-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/25"
+                          >
+                            Hayir
+                          </button>
+                        </div>
+                      )}
+                      {pendingUserInput.inputType === "text" && (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={pendingUserInputValue}
+                            onChange={(event) => setPendingUserInputValue(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault()
+                                handleUserInputSubmit()
+                              }
+                            }}
+                            placeholder={pendingUserInput.placeholder || "Cevap girin ve Enter"}
+                            className="h-8 min-w-0 flex-1 rounded-md border border-white/15 bg-ink-900/70 px-2 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleUserInputSubmit()}
+                            className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-100 transition hover:border-white/30 hover:bg-white/10"
+                          >
+                            Gonder
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {visibleLogs.map((entry) => (
                   <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
                     <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>

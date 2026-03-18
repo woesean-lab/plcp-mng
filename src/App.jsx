@@ -1230,6 +1230,7 @@ function App() {
               panelClass={panelClass}
               isLoading={isApplicationsTabLoading}
               backendOptions={eldoradoAutomationBackendOptions}
+              automationWsUrl={eldoradoAutomationWsUrl}
               canManageApplications={canManageApplications}
               canRunApplications={canRunApplications}
               canViewApplicationLogs={canViewApplicationLogs}
