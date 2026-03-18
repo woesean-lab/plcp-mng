@@ -1131,12 +1131,12 @@ function App() {
           </div>
         )}
 
-        {activeTab === "products" && canViewProducts && (
-          <div className={getTabSlideClass("products")}>
+        {canViewProducts && (
+          <div className={activeTab === "products" ? getTabSlideClass("products") : "hidden"}>
             <ProductsTab
               panelClass={panelClass}
               catalog={eldoradoCatalog}
-              isLoading={isProductsTabLoading}
+              isLoading={activeTab === "products" ? isProductsTabLoading : false}
               isRefreshing={isEldoradoRefreshing}
               onRefresh={refreshEldoradoCatalog}
               keysByOffer={eldoradoKeysByOffer}
@@ -1224,11 +1224,11 @@ function App() {
           </div>
         )}
 
-        {activeTab === "applications" && canViewApplications && (
-          <div className={getTabSlideClass("applications")}>
+        {canViewApplications && (
+          <div className={activeTab === "applications" ? getTabSlideClass("applications") : "hidden"}>
             <ApplicationsTab
               panelClass={panelClass}
-              isLoading={isApplicationsTabLoading}
+              isLoading={activeTab === "applications" ? isApplicationsTabLoading : false}
               backendOptions={eldoradoAutomationBackendOptions}
               automationWsUrl={eldoradoAutomationWsUrl}
               canManageApplications={canManageApplications}
