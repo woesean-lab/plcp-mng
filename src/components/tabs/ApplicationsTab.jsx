@@ -125,7 +125,6 @@ export default function ApplicationsTab({
   const activeSocketRef = useRef(null)
   const activeRunApplicationIdRef = useRef("")
   const completeActiveRunRef = useRef(null)
-  const logContainerRef = useRef(null)
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -375,7 +374,7 @@ export default function ApplicationsTab({
         const normalized = Array.isArray(payload)
           ? payload.map(normalizeApplicationLogEntry).filter(Boolean)
           : []
-        setRunLogsByApplication((prev) => ({ ...prev, [appId]: [...normalized].reverse() }))
+        setRunLogsByApplication((prev) => ({ ...prev, [appId]: normalized }))
       } catch (error) {
         if (!isMounted || controller.signal.aborted) return
         toast.error(error?.message || "Servis Konsolu loglari alinamadi.")
@@ -413,7 +412,7 @@ export default function ApplicationsTab({
       const currentLogs = Array.isArray(prev[normalizedAppId]) ? prev[normalizedAppId] : []
       return {
         ...prev,
-        [normalizedAppId]: [...currentLogs, nextEntry].slice(-MAX_LOG_ENTRIES),
+        [normalizedAppId]: [nextEntry, ...currentLogs].slice(0, MAX_LOG_ENTRIES),
       }
     })
     return nextEntry
@@ -962,18 +961,6 @@ export default function ApplicationsTab({
     const logs = runLogsByApplication[targetAppId]
     return Array.isArray(logs) ? logs : []
   }, [canViewApplicationLogs, runLogsByApplication, selectedApplicationId])
-  useEffect(() => {
-    if (!canViewApplicationLogs) return
-    const container = logContainerRef.current
-    if (!container) return
-    const frameId = window.requestAnimationFrame(() => {
-      container.scrollTop = container.scrollHeight
-    })
-    return () => {
-      window.cancelAnimationFrame(frameId)
-    }
-  }, [canViewApplicationLogs, isLogsLoading, pendingUserInput, runLogs])
-
   const isTabLoading = isLoading || isApplicationsLoading
   const hasWsUrl = String(automationWsUrl ?? "").trim().length > 0
   const connectionLabel = hasWsUrl
@@ -1111,10 +1098,7 @@ export default function ApplicationsTab({
             )}
           </div>
 
-          <div
-            ref={logContainerRef}
-            className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6"
-          >
+          <div className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
             {!canViewApplicationLogs ? (
               <div className="flex h-full items-center justify-center text-slate-500">
                 Servis Konsolu log goruntuleme yetkiniz yok.
