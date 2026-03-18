@@ -145,7 +145,9 @@ export default function ApplicationsTab({
     const backendKey = String(entry?.backendKey ?? "").trim()
     if (!id || !name || !about || !backendKey) return null
     const backendLabel = String(entry?.backendLabel ?? backendKey).trim() || backendKey
-    return { id, name, about, backendKey, backendLabel, isActive: Boolean(entry?.isActive) }
+    const createdAtRaw = Date.parse(String(entry?.createdAt ?? "").trim())
+    const createdAtMs = Number.isFinite(createdAtRaw) ? createdAtRaw : 0
+    return { id, name, about, backendKey, backendLabel, createdAtMs, isActive: Boolean(entry?.isActive) }
   }, [])
 
   const normalizeApplicationLogEntry = useCallback((entry) => {
@@ -297,15 +299,23 @@ export default function ApplicationsTab({
     }
   }, [apiFetchApplications, canAccessApplications, normalizeApplicationEntry, readApiError])
 
+  const runDropdownApplications = useMemo(() => {
+    return [...applications].sort((a, b) => {
+      const timeDiff = Number(a?.createdAtMs ?? 0) - Number(b?.createdAtMs ?? 0)
+      if (timeDiff !== 0) return timeDiff
+      return String(a?.name ?? "").localeCompare(String(b?.name ?? ""), "tr")
+    })
+  }, [applications])
+
   useEffect(() => {
-    if (applications.length === 0) {
+    if (runDropdownApplications.length === 0) {
       setSelectedApplicationId("")
       return
     }
-    if (!selectedApplicationId || !applications.some((entry) => entry.id === selectedApplicationId)) {
-      setSelectedApplicationId(applications[0].id)
+    if (!selectedApplicationId || !runDropdownApplications.some((entry) => entry.id === selectedApplicationId)) {
+      setSelectedApplicationId(runDropdownApplications[0].id)
     }
-  }, [applications, selectedApplicationId])
+  }, [runDropdownApplications, selectedApplicationId])
 
   const selectedApplication = useMemo(
     () => applications.find((entry) => entry.id === selectedApplicationId) || null,
@@ -1037,7 +1047,7 @@ export default function ApplicationsTab({
               className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
-              {applications.map((entry) => (
+              {runDropdownApplications.map((entry) => (
                 <option key={`run-app-${entry.id}`} value={entry.id}>
                   {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
                 </option>
