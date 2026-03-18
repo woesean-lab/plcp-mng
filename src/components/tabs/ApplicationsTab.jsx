@@ -637,6 +637,7 @@ export default function ApplicationsTab({
 
     const backendDisplay = getBackendLabelForDisplay(selectedApplication.backendLabel)
     const serviceLabel = selectedApplication.name
+    const runToastId = toast.loading(`${serviceLabel} calisiyor...`, { position: "top-right" })
 
     void persistLog(selectedApplication.id, "running", `Calistiriliyor: ${serviceLabel}`)
     void persistLog(selectedApplication.id, "running", `Backend map: ${backendDisplay}`)
@@ -650,6 +651,13 @@ export default function ApplicationsTab({
       settled = true
       if (message) {
         void persistLog(selectedApplication.id, status, message)
+      }
+      if (status === "success") {
+        toast.success(message || `${serviceLabel} tamamlandi.`, { id: runToastId, position: "top-right" })
+      } else if (status === "error") {
+        toast.error(message || `${serviceLabel} tamamlanamadi.`, { id: runToastId, position: "top-right" })
+      } else {
+        toast.dismiss(runToastId)
       }
       setIsRunning(false)
       setPendingUserInput(null)
