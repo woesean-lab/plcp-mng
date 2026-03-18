@@ -102,6 +102,7 @@ export default function ApplicationsTab({
   isLoading = false,
   backendOptions = [],
   automationWsUrl = "",
+  activeUsername = "",
   canManageApplications = false,
   canRunApplications = false,
   canViewApplicationLogs = false,
@@ -638,8 +639,10 @@ export default function ApplicationsTab({
 
     const backendDisplay = getBackendLabelForDisplay(selectedApplication.backendLabel)
     const serviceLabel = selectedApplication.name
+    const starterUsername = String(activeUsername ?? "").trim() || "bilinmeyen-kullanici"
     const runToastId = toast.loading(`${serviceLabel} calisiyor...`, { position: "top-right" })
 
+    void persistLog(selectedApplication.id, "running", `Calistiran: ${starterUsername}`)
     void persistLog(selectedApplication.id, "running", `Calistiriliyor: ${serviceLabel}`)
     void persistLog(selectedApplication.id, "running", `Backend map: ${backendDisplay}`)
 

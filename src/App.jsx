@@ -1231,6 +1231,7 @@ function App() {
               isLoading={activeTab === "applications" ? isApplicationsTabLoading : false}
               backendOptions={eldoradoAutomationBackendOptions}
               automationWsUrl={eldoradoAutomationWsUrl}
+              activeUsername={userName}
               canManageApplications={canManageApplications}
               canRunApplications={canRunApplications}
               canViewApplicationLogs={canViewApplicationLogs}
