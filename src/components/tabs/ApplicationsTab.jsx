@@ -668,7 +668,7 @@ export default function ApplicationsTab({
         void persistLog(selectedApplication.id, status, message)
       }
       if (status === "success") {
-        toast.success(message || `${serviceLabel} tamamlandi.`, { id: runToastId, position: "top-right" })
+        toast.success(message || `${serviceLabel}: Servis hatasiz bitirildi.`, { id: runToastId, position: "top-right" })
       } else if (status === "error") {
         toast.error(message || `${serviceLabel} tamamlanamadi.`, { id: runToastId, position: "top-right" })
       } else {
@@ -736,7 +736,7 @@ export default function ApplicationsTab({
 
         if (packet.startsWith("41")) {
           if (hasResult) {
-            completeRun("success", `${serviceLabel} tamamlandi.`)
+            completeRun("success", `${serviceLabel}: Servis hatasiz bitirildi.`)
           } else {
             completeRun("error", `${serviceLabel} baglantisi sonuc alinmadan kapandi.`)
           }
@@ -806,7 +806,7 @@ export default function ApplicationsTab({
           const valueText = normalizeEventMessage(firstArg?.value ?? firstArg).trim()
           void persistLog(selectedApplication.id, "success", `${backendDisplay} => ${valueText || "-"}`)
           hasResult = true
-          completeRun("success", `${serviceLabel} tamamlandi.`)
+          completeRun("success", `${serviceLabel}: Servis hatasiz bitirildi.`)
           return
         }
 
@@ -834,7 +834,7 @@ export default function ApplicationsTab({
     socket.addEventListener("close", () => {
       if (settled) return
       if (hasResult) {
-        completeRun("success", `${serviceLabel} tamamlandi.`)
+        completeRun("success", `${serviceLabel}: Servis hatasiz bitirildi.`)
         return
       }
       if (hasConnected) {
