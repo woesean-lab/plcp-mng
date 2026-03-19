@@ -225,6 +225,18 @@ export default function ApplicationsTab({
     activeSocketRef.current = null
   }, [])
 
+  const sendSocketIoEvent = useCallback((socket, eventName, payload) => {
+    if (!socket || socket.readyState !== WebSocket.OPEN) return false
+    const normalizedEventName = String(eventName ?? "").trim()
+    if (!normalizedEventName) return false
+    try {
+      socket.send(`42${JSON.stringify([normalizedEventName, payload ?? {}])}`)
+      return true
+    } catch {
+      return false
+    }
+  }, [])
+
   useEffect(() => {
     return () => {
       closeActiveSocket()
@@ -846,6 +858,32 @@ export default function ApplicationsTab({
 
   const handleCancelRun = useCallback(() => {
     if (!isRunning) return
+    const socket = activeSocketRef.current
+    const runningAppId = String(activeRunApplicationIdRef.current ?? "").trim()
+    const runningApp =
+      applications.find((entry) => entry.id === runningAppId) ||
+      applications.find((entry) => entry.id === String(selectedApplicationId ?? "").trim()) ||
+      null
+    const backend = String(runningApp?.backendKey || selectedApplication?.backendKey || "").trim()
+    const step = String(pendingUserInput?.step ?? "").trim()
+    if (backend) {
+      const cancelPayload = {
+        backend,
+        step,
+        reason: "user-cancelled",
+      }
+      const cancelSent = sendSocketIoEvent(socket, "islem-iptal", cancelPayload)
+      if (!cancelSent) {
+        sendSocketIoEvent(socket, "kullanici-girdisi", {
+          backend,
+          step,
+          value: "iptal",
+          reason: "user-cancelled",
+        })
+      } else if (runningAppId) {
+        void persistLog(runningAppId, "running", `${getBackendLabelForDisplay(runningApp?.backendLabel)} => iptal eventi gonderildi.`)
+      }
+    }
     if (typeof completeActiveRunRef.current === "function") {
       completeActiveRunRef.current("error", "Islem kullanici tarafindan iptal edildi.")
       return
@@ -857,7 +895,18 @@ export default function ApplicationsTab({
     setConnectionState("idle")
     activeRunApplicationIdRef.current = ""
     toast("Islem iptal edildi.", { position: "top-right" })
-  }, [closeActiveSocket, isRunning])
+  }, [
+    applications,
+    closeActiveSocket,
+    getBackendLabelForDisplay,
+    isRunning,
+    pendingUserInput?.step,
+    persistLog,
+    selectedApplication?.backendKey,
+    selectedApplication?.backendLabel,
+    selectedApplicationId,
+    sendSocketIoEvent,
+  ])
 
   const handleUserInputSubmit = useCallback(
     (forcedValue = "") => {
@@ -898,15 +947,13 @@ export default function ApplicationsTab({
       }
 
       try {
-        socket.send(
-          `42${JSON.stringify([
-            "kullanici-girdisi",
-            {
-              backend,
-              value: valueToSend,
-            },
-          ])}`,
-        )
+        const sent = sendSocketIoEvent(socket, "kullanici-girdisi", {
+          backend,
+          value: valueToSend,
+        })
+        if (!sent) {
+          throw new Error("Kullanici girdisi gonderilemedi.")
+        }
         const runAppId = String(activeRunApplicationIdRef.current || selectedApplicationId || "").trim()
         if (runAppId) {
           void persistLog(runAppId, "running", `> ${valueToSend}`)
@@ -925,6 +972,7 @@ export default function ApplicationsTab({
       persistLog,
       selectedApplication?.backendKey,
       selectedApplicationId,
+      sendSocketIoEvent,
     ],
   )
 
