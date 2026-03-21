@@ -2442,11 +2442,11 @@ export default function ProductsTab({
                       {isOpen && (
                         <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                           <div className="rounded-2xl rounded-b-none border border-white/10 bg-[#131826] px-3 pt-2 shadow-card">
-                            <div className="flex flex-wrap items-end gap-4 border-b border-white/10" role="tablist">
+                            <div className="no-scrollbar flex items-end gap-4 overflow-x-auto border-b border-white/10 pr-1 sm:flex-wrap" role="tablist">
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "inventory")}
-                                className={`group flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
+                                className={`group shrink-0 flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                   activePanel === "inventory"
                                     ? "border-accent-400 text-white"
                                     : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
@@ -2474,7 +2474,7 @@ export default function ProductsTab({
                                       void loadAutomationRunLogs(offerId)
                                     }
                                   }}
-                                  className={`flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
+                                  className={`shrink-0 flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                     activePanel === "automation"
                                       ? "border-accent-400 text-white"
                                       : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
@@ -2487,7 +2487,7 @@ export default function ProductsTab({
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "note")}
-                                className={`group flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
+                                className={`group shrink-0 flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                   activePanel === "note"
                                     ? "border-accent-400 text-white"
                                     : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
@@ -2508,7 +2508,7 @@ export default function ProductsTab({
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "messages")}
-                                className={`group flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
+                                className={`group shrink-0 flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                   activePanel === "messages"
                                     ? "border-accent-400 text-white"
                                     : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
@@ -2530,7 +2530,7 @@ export default function ProductsTab({
                                 <button
                                   type="button"
                                   onClick={() => setActivePanel(offerId, "stock-group")}
-                                  className={`group flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
+                                  className={`group shrink-0 flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                     activePanel === "stock-group"
                                       ? "border-accent-400 text-white"
                                       : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
@@ -2556,7 +2556,7 @@ export default function ProductsTab({
                                     if (!canManagePrices) return
                                     setActivePanel(offerId, "price")
                                   }}
-                                  className={`flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
+                                  className={`shrink-0 flex items-center gap-2 border-b-2 px-1 pb-2 text-[12px] font-semibold transition ${
                                     activePanel === "price"
                                       ? "border-accent-400 text-white"
                                       : "border-transparent text-slate-400 hover:border-white/30 hover:text-slate-200"
@@ -2869,8 +2869,8 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
-                              <div className="relative -mt-2 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card lg:col-span-2 sm:p-5 animate-panelFade">
-                                <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
+                              <div className="relative -mt-2 min-w-0 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
+                                <div className="relative grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
                                   <div className="space-y-3">
                                     <section className="rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
                                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -2886,7 +2886,7 @@ export default function ProductsTab({
                                           {automationTargets.length} servis
                                         </span>
                                       </div>
-                                      <div className="grid gap-2.5 md:grid-cols-[minmax(0,1.85fr)_minmax(130px,0.45fr)_auto]">
+                                      <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1.85fr)_minmax(150px,0.55fr)_auto]">
                                         <input
                                           type="text"
                                           value={visibleDraftAutomationUrl}
@@ -3016,7 +3016,7 @@ export default function ProductsTab({
                                                     <span className="max-w-full truncate rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
                                                       {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                                     </span>
-                                                    <div className="ml-auto flex items-center gap-1.5">
+                                                    <div className="flex w-full items-center justify-end gap-1.5 sm:ml-auto sm:w-auto">
                                                       <button
                                                         type="button"
                                                         onClick={(event) => {
@@ -3179,11 +3179,11 @@ export default function ProductsTab({
                                           )}
                                         </div>
                                       </div>
-                                      <div className="no-scrollbar h-[300px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                                      <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                                         <div className="space-y-0.5">
                                           {hasAutomationTwoFactorPrompt && (
                                             <div className="mb-2 border-b border-white/10 pb-1.5">
-                                              <div className="flex min-w-0 flex-wrap items-center gap-2 text-slate-300 sm:flex-nowrap">
+                                              <div className="flex min-w-0 flex-col items-start gap-2 text-slate-300 sm:flex-row sm:flex-wrap sm:items-center">
                                                 <span className="flex-none text-emerald-300">
                                                   [2FA]
                                                 </span>
@@ -3211,7 +3211,7 @@ export default function ProductsTab({
                                                   }}
                                                   autoFocus={hasAutomationTwoFactorPrompt}
                                                   placeholder={automationTwoFactorMessage || "kodu yaz ve Enter"}
-                                                  className="h-7 min-w-[140px] flex-1 border-0 border-b border-white/20 bg-transparent px-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-0"
+                                                  className="h-7 w-full min-w-0 flex-1 border-0 border-b border-white/20 bg-transparent px-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-0 sm:min-w-[140px]"
                                                 />
                                               </div>
                                             </div>
