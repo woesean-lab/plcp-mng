@@ -1293,7 +1293,6 @@ export default function ApplicationsTab({
     () => applications.filter((entry) => Boolean(entry?.isActive)).length,
     [applications],
   )
-  const inactiveServiceCount = Math.max(0, applications.length - activeServiceCount)
   const consoleLineLabel = canViewApplicationLogs
     ? !activeRunSession && isLogsLoading
       ? "yukleniyor..."
@@ -1345,104 +1344,32 @@ export default function ApplicationsTab({
   const textAreaClassName =
     "w-full resize-none rounded-lg border border-white/10 bg-ink-950/70 px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
   const heroSection = (
-    <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-ink-900/92 via-ink-800/78 to-ink-900/92 shadow-card">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-20 top-8 h-44 w-44 rounded-full bg-accent-400/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-32 w-32 bg-white/[0.03]" />
-        <div className="absolute inset-y-0 left-0 w-px bg-white/10" />
-        <div className="absolute inset-y-0 right-[28%] hidden w-px bg-white/5 xl:block" />
-      </div>
-
-      <div className="relative z-10 grid gap-5 px-5 py-5 sm:px-6 sm:py-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-accent-200">
-              Service Workspace
-            </span>
-            <div className="space-y-2">
-              <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-                Servis Konsolu
-              </h1>
-              <p className="max-w-2xl text-sm leading-6 text-slate-300">
-                Canli calistirma, kalici log akisi ve servis yonetimini tek bir sade operasyon
-                yuzeyinde toplar.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Kayitli servis
-              </p>
-              <p className="mt-3 font-display text-3xl text-white">{applications.length}</p>
-              <p className="mt-2 text-xs text-slate-400">Yonetim panelindeki toplam servis sayisi.</p>
-            </div>
-
-            <div className="rounded-xl border border-emerald-300/20 bg-emerald-500/[0.06] p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80">
-                Aktif servis
-              </p>
-              <p className="mt-3 font-display text-3xl text-white">{activeServiceCount}</p>
-              <p className="mt-2 text-xs text-slate-400">
-                {inactiveServiceCount} servis beklemede veya kapali.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Canli oturum
-              </p>
-              <p className="mt-3 font-display text-3xl text-white">{runningRunCount}</p>
-              <p className="mt-2 text-xs text-slate-400">
-                {applicationBackendOptions.length} backend map hazir.
-              </p>
-            </div>
+    <section className="rounded-2xl border border-white/10 bg-ink-900/55 px-5 py-5 shadow-card">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-300">
+            Servisler
+          </span>
+          <div>
+            <h1 className="font-display text-2xl font-semibold text-white sm:text-[30px]">
+              Servis Konsolu
+            </h1>
+            <p className="mt-1 text-sm text-slate-400">Daha sakin, tek odakli calisma alani.</p>
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-          <div className="rounded-xl border border-white/10 bg-ink-900/45 p-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Odak servis
-              </p>
-              <span
-                className={`rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${activeContextBadgeClass}`}
-              >
-                {activeContextBadgeLabel}
-              </span>
-            </div>
-            <p className="mt-3 font-display text-lg text-white">{activeContextName}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-accent-200">
-              {activeContextBackend}
-            </p>
-            <p className="mt-3 text-xs leading-5 text-slate-400">{activeContextStateText}</p>
-          </div>
-
-          <div className="rounded-xl border border-white/10 bg-ink-900/45 p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Kontrol durumu
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span
-                className={`rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${connectionBadgeClass}`}
-              >
-                {connectionLabel}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                Log: {canViewApplicationLogs ? "Acik" : "Kapali"}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                Yonetim: {canManageApplications ? "Acik" : "Kapali"}
-              </span>
-            </div>
-            <p className="mt-3 text-xs leading-5 text-slate-400">
-              {hasWsUrl
-                ? "Websocket adresi tanimli. Servisler canli olarak tetiklenebilir."
-                : "Websocket adresi eksik. Calistirma islemi icin admin panelinde adres kaydedilmeli."}
-            </p>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+            Kayit {applications.length}
+          </span>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+            Aktif {activeServiceCount}
+          </span>
+          <span
+            className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${connectionBadgeClass}`}
+          >
+            {runningRunCount > 0 ? `${runningRunCount} canli` : connectionLabel}
+          </span>
         </div>
       </div>
     </section>
@@ -1653,175 +1580,21 @@ export default function ApplicationsTab({
     </section>
   )
 
-  const sessionsSection = (
-    <section className={`${panelClass} bg-ink-900/55`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Oturumlar
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            Genel log ve acik/cikmis tum servis calismalari.
-          </p>
-        </div>
-        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
-          {runSessions.length}
-        </span>
-      </div>
-
-      <div className="mt-4 space-y-2">
-        <button
-          type="button"
-          onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-          className={`w-full rounded-xl border px-3 py-3 text-left transition ${
-            activeRunSession
-              ? "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
-              : "border-accent-400/50 bg-accent-500/[0.08]"
-          }`}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-100">Genel Log</p>
-              <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-500">
-                Kalici servis gecmisi
-              </p>
-            </div>
-            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-300">
-              {historyLogs.length}
-            </span>
-          </div>
-        </button>
-
-        {runSessions.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03] px-3 py-6 text-center text-xs text-slate-500">
-            Henuz calisma oturumu yok.
-          </div>
-        ) : (
-          runSessions.map((entry) => {
-            const entryIsActive = activeConsoleTabId === entry.id
-            const entryIsLive = isRunLive(entry.status)
-            const statusMeta = getStatusMeta(entry.status)
-
-            return (
-              <div
-                key={`run-session-${entry.id}`}
-                className={`rounded-xl border p-2 transition ${
-                  entryIsActive
-                    ? "border-white/20 bg-white/[0.08]"
-                    : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setActiveConsoleTabId(entry.id)}
-                  className="w-full px-1 py-1 text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${statusMeta.dotClass}`} />
-                    <span className="min-w-0 truncate text-sm font-semibold text-slate-100">
-                      {entry.label}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <span
-                      className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] ${statusMeta.badgeClass}`}
-                    >
-                      {statusMeta.label}
-                    </span>
-                    <span className="text-[10px] text-slate-500">
-                      {(runLogsByTab[entry.id] || []).length} satir
-                    </span>
-                  </div>
-                </button>
-                {!entryIsLive && (
-                  <button
-                    type="button"
-                    onClick={() => handleCloseRunTab(entry.id)}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-slate-100"
-                    aria-label={`${entry.label} sekmesini kapat`}
-                  >
-                    Sekmeyi kapat
-                  </button>
-                )}
-              </div>
-            )
-          })
-        )}
-      </div>
-    </section>
-  )
-
-  const contextSection = (
-    <section className={`${panelClass} bg-ink-900/55`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Secili baglam
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            Secili servis veya aktif oturum detaylari.
-          </p>
-        </div>
-        <span
-          className={`rounded-full border px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${activeContextBadgeClass}`}
-        >
-          {activeContextBadgeLabel}
-        </span>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Servis
-          </p>
-          <p className="mt-2 font-display text-lg text-white">{activeContextName}</p>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-accent-200">
-            {activeContextBackend}
-          </p>
-          <p className="mt-3 text-xs leading-5 text-slate-400">{activeContextAbout}</p>
-        </div>
-
-        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Durum notu
-          </p>
-          <p className="mt-2 text-xs leading-5 text-slate-300">{activeContextStateText}</p>
-        </div>
-
-        {!hasWsUrl && (
-          <div className="rounded-xl border border-amber-300/30 bg-amber-500/10 px-3 py-3 text-xs leading-5 text-amber-100">
-            Websocket adresi yok. Servisleri calistirmak icin admin panelinden websocket
-            adresi kaydedin.
-          </div>
-        )}
-      </div>
-    </section>
-  )
-
   const consoleSection = (
-    <section className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-ink-900/88 via-ink-900/78 to-ink-950/86 shadow-card">
-      <div className="border-b border-white/10 bg-white/[0.03] px-5 py-4">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-          <div className="space-y-2">
+    <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 shadow-card">
+      <div className="border-b border-white/10 px-5 py-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Operasyon yuzeyi
+              Konsol
             </p>
-            <div>
-              <h2 className="font-display text-xl text-white">
-                {activeRunSession ? activeRunSession.label : "Servis Konsolu"}
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-400">
-                {activeRunSession
-                  ? activeRunSession.applicationAbout || "Servis aciklamasi yok."
-                  : selectedApplication
-                    ? selectedApplication.about || "Servis aciklamasi yok."
-                    : "Calistirmak veya loglarini izlemek icin bir servis sec."}
-              </p>
-            </div>
+            <h2 className="mt-1 font-display text-xl text-white">
+              {activeRunSession ? activeRunSession.label : activeContextName}
+            </h2>
+            <p className="mt-1 text-sm text-slate-400">{activeContextAbout}</p>
           </div>
-
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
               {consoleLineLabel}
             </span>
             <span
@@ -1829,17 +1602,17 @@ export default function ApplicationsTab({
             >
               {connectionLabel}
             </span>
-            {(activeRunSession || selectedApplication) && (
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                {activeContextBackend}
-              </span>
-            )}
+            <span
+              className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${activeContextBadgeClass}`}
+            >
+              {activeContextBadgeLabel}
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="border-b border-white/10 bg-ink-900/45 px-5 py-4">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_120px_150px_auto]">
+      <div className="border-b border-white/10 px-5 py-4">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_112px_132px_auto]">
           <select
             value={selectedApplicationId}
             onChange={(event) => setSelectedApplicationId(event.target.value)}
@@ -1883,11 +1656,73 @@ export default function ApplicationsTab({
             </button>
           </div>
         </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+          <span className="truncate text-slate-300">{activeContextBackend}</span>
+          <span className="text-slate-600">/</span>
+          <span className="truncate">{activeContextStateText}</span>
+        </div>
+      </div>
+
+      <div className="border-b border-white/10 px-5 py-3">
+        <div className="no-scrollbar flex gap-2 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
+            className={`inline-flex min-w-[140px] items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
+              activeRunSession
+                ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.06]"
+                : "border-accent-400/50 bg-accent-500/[0.08] text-white"
+            }`}
+          >
+            <span className="truncate">Genel log</span>
+            <span className="text-[9px] text-slate-500">{historyLogs.length}</span>
+          </button>
+
+          {runSessions.map((entry) => {
+            const entryIsActive = activeConsoleTabId === entry.id
+            const entryIsLive = isRunLive(entry.status)
+            const statusMeta = getStatusMeta(entry.status)
+
+            return (
+              <div
+                key={`run-tab-${entry.id}`}
+                className={`inline-flex min-w-[180px] items-center gap-1 rounded-lg border px-2 py-2 transition ${
+                  entryIsActive
+                    ? "border-white/20 bg-white/[0.08]"
+                    : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveConsoleTabId(entry.id)}
+                  className="inline-flex min-w-0 flex-1 items-center gap-2 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200"
+                >
+                  <span className={`h-2 w-2 flex-none rounded-full ${statusMeta.dotClass}`} />
+                  <span className="truncate">{entry.label}</span>
+                </button>
+                <span className="flex-none text-[9px] text-slate-500">
+                  {(runLogsByTab[entry.id] || []).length}
+                </span>
+                {!entryIsLive && (
+                  <button
+                    type="button"
+                    onClick={() => handleCloseRunTab(entry.id)}
+                    className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-md border border-white/10 bg-white/[0.04] text-[10px] text-slate-400 transition hover:border-white/25 hover:text-slate-200"
+                    aria-label={`${entry.label} sekmesini kapat`}
+                  >
+                    x
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {activeRunPrompt && isActiveRunLive && (
-        <div className="border-b border-white/10 bg-gradient-to-r from-accent-500/[0.08] via-white/[0.03] to-transparent px-5 py-4">
-          <div className="rounded-xl border border-white/10 bg-ink-950/45 p-3">
+        <div className="border-b border-white/10 bg-accent-500/[0.04] px-5 py-4">
+          <div className="rounded-lg border border-white/10 bg-ink-950/45 p-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-emerald-300/45 bg-emerald-500/12 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-emerald-100">
                 Input
@@ -1972,17 +1807,17 @@ export default function ApplicationsTab({
         </div>
       )}
 
-      <div className="no-scrollbar h-[420px] overflow-y-auto bg-gradient-to-b from-ink-950/45 via-ink-950/30 to-ink-950/15 px-5 py-4 sm:h-[520px]">
+      <div className="no-scrollbar h-[420px] overflow-y-auto bg-ink-950/25 px-5 py-4 sm:h-[520px]">
         {!canViewApplicationLogs ? (
-          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.03] text-sm text-slate-500">
+          <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] text-sm text-slate-500">
             Servis Konsolu log goruntuleme yetkiniz yok.
           </div>
         ) : !activeRunSession && isLogsLoading ? (
-          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.03] text-sm text-slate-500">
+          <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] text-sm text-slate-500">
             Loglar yukleniyor...
           </div>
         ) : consoleLogs.length === 0 ? (
-          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.03] text-sm text-slate-500">
+          <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] text-sm text-slate-500">
             Beklenen log akisi burada gorunecek.
           </div>
         ) : (
@@ -1992,10 +1827,10 @@ export default function ApplicationsTab({
               return (
                 <div
                   key={entry.id}
-                  className={`rounded-xl border px-3 py-3 ${statusMeta.surfaceClass}`}
+                  className={`rounded-lg border px-3 py-3 ${statusMeta.surfaceClass}`}
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                    <div className="flex flex-wrap items-center gap-2 sm:w-[190px] sm:flex-none">
+                    <div className="flex flex-wrap items-center gap-2 sm:w-[150px] sm:flex-none">
                       <span className={`h-2 w-2 rounded-full ${statusMeta.dotClass}`} />
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                         {entry.time}
@@ -2039,14 +1874,7 @@ export default function ApplicationsTab({
           {editorSection}
         </aside>
 
-        <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="space-y-5 lg:order-1">
-            {sessionsSection}
-            {contextSection}
-          </aside>
-
-          <div className="lg:order-2">{consoleSection}</div>
-        </div>
+        <div>{consoleSection}</div>
       </div>
     </div>
   )
