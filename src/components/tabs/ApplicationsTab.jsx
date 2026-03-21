@@ -1404,11 +1404,11 @@ export default function ApplicationsTab({
   const terminalIconButtonBaseClass =
     "inline-flex h-10 w-10 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalRunButtonClass =
-    `${terminalIconButtonBaseClass} border-emerald-700 bg-emerald-500/12 text-emerald-300 hover:border-emerald-600 hover:bg-emerald-500/16 focus:ring-emerald-500/20`
+    `${terminalIconButtonBaseClass} border-emerald-500/80 bg-emerald-600/85 text-emerald-50 hover:border-emerald-400 hover:bg-emerald-500/90 focus:ring-emerald-500/30`
   const terminalPauseButtonClass =
-    `${terminalIconButtonBaseClass} border-sky-700 bg-sky-500/12 text-sky-300 hover:border-sky-600 hover:bg-sky-500/16 focus:ring-sky-500/20`
+    `${terminalIconButtonBaseClass} border-sky-500/80 bg-sky-600/85 text-sky-50 hover:border-sky-400 hover:bg-sky-500/90 focus:ring-sky-500/30`
   const terminalClearButtonClass =
-    `${terminalIconButtonBaseClass} border-rose-700 bg-rose-500/12 text-rose-300 hover:border-rose-600 hover:bg-rose-500/16 focus:ring-rose-500/20`
+    `${terminalIconButtonBaseClass} border-rose-500/80 bg-rose-600/85 text-rose-50 hover:border-rose-400 hover:bg-rose-500/90 focus:ring-rose-500/30`
   const terminalTabBaseClass =
     "inline-flex h-9 min-w-[170px] items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 px-3 transition"
 
@@ -1719,7 +1719,7 @@ export default function ApplicationsTab({
                               key={`${entry.id}-segment-${index}`}
                               type="button"
                               onClick={() => void copyTextToClipboard(segment.value)}
-                              className="inline break-all text-left text-sky-300 underline decoration-slate-600 underline-offset-2 transition hover:text-sky-200 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+                              className="inline break-all bg-transparent p-0 text-left align-baseline text-sky-300 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-sky-200 hover:decoration-sky-300 focus:outline-none"
                               title="Tiklayinca kopyalanir"
                             >
                               {segment.value}
