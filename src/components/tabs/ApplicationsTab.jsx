@@ -9,6 +9,7 @@ import {
 
 const MAX_LOG_ENTRIES = 300
 const MASKED_BACKEND_TEXT = "******"
+const HISTORY_CONSOLE_TAB_ID = "__history__"
 
 const normalizeBackendKind = (value) =>
   String(value ?? "")
@@ -115,16 +116,18 @@ export default function ApplicationsTab({
   const [selectedApplicationId, setSelectedApplicationId] = useState("")
   const [editingApplicationId, setEditingApplicationId] = useState("")
   const [deleteConfirmId, setDeleteConfirmId] = useState("")
-  const [isRunning, setIsRunning] = useState(false)
-  const [connectionState, setConnectionState] = useState("idle")
+  const [runSessions, setRunSessions] = useState([])
+  const [activeConsoleTabId, setActiveConsoleTabId] = useState(HISTORY_CONSOLE_TAB_ID)
   const [runLogsByApplication, setRunLogsByApplication] = useState({})
+  const [runLogsByTab, setRunLogsByTab] = useState({})
   const [isApplicationsLoading, setIsApplicationsLoading] = useState(true)
   const [isLogsLoading, setIsLogsLoading] = useState(false)
-  const [pendingUserInput, setPendingUserInput] = useState(null)
-  const [pendingUserInputValue, setPendingUserInputValue] = useState("")
-  const activeSocketRef = useRef(null)
-  const activeRunApplicationIdRef = useRef("")
-  const completeActiveRunRef = useRef(null)
+  const [pendingUserInputByRunId, setPendingUserInputByRunId] = useState({})
+  const [pendingUserInputValueByRunId, setPendingUserInputValueByRunId] = useState({})
+  const runSocketRefs = useRef({})
+  const runCompleteRefs = useRef({})
+  const runSerialRef = useRef(0)
+  const runSessionsRef = useRef([])
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -213,8 +216,10 @@ export default function ApplicationsTab({
     }
   }, [applicationBackendOptions, backendDraft])
 
-  const closeActiveSocket = useCallback(() => {
-    const socket = activeSocketRef.current
+  const closeRunSocket = useCallback((runId) => {
+    const normalizedRunId = String(runId ?? "").trim()
+    if (!normalizedRunId) return
+    const socket = runSocketRefs.current[normalizedRunId]
     if (socket) {
       try {
         socket.close()
@@ -222,7 +227,48 @@ export default function ApplicationsTab({
         // Ignore close errors.
       }
     }
-    activeSocketRef.current = null
+    delete runSocketRefs.current[normalizedRunId]
+  }, [])
+
+  const closeAllRunSockets = useCallback(() => {
+    Object.keys(runSocketRefs.current).forEach((runId) => {
+      closeRunSocket(runId)
+    })
+    runCompleteRefs.current = {}
+  }, [closeRunSocket])
+
+  useEffect(() => {
+    runSessionsRef.current = runSessions
+  }, [runSessions])
+
+  const updateRunSession = useCallback((runId, updater) => {
+    const normalizedRunId = String(runId ?? "").trim()
+    if (!normalizedRunId) return
+    setRunSessions((prev) =>
+      prev.map((entry) => {
+        if (entry.id !== normalizedRunId) return entry
+        const nextPatch = typeof updater === "function" ? updater(entry) : updater
+        if (!nextPatch || typeof nextPatch !== "object") return entry
+        return { ...entry, ...nextPatch }
+      }),
+    )
+  }, [])
+
+  const clearRunPromptState = useCallback((runId) => {
+    const normalizedRunId = String(runId ?? "").trim()
+    if (!normalizedRunId) return
+    setPendingUserInputByRunId((prev) => {
+      if (!Object.prototype.hasOwnProperty.call(prev, normalizedRunId)) return prev
+      const next = { ...prev }
+      delete next[normalizedRunId]
+      return next
+    })
+    setPendingUserInputValueByRunId((prev) => {
+      if (!Object.prototype.hasOwnProperty.call(prev, normalizedRunId)) return prev
+      const next = { ...prev }
+      delete next[normalizedRunId]
+      return next
+    })
   }, [])
 
   const sendSocketIoEvent = useCallback((socket, eventName, payload) => {
@@ -239,9 +285,9 @@ export default function ApplicationsTab({
 
   useEffect(() => {
     return () => {
-      closeActiveSocket()
+      closeAllRunSockets()
     }
-  }, [closeActiveSocket])
+  }, [closeAllRunSockets])
 
   const apiFetchApplications = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -331,6 +377,28 @@ export default function ApplicationsTab({
   const selectedApplication = useMemo(
     () => applications.find((entry) => entry.id === selectedApplicationId) || null,
     [applications, selectedApplicationId],
+  )
+
+  const activeRunSession = useMemo(() => {
+    if (activeConsoleTabId === HISTORY_CONSOLE_TAB_ID) return null
+    return runSessions.find((entry) => entry.id === activeConsoleTabId) || null
+  }, [activeConsoleTabId, runSessions])
+
+  useEffect(() => {
+    if (activeConsoleTabId === HISTORY_CONSOLE_TAB_ID) return
+    if (runSessions.some((entry) => entry.id === activeConsoleTabId)) return
+    setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)
+  }, [activeConsoleTabId, runSessions])
+
+  const activeRunId = String(activeRunSession?.id ?? "").trim()
+  const isRunLive = useCallback((status) => {
+    const normalized = String(status ?? "").trim().toLowerCase()
+    return normalized === "running" || normalized === "connecting"
+  }, [])
+
+  const runningRunCount = useMemo(
+    () => runSessions.filter((entry) => isRunLive(entry.status)).length,
+    [isRunLive, runSessions],
   )
 
   const normalizeUserInputPrompt = useCallback(
@@ -451,6 +519,42 @@ export default function ApplicationsTab({
       }
     },
     [apiFetchApplications, appendLog],
+  )
+
+  const appendRunTabLog = useCallback((runId, status, message) => {
+    const normalizedRunId = String(runId ?? "").trim()
+    if (!normalizedRunId) return null
+    const normalizedMessage = String(message ?? "").trim()
+    if (!normalizedMessage) return null
+    const nextEntry = {
+      id: `run-tab-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      time: formatLogTime(),
+      status: String(status ?? "").trim() || "running",
+      message: normalizedMessage,
+    }
+    setRunLogsByTab((prev) => {
+      const current = Array.isArray(prev[normalizedRunId]) ? prev[normalizedRunId] : []
+      return {
+        ...prev,
+        [normalizedRunId]: [nextEntry, ...current].slice(0, MAX_LOG_ENTRIES),
+      }
+    })
+    return nextEntry
+  }, [])
+
+  const persistRunLog = useCallback(
+    (runId, appId, status, message) => {
+      const normalizedRunId = String(runId ?? "").trim()
+      const normalizedAppId = String(appId ?? "").trim()
+      if (!normalizedRunId || !normalizedAppId) return
+      const normalizedMessage = String(message ?? "").trim()
+      if (!normalizedMessage) return
+      appendRunTabLog(normalizedRunId, status, normalizedMessage)
+      const runEntry = runSessionsRef.current.find((entry) => entry.id === normalizedRunId) || null
+      const runPrefix = runEntry ? `[${runEntry.label}] ` : ""
+      void persistLog(normalizedAppId, status, `${runPrefix}${normalizedMessage}`)
+    },
+    [appendRunTabLog, persistLog],
   )
 
   const handleSave = async () => {
@@ -618,7 +722,26 @@ export default function ApplicationsTab({
     }
   }
 
-  const handleRun = () => {
+  const handleCloseRunTab = useCallback(
+    (runId) => {
+      const normalizedRunId = String(runId ?? "").trim()
+      if (!normalizedRunId) return
+      const runEntry = runSessionsRef.current.find((entry) => entry.id === normalizedRunId) || null
+      if (runEntry && isRunLive(runEntry.status)) {
+        toast.error("Calisan sekme kapatilamaz. Once islemi iptal edin.")
+        return
+      }
+      setRunSessions((prev) => prev.filter((entry) => entry.id !== normalizedRunId))
+      runSessionsRef.current = runSessionsRef.current.filter((entry) => entry.id !== normalizedRunId)
+      clearRunPromptState(normalizedRunId)
+      if (activeConsoleTabId === normalizedRunId) {
+        setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)
+      }
+    },
+    [activeConsoleTabId, clearRunPromptState, isRunLive],
+  )
+
+  const handleRun = useCallback(() => {
     if (!canRunApplications) {
       toast.error("Servis calistirma yetkiniz yok.")
       return
@@ -631,7 +754,6 @@ export default function ApplicationsTab({
       toast.error("Secilen servis kapali. Once aktif edin.")
       return
     }
-    if (isRunning) return
 
     const wsBaseUrl = String(automationWsUrl ?? "").trim()
     if (!wsBaseUrl) {
@@ -651,21 +773,39 @@ export default function ApplicationsTab({
       return
     }
 
-    closeActiveSocket()
-    setPendingUserInput(null)
-    setPendingUserInputValue("")
-    setConnectionState("connecting")
-    setIsRunning(true)
-    activeRunApplicationIdRef.current = selectedApplication.id
-
+    runSerialRef.current += 1
+    const runSerial = runSerialRef.current
+    const runId = `service-run-${Date.now()}-${runSerial}`
+    const runLabel = `${selectedApplication.name} #${runSerial}`
     const backendDisplay = getBackendLabelForDisplay(selectedApplication.backendLabel)
     const serviceLabel = selectedApplication.name
     const starterUsername = String(activeUsername ?? "").trim() || "bilinmeyen-kullanici"
-    const runToastId = toast.loading(`${serviceLabel} calisiyor...`, { position: "top-right" })
+    const runStartedAt = Date.now()
+    const runToastId = toast.loading(`${runLabel} calisiyor...`, { position: "top-right" })
+    const runEntry = {
+      id: runId,
+      label: runLabel,
+      serial: runSerial,
+      applicationId: selectedApplication.id,
+      applicationName: selectedApplication.name,
+      applicationAbout: selectedApplication.about,
+      backendKey,
+      backendLabel: selectedApplication.backendLabel,
+      status: "connecting",
+      connectionState: "connecting",
+      startedAtMs: runStartedAt,
+      endedAtMs: 0,
+    }
 
-    void persistLog(selectedApplication.id, "running", `Calistiran: ${starterUsername}`)
-    void persistLog(selectedApplication.id, "running", `Calistiriliyor: ${serviceLabel}`)
-    void persistLog(selectedApplication.id, "running", `Backend map: ${backendDisplay}`)
+    setRunSessions((prev) => [runEntry, ...prev])
+    runSessionsRef.current = [runEntry, ...runSessionsRef.current]
+    setActiveConsoleTabId(runId)
+    setPendingUserInputByRunId((prev) => ({ ...prev, [runId]: null }))
+    setPendingUserInputValueByRunId((prev) => ({ ...prev, [runId]: "" }))
+
+    void persistRunLog(runId, selectedApplication.id, "running", `Calistiran: ${starterUsername}`)
+    void persistRunLog(runId, selectedApplication.id, "running", `Calistiriliyor: ${serviceLabel}`)
+    void persistRunLog(runId, selectedApplication.id, "running", `Backend map: ${backendDisplay}`)
 
     let settled = false
     let hasConnected = false
@@ -675,31 +815,34 @@ export default function ApplicationsTab({
     const completeRun = (status, message) => {
       if (settled) return
       settled = true
-      completeActiveRunRef.current = null
+      delete runCompleteRefs.current[runId]
+
+      const normalizedStatus = String(status ?? "").trim() || "error"
       if (message) {
-        void persistLog(selectedApplication.id, status, message)
+        void persistRunLog(runId, selectedApplication.id, normalizedStatus, message)
       }
-      if (status === "success") {
-        toast.success(message || `${serviceLabel}: Servis hatasiz bitirildi.`, { id: runToastId, position: "top-right" })
-      } else if (status === "error") {
+
+      if (normalizedStatus === "success") {
+        toast.success(message || `${serviceLabel}: Servis hatasiz bitirildi.`, {
+          id: runToastId,
+          position: "top-right",
+        })
+      } else if (normalizedStatus === "error") {
         toast.error(message || `${serviceLabel} tamamlanamadi.`, { id: runToastId, position: "top-right" })
       } else {
         toast.dismiss(runToastId)
       }
-      setIsRunning(false)
-      setPendingUserInput(null)
-      setPendingUserInputValue("")
-      if (status === "error") {
-        setConnectionState("error")
-      } else if (hasConnected) {
-        setConnectionState("connected")
-      } else {
-        setConnectionState("idle")
-      }
-      activeRunApplicationIdRef.current = ""
-      closeActiveSocket()
+
+      updateRunSession(runId, {
+        status: normalizedStatus,
+        connectionState: normalizedStatus === "error" ? "error" : hasConnected ? "connected" : "idle",
+        endedAtMs: Date.now(),
+      })
+      clearRunPromptState(runId)
+      closeRunSocket(runId)
     }
-    completeActiveRunRef.current = completeRun
+
+    runCompleteRefs.current[runId] = completeRun
 
     let socket
     try {
@@ -708,7 +851,7 @@ export default function ApplicationsTab({
       completeRun("error", `${serviceLabel} icin websocket baglantisi baslatilamadi.`)
       return
     }
-    activeSocketRef.current = socket
+    runSocketRefs.current[runId] = socket
 
     socket.addEventListener("message", (event) => {
       if (settled) return
@@ -721,8 +864,9 @@ export default function ApplicationsTab({
 
         if (hasSocketErrorSignal) {
           hasSocketErrorSignal = false
-          setConnectionState("connected")
-          void persistLog(
+          updateRunSession(runId, { status: "running", connectionState: "connected" })
+          void persistRunLog(
+            runId,
             selectedApplication.id,
             "running",
             `${serviceLabel} websocket baglantisi toparlandi, islem devam ediyor.`,
@@ -749,10 +893,10 @@ export default function ApplicationsTab({
 
         if (packet.startsWith("40")) {
           if (!hasConnected) {
-            void persistLog(selectedApplication.id, "running", `${serviceLabel} baglandi.`)
+            void persistRunLog(runId, selectedApplication.id, "running", `${serviceLabel} baglandi.`)
           }
           hasConnected = true
-          setConnectionState("connected")
+          updateRunSession(runId, { status: "running", connectionState: "connected" })
           continue
         }
 
@@ -776,7 +920,7 @@ export default function ApplicationsTab({
         const firstArg = eventPacket.args[0]
 
         if (eventName === "script-triggered" || eventName === "script-started") {
-          void persistLog(selectedApplication.id, "running", `${backendDisplay} script baslatildi.`)
+          void persistRunLog(runId, selectedApplication.id, "running", `${backendDisplay} script baslatildi.`)
           continue
         }
 
@@ -787,10 +931,10 @@ export default function ApplicationsTab({
             .map((line) => line.trim())
             .filter(Boolean)
           if (lines.length === 0) {
-            void persistLog(selectedApplication.id, "running", `${backendDisplay} => -`)
+            void persistRunLog(runId, selectedApplication.id, "running", `${backendDisplay} => -`)
           } else {
             lines.forEach((line) => {
-              void persistLog(selectedApplication.id, "running", `${backendDisplay} => ${line}`)
+              void persistRunLog(runId, selectedApplication.id, "running", `${backendDisplay} => ${line}`)
             })
           }
           continue
@@ -803,11 +947,7 @@ export default function ApplicationsTab({
             .map((line) => line.trim())
             .filter(Boolean)
           lines.forEach((line) => {
-            void persistLog(
-              selectedApplication.id,
-              stream === "stderr" ? "error" : "running",
-              line,
-            )
+            void persistRunLog(runId, selectedApplication.id, stream === "stderr" ? "error" : "running", line)
           })
           continue
         }
@@ -816,17 +956,17 @@ export default function ApplicationsTab({
           const promptBackend = String(firstArg?.backend ?? backendKey).trim() || backendKey
           const prompt = normalizeUserInputPrompt(firstArg, promptBackend)
           if (prompt) {
-            setPendingUserInput(prompt)
-            setPendingUserInputValue("")
+            setPendingUserInputByRunId((prev) => ({ ...prev, [runId]: prompt }))
+            setPendingUserInputValueByRunId((prev) => ({ ...prev, [runId]: "" }))
             const promptMessage = String(prompt.message ?? "").trim() || "Kullanici girdisi gerekli."
-            void persistLog(selectedApplication.id, "running", `${backendDisplay} => ${promptMessage}`)
+            void persistRunLog(runId, selectedApplication.id, "running", `${backendDisplay} => ${promptMessage}`)
           }
           continue
         }
 
         if (eventName === "sonuc") {
           const valueText = normalizeEventMessage(firstArg?.value ?? firstArg).trim()
-          void persistLog(selectedApplication.id, "success", `${backendDisplay} => ${valueText || "-"}`)
+          void persistRunLog(runId, selectedApplication.id, "success", `${backendDisplay} => ${valueText || "-"}`)
           hasResult = true
           completeRun("success", `${serviceLabel}: Servis hatasiz bitirildi.`)
           return
@@ -835,7 +975,8 @@ export default function ApplicationsTab({
         if (eventName === "script-exit") {
           const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
           if (Number.isFinite(exitCode)) {
-            void persistLog(
+            void persistRunLog(
+              runId,
               selectedApplication.id,
               exitCode === 0 ? "success" : "error",
               `Script cikti. Kod: ${exitCode}`,
@@ -853,8 +994,9 @@ export default function ApplicationsTab({
       if (settled) return
       if (hasSocketErrorSignal) return
       hasSocketErrorSignal = true
-      setConnectionState("connecting")
-      void persistLog(
+      updateRunSession(runId, { status: "running", connectionState: "connecting" })
+      void persistRunLog(
+        runId,
         selectedApplication.id,
         "running",
         `${serviceLabel} websocket baglanti hatasi algiladi, baglanti takip ediliyor...`,
@@ -878,75 +1020,100 @@ export default function ApplicationsTab({
       }
       completeRun("error", `${serviceLabel} icin websocket baglantisi kapandi.`)
     })
-  }
-
-  const handleCancelRun = useCallback(() => {
-    if (!isRunning) return
-    const socket = activeSocketRef.current
-    const runningAppId = String(activeRunApplicationIdRef.current ?? "").trim()
-    const runningApp =
-      applications.find((entry) => entry.id === runningAppId) ||
-      applications.find((entry) => entry.id === String(selectedApplicationId ?? "").trim()) ||
-      null
-    const backend = String(runningApp?.backendKey || selectedApplication?.backendKey || "").trim()
-    const step = String(pendingUserInput?.step ?? "").trim()
-    if (backend) {
-      const cancelPayload = {
-        backend,
-        step,
-        reason: "user-cancelled",
-      }
-      const cancelSent = sendSocketIoEvent(socket, "islem-iptal", cancelPayload)
-      if (!cancelSent) {
-        sendSocketIoEvent(socket, "kullanici-girdisi", {
-          backend,
-          step,
-          value: "iptal",
-          reason: "user-cancelled",
-        })
-      } else if (runningAppId) {
-        void persistLog(runningAppId, "running", `${getBackendLabelForDisplay(runningApp?.backendLabel)} => iptal eventi gonderildi.`)
-      }
-    }
-    if (typeof completeActiveRunRef.current === "function") {
-      completeActiveRunRef.current("error", "Islem kullanici tarafindan iptal edildi.")
-      return
-    }
-    closeActiveSocket()
-    setPendingUserInput(null)
-    setPendingUserInputValue("")
-    setIsRunning(false)
-    setConnectionState("idle")
-    activeRunApplicationIdRef.current = ""
-    toast("Islem iptal edildi.", { position: "top-right" })
   }, [
-    applications,
-    closeActiveSocket,
+    activeUsername,
+    automationWsUrl,
+    canRunApplications,
+    clearRunPromptState,
+    closeRunSocket,
     getBackendLabelForDisplay,
-    isRunning,
-    pendingUserInput?.step,
-    persistLog,
-    selectedApplication?.backendKey,
-    selectedApplicationId,
-    sendSocketIoEvent,
+    normalizeUserInputPrompt,
+    persistRunLog,
+    selectedApplication,
+    updateRunSession,
   ])
 
+  const handleCancelRun = useCallback(
+    (runIdOverride = "") => {
+      const targetRunId = String(runIdOverride || activeRunId).trim()
+      if (!targetRunId) return
+      const runEntry = runSessionsRef.current.find((entry) => entry.id === targetRunId) || null
+      if (!runEntry || !isRunLive(runEntry.status)) return
+
+      const socket = runSocketRefs.current[targetRunId] || null
+      const pendingPrompt = pendingUserInputByRunId[targetRunId]
+      const backend = String(runEntry.backendKey ?? "").trim()
+      const step = String(pendingPrompt?.step ?? "").trim()
+
+      if (backend) {
+        const cancelPayload = {
+          backend,
+          step,
+          reason: "user-cancelled",
+        }
+        const cancelSent = sendSocketIoEvent(socket, "islem-iptal", cancelPayload)
+        if (!cancelSent) {
+          sendSocketIoEvent(socket, "kullanici-girdisi", {
+            backend,
+            step,
+            value: "iptal",
+            reason: "user-cancelled",
+          })
+        } else {
+          void persistRunLog(
+            targetRunId,
+            runEntry.applicationId,
+            "running",
+            `${getBackendLabelForDisplay(runEntry.backendLabel)} => iptal eventi gonderildi.`,
+          )
+        }
+      }
+
+      const completeRun = runCompleteRefs.current[targetRunId]
+      if (typeof completeRun === "function") {
+        completeRun("error", "Islem kullanici tarafindan iptal edildi.")
+        return
+      }
+
+      closeRunSocket(targetRunId)
+      updateRunSession(targetRunId, {
+        status: "error",
+        connectionState: "error",
+        endedAtMs: Date.now(),
+      })
+      clearRunPromptState(targetRunId)
+      toast("Islem iptal edildi.", { position: "top-right" })
+    },
+    [
+      activeRunId,
+      clearRunPromptState,
+      closeRunSocket,
+      getBackendLabelForDisplay,
+      isRunLive,
+      pendingUserInputByRunId,
+      persistRunLog,
+      sendSocketIoEvent,
+      updateRunSession,
+    ],
+  )
+
   const handleUserInputSubmit = useCallback(
-    (forcedValue = "") => {
-      if (!pendingUserInput || !isRunning) return
-      const socket = activeSocketRef.current
+    (forcedValue = "", runIdOverride = "") => {
+      const targetRunId = String(runIdOverride || activeRunId).trim()
+      if (!targetRunId) return
+      const runEntry = runSessionsRef.current.find((entry) => entry.id === targetRunId) || null
+      if (!runEntry || !isRunLive(runEntry.status)) return
+
+      const pendingUserInput = pendingUserInputByRunId[targetRunId]
+      if (!pendingUserInput) return
+
+      const socket = runSocketRefs.current[targetRunId] || null
       if (!socket || socket.readyState !== WebSocket.OPEN) {
         toast.error("Websocket baglantisi acik degil.")
         return
       }
-      const runningAppId = String(activeRunApplicationIdRef.current ?? "").trim()
-      const runningApp =
-        applications.find((entry) => entry.id === runningAppId) ||
-        applications.find((entry) => entry.id === String(selectedApplicationId ?? "").trim()) ||
-        null
-      const backend = String(
-        pendingUserInput.backend || runningApp?.backendKey || selectedApplication?.backendKey || "",
-      ).trim()
+
+      const backend = String(pendingUserInput.backend || runEntry.backendKey || "").trim()
       if (!backend) {
         toast.error("Backend bilgisi bulunamadi.")
         return
@@ -957,10 +1124,8 @@ export default function ApplicationsTab({
       let valueToSend = normalizedForced
 
       if (!valueToSend) {
-        if (inputType === "text") {
-          valueToSend = String(pendingUserInputValue ?? "").trim()
-        } else if (inputType === "choice") {
-          valueToSend = String(pendingUserInputValue ?? "").trim()
+        if (inputType === "text" || inputType === "choice") {
+          valueToSend = String(pendingUserInputValueByRunId[targetRunId] ?? "").trim()
         }
       }
 
@@ -977,24 +1142,19 @@ export default function ApplicationsTab({
         if (!sent) {
           throw new Error("Kullanici girdisi gonderilemedi.")
         }
-        const runAppId = String(activeRunApplicationIdRef.current || selectedApplicationId || "").trim()
-        if (runAppId) {
-          void persistLog(runAppId, "running", `> ${valueToSend}`)
-        }
-        setPendingUserInput(null)
-        setPendingUserInputValue("")
+        void persistRunLog(targetRunId, runEntry.applicationId, "running", `> ${valueToSend}`)
+        clearRunPromptState(targetRunId)
       } catch {
         toast.error("Kullanici girdisi gonderilemedi.")
       }
     },
     [
-      applications,
-      isRunning,
-      pendingUserInput,
-      pendingUserInputValue,
-      persistLog,
-      selectedApplication?.backendKey,
-      selectedApplicationId,
+      activeRunId,
+      clearRunPromptState,
+      isRunLive,
+      pendingUserInputByRunId,
+      pendingUserInputValueByRunId,
+      persistRunLog,
       sendSocketIoEvent,
     ],
   )
@@ -1025,29 +1185,52 @@ export default function ApplicationsTab({
   }
 
   const hasApplications = applications.length > 0
-  const runLogs = useMemo(() => {
+  const historyLogs = useMemo(() => {
     if (!canViewApplicationLogs) return []
     const targetAppId = String(selectedApplicationId ?? "").trim()
     if (!targetAppId) return []
     const logs = runLogsByApplication[targetAppId]
     return Array.isArray(logs) ? logs : []
   }, [canViewApplicationLogs, runLogsByApplication, selectedApplicationId])
+  const activeRunLogs = useMemo(() => {
+    if (!activeRunSession) return []
+    const logs = runLogsByTab[activeRunSession.id]
+    return Array.isArray(logs) ? logs : []
+  }, [activeRunSession, runLogsByTab])
+  const consoleLogs = activeRunSession ? activeRunLogs : historyLogs
+  const activeRunPrompt = activeRunSession ? pendingUserInputByRunId[activeRunSession.id] || null : null
+  const activeRunPromptValue = activeRunSession
+    ? String(pendingUserInputValueByRunId[activeRunSession.id] ?? "")
+    : ""
+  const isActiveRunLive = activeRunSession ? isRunLive(activeRunSession.status) : false
+  const canCancelActiveRun = Boolean(activeRunSession && isActiveRunLive)
   const isTabLoading = isLoading || isApplicationsLoading
   const hasWsUrl = String(automationWsUrl ?? "").trim().length > 0
-  const connectionLabel = hasWsUrl
-    ? connectionState === "connecting"
-      ? "Baglaniliyor"
-      : connectionState === "error"
-        ? "Baglanti hatasi"
-        : "Baglanildi"
-    : "Baglanti yok"
+  const activeConnectionState = String(activeRunSession?.connectionState ?? "").trim().toLowerCase()
+  const connectionLabel = !hasWsUrl
+    ? "Baglanti yok"
+    : activeRunSession
+      ? activeConnectionState === "connecting"
+        ? "Baglaniliyor"
+        : activeConnectionState === "error"
+          ? "Baglanti hatasi"
+          : activeRunSession.status === "success"
+            ? "Tamamlandi"
+            : isActiveRunLive
+              ? "Baglanildi"
+              : "Hazir"
+      : runningRunCount > 0
+        ? `${runningRunCount} calisiyor`
+        : "Hazir"
   const connectionBadgeClass = !hasWsUrl
     ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
-    : connectionState === "connecting"
-      ? "border-sky-300/60 bg-sky-500/15 text-sky-100"
-      : connectionState === "error"
-        ? "border-rose-300/60 bg-rose-500/15 text-rose-100"
-        : "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
+    : activeRunSession && activeConnectionState === "error"
+      ? "border-rose-300/60 bg-rose-500/15 text-rose-100"
+      : activeRunSession && activeConnectionState === "connecting"
+        ? "border-sky-300/60 bg-sky-500/15 text-sky-100"
+        : runningRunCount > 0
+          ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
+          : "border-white/20 bg-white/10 text-slate-200"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1094,9 +1277,9 @@ export default function ApplicationsTab({
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                 {canViewApplicationLogs
-                  ? isLogsLoading
+                  ? !activeRunSession && isLogsLoading
                     ? "yukleniyor..."
-                    : `${runLogs.length} satir`
+                    : `${consoleLogs.length} satir`
                   : "log yetkisi yok"}
               </span>
               <span
@@ -1107,11 +1290,11 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="grid gap-2 border-b border-white/10 bg-ink-900/45 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_120px_auto]">
+          <div className="grid gap-2 border-b border-white/10 bg-ink-900/45 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_110px_120px_auto]">
             <select
               value={selectedApplicationId}
               onChange={(event) => setSelectedApplicationId(event.target.value)}
-              disabled={!hasApplications || isRunning}
+              disabled={!hasApplications}
               className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
@@ -1123,25 +1306,25 @@ export default function ApplicationsTab({
             </select>
             <button
               type="button"
-              onClick={isRunning ? handleCancelRun : handleRun}
-              disabled={
-                isRunning
-                  ? false
-                  : !canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl
-              }
-              className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-[10px] font-semibold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                isRunning
-                  ? "border-rose-300/60 bg-rose-500/15 text-rose-50 hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
-                  : "border-emerald-300/60 bg-emerald-500/15 text-emerald-50 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25"
-              }`}
+              onClick={handleRun}
+              disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
+              className="inline-flex h-9 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isRunning ? "Islemi Iptal Et" : "Calistir"}
+              Calistir
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCancelRun()}
+              disabled={!canCancelActiveRun}
+              className="inline-flex h-9 items-center justify-center rounded-md border border-rose-300/60 bg-rose-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Islemi Iptal Et
             </button>
             <div className="flex items-center justify-end">
               <button
                 type="button"
                 onClick={handleClearLogs}
-                disabled={!canClearApplicationLogs || !canViewApplicationLogs || runLogs.length === 0}
+                disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
                 className="inline-flex h-9 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Log temizle
@@ -1149,8 +1332,71 @@ export default function ApplicationsTab({
             </div>
           </div>
 
+          <div className="border-b border-white/10 bg-ink-900/40 px-3 py-2">
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
+              <button
+                type="button"
+                onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
+                className={`inline-flex items-center rounded-md border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition ${
+                  activeRunSession
+                    ? "border-white/10 bg-white/5 text-slate-300 hover:border-white/25 hover:bg-white/10"
+                    : "border-accent-300/60 bg-accent-500/20 text-accent-50"
+                }`}
+              >
+                Genel Log
+              </button>
+              {runSessions.map((entry) => {
+                const entryIsActive = activeConsoleTabId === entry.id
+                const entryIsLive = isRunLive(entry.status)
+                return (
+                  <div key={`run-tab-${entry.id}`} className="inline-flex items-center rounded-md border border-white/10 bg-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setActiveConsoleTabId(entry.id)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition ${
+                        entryIsActive ? "text-accent-100" : "text-slate-300 hover:text-slate-100"
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          entry.status === "error"
+                            ? "bg-rose-300"
+                            : entry.status === "success"
+                              ? "bg-emerald-300"
+                              : entryIsLive
+                                ? "bg-sky-300"
+                                : "bg-slate-400"
+                        }`}
+                      />
+                      <span className="whitespace-nowrap">{entry.label}</span>
+                    </button>
+                    {!entryIsLive && (
+                      <button
+                        type="button"
+                        onClick={() => handleCloseRunTab(entry.id)}
+                        className="inline-flex h-full items-center border-l border-white/10 px-2 text-[10px] text-slate-400 transition hover:text-slate-100"
+                        aria-label={`${entry.label} sekmesini kapat`}
+                      >
+                        x
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
           <div className="border-b border-white/10 bg-ink-900/30 px-3 py-2 text-[10px] text-slate-400">
-            {selectedApplication ? (
+            {activeRunSession ? (
+              <>
+                <p className="text-[11px] font-semibold text-slate-200">
+                  {activeRunSession.label} ({getBackendLabelForDisplay(activeRunSession.backendLabel)})
+                </p>
+                <p className="mt-1 text-[10px] text-slate-400">
+                  {activeRunSession.applicationAbout || "Servis aciklamasi yok."}
+                </p>
+              </>
+            ) : selectedApplication ? (
               <>
                 <p className="text-[11px] font-semibold text-slate-200">
                   {selectedApplication.name} ({getBackendLabelForDisplay(selectedApplication.backendLabel)})
@@ -1174,31 +1420,31 @@ export default function ApplicationsTab({
               <div className="flex h-full items-center justify-center text-slate-500">
                 Servis Konsolu log goruntuleme yetkiniz yok.
               </div>
-            ) : isLogsLoading ? (
+            ) : !activeRunSession && isLogsLoading ? (
               <div className="flex h-full items-center justify-center text-slate-500">Loglar yukleniyor...</div>
             ) : (
               <div className="space-y-0.5">
-                {pendingUserInput && isRunning && (
+                {activeRunPrompt && isActiveRunLive && (
                   <div className="mb-2 rounded-md border border-white/10 bg-white/5 px-2 py-2">
                     <div className="flex min-w-0 flex-wrap items-center gap-2 text-slate-300 sm:flex-nowrap">
                       <span className="flex-none text-emerald-300">[INPUT]</span>
                       <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
                       <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                       <span className="min-w-0 break-words text-slate-200">
-                        {pendingUserInput.message}
+                        {activeRunPrompt.message}
                       </span>
                     </div>
-                    {pendingUserInput.step && (
-                      <p className="mt-1 text-[10px] text-slate-500">Step: {pendingUserInput.step}</p>
+                    {activeRunPrompt.step && (
+                      <p className="mt-1 text-[10px] text-slate-500">Step: {activeRunPrompt.step}</p>
                     )}
                     <div className="mt-2">
-                      {pendingUserInput.inputType === "choice" && (
+                      {activeRunPrompt.inputType === "choice" && (
                         <div className="flex flex-wrap gap-1.5">
-                          {pendingUserInput.options.map((option) => (
+                          {activeRunPrompt.options.map((option) => (
                             <button
                               key={`choice-${option.value}`}
                               type="button"
-                              onClick={() => handleUserInputSubmit(option.value)}
+                              onClick={() => handleUserInputSubmit(option.value, activeRunId)}
                               className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-100 transition hover:border-white/30 hover:bg-white/10"
                             >
                               {option.label}
@@ -1206,42 +1452,49 @@ export default function ApplicationsTab({
                           ))}
                         </div>
                       )}
-                      {pendingUserInput.inputType === "confirm" && (
+                      {activeRunPrompt.inputType === "confirm" && (
                         <div className="flex flex-wrap gap-1.5">
                           <button
                             type="button"
-                            onClick={() => handleUserInputSubmit("evet")}
+                            onClick={() => handleUserInputSubmit("evet", activeRunId)}
                             className="rounded-md border border-emerald-300/50 bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-500/25"
                           >
                             Evet
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleUserInputSubmit("hayir")}
+                            onClick={() => handleUserInputSubmit("hayir", activeRunId)}
                             className="rounded-md border border-rose-300/50 bg-rose-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-100 transition hover:border-rose-200 hover:bg-rose-500/25"
                           >
                             Hayir
                           </button>
                         </div>
                       )}
-                      {pendingUserInput.inputType === "text" && (
+                      {activeRunPrompt.inputType === "text" && (
                         <div className="flex items-center gap-1.5">
                           <input
                             type="text"
-                            value={pendingUserInputValue}
-                            onChange={(event) => setPendingUserInputValue(event.target.value)}
+                            value={activeRunPromptValue}
+                            onChange={(event) => {
+                              const targetRunId = String(activeRunId ?? "").trim()
+                              if (!targetRunId) return
+                              setPendingUserInputValueByRunId((prev) => ({
+                                ...prev,
+                                [targetRunId]: event.target.value,
+                              }))
+                            }}
                             onKeyDown={(event) => {
                               if (event.key === "Enter") {
                                 event.preventDefault()
-                                handleUserInputSubmit()
+                                handleUserInputSubmit("", activeRunId)
                               }
                             }}
-                            placeholder={pendingUserInput.placeholder || "Cevap girin ve Enter"}
+                            placeholder={activeRunPrompt.placeholder || "Cevap girin ve Enter"}
                             className="h-8 min-w-0 flex-1 rounded-md border border-white/15 bg-ink-900/70 px-2 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
                           />
                           <button
                             type="button"
-                            onClick={() => handleUserInputSubmit()}
+                            onClick={() => handleUserInputSubmit("", activeRunId)}
                             className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-100 transition hover:border-white/30 hover:bg-white/10"
                           >
                             Gonder
@@ -1251,7 +1504,7 @@ export default function ApplicationsTab({
                     </div>
                   </div>
                 )}
-                {runLogs.map((entry) => (
+                {consoleLogs.map((entry) => (
                   <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
                     <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
                     <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
@@ -1282,7 +1535,7 @@ export default function ApplicationsTab({
                     </span>
                   </div>
                 ))}
-                {runLogs.length === 0 && (
+                {consoleLogs.length === 0 && (
                   <div className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
                     <span className="hidden flex-none text-slate-600 sm:inline">C:\plcp\applications&gt;</span>
                     <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
