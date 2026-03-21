@@ -12,6 +12,7 @@ const MASKED_BACKEND_TEXT = "******"
 const HISTORY_CONSOLE_TAB_ID = "__history__"
 const CMD_PROMPT_PATH = "C:\\plcp\\applications>"
 const CMD_WINDOW_TITLE = "Komut Istemi"
+const LOG_URL_REGEX = /((?:https?:\/\/|www\.)[^\s<>"']+)/gi
 
 const PlayIcon = ({ className = "h-4 w-4" }) => (
   <svg
@@ -106,6 +107,55 @@ const normalizeInputType = (value) => {
   const normalized = String(value ?? "").trim().toLowerCase()
   if (normalized === "choice" || normalized === "confirm" || normalized === "text") return normalized
   return "text"
+}
+
+const splitTrailingLinkSuffix = (value) => {
+  let url = String(value ?? "")
+  let suffix = ""
+
+  while (url && /[),.;!?\]}]+$/.test(url)) {
+    suffix = `${url.slice(-1)}${suffix}`
+    url = url.slice(0, -1)
+  }
+
+  return { url, suffix }
+}
+
+const splitLogMessageLinks = (value) => {
+  const message = String(value ?? "")
+  if (!message) return []
+
+  const segments = []
+  const regex = new RegExp(LOG_URL_REGEX)
+  let lastIndex = 0
+  let match = regex.exec(message)
+
+  while (match) {
+    const startIndex = match.index
+    const rawMatch = match[0]
+    const { url, suffix } = splitTrailingLinkSuffix(rawMatch)
+
+    if (startIndex > lastIndex) {
+      segments.push({ type: "text", value: message.slice(lastIndex, startIndex) })
+    }
+
+    if (url) {
+      segments.push({ type: "link", value: url })
+    }
+
+    if (suffix) {
+      segments.push({ type: "text", value: suffix })
+    }
+
+    lastIndex = startIndex + rawMatch.length
+    match = regex.exec(message)
+  }
+
+  if (lastIndex < message.length) {
+    segments.push({ type: "text", value: message.slice(lastIndex) })
+  }
+
+  return segments.length > 0 ? segments : [{ type: "text", value: message }]
 }
 
 const getConsoleStatusMeta = (status) => {
@@ -282,6 +332,34 @@ export default function ApplicationsTab({
     },
     [backendMaskTokens, canViewApplicationBackendMap],
   )
+
+  const copyTextToClipboard = useCallback(async (value) => {
+    const text = String(value ?? "").trim()
+    if (!text) return
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else if (typeof document !== "undefined") {
+        const textarea = document.createElement("textarea")
+        textarea.value = text
+        textarea.setAttribute("readonly", "")
+        textarea.style.position = "absolute"
+        textarea.style.left = "-9999px"
+        document.body.appendChild(textarea)
+        textarea.select()
+        const didCopy = document.execCommand("copy")
+        document.body.removeChild(textarea)
+        if (!didCopy) throw new Error("copy-failed")
+      } else {
+        throw new Error("clipboard-unavailable")
+      }
+
+      toast.success("Link kopyalandi.")
+    } catch {
+      toast.error("Link kopyalanamadi.")
+    }
+  }, [])
 
   useEffect(() => {
     if (applicationBackendOptions.length === 0) {
@@ -1625,6 +1703,9 @@ export default function ApplicationsTab({
                 )}
                 {consoleLogs.map((entry) => {
                   const statusMeta = getConsoleStatusMeta(entry.status)
+                  const sanitizedMessage = sanitizeLogMessage(entry.message)
+                  const messageSegments = splitLogMessageLinks(sanitizedMessage)
+
                   return (
                     <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 sm:flex-nowrap">
                       <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
@@ -1632,7 +1713,21 @@ export default function ApplicationsTab({
                       <span className="hidden flex-none text-slate-600 sm:inline">{CMD_PROMPT_PATH}</span>
                       <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                       <span className="min-w-0 break-words text-slate-100">
-                        {sanitizeLogMessage(entry.message)}
+                        {messageSegments.map((segment, index) =>
+                          segment.type === "link" ? (
+                            <button
+                              key={`${entry.id}-segment-${index}`}
+                              type="button"
+                              onClick={() => void copyTextToClipboard(segment.value)}
+                              className="inline break-all text-left text-sky-300 underline decoration-slate-600 underline-offset-2 transition hover:text-sky-200 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+                              title="Tiklayinca kopyalanir"
+                            >
+                              {segment.value}
+                            </button>
+                          ) : (
+                            <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
+                          ),
+                        )}
                       </span>
                     </div>
                   )
