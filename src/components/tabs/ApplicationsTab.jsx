@@ -1358,13 +1358,15 @@ export default function ApplicationsTab({
   const terminalTextInputClass =
     "h-9 min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 font-mono text-[11px] text-slate-100 transition placeholder:text-slate-500 focus:border-slate-500 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
   const terminalButtonBaseClass =
-    "inline-flex h-10 items-center justify-center rounded-lg border px-3.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition focus:outline-none focus:ring-2 focus:ring-slate-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+    "inline-flex h-9 items-center justify-center rounded-md border px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition focus:outline-none focus:ring-2 focus:ring-slate-500/20 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600 hover:bg-slate-800`
   const terminalIconButtonBaseClass =
     "inline-flex h-9 w-full items-center justify-center rounded-md border transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-9"
   const terminalActionButtonClass =
     `${terminalIconButtonBaseClass} border-sky-900 bg-[#0b1624] text-sky-200 hover:border-sky-800 hover:bg-[#102033] focus:ring-sky-800/30`
+  const terminalPromptButtonClass =
+    `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
     "inline-flex h-9 min-w-[170px] items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 px-3 transition"
 
@@ -1414,8 +1416,8 @@ export default function ApplicationsTab({
           </div>
 
           <div className="border-b border-slate-800 bg-[#0b0d10] px-3 py-3 sm:px-4">
-            <div className="grid grid-cols-3 gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
-              <div className="relative col-span-3 md:col-span-1">
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <div className="relative min-w-0">
                 <select
                   value={selectedApplicationId}
                   onChange={(event) => setSelectedApplicationId(event.target.value)}
@@ -1444,36 +1446,38 @@ export default function ApplicationsTab({
                   </svg>
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={handleRun}
-                disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                className={terminalActionButtonClass}
-                aria-label="Servisi calistir"
-                title="Calistir"
-              >
-                <RiPlayFill size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCancelRun()}
-                disabled={!canCancelActiveRun}
-                className={terminalActionButtonClass}
-                aria-label="Aktif calistirmayi iptal et"
-                title="Iptal"
-              >
-                <RiPauseFill size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={handleClearLogs}
-                disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                className={terminalActionButtonClass}
-                aria-label="Loglari temizle"
-                title="Log temizle"
-              >
-                <RiDeleteBin6Line size={16} aria-hidden="true" />
-              </button>
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
+                <button
+                  type="button"
+                  onClick={handleRun}
+                  disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
+                  className={terminalActionButtonClass}
+                  aria-label="Servisi calistir"
+                  title="Calistir"
+                >
+                  <RiPlayFill size={16} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleCancelRun()}
+                  disabled={!canCancelActiveRun}
+                  className={terminalActionButtonClass}
+                  aria-label="Aktif calistirmayi iptal et"
+                  title="Iptal"
+                >
+                  <RiPauseFill size={16} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearLogs}
+                  disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
+                  className={terminalActionButtonClass}
+                  aria-label="Loglari temizle"
+                  title="Log temizle"
+                >
+                  <RiDeleteBin6Line size={16} aria-hidden="true" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1592,13 +1596,13 @@ export default function ApplicationsTab({
                     )}
                     <div className="mt-3">
                       {activeRunPrompt.inputType === "choice" && (
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="grid gap-1.5 sm:grid-cols-2">
                           {activeRunPrompt.options.map((option) => (
                             <button
                               key={`choice-${option.value}`}
                               type="button"
                               onClick={() => handleUserInputSubmit(option.value, activeRunId)}
-                              className={terminalButtonNeutralClass}
+                              className={terminalPromptButtonClass}
                             >
                               {option.label}
                             </button>
@@ -1606,25 +1610,25 @@ export default function ApplicationsTab({
                         </div>
                       )}
                       {activeRunPrompt.inputType === "confirm" && (
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="grid gap-1.5 sm:grid-cols-2">
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("evet", activeRunId)}
-                            className={terminalButtonNeutralClass}
+                            className={terminalPromptButtonClass}
                           >
                             Evet
                           </button>
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("hayir", activeRunId)}
-                            className={terminalButtonNeutralClass}
+                            className={terminalPromptButtonClass}
                           >
                             Hayir
                           </button>
                         </div>
                       )}
                       {activeRunPrompt.inputType === "text" && (
-                        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+                        <div className="grid gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                           <input
                             type="text"
                             value={activeRunPromptValue}
@@ -1648,7 +1652,7 @@ export default function ApplicationsTab({
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("", activeRunId)}
-                            className={`${terminalButtonNeutralClass} w-full sm:w-auto`}
+                            className={terminalPromptButtonClass}
                           >
                             Gonder
                           </button>
