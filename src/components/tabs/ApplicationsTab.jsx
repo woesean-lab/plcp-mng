@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { RiDeleteBin6Line, RiPauseFill, RiPlayFill } from "@remixicon/react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import {
@@ -13,47 +14,6 @@ const HISTORY_CONSOLE_TAB_ID = "__history__"
 const CMD_PROMPT_PATH = "C:\\plcp\\applications>"
 const CMD_WINDOW_TITLE = "Komut Istemi"
 const LOG_URL_REGEX = /((?:https?:\/\/|www\.)[^\s<>"']+)/gi
-
-const PlayIcon = ({ className = "h-4 w-4" }) => (
-  <svg
-    viewBox="0 0 20 20"
-    aria-hidden="true"
-    className={className}
-    fill="currentColor"
-  >
-    <path d="M6 4.8c0-.86.93-1.4 1.68-.97l7.4 4.2c.75.43.75 1.51 0 1.94l-7.4 4.2C6.93 14.6 6 14.06 6 13.2V4.8Z" />
-  </svg>
-)
-
-const PauseIcon = ({ className = "h-4 w-4" }) => (
-  <svg
-    viewBox="0 0 20 20"
-    aria-hidden="true"
-    className={className}
-    fill="currentColor"
-  >
-    <path d="M5.75 4.75A.75.75 0 0 1 6.5 4h1A.75.75 0 0 1 8.25 4.75v10.5a.75.75 0 0 1-.75.75h-1a.75.75 0 0 1-.75-.75V4.75Zm6 0A.75.75 0 0 1 12.5 4h1a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-1a.75.75 0 0 1-.75-.75V4.75Z" />
-  </svg>
-)
-
-const TrashIcon = ({ className = "h-4 w-4" }) => (
-  <svg
-    viewBox="0 0 20 20"
-    aria-hidden="true"
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.7"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M3.75 5.75h12.5" />
-    <path d="M7.25 3.75h5.5" />
-    <path d="m6.5 5.75.55 8.11a1 1 0 0 0 1 .93h3.9a1 1 0 0 0 1-.93l.55-8.11" />
-    <path d="M8.25 8.5v3.75" />
-    <path d="M11.75 8.5v3.75" />
-  </svg>
-)
 
 const normalizeBackendKind = (value) =>
   String(value ?? "")
@@ -1496,7 +1456,7 @@ export default function ApplicationsTab({
                 aria-label="Servisi calistir"
                 title="Calistir"
               >
-                <PlayIcon />
+                <RiPlayFill size={16} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -1506,7 +1466,7 @@ export default function ApplicationsTab({
                 aria-label="Aktif calistirmayi iptal et"
                 title="Iptal"
               >
-                <PauseIcon />
+                <RiPauseFill size={16} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -1516,7 +1476,7 @@ export default function ApplicationsTab({
                 aria-label="Loglari temizle"
                 title="Log temizle"
               >
-                <TrashIcon />
+                <RiDeleteBin6Line size={16} aria-hidden="true" />
               </button>
             </div>
           </div>
