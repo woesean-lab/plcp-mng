@@ -13,6 +13,47 @@ const HISTORY_CONSOLE_TAB_ID = "__history__"
 const CMD_PROMPT_PATH = "C:\\plcp\\applications>"
 const CMD_WINDOW_TITLE = "Komut Istemi"
 
+const PlayIcon = ({ className = "h-4 w-4" }) => (
+  <svg
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M6 4.8c0-.86.93-1.4 1.68-.97l7.4 4.2c.75.43.75 1.51 0 1.94l-7.4 4.2C6.93 14.6 6 14.06 6 13.2V4.8Z" />
+  </svg>
+)
+
+const PauseIcon = ({ className = "h-4 w-4" }) => (
+  <svg
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M5.75 4.75A.75.75 0 0 1 6.5 4h1A.75.75 0 0 1 8.25 4.75v10.5a.75.75 0 0 1-.75.75h-1a.75.75 0 0 1-.75-.75V4.75Zm6 0A.75.75 0 0 1 12.5 4h1a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-1a.75.75 0 0 1-.75-.75V4.75Z" />
+  </svg>
+)
+
+const TrashIcon = ({ className = "h-4 w-4" }) => (
+  <svg
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.7"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3.75 5.75h12.5" />
+    <path d="M7.25 3.75h5.5" />
+    <path d="m6.5 5.75.55 8.11a1 1 0 0 0 1 .93h3.9a1 1 0 0 0 1-.93l.55-8.11" />
+    <path d="M8.25 8.5v3.75" />
+    <path d="M11.75 8.5v3.75" />
+  </svg>
+)
+
 const normalizeBackendKind = (value) =>
   String(value ?? "")
     .trim()
@@ -74,7 +115,7 @@ const getConsoleStatusMeta = (status) => {
       code: "OK",
       dotClass: "bg-emerald-300",
       textClass: "text-emerald-300",
-      badgeClass: "border-emerald-300/40 bg-emerald-500/10 text-emerald-200",
+      badgeClass: "border-slate-700 bg-slate-900/90 text-emerald-300",
     }
   }
   if (normalized === "error") {
@@ -82,7 +123,7 @@ const getConsoleStatusMeta = (status) => {
       code: "ERR",
       dotClass: "bg-rose-300",
       textClass: "text-rose-300",
-      badgeClass: "border-rose-300/40 bg-rose-500/10 text-rose-200",
+      badgeClass: "border-slate-700 bg-slate-900/90 text-rose-300",
     }
   }
   if (normalized === "connecting") {
@@ -90,14 +131,14 @@ const getConsoleStatusMeta = (status) => {
       code: "CON",
       dotClass: "bg-sky-300",
       textClass: "text-sky-300",
-      badgeClass: "border-sky-300/40 bg-sky-500/10 text-sky-200",
+      badgeClass: "border-slate-700 bg-slate-900/90 text-sky-300",
     }
   }
   return {
     code: "RUN",
     dotClass: "bg-slate-300",
     textClass: "text-slate-300",
-    badgeClass: "border-white/15 bg-white/[0.04] text-slate-200",
+    badgeClass: "border-slate-700 bg-slate-900/90 text-slate-200",
   }
 }
 
@@ -1266,7 +1307,7 @@ export default function ApplicationsTab({
         ? "border-sky-300/60 bg-sky-500/15 text-sky-100"
         : runningRunCount > 0
           ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
-          : "border-white/20 bg-white/10 text-slate-200"
+          : "border-slate-700 bg-slate-900/90 text-slate-200"
   const activeConsoleTitle = activeRunSession ? activeRunSession.label : selectedApplication?.name || "Genel Log"
   const activeConsoleAbout = activeRunSession?.applicationAbout || selectedApplication?.about || "Calistirmak icin servis secin."
   const activeConsoleBackend = activeRunSession
@@ -1275,19 +1316,23 @@ export default function ApplicationsTab({
       ? getBackendLabelForDisplay(selectedApplication.backendLabel)
       : MASKED_BACKEND_TEXT
   const terminalFieldClass =
-    "h-10 w-full appearance-none rounded-lg border border-white/10 bg-[#07090d] px-3.5 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:border-accent-300/70 focus:bg-[#0a0d12] focus:outline-none focus:ring-2 focus:ring-accent-500/18 disabled:cursor-not-allowed disabled:opacity-60"
+    "h-10 w-full appearance-none rounded-lg border border-slate-700 bg-slate-900 px-3.5 font-mono text-[11px] text-slate-100 transition focus:border-slate-500 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500/20 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalTextInputClass =
-    "h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-[#07090d] px-3 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition placeholder:text-slate-500 focus:border-accent-300/70 focus:bg-[#0a0d12] focus:outline-none focus:ring-2 focus:ring-accent-500/18"
+    "h-9 min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 font-mono text-[11px] text-slate-100 transition placeholder:text-slate-500 focus:border-slate-500 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
   const terminalButtonBaseClass =
-    "inline-flex h-10 items-center justify-center rounded-lg border px-3.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:outline-none focus:ring-2 focus:ring-accent-500/18 disabled:cursor-not-allowed disabled:opacity-60"
+    "inline-flex h-10 items-center justify-center rounded-lg border px-3.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition focus:outline-none focus:ring-2 focus:ring-slate-500/20 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonNeutralClass =
-    `${terminalButtonBaseClass} border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08]`
-  const terminalButtonPrimaryClass =
-    `${terminalButtonBaseClass} border-accent-300/45 bg-accent-500/[0.12] text-accent-100 hover:border-accent-200/70 hover:bg-accent-500/[0.18]`
-  const terminalButtonDangerClass =
-    `${terminalButtonBaseClass} border-rose-300/35 bg-rose-500/[0.08] text-rose-100 hover:border-rose-200/70 hover:bg-rose-500/[0.14]`
+    `${terminalButtonBaseClass} border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600 hover:bg-slate-800`
+  const terminalIconButtonBaseClass =
+    "inline-flex h-10 w-10 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+  const terminalRunButtonClass =
+    `${terminalIconButtonBaseClass} border-emerald-700 bg-emerald-500/12 text-emerald-300 hover:border-emerald-600 hover:bg-emerald-500/16 focus:ring-emerald-500/20`
+  const terminalPauseButtonClass =
+    `${terminalIconButtonBaseClass} border-sky-700 bg-sky-500/12 text-sky-300 hover:border-sky-600 hover:bg-sky-500/16 focus:ring-sky-500/20`
+  const terminalClearButtonClass =
+    `${terminalIconButtonBaseClass} border-rose-700 bg-rose-500/12 text-rose-300 hover:border-rose-600 hover:bg-rose-500/16 focus:ring-rose-500/20`
   const terminalTabBaseClass =
-    "inline-flex h-9 min-w-[170px] items-center gap-2 rounded-lg border px-3 transition"
+    "inline-flex h-9 min-w-[170px] items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 px-3 transition"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1321,11 +1366,11 @@ export default function ApplicationsTab({
       </header>
 
       <div className="grid items-start gap-6 lg:grid-cols-3">
-        <section className="order-2 overflow-hidden rounded-2xl border border-white/10 bg-[#020304] shadow-card lg:order-1 lg:col-span-2">
-          <div className="border-b border-white/10 bg-[#171a21] px-4 py-2.5">
+        <section className="order-2 overflow-hidden rounded-2xl border border-slate-800 bg-[#040506] shadow-card lg:order-1 lg:col-span-2">
+          <div className="border-b border-slate-800 bg-[#17191d] px-4 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-3 w-3 rounded-sm border border-white/15 bg-[#07090c]" />
+                <span className="inline-flex h-3 w-3 rounded-sm border border-slate-700 bg-slate-900" />
                 <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200">
                   {CMD_WINDOW_TITLE}
                 </span>
@@ -1334,8 +1379,8 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="border-b border-white/10 bg-[#0a0d12] px-4 py-3">
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_110px_120px_auto]">
+          <div className="border-b border-slate-800 bg-[#0b0d10] px-4 py-3">
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
               <div className="relative">
                 <select
                   value={selectedApplicationId}
@@ -1369,32 +1414,36 @@ export default function ApplicationsTab({
                 type="button"
                 onClick={handleRun}
                 disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                className={terminalButtonPrimaryClass}
+                className={terminalRunButtonClass}
+                aria-label="Servisi calistir"
+                title="Calistir"
               >
-                Calistir
+                <PlayIcon />
               </button>
               <button
                 type="button"
                 onClick={() => handleCancelRun()}
                 disabled={!canCancelActiveRun}
-                className={terminalButtonDangerClass}
+                className={terminalPauseButtonClass}
+                aria-label="Aktif calistirmayi iptal et"
+                title="Iptal"
               >
-                Iptal
+                <PauseIcon />
               </button>
-              <div className="flex items-center justify-end">
-                <button
-                  type="button"
-                  onClick={handleClearLogs}
-                  disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                  className={terminalButtonNeutralClass}
-                >
-                  Log temizle
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleClearLogs}
+                disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
+                className={terminalClearButtonClass}
+                aria-label="Loglari temizle"
+                title="Log temizle"
+              >
+                <TrashIcon />
+              </button>
             </div>
           </div>
 
-          <div className="border-b border-white/10 bg-[#05070a] px-4 py-3">
+          <div className="border-b border-slate-800 bg-[#06080b] px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2 font-mono text-[11px]">
               <span className="flex-none text-slate-500">{CMD_PROMPT_PATH}</span>
               <span className="min-w-0 truncate text-slate-100">{activeConsoleTitle}</span>
@@ -1403,7 +1452,7 @@ export default function ApplicationsTab({
             </div>
             <p className="mt-2 text-xs text-slate-500">{activeConsoleAbout}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
+              <span className="rounded-full border border-slate-700 bg-slate-900/90 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
                 {canViewApplicationLogs
                   ? !activeRunSession && isLogsLoading
                     ? "yukleniyor..."
@@ -1415,7 +1464,7 @@ export default function ApplicationsTab({
               >
                 {connectionLabel}
               </span>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
+              <span className="rounded-full border border-slate-700 bg-slate-900/90 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
                 {runSessions.length} oturum
               </span>
             </div>
@@ -1426,19 +1475,19 @@ export default function ApplicationsTab({
             )}
           </div>
 
-          <div className="border-b border-white/10 bg-[#030406] px-4 py-2.5">
+          <div className="border-b border-slate-800 bg-[#040607] px-4 py-2.5">
             <div className="no-scrollbar flex gap-2 overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
                 className={`${terminalTabBaseClass} justify-between ${
                   activeRunSession
-                    ? "border-white/10 bg-[#080b10] text-slate-300 hover:border-white/20 hover:bg-[#0c1016]"
-                    : "border-accent-300/45 bg-accent-500/[0.12] text-accent-100 shadow-[0_0_0_1px_rgba(58,199,255,0.08)]"
+                    ? "text-slate-400 hover:border-slate-700 hover:bg-slate-800/90"
+                    : "border-slate-600 bg-slate-800 text-slate-100"
                 }`}
               >
                 <span className="truncate font-mono text-[11px] font-semibold tracking-[0.04em]">Genel Log</span>
-                <span className="rounded-full border border-white/10 bg-black/20 px-1.5 py-0.5 font-mono text-[9px] text-slate-400">
+                <span className="rounded-full border border-slate-700 bg-slate-950 px-1.5 py-0.5 font-mono text-[9px] text-slate-400">
                   {historyLogs.length}
                 </span>
               </button>
@@ -1453,8 +1502,8 @@ export default function ApplicationsTab({
                     key={`run-tab-${entry.id}`}
                     className={`${terminalTabBaseClass} min-w-[196px] pl-2.5 pr-1.5 ${
                       entryIsActive
-                        ? "border-accent-300/40 bg-accent-500/[0.10] shadow-[0_0_0_1px_rgba(58,199,255,0.08)]"
-                        : "border-white/10 bg-[#080b10] hover:border-white/20 hover:bg-[#0c1016]"
+                        ? "border-slate-600 bg-slate-800 text-slate-100"
+                        : "text-slate-400 hover:border-slate-700 hover:bg-slate-800/90"
                     }`}
                   >
                     <button
@@ -1476,7 +1525,7 @@ export default function ApplicationsTab({
                       <button
                         type="button"
                         onClick={() => handleCloseRunTab(entry.id)}
-                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-md border border-white/10 bg-black/20 font-mono text-[10px] text-slate-500 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-slate-200"
+                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-md border border-slate-700 bg-slate-950 font-mono text-[10px] text-slate-500 transition hover:border-slate-600 hover:bg-slate-900 hover:text-slate-200"
                         aria-label={`${entry.label} sekmesini kapat`}
                       >
                         x
@@ -1498,7 +1547,7 @@ export default function ApplicationsTab({
             ) : (
               <div className="space-y-1">
                 {activeRunPrompt && isActiveRunLive && (
-                  <div className="mb-3 rounded-md border border-emerald-300/20 bg-emerald-500/[0.05] px-3 py-3">
+                  <div className="mb-3 rounded-md border border-slate-800 bg-slate-900/70 px-3 py-3">
                     <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap">
                       <span className="hidden flex-none text-slate-500 sm:inline">{CMD_PROMPT_PATH}</span>
                       <span className="flex-none text-emerald-300">INPUT</span>
@@ -1527,14 +1576,14 @@ export default function ApplicationsTab({
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("evet", activeRunId)}
-                            className={terminalButtonPrimaryClass}
+                            className={terminalButtonNeutralClass}
                           >
                             Evet
                           </button>
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("hayir", activeRunId)}
-                            className={terminalButtonDangerClass}
+                            className={terminalButtonNeutralClass}
                           >
                             Hayir
                           </button>
