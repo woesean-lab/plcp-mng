@@ -1332,10 +1332,10 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="border-b border-white/10 bg-ink-900/40 px-3 py-2.5">
+          <div className="border-b border-white/10 bg-ink-900/35 px-3 py-2.5">
             <div className="flex items-center justify-between gap-2">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Konsol Sekmeleri</p>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-slate-400">
                 {runSessions.length} oturum
               </span>
             </div>
@@ -1346,14 +1346,14 @@ export default function ApplicationsTab({
                 onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
                 className={`min-w-[150px] rounded-lg border px-2.5 py-2 text-left transition ${
                   activeRunSession
-                    ? "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10"
-                    : "border-accent-300/60 bg-accent-500/20"
+                    ? "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
+                    : "border-white/20 bg-white/[0.08]"
                 }`}
               >
-                <p className={`truncate text-[11px] font-semibold ${activeRunSession ? "text-slate-100" : "text-accent-50"}`}>
+                <p className={`truncate text-[11px] font-semibold ${activeRunSession ? "text-slate-200" : "text-white"}`}>
                   Genel Log
                 </p>
-                <p className={`mt-0.5 text-[10px] ${activeRunSession ? "text-slate-400" : "text-accent-100/80"}`}>
+                <p className={`mt-0.5 text-[10px] ${activeRunSession ? "text-slate-500" : "text-slate-300"}`}>
                   {historyLogs.length} satir
                 </p>
               </button>
@@ -1371,20 +1371,20 @@ export default function ApplicationsTab({
                         : "Hazir"
                 const statusToneClass =
                   entry.status === "error"
-                    ? "border-rose-300/45 bg-rose-500/20 text-rose-100"
+                    ? "border-rose-300/30 bg-rose-500/10 text-rose-200"
                     : entry.status === "success"
-                      ? "border-emerald-300/45 bg-emerald-500/20 text-emerald-100"
+                      ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-200"
                       : entryIsLive
-                        ? "border-sky-300/45 bg-sky-500/20 text-sky-100"
-                        : "border-slate-300/35 bg-slate-500/10 text-slate-300"
+                        ? "border-slate-300/30 bg-slate-500/10 text-slate-200"
+                        : "border-white/15 bg-white/[0.03] text-slate-300"
 
                 return (
                   <div
                     key={`run-tab-${entry.id}`}
                     className={`min-w-[180px] rounded-lg border transition ${
                       entryIsActive
-                        ? "border-accent-300/60 bg-accent-500/12 shadow-[0_0_0_1px_rgba(93,188,255,0.25)_inset]"
-                        : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10"
+                        ? "border-white/20 bg-white/[0.08]"
+                        : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-1.5 px-2.5 pt-2">
@@ -1393,16 +1393,16 @@ export default function ApplicationsTab({
                         onClick={() => setActiveConsoleTabId(entry.id)}
                         className="min-w-0 flex-1 text-left"
                       >
-                        <p className={`truncate text-[11px] font-semibold ${entryIsActive ? "text-accent-100" : "text-slate-100"}`}>
+                        <p className={`truncate text-[11px] font-semibold ${entryIsActive ? "text-white" : "text-slate-200"}`}>
                           {entry.label}
                         </p>
-                        <p className="mt-0.5 truncate text-[10px] text-slate-400">{getBackendLabelForDisplay(entry.backendLabel)}</p>
+                        <p className="mt-0.5 truncate text-[10px] text-slate-500">{getBackendLabelForDisplay(entry.backendLabel)}</p>
                       </button>
                       {!entryIsLive && (
                         <button
                           type="button"
                           onClick={() => handleCloseRunTab(entry.id)}
-                          className="rounded-md border border-white/15 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300 transition hover:border-white/30 hover:text-slate-100"
+                          className="rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-slate-400 transition hover:border-white/20 hover:text-slate-200"
                           aria-label={`${entry.label} sekmesini kapat`}
                         >
                           x
