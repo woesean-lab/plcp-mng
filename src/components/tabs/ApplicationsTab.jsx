@@ -1332,92 +1332,61 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="border-b border-white/10 bg-ink-900/35 px-3 py-2.5">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Konsol Sekmeleri</p>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-slate-400">
-                {runSessions.length} oturum
-              </span>
-            </div>
-
-            <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
+          <div className="border-b border-white/10 bg-ink-900/30 px-3 py-2">
+            <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
               <button
                 type="button"
                 onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                className={`min-w-[150px] rounded-lg border px-2.5 py-2 text-left transition ${
+                className={`inline-flex h-8 min-w-[140px] items-center justify-between gap-2 rounded-md border px-2.5 text-left text-[10px] font-semibold transition ${
                   activeRunSession
-                    ? "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
-                    : "border-white/20 bg-white/[0.08]"
+                    ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
+                    : "border-white/20 bg-white/[0.08] text-white"
                 }`}
               >
-                <p className={`truncate text-[11px] font-semibold ${activeRunSession ? "text-slate-200" : "text-white"}`}>
-                  Genel Log
-                </p>
-                <p className={`mt-0.5 text-[10px] ${activeRunSession ? "text-slate-500" : "text-slate-300"}`}>
-                  {historyLogs.length} satir
-                </p>
+                <span className="truncate">Genel Log</span>
+                <span className="text-[9px] text-slate-400">{historyLogs.length}</span>
               </button>
 
               {runSessions.map((entry) => {
                 const entryIsActive = activeConsoleTabId === entry.id
                 const entryIsLive = isRunLive(entry.status)
-                const statusLabel =
+                const statusDotClass =
                   entry.status === "error"
-                    ? "Hata"
+                    ? "bg-rose-300"
                     : entry.status === "success"
-                      ? "Tamamlandi"
+                      ? "bg-emerald-300"
                       : entryIsLive
-                        ? "Calisiyor"
-                        : "Hazir"
-                const statusToneClass =
-                  entry.status === "error"
-                    ? "border-rose-300/30 bg-rose-500/10 text-rose-200"
-                    : entry.status === "success"
-                      ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-200"
-                      : entryIsLive
-                        ? "border-slate-300/30 bg-slate-500/10 text-slate-200"
-                        : "border-white/15 bg-white/[0.03] text-slate-300"
+                        ? "bg-sky-300"
+                        : "bg-slate-400"
 
                 return (
                   <div
                     key={`run-tab-${entry.id}`}
-                    className={`min-w-[180px] rounded-lg border transition ${
+                    className={`inline-flex h-8 min-w-[180px] items-center gap-1 rounded-md border pl-2 pr-1 transition ${
                       entryIsActive
                         ? "border-white/20 bg-white/[0.08]"
                         : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-1.5 px-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveConsoleTabId(entry.id)}
+                      className="inline-flex min-w-0 flex-1 items-center gap-2 text-left text-[10px] font-semibold text-slate-200"
+                    >
+                      <span className={`h-1.5 w-1.5 flex-none rounded-full ${statusDotClass}`} />
+                      <span className="truncate">{entry.label}</span>
+                      <span className="flex-none text-[9px] text-slate-500">{(runLogsByTab[entry.id] || []).length}</span>
+                    </button>
+                    {!entryIsLive && (
                       <button
                         type="button"
-                        onClick={() => setActiveConsoleTabId(entry.id)}
-                        className="min-w-0 flex-1 text-left"
+                        onClick={() => handleCloseRunTab(entry.id)}
+                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded border border-white/10 bg-white/[0.02] text-[10px] text-slate-400 transition hover:border-white/20 hover:text-slate-200"
+                        aria-label={`${entry.label} sekmesini kapat`}
                       >
-                        <p className={`truncate text-[11px] font-semibold ${entryIsActive ? "text-white" : "text-slate-200"}`}>
-                          {entry.label}
-                        </p>
-                        <p className="mt-0.5 truncate text-[10px] text-slate-500">{getBackendLabelForDisplay(entry.backendLabel)}</p>
+                        x
                       </button>
-                      {!entryIsLive && (
-                        <button
-                          type="button"
-                          onClick={() => handleCloseRunTab(entry.id)}
-                          className="rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[10px] text-slate-400 transition hover:border-white/20 hover:text-slate-200"
-                          aria-label={`${entry.label} sekmesini kapat`}
-                        >
-                          x
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 px-2.5 pb-2 pt-1.5">
-                      <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] ${statusToneClass}`}>
-                        {statusLabel}
-                      </span>
-                      <span className="text-[10px] text-slate-500">
-                        {(runLogsByTab[entry.id] || []).length} satir
-                      </span>
-                    </div>
+                    )}
                   </div>
                 )
               })}
