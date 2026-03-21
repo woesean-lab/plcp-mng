@@ -1354,7 +1354,7 @@ export default function ApplicationsTab({
       ? getBackendLabelForDisplay(selectedApplication.backendLabel)
       : MASKED_BACKEND_TEXT
   const terminalFieldClass =
-    "h-10 w-full appearance-none rounded-lg border border-slate-700 bg-slate-900 px-3.5 font-mono text-[11px] text-slate-100 transition focus:border-slate-500 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+    "h-9 w-full appearance-none rounded-md border border-slate-800 bg-[#0a1019] px-3 text-[11px] text-slate-100 transition focus:border-slate-600 focus:bg-[#0d1420] focus:outline-none focus:ring-2 focus:ring-slate-700/20 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalTextInputClass =
     "h-9 min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 font-mono text-[11px] text-slate-100 transition placeholder:text-slate-500 focus:border-slate-500 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
   const terminalButtonBaseClass =
@@ -1362,13 +1362,9 @@ export default function ApplicationsTab({
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600 hover:bg-slate-800`
   const terminalIconButtonBaseClass =
-    "inline-flex h-10 w-10 items-center justify-center rounded-lg border transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
-  const terminalRunButtonClass =
-    `${terminalIconButtonBaseClass} border-emerald-500/80 bg-emerald-600/85 text-emerald-50 hover:border-emerald-400 hover:bg-emerald-500/90 focus:ring-emerald-500/30`
-  const terminalPauseButtonClass =
-    `${terminalIconButtonBaseClass} border-sky-500/80 bg-sky-600/85 text-sky-50 hover:border-sky-400 hover:bg-sky-500/90 focus:ring-sky-500/30`
-  const terminalClearButtonClass =
-    `${terminalIconButtonBaseClass} border-rose-500/80 bg-rose-600/85 text-rose-50 hover:border-rose-400 hover:bg-rose-500/90 focus:ring-rose-500/30`
+    "inline-flex h-9 w-full items-center justify-center rounded-md border transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-9"
+  const terminalActionButtonClass =
+    `${terminalIconButtonBaseClass} border-sky-900 bg-[#0b1624] text-sky-200 hover:border-sky-800 hover:bg-[#102033] focus:ring-sky-800/30`
   const terminalTabBaseClass =
     "inline-flex h-9 min-w-[170px] items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 px-3 transition"
 
@@ -1403,8 +1399,8 @@ export default function ApplicationsTab({
         </div>
       </header>
 
-      <div className="grid items-start gap-6 lg:grid-cols-3">
-        <section className="order-2 overflow-hidden rounded-2xl border border-slate-800 bg-[#040506] shadow-card lg:order-1 lg:col-span-2">
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
+        <section className="order-1 min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-[#040506] shadow-card lg:col-span-2">
           <div className="border-b border-slate-800 bg-[#17191d] px-4 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-3">
@@ -1413,13 +1409,13 @@ export default function ApplicationsTab({
                   {CMD_WINDOW_TITLE}
                 </span>
               </div>
-              <span className="font-mono text-[10px] text-slate-400">C:\Windows\System32\cmd.exe</span>
+              <span className="hidden font-mono text-[10px] text-slate-400 sm:inline">C:\Windows\System32\cmd.exe</span>
             </div>
           </div>
 
-          <div className="border-b border-slate-800 bg-[#0b0d10] px-4 py-3">
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
-              <div className="relative">
+          <div className="border-b border-slate-800 bg-[#0b0d10] px-3 py-3 sm:px-4">
+            <div className="grid grid-cols-3 gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
+              <div className="relative col-span-3 md:col-span-1">
                 <select
                   value={selectedApplicationId}
                   onChange={(event) => setSelectedApplicationId(event.target.value)}
@@ -1452,7 +1448,7 @@ export default function ApplicationsTab({
                 type="button"
                 onClick={handleRun}
                 disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                className={terminalRunButtonClass}
+                className={terminalActionButtonClass}
                 aria-label="Servisi calistir"
                 title="Calistir"
               >
@@ -1462,7 +1458,7 @@ export default function ApplicationsTab({
                 type="button"
                 onClick={() => handleCancelRun()}
                 disabled={!canCancelActiveRun}
-                className={terminalPauseButtonClass}
+                className={terminalActionButtonClass}
                 aria-label="Aktif calistirmayi iptal et"
                 title="Iptal"
               >
@@ -1472,7 +1468,7 @@ export default function ApplicationsTab({
                 type="button"
                 onClick={handleClearLogs}
                 disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                className={terminalClearButtonClass}
+                className={terminalActionButtonClass}
                 aria-label="Loglari temizle"
                 title="Log temizle"
               >
@@ -1575,7 +1571,7 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-[#010203] px-4 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+          <div className="no-scrollbar h-[52vh] min-h-[280px] max-h-[420px] overflow-y-auto overflow-x-hidden bg-[#010203] px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:px-4 sm:text-[12px] sm:leading-6">
             {!canViewApplicationLogs ? (
               <div className="flex h-full items-center justify-center text-slate-500">
                 Servis Konsolu log goruntuleme yetkiniz yok.
@@ -1628,7 +1624,7 @@ export default function ApplicationsTab({
                         </div>
                       )}
                       {activeRunPrompt.inputType === "text" && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
                           <input
                             type="text"
                             value={activeRunPromptValue}
@@ -1652,7 +1648,7 @@ export default function ApplicationsTab({
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("", activeRunId)}
-                            className={terminalButtonNeutralClass}
+                            className={`${terminalButtonNeutralClass} w-full sm:w-auto`}
                           >
                             Gonder
                           </button>
@@ -1706,7 +1702,7 @@ export default function ApplicationsTab({
           </div>
         </section>
 
-        <section className={`order-1 self-start ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
+        <section className={`order-2 min-w-0 self-start ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-300/85">Servis Yonet</p>
