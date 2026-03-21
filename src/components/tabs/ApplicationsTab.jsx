@@ -1274,10 +1274,20 @@ export default function ApplicationsTab({
     : selectedApplication
       ? getBackendLabelForDisplay(selectedApplication.backendLabel)
       : MASKED_BACKEND_TEXT
-  const terminalSelectClass =
-    "h-9 w-full appearance-none rounded-md border border-white/10 bg-[#040506] px-3 font-mono text-[11px] text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-  const terminalButtonClass =
-    "inline-flex h-9 items-center justify-center rounded-md border border-white/12 bg-white/[0.04] px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/25 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+  const terminalFieldClass =
+    "h-10 w-full appearance-none rounded-lg border border-white/10 bg-[#07090d] px-3.5 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:border-accent-300/70 focus:bg-[#0a0d12] focus:outline-none focus:ring-2 focus:ring-accent-500/18 disabled:cursor-not-allowed disabled:opacity-60"
+  const terminalTextInputClass =
+    "h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-[#07090d] px-3 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition placeholder:text-slate-500 focus:border-accent-300/70 focus:bg-[#0a0d12] focus:outline-none focus:ring-2 focus:ring-accent-500/18"
+  const terminalButtonBaseClass =
+    "inline-flex h-10 items-center justify-center rounded-lg border px-3.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:outline-none focus:ring-2 focus:ring-accent-500/18 disabled:cursor-not-allowed disabled:opacity-60"
+  const terminalButtonNeutralClass =
+    `${terminalButtonBaseClass} border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08]`
+  const terminalButtonPrimaryClass =
+    `${terminalButtonBaseClass} border-accent-300/45 bg-accent-500/[0.12] text-accent-100 hover:border-accent-200/70 hover:bg-accent-500/[0.18]`
+  const terminalButtonDangerClass =
+    `${terminalButtonBaseClass} border-rose-300/35 bg-rose-500/[0.08] text-rose-100 hover:border-rose-200/70 hover:bg-rose-500/[0.14]`
+  const terminalTabBaseClass =
+    "inline-flex h-9 min-w-[170px] items-center gap-2 rounded-lg border px-3 transition"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1326,24 +1336,40 @@ export default function ApplicationsTab({
 
           <div className="border-b border-white/10 bg-[#0a0d12] px-4 py-3">
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_110px_120px_auto]">
-              <select
-                value={selectedApplicationId}
-                onChange={(event) => setSelectedApplicationId(event.target.value)}
-                disabled={!hasApplications}
-                className={terminalSelectClass}
-              >
-                <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
-                {runDropdownApplications.map((entry) => (
-                  <option key={`run-app-${entry.id}`} value={entry.id}>
-                    {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={selectedApplicationId}
+                  onChange={(event) => setSelectedApplicationId(event.target.value)}
+                  disabled={!hasApplications}
+                  className={`${terminalFieldClass} pr-10`}
+                >
+                  <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
+                  {runDropdownApplications.map((entry) => (
+                    <option key={`run-app-${entry.id}`} value={entry.id}>
+                      {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500">
+                  <svg
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m5 8 5 5 5-5" />
+                  </svg>
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={handleRun}
                 disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                className={`${terminalButtonClass} border-emerald-300/40 bg-emerald-500/[0.08] text-emerald-100 hover:border-emerald-200/70 hover:bg-emerald-500/[0.14]`}
+                className={terminalButtonPrimaryClass}
               >
                 Calistir
               </button>
@@ -1351,7 +1377,7 @@ export default function ApplicationsTab({
                 type="button"
                 onClick={() => handleCancelRun()}
                 disabled={!canCancelActiveRun}
-                className={`${terminalButtonClass} border-rose-300/40 bg-rose-500/[0.08] text-rose-100 hover:border-rose-200/70 hover:bg-rose-500/[0.14]`}
+                className={terminalButtonDangerClass}
               >
                 Iptal
               </button>
@@ -1360,7 +1386,7 @@ export default function ApplicationsTab({
                   type="button"
                   onClick={handleClearLogs}
                   disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                  className={terminalButtonClass}
+                  className={terminalButtonNeutralClass}
                 >
                   Log temizle
                 </button>
@@ -1405,14 +1431,16 @@ export default function ApplicationsTab({
               <button
                 type="button"
                 onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                className={`inline-flex h-8 min-w-[140px] items-center justify-between gap-2 rounded-md border px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
+                className={`${terminalTabBaseClass} justify-between ${
                   activeRunSession
-                    ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.06]"
-                    : "border-emerald-300/35 bg-emerald-500/[0.08] text-emerald-100"
+                    ? "border-white/10 bg-[#080b10] text-slate-300 hover:border-white/20 hover:bg-[#0c1016]"
+                    : "border-accent-300/45 bg-accent-500/[0.12] text-accent-100 shadow-[0_0_0_1px_rgba(58,199,255,0.08)]"
                 }`}
               >
-                <span className="truncate">Genel Log</span>
-                <span className="text-[9px] text-slate-500">{historyLogs.length}</span>
+                <span className="truncate font-mono text-[11px] font-semibold tracking-[0.04em]">Genel Log</span>
+                <span className="rounded-full border border-white/10 bg-black/20 px-1.5 py-0.5 font-mono text-[9px] text-slate-400">
+                  {historyLogs.length}
+                </span>
               </button>
 
               {runSessions.map((entry) => {
@@ -1423,26 +1451,32 @@ export default function ApplicationsTab({
                 return (
                   <div
                     key={`run-tab-${entry.id}`}
-                    className={`inline-flex h-8 min-w-[180px] items-center gap-1 rounded-md border pl-2.5 pr-1.5 transition ${
+                    className={`${terminalTabBaseClass} min-w-[196px] pl-2.5 pr-1.5 ${
                       entryIsActive
-                        ? "border-white/20 bg-white/[0.08]"
-                        : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+                        ? "border-accent-300/40 bg-accent-500/[0.10] shadow-[0_0_0_1px_rgba(58,199,255,0.08)]"
+                        : "border-white/10 bg-[#080b10] hover:border-white/20 hover:bg-[#0c1016]"
                     }`}
                   >
                     <button
                       type="button"
                       onClick={() => setActiveConsoleTabId(entry.id)}
-                      className="inline-flex min-w-0 flex-1 items-center gap-2 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200"
+                      className="inline-flex min-w-0 flex-1 items-center gap-2 text-left"
                     >
                       <span className={`h-1.5 w-1.5 flex-none rounded-full ${statusMeta.dotClass}`} />
-                      <span className="truncate">{entry.label}</span>
-                      <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                      <span className="min-w-0 flex-1 truncate font-mono text-[11px] font-semibold tracking-[0.04em] text-slate-100">
+                        {entry.label}
+                      </span>
+                      <span
+                        className={`flex-none rounded-full border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] ${statusMeta.badgeClass}`}
+                      >
+                        {statusMeta.code}
+                      </span>
                     </button>
                     {!entryIsLive && (
                       <button
                         type="button"
                         onClick={() => handleCloseRunTab(entry.id)}
-                        className="inline-flex h-5 w-5 flex-none items-center justify-center rounded-sm border border-white/10 bg-white/[0.03] font-mono text-[10px] text-slate-400 transition hover:border-white/25 hover:text-slate-200"
+                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-md border border-white/10 bg-black/20 font-mono text-[10px] text-slate-500 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-slate-200"
                         aria-label={`${entry.label} sekmesini kapat`}
                       >
                         x
@@ -1481,7 +1515,7 @@ export default function ApplicationsTab({
                               key={`choice-${option.value}`}
                               type="button"
                               onClick={() => handleUserInputSubmit(option.value, activeRunId)}
-                              className={terminalButtonClass}
+                              className={terminalButtonNeutralClass}
                             >
                               {option.label}
                             </button>
@@ -1493,14 +1527,14 @@ export default function ApplicationsTab({
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("evet", activeRunId)}
-                            className={`${terminalButtonClass} border-emerald-300/40 bg-emerald-500/[0.08] text-emerald-100 hover:border-emerald-200/70 hover:bg-emerald-500/[0.14]`}
+                            className={terminalButtonPrimaryClass}
                           >
                             Evet
                           </button>
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("hayir", activeRunId)}
-                            className={`${terminalButtonClass} border-rose-300/40 bg-rose-500/[0.08] text-rose-100 hover:border-rose-200/70 hover:bg-rose-500/[0.14]`}
+                            className={terminalButtonDangerClass}
                           >
                             Hayir
                           </button>
@@ -1526,12 +1560,12 @@ export default function ApplicationsTab({
                               }
                             }}
                             placeholder={activeRunPrompt.placeholder || "Cevap girin ve Enter"}
-                            className="h-8 min-w-0 flex-1 rounded-md border border-white/12 bg-[#040506] px-2 font-mono text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+                            className={terminalTextInputClass}
                           />
                           <button
                             type="button"
                             onClick={() => handleUserInputSubmit("", activeRunId)}
-                            className={terminalButtonClass}
+                            className={terminalButtonNeutralClass}
                           >
                             Gonder
                           </button>
