@@ -670,6 +670,7 @@ export default function ApplicationsTab({
     let settled = false
     let hasConnected = false
     let hasResult = false
+    let hasSocketErrorSignal = false
 
     const completeRun = (status, message) => {
       if (settled) return
@@ -717,6 +718,16 @@ export default function ApplicationsTab({
 
       for (const packet of packets) {
         if (settled) return
+
+        if (hasSocketErrorSignal) {
+          hasSocketErrorSignal = false
+          setConnectionState("connected")
+          void persistLog(
+            selectedApplication.id,
+            "running",
+            `${serviceLabel} websocket baglantisi toparlandi, islem devam ediyor.`,
+          )
+        }
 
         if (packet === "2") {
           try {
@@ -839,7 +850,15 @@ export default function ApplicationsTab({
     })
 
     socket.addEventListener("error", () => {
-      completeRun("error", `${serviceLabel} icin websocket baglanti hatasi olustu.`)
+      if (settled) return
+      if (hasSocketErrorSignal) return
+      hasSocketErrorSignal = true
+      setConnectionState("connecting")
+      void persistLog(
+        selectedApplication.id,
+        "running",
+        `${serviceLabel} websocket baglanti hatasi algiladi, baglanti takip ediliyor...`,
+      )
     })
 
     socket.addEventListener("close", () => {
@@ -849,7 +868,12 @@ export default function ApplicationsTab({
         return
       }
       if (hasConnected) {
-        completeRun("error", `${serviceLabel} baglantisi acildi ancak sonuc gelmedi.`)
+        completeRun(
+          "error",
+          hasSocketErrorSignal
+            ? `${serviceLabel} icin websocket baglanti hatasi olustu ve baglanti kapandi.`
+            : `${serviceLabel} baglantisi acildi ancak sonuc gelmedi.`,
+        )
         return
       }
       completeRun("error", `${serviceLabel} icin websocket baglantisi kapandi.`)
@@ -903,7 +927,6 @@ export default function ApplicationsTab({
     pendingUserInput?.step,
     persistLog,
     selectedApplication?.backendKey,
-    selectedApplication?.backendLabel,
     selectedApplicationId,
     sendSocketIoEvent,
   ])
