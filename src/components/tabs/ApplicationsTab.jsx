@@ -1264,18 +1264,20 @@ export default function ApplicationsTab({
       </header>
 
       <div className="grid items-start gap-6 lg:grid-cols-3">
-        <section className="order-2 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 lg:order-1 lg:col-span-2">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+        <section className="order-2 relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-ink-900/85 via-ink-900/72 to-ink-950/80 shadow-card lg:order-1 lg:col-span-2">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/[0.06] via-white/[0.02] to-transparent" />
+
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-white/[0.02] px-4 py-3">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-              <span className="h-2 w-2 rounded-full bg-amber-300/80" />
-              <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-              <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+              <span className="h-2 w-2 rounded-full bg-slate-500" />
+              <span className="h-2 w-2 rounded-full bg-slate-400" />
+              <span className="h-2 w-2 rounded-full bg-slate-300" />
+              <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200">
                 Servis Konsolu
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+              <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.12em] text-slate-400">
                 {canViewApplicationLogs
                   ? !activeRunSession && isLogsLoading
                     ? "yukleniyor..."
@@ -1290,12 +1292,12 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="grid gap-2 border-b border-white/10 bg-ink-900/45 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_110px_120px_auto]">
+          <div className="relative z-10 grid gap-2 border-b border-white/10 bg-ink-900/55 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_110px_120px_auto]">
             <select
               value={selectedApplicationId}
               onChange={(event) => setSelectedApplicationId(event.target.value)}
               disabled={!hasApplications}
-              className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-9 w-full appearance-none rounded-lg border border-white/10 bg-ink-950/60 px-3 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
               {runDropdownApplications.map((entry) => (
@@ -1308,7 +1310,7 @@ export default function ApplicationsTab({
               type="button"
               onClick={handleRun}
               disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-              className="inline-flex h-9 items-center justify-center rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-emerald-300/45 bg-emerald-500/12 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-100 transition hover:border-emerald-200/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Calistir
             </button>
@@ -1316,7 +1318,7 @@ export default function ApplicationsTab({
               type="button"
               onClick={() => handleCancelRun()}
               disabled={!canCancelActiveRun}
-              className="inline-flex h-9 items-center justify-center rounded-md border border-rose-300/60 bg-rose-500/15 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300/45 bg-rose-500/12 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-100 transition hover:border-rose-200/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Islemi Iptal Et
             </button>
@@ -1325,22 +1327,28 @@ export default function ApplicationsTab({
                 type="button"
                 onClick={handleClearLogs}
                 disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                className="inline-flex h-9 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-9 items-center rounded-lg border border-white/12 bg-white/[0.05] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/25 hover:bg-white/[0.09] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Log temizle
               </button>
             </div>
           </div>
 
-          <div className="border-b border-white/10 bg-ink-900/30 px-3 py-2">
-            <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
+          <div className="relative z-10 border-b border-white/10 bg-ink-900/40 px-4 py-2.5">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Oturumlar</p>
+              <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] text-slate-400">
+                {runSessions.length} aktif/pasif
+              </span>
+            </div>
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
               <button
                 type="button"
                 onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                className={`inline-flex h-8 min-w-[140px] items-center justify-between gap-2 rounded-md border px-2.5 text-left text-[10px] font-semibold transition ${
+                className={`inline-flex h-9 min-w-[150px] items-center justify-between gap-2 rounded-lg border px-3 text-left text-[10px] font-semibold transition ${
                   activeRunSession
-                    ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
-                    : "border-white/20 bg-white/[0.08] text-white"
+                    ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.06]"
+                    : "border-white/20 bg-white/[0.1] text-white"
                 }`}
               >
                 <span className="truncate">Genel Log</span>
@@ -1362,10 +1370,10 @@ export default function ApplicationsTab({
                 return (
                   <div
                     key={`run-tab-${entry.id}`}
-                    className={`inline-flex h-8 min-w-[180px] items-center gap-1 rounded-md border pl-2 pr-1 transition ${
+                    className={`inline-flex h-9 min-w-[190px] items-center gap-1 rounded-lg border pl-2.5 pr-1.5 transition ${
                       entryIsActive
-                        ? "border-white/20 bg-white/[0.08]"
-                        : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
+                        ? "border-white/20 bg-white/[0.1]"
+                        : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
                     }`}
                   >
                     <button
@@ -1381,7 +1389,7 @@ export default function ApplicationsTab({
                       <button
                         type="button"
                         onClick={() => handleCloseRunTab(entry.id)}
-                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded border border-white/10 bg-white/[0.02] text-[10px] text-slate-400 transition hover:border-white/20 hover:text-slate-200"
+                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-[10px] text-slate-400 transition hover:border-white/25 hover:text-slate-200"
                         aria-label={`${entry.label} sekmesini kapat`}
                       >
                         x
@@ -1393,7 +1401,7 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="border-b border-white/10 bg-ink-900/30 px-3 py-2 text-[10px] text-slate-400">
+          <div className="relative z-10 border-b border-white/10 bg-ink-900/35 px-4 py-2.5 text-[10px] text-slate-400">
             {activeRunSession ? (
               <>
                 <p className="text-[11px] font-semibold text-slate-200">
@@ -1422,7 +1430,7 @@ export default function ApplicationsTab({
             )}
           </div>
 
-          <div className="no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+          <div className="relative z-10 no-scrollbar h-[320px] overflow-y-auto overflow-x-hidden bg-gradient-to-b from-ink-950/55 via-ink-950/40 to-ink-950/25 px-4 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
             {!canViewApplicationLogs ? (
               <div className="flex h-full items-center justify-center text-slate-500">
                 Servis Konsolu log goruntuleme yetkiniz yok.
