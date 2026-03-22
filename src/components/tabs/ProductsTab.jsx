@@ -2108,7 +2108,7 @@ export default function ProductsTab({
                             : "bg-ink-900/70"
                       } ${isOpen ? "border-accent-400/60" : ""}`}
                     >
-                      <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap">
+                      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:flex-nowrap">
                         <div
                           role="button"
                           tabIndex={!offerId || !canToggleCard ? -1 : 0}
@@ -2128,7 +2128,7 @@ export default function ProductsTab({
                             !offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""
                           }`}
                         >
-                          <div className="flex min-h-[36px] flex-wrap items-center gap-2">
+                          <div className="flex min-h-[36px] flex-wrap items-start gap-2 sm:items-center">
                             <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 text-[11px] font-semibold text-slate-200">
                               {imageUrl ? (
                                 <>
@@ -2161,7 +2161,7 @@ export default function ProductsTab({
                               {name}
                             </span>
                             {(isStockEnabled || isMissing) && (
-                              <div className="flex shrink-0 flex-nowrap items-center gap-2">
+                              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                                 {isStockEnabled && (
                                   <span
                                     className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
@@ -2187,8 +2187,8 @@ export default function ProductsTab({
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-stretch gap-1.5">
-                          <div className="flex w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:h-[36px] sm:w-[216px] sm:flex-nowrap">
+                        <div className="min-w-0">
+                          <div className="flex w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner lg:h-[36px] lg:w-[216px] lg:flex-nowrap">
                             <button
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
@@ -2569,9 +2569,9 @@ export default function ProductsTab({
                             </div>
                           </div>
                           {activePanel !== "inventory" && (
-                          <div className={`grid items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
+                          <div className={`grid min-w-0 items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
                             {isStockEnabled && activePanel === "stock-group" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                                 {isOfferRefreshing && (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-24 rounded-lg" />
@@ -2581,7 +2581,7 @@ export default function ProductsTab({
                                 )}
                                 {!isOfferRefreshing && (
                                   <>
-                                <div className="mt-1 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
+                                <div className="mt-1 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
                                   <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
                                     <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Stok grubu</label>
                                     <div
@@ -2677,7 +2677,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "messages" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                                 {isOfferRefreshing ? (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-28 rounded-lg" />
@@ -2686,7 +2686,7 @@ export default function ProductsTab({
                                   </div>
                                 ) : (
                                   <>
-                                <div className="mt-1 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                                <div className="mt-1 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                                   <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
                                     <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Mesaj grubu</label>
                                     <div
@@ -2806,8 +2806,8 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "price" && isPriceEnabled && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
-                                <div className="mt-1 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
+                              <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
+                                <div className="mt-1 grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
                                   <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
                                     <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Fiyat gir</label>
                                     <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -3280,7 +3280,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "note" && (
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
+                              <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                                 {isOfferRefreshing ? (
                                   <div className="space-y-3">
                                     <SkeletonBlock className="h-4 w-28 rounded-lg" />
@@ -3427,8 +3427,8 @@ export default function ProductsTab({
                           )}
                           {activePanel === "inventory" && (
                             <div className="grid items-start gap-3 lg:grid-cols-2">
-                              <div className="rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-5 shadow-card -mt-2 lg:col-span-2 animate-panelFade">
-                              <div className="grid gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
+                              <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
+                              <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="order-2 space-y-4 lg:col-start-2 lg:row-start-1 lg:order-none">
                             {isOfferRefreshing ? (
                               <div className="space-y-3 rounded-2xl border border-white/10 bg-ink-900/40 p-4 shadow-inner">
@@ -3758,7 +3758,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             </div>
-                          <div className="order-1 self-start rounded-2xl border border-white/10 bg-ink-900/50 p-4 lg:col-start-1 lg:row-start-1 lg:order-none">
+                          <div className="order-2 self-start rounded-2xl border border-white/10 bg-ink-900/50 p-4 lg:col-start-1 lg:row-start-1 lg:order-none">
                               <div>
                                 {messageGroupMessages.length === 0 ? (
                                   <div className="text-xs text-slate-400">
