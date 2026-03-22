@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../constants/appConstants"
-import useSocketIoProbe from "./useSocketIoProbe"
 import {
   buildSocketIoWsUrl,
   parseSocketIoEventPacket,
@@ -67,7 +66,6 @@ export default function useEldoradoAutomationRuntime({
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [automationLogsClearingByOffer, setAutomationLogsClearingByOffer] = useState({})
   const automationSocketByOfferRef = useRef({})
-  const { status: automationWsProbeStatus } = useSocketIoProbe(automationWsUrl)
 
   const apiFetchAutomationLog = async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -660,7 +658,6 @@ export default function useEldoradoAutomationRuntime({
     automationTwoFactorPromptByOffer,
     automationTwoFactorCodeByOffer,
     setAutomationTwoFactorCodeByOffer,
-    automationWsProbeStatus,
     automationLogsLoadingByOffer,
     automationLogsClearingByOffer,
     loadAutomationRunLogs,

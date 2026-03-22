@@ -866,7 +866,6 @@ function App() {
                         : "bg-white/5 text-slate-200 hover:bg-white/10"
                     }`}
                   >
-                    <span className="h-2 w-2 rounded-full bg-accent-400 shadow-glow" />
                     Admin
                   </a>
                 )}
@@ -1183,6 +1182,7 @@ function App() {
               activeUsername={userName}
               stockEnabledByOffer={eldoradoStockEnabledByOffer}
               automationWsUrl={eldoradoAutomationWsUrl}
+              automationWsProbeStatus={automationHeaderProbeStatus}
               automationEnabledByOffer={eldoradoAutomationEnabledByOffer}
               automationBackendsByOffer={eldoradoAutomationBackendsByOffer}
               automationTargetsByOffer={eldoradoAutomationTargetsByOffer}
