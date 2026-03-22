@@ -2585,7 +2585,7 @@ export default function ProductsTab({
                                   <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
                                     <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Stok grubu</label>
                                     <div
-                                      className={`mt-1 flex flex-wrap items-center gap-2 ${
+                                      className={`mt-1 grid gap-2 sm:flex sm:flex-wrap sm:items-center ${
                                         selectFlashByKey[`${offerId}:stock-group`] ? "animate-noteSwap" : ""
                                       }`}
                                     >
@@ -2598,7 +2598,7 @@ export default function ProductsTab({
                                           }))
                                         }
                                         disabled={!canManageGroups}
-                                        className="min-w-[160px] flex-1 appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="min-w-0 w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 sm:min-w-[160px] sm:flex-1 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <option value="">Bağımsız</option>
                                         {groups.map((groupOption) => (
@@ -2619,7 +2619,7 @@ export default function ProductsTab({
                                               triggerSelectFlash(offerId, "stock-group")
                                             }
                                           }
-                                          className="rounded-lg border border-amber-300/60 bg-amber-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 h-9 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25"
+                                          className="w-full rounded-lg border border-amber-300/60 bg-amber-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 h-9 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25 sm:w-auto"
                                         >
                                           KALDIR
                                         </button>
@@ -2632,7 +2632,7 @@ export default function ProductsTab({
                                             triggerSelectFlash(offerId, "stock-group")
                                           }}
                                           disabled={!isGroupSelectionDirty}
-                                          className="rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-9 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="w-full rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-9 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                                         >
                                           KAYDET
                                         </button>
@@ -2641,7 +2641,7 @@ export default function ProductsTab({
                                         <button
                                           type="button"
                                           onClick={() => handleGroupDelete(offerId, groupId)}
-                                          className="rounded-lg border border-rose-300/60 bg-rose-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 h-9 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25"
+                                          className="w-full rounded-lg border border-rose-300/60 bg-rose-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 h-9 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25 sm:w-auto"
                                         >
                                           {confirmGroupDelete === groupId ? "ONAYLA" : "SİL"}
                                         </button>
@@ -2651,20 +2651,20 @@ export default function ProductsTab({
                                   {canManageGroups && (
                                     <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
                                       <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Yeni grup</label>
-                                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                                      <div className="mt-1 grid gap-2 sm:flex sm:flex-wrap sm:items-center">
                                         <input
                                           type="text"
                                           value={groupDraftValue}
                                           onChange={(event) => handleGroupDraftChange(offerId, event.target.value)}
                                           placeholder="Yeni grup adı"
                                           disabled={!canManageGroups}
-                                          className="min-w-[160px] flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="min-w-0 w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 h-9 sm:min-w-[160px] sm:flex-1 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         />
                                         <button
                                           type="button"
                                           onClick={() => handleGroupCreate(offerId)}
                                           disabled={!canManageGroups || !groupDraftValue.trim()}
-                                          className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="w-full rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                                         >
                                           OLUŞTUR
                                         </button>
@@ -2886,7 +2886,7 @@ export default function ProductsTab({
                                           {automationTargets.length} servis
                                         </span>
                                       </div>
-                                      <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1.85fr)_minmax(150px,0.55fr)_auto]">
+                                      <div className="grid min-w-0 gap-2.5 lg:grid-cols-[minmax(0,1.85fr)_minmax(150px,0.55fr)_auto]">
                                         <input
                                           type="text"
                                           value={visibleDraftAutomationUrl}
@@ -2895,7 +2895,7 @@ export default function ProductsTab({
                                           }
                                           placeholder="https://site.com/urun"
                                           disabled={!canManageAutomationTargets || isAutomationTargetSaving}
-                                          className="h-9 rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="h-9 min-w-0 w-full rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         />
                                         <select
                                           value={visibleDraftAutomationBackend}
@@ -2906,7 +2906,7 @@ export default function ProductsTab({
                                             !canManageAutomationTargets ||
                                             stockFetchAutomationBackendOptions.length === 0
                                           }
-                                          className="h-9 appearance-none rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="h-9 min-w-0 w-full appearance-none rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                           <option value="">
                                             {stockFetchAutomationBackendOptions.length === 0
@@ -3000,7 +3000,7 @@ export default function ProductsTab({
                                                     }
                                                   }}
                                                 >
-                                                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                                                  <div className="flex min-w-0 flex-wrap items-start gap-2 sm:items-center">
                                                     <input
                                                       type="radio"
                                                       name={`automation-target-select-${offerId}`}
@@ -3013,7 +3013,7 @@ export default function ProductsTab({
                                                     <span className="shrink-0 rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-100">
                                                       {serviceLabel}
                                                     </span>
-                                                    <span className="max-w-full truncate rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+                                                    <span className="min-w-0 max-w-full truncate rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
                                                       {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                                     </span>
                                                     <div className="flex w-full items-center justify-end gap-1.5 sm:ml-auto sm:w-auto">
