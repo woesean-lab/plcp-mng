@@ -848,7 +848,7 @@ function App() {
                   onClick={() => {
                     void probeAutomationHeaderConnection()
                   }}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-white/5 px-3.5 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+                  className="inline-flex h-9 items-center gap-2 rounded-2xl bg-white/5 px-3.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
                   title="Websocket baglanti durumunu kontrol et"
                   aria-label="Websocket baglanti durumunu kontrol et"
                   aria-busy={automationHeaderProbeStatus === "connecting"}
@@ -860,7 +860,7 @@ function App() {
                   <a
                     href={getTabHref("admin")}
                     onClick={(event) => handleTabLinkClick(event, "admin")}
-                    className={`inline-flex items-center gap-1.5 rounded-2xl px-3.5 py-2 text-sm font-semibold transition ${
+                    className={`inline-flex h-9 items-center gap-1.5 rounded-2xl px-3.5 text-sm font-semibold transition ${
                       activeTab === "admin"
                         ? "bg-accent-500/20 text-accent-50 shadow-glow"
                         : "bg-white/5 text-slate-200 hover:bg-white/10"
