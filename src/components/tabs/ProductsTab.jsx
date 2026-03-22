@@ -2108,7 +2108,7 @@ export default function ProductsTab({
                             : "bg-ink-900/70"
                       } ${isOpen ? "border-accent-400/60" : ""}`}
                     >
-                      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:flex-nowrap">
+                      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:flex-nowrap">
                         <div
                           role="button"
                           tabIndex={!offerId || !canToggleCard ? -1 : 0}
@@ -2187,13 +2187,13 @@ export default function ProductsTab({
                             )}
                           </div>
                         </div>
-                        <div className="min-w-0 w-full xl:w-auto xl:self-start">
-                          <div className="flex w-full max-w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:max-w-[320px] xl:w-auto xl:max-w-none">
+                        <div className="min-w-0">
+                          <div className="flex w-full flex-wrap items-center gap-1 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2 py-1 shadow-inner sm:gap-1.5 sm:px-2.5 lg:h-[36px] lg:w-[216px] lg:flex-nowrap">
                             <button
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
                               disabled={!canManageStock || !offerId}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                 !canManageStock || !offerId
                                   ? "cursor-not-allowed opacity-60"
                                   : ""
@@ -2209,7 +2209,7 @@ export default function ProductsTab({
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
-                                className="h-4 w-4"
+                                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="2"
@@ -2224,7 +2224,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => handlePriceToggle(offerId)}
                               disabled={!offerId || !canTogglePrice}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                 !offerId || !canTogglePrice ? "cursor-not-allowed opacity-60" : ""
                               }`}
                               aria-label="Fiyat aç/kapat"
@@ -2238,7 +2238,7 @@ export default function ProductsTab({
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
-                                className="h-4 w-4"
+                                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="2"
@@ -2253,7 +2253,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => handleAutomationToggle(offerId)}
                               disabled={!offerId || !canManageAutomationTargets}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md transition before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md transition before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                 isAutomationEnabled ? "text-emerald-300 hover:text-emerald-200" : "text-slate-200/80 hover:text-white"
                               } ${
                                 !offerId || !canManageAutomationTargets
@@ -2271,7 +2271,7 @@ export default function ProductsTab({
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
-                                className="h-4 w-4"
+                                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                 fill="currentColor"
                               >
                                 <path d="M8 6v12l10-6z" />
@@ -2281,7 +2281,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => toggleStarred(offerId)}
                               disabled={!offerId || !canStarOffers}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                 !offerId || !canStarOffers ? "cursor-not-allowed opacity-60" : ""
                               } ${starredOffers[offerId] ? "text-yellow-300" : ""}`}
                               aria-label="Ürünü yıldızla"
@@ -2290,7 +2290,7 @@ export default function ProductsTab({
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
-                                className="h-4 w-4"
+                                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                 fill={starredOffers[offerId] ? "currentColor" : "none"}
                                 stroke="currentColor"
                                 strokeWidth="2"
@@ -2304,7 +2304,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => handleOfferRefresh(offerId)}
                               disabled={!offerId || isKeysLoading || !isStockEnabled || isOfferRefreshing}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                 !offerId || isKeysLoading || !isStockEnabled || isOfferRefreshing
                                   ? "cursor-not-allowed opacity-60"
                                   : ""
@@ -2323,7 +2323,7 @@ export default function ProductsTab({
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
-                                className={`h-4 w-4 ${isKeysLoading || isOfferRefreshing ? "animate-spin" : ""}`}
+                                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isKeysLoading || isOfferRefreshing ? "animate-spin" : ""}`}
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="2"
@@ -2339,7 +2339,7 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => handleOfferDeleteWithConfirm(offerId)}
                                 disabled={!offerId}
-                                className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                                className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                   !offerId ? "cursor-not-allowed opacity-60" : ""
                                 } ${confirmOfferDelete === offerId ? "bg-rose-500/20 text-rose-100" : ""}`}
                                 aria-label="Urun sil"
@@ -2348,7 +2348,7 @@ export default function ProductsTab({
                                 <svg
                                   viewBox="0 0 24 24"
                                   aria-hidden="true"
-                                  className="h-4 w-4"
+                                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth="2"
@@ -2368,13 +2368,13 @@ export default function ProductsTab({
                                 href={href}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition"
+                                className="relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7"
                                 aria-label="Ürün linki"
                               >
                                 <svg
                                   viewBox="0 0 24 24"
                                   aria-hidden="true"
-                                  className="h-4 w-4"
+                                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth="2"
@@ -2391,7 +2391,7 @@ export default function ProductsTab({
                                 type="button"
                                 onClick={() => openStockModal(offerId, name)}
                                 disabled={!offerId || !isStockEnabled}
-                                className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                                className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                   !offerId || !isStockEnabled
                                     ? "cursor-not-allowed opacity-60"
                                     : ""
@@ -2401,7 +2401,7 @@ export default function ProductsTab({
                                 <svg
                                   viewBox="0 0 24 24"
                                   aria-hidden="true"
-                                  className="h-4 w-4"
+                                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth="2"
@@ -2417,7 +2417,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => toggleOfferOpen(offerId)}
                               disabled={!offerId || !canToggleCard}
-                              className={`relative inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition ${
+                              className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                 isOpen ? "bg-white/10 text-white" : ""
                               } ${!offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""}`}
                               aria-label="Ürün detaylarını aç/kapat"
@@ -2425,7 +2425,7 @@ export default function ProductsTab({
                               <svg
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
-                                className={`h-4 w-4 transition ${isOpen ? "rotate-180" : ""}`}
+                                className={`h-3.5 w-3.5 transition sm:h-4 sm:w-4 ${isOpen ? "rotate-180" : ""}`}
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="2"
