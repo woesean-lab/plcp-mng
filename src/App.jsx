@@ -854,7 +854,7 @@ function App() {
                   aria-busy={automationHeaderProbeStatus === "connecting"}
                 >
                   <span className={`h-2 w-2 rounded-full ${automationHeaderStatusDotClass}`} />
-                  <span className="text-xs sm:text-sm">{automationHeaderStatusLabel}</span>
+                  <span className="leading-none">{automationHeaderStatusLabel}</span>
                 </button>
                 {canViewAdmin && (
                   <a
