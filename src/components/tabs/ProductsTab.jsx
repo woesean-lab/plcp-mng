@@ -2108,7 +2108,7 @@ export default function ProductsTab({
                             : "bg-ink-900/70"
                       } ${isOpen ? "border-accent-400/60" : ""}`}
                     >
-                      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:flex-nowrap">
+                      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:flex-nowrap">
                         <div
                           role="button"
                           tabIndex={!offerId || !canToggleCard ? -1 : 0}
@@ -2187,8 +2187,8 @@ export default function ProductsTab({
                             )}
                           </div>
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner lg:h-[36px] lg:w-[216px] lg:flex-nowrap">
+                        <div className="min-w-0 w-full xl:w-auto xl:self-start">
+                          <div className="flex w-full max-w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#ffffff1a] bg-[#ffffff0d] px-2.5 py-1 shadow-inner sm:max-w-[320px] xl:w-auto xl:max-w-none">
                             <button
                               type="button"
                               onClick={() => handleStockToggle(offerId)}
