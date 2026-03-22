@@ -547,7 +547,7 @@ function App() {
   const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
   const canViewAdmin = canManageRoles || canManageUsers
   const automationHeaderStatusLabel =
-    automationHeaderProbeStatus === "connected" ? "Bağlanıldı" : "Bağlanılmadı"
+    automationHeaderProbeStatus === "connected" ? "Baglanildi" : "Baglanilmadi"
   const automationHeaderStatusDotClass =
     automationHeaderProbeStatus === "connected"
       ? "bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,0.45)]"
@@ -849,8 +849,8 @@ function App() {
                     void probeAutomationHeaderConnection()
                   }}
                   className="inline-flex items-center gap-2 rounded-2xl bg-white/5 px-3.5 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
-                  title="Websocket bağlantı durumunu kontrol et"
-                  aria-label="Websocket bağlantı durumunu kontrol et"
+                  title="Websocket baglanti durumunu kontrol et"
+                  aria-label="Websocket baglanti durumunu kontrol et"
                   aria-busy={automationHeaderProbeStatus === "connecting"}
                 >
                   <span className={`h-2 w-2 rounded-full ${automationHeaderStatusDotClass}`} />
