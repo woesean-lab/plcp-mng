@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../constants/appConstants"
+import useSocketIoProbe from "./useSocketIoProbe"
 import {
   buildSocketIoWsUrl,
   parseSocketIoEventPacket,
   splitEnginePackets,
-  testSocketIoConnection,
 } from "../utils/socketIoClient"
 
 const normalizeAutomationLogEntry = (entry) => {
@@ -63,13 +63,11 @@ export default function useEldoradoAutomationRuntime({
   const [automationConnectionStateByOffer, setAutomationConnectionStateByOffer] = useState({})
   const [automationTwoFactorPromptByOffer, setAutomationTwoFactorPromptByOffer] = useState({})
   const [automationTwoFactorCodeByOffer, setAutomationTwoFactorCodeByOffer] = useState({})
-  const [automationWsProbeStatus, setAutomationWsProbeStatus] = useState("idle")
-  const [, setAutomationWsProbeMessage] = useState("")
   const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [automationLogsClearingByOffer, setAutomationLogsClearingByOffer] = useState({})
-  const automationWsProbeAttemptRef = useRef(0)
   const automationSocketByOfferRef = useRef({})
+  const { status: automationWsProbeStatus } = useSocketIoProbe(automationWsUrl)
 
   const apiFetchAutomationLog = async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -654,43 +652,6 @@ export default function useEldoradoAutomationRuntime({
       automationSocketByOfferRef.current = {}
     }
   }, [])
-
-  useEffect(() => {
-    const normalizedWsUrl = String(automationWsUrl ?? "").trim()
-    if (!normalizedWsUrl) {
-      setAutomationWsProbeStatus("idle")
-      setAutomationWsProbeMessage("Websocket adresi kayitli degil.")
-      return
-    }
-
-    const socketIoUrl = buildSocketIoWsUrl(normalizedWsUrl)
-    if (!socketIoUrl) {
-      setAutomationWsProbeStatus("error")
-      setAutomationWsProbeMessage("Websocket adresi gecersiz.")
-      return
-    }
-
-    const attemptId = automationWsProbeAttemptRef.current + 1
-    automationWsProbeAttemptRef.current = attemptId
-    setAutomationWsProbeStatus("connecting")
-    setAutomationWsProbeMessage("Websocket baglantisi deneniyor...")
-
-    let cancelled = false
-    void testSocketIoConnection(socketIoUrl).then((result) => {
-      if (cancelled || automationWsProbeAttemptRef.current !== attemptId) return
-      if (result?.ok) {
-        setAutomationWsProbeStatus("connected")
-        setAutomationWsProbeMessage("Websocket sunucusuna baglandi.")
-        return
-      }
-      setAutomationWsProbeStatus("error")
-      setAutomationWsProbeMessage("Websocket baglantisi kurulamadi.")
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [automationWsUrl])
 
   return {
     automationRunLogByOffer,

@@ -15,6 +15,7 @@ import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
 import ApplicationsTab from "./components/tabs/ApplicationsTab"
 import useAppData from "./hooks/useAppData"
+import useSocketIoProbe from "./hooks/useSocketIoProbe"
 import { PERMISSIONS } from "./constants/appConstants"
 
 function App() {
@@ -306,6 +307,10 @@ function App() {
   const hasMountedRef = useRef(false)
   const userInitial = (activeUser?.username || "?").trim().charAt(0).toUpperCase() || "?"
   const userName = activeUser?.username ?? ""
+  const {
+    status: automationHeaderProbeStatus,
+    probe: probeAutomationHeaderConnection,
+  } = useSocketIoProbe(eldoradoAutomationWsUrl)
 
   useEffect(() => {
     if (!isUserMenuOpen) return
@@ -541,6 +546,14 @@ function App() {
   const canManageRoles = hasAnyPermission([PERMISSIONS.adminRolesManage, PERMISSIONS.adminManage])
   const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
   const canViewAdmin = canManageRoles || canManageUsers
+  const automationHeaderStatusLabel =
+    automationHeaderProbeStatus === "connected" ? "Bağlanıldı" : "Bağlanılmadı"
+  const automationHeaderStatusDotClass =
+    automationHeaderProbeStatus === "connected"
+      ? "bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,0.45)]"
+      : automationHeaderProbeStatus === "connecting"
+        ? "bg-amber-300 shadow-[0_0_10px_rgba(253,224,71,0.35)] animate-pulse"
+        : "bg-rose-400/90 shadow-[0_0_10px_rgba(251,113,133,0.35)]"
   const tabItems = useMemo(
     () => [
       { key: "messages", label: "Mesaj", canView: canViewMessages },
@@ -829,7 +842,20 @@ function App() {
                 </div>
               </div>
 
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void probeAutomationHeaderConnection()
+                  }}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-white/5 px-3.5 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+                  title="Websocket bağlantı durumunu kontrol et"
+                  aria-label="Websocket bağlantı durumunu kontrol et"
+                  aria-busy={automationHeaderProbeStatus === "connecting"}
+                >
+                  <span className={`h-2 w-2 rounded-full ${automationHeaderStatusDotClass}`} />
+                  <span className="text-xs sm:text-sm">{automationHeaderStatusLabel}</span>
+                </button>
                 {canViewAdmin && (
                   <a
                     href={getTabHref("admin")}
