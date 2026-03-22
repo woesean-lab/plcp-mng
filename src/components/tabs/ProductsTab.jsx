@@ -2869,10 +2869,10 @@ export default function ProductsTab({
                               </div>
                             )}
                             {activePanel === "automation" && isAutomationEnabled && (
-                              <div className="relative -mt-2 min-w-0 overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
-                                <div className="relative grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
-                                  <div className="space-y-3">
-                                    <section className="rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
+                              <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
+                                <div className="relative grid w-full min-w-0 max-w-full gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
+                                  <div className="min-w-0 space-y-3">
+                                    <section className="min-w-0 rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
                                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                                         <div>
                                           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
@@ -2942,7 +2942,7 @@ export default function ProductsTab({
                                       </div>
                                     </section>
 
-                                    <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f1980]">
+                                    <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f1980]">
                                       <div className="border-b border-white/10 px-3 py-2">
                                         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                           Kayitli servisler
@@ -2983,7 +2983,7 @@ export default function ProductsTab({
                                               return (
                                                 <div
                                                   key={`${offerId}-automation-target-row-${targetRow.id}`}
-                                                  className={`group w-full cursor-pointer overflow-hidden rounded-xl border px-3 py-3 transition-colors ${
+                                                  className={`group w-full min-w-0 max-w-full cursor-pointer overflow-hidden rounded-xl border px-3 py-3 transition-colors ${
                                                     isSelected
                                                       ? "border-emerald-200/60 bg-emerald-500/10"
                                                       : "border-emerald-300/30 bg-emerald-500/5 hover:border-emerald-200/60 hover:bg-emerald-500/10"
@@ -3000,7 +3000,7 @@ export default function ProductsTab({
                                                     }
                                                   }}
                                                 >
-                                                  <div className="flex min-w-0 flex-wrap items-start gap-2 sm:items-center">
+                                                  <div className="flex w-full min-w-0 flex-wrap items-start gap-2 sm:items-center">
                                                     <input
                                                       type="radio"
                                                       name={`automation-target-select-${offerId}`}
@@ -3013,10 +3013,10 @@ export default function ProductsTab({
                                                     <span className="shrink-0 rounded-md bg-[#0f172a] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-100">
                                                       {serviceLabel}
                                                     </span>
-                                                    <span className="min-w-0 max-w-full truncate rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+                                                    <span className="min-w-0 flex-1 truncate rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300 sm:flex-none sm:max-w-full">
                                                       {isStarred ? `\u2605 ${backendLabelDisplay}` : backendLabelDisplay}
                                                     </span>
-                                                    <div className="flex w-full items-center justify-end gap-1.5 sm:ml-auto sm:w-auto">
+                                                    <div className="flex w-full items-center justify-start gap-1.5 sm:ml-auto sm:w-auto sm:justify-end">
                                                       <button
                                                         type="button"
                                                         onClick={(event) => {
@@ -3063,26 +3063,26 @@ export default function ProductsTab({
                                                       </button>
                                                     </div>
                                                   </div>
-                                                  <div className="mt-2 min-w-0">
+                                                  <div className="mt-2 min-w-0 w-full">
                                                     {canViewAutomationTargetDetails ? (
                                                       <a
                                                         href={targetRow.url}
                                                         target="_blank"
                                                         rel="noreferrer"
                                                         onClick={(event) => event.stopPropagation()}
-                                                        className="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/[0.08] hover:text-white"
+                                                        className="inline-flex w-full max-w-full items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] text-slate-200 transition-colors hover:bg-white/[0.08] hover:text-white"
                                                         title={targetRow.url}
                                                       >
-                                                        <span className="inline-block max-w-full truncate">
+                                                        <span className="inline-block max-w-full break-all sm:truncate">
                                                           {urlDisplay}
                                                         </span>
                                                       </a>
                                                     ) : (
                                                       <span
-                                                        className="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] text-slate-300"
+                                                        className="inline-flex w-full max-w-full items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] text-slate-300"
                                                         title={urlDisplay}
                                                       >
-                                                        <span className="inline-block max-w-full truncate">
+                                                        <span className="inline-block max-w-full break-all sm:truncate">
                                                           {urlDisplay}
                                                         </span>
                                                       </span>
@@ -3097,7 +3097,7 @@ export default function ProductsTab({
                                     </section>
                                   </div>
 
-                                  <aside className="rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
+                                  <aside className="min-w-0 rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
                                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                       Kontrol paneli
                                     </p>
