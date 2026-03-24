@@ -2036,7 +2036,7 @@ export default function ProductsTab({
                   const noteInputValue = noteDraftValue !== undefined ? noteDraftValue : storedNote
                   const noteHasChanges = String(noteInputValue ?? "").trim() !== storedNote
                   const noteGroupDraftValue = noteGroupDrafts[offerId] ?? ""
-                  const availablePanels = ["messages", "inventory", "note"]
+                  const availablePanels = ["inventory"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
                   const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
                   const automationTargets = getAutomationTargets(offerId)
@@ -2110,14 +2110,15 @@ export default function ProductsTab({
                   const automationTwoFactorCodeValue = String(
                     automationTwoFactorCodeByOffer?.[offerId] ?? "",
                   )
-                  if (isStockEnabled) {
-                    availablePanels.push("stock-group")
+                  if (isAutomationEnabled && canViewAutomationPanel) {
+                    availablePanels.push("automation")
                   }
                   if (isPriceEnabled) {
                     availablePanels.push("price")
                   }
-                  if (isAutomationEnabled && canViewAutomationPanel) {
-                    availablePanels.push("automation")
+                  availablePanels.push("note", "messages")
+                  if (isStockEnabled) {
+                    availablePanels.push("stock-group")
                   }
                   const storedPanel = activePanelByOffer[offerId]
                   const defaultPanel = availablePanels[0] ?? "inventory"
@@ -2555,27 +2556,6 @@ export default function ProductsTab({
                             <div className="grid gap-2 border-b border-white/10 pb-2 sm:flex sm:flex-wrap sm:items-end sm:gap-4 sm:pb-0" role="tablist">
                               <button
                                 type="button"
-                                onClick={() => setActivePanel(offerId, "messages")}
-                                className={`group flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
-                                  activePanel === "messages"
-                                    ? "border-accent-400 bg-accent-500/10 text-white sm:bg-transparent"
-                                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200 sm:border-transparent sm:bg-transparent sm:hover:border-white/30 sm:hover:bg-transparent"
-                                }`}
-                                aria-pressed={activePanel === "messages"}
-                              >
-                                <span>Mesaj grubu</span>
-                                <span
-                                  className={`ml-auto max-w-[220px] whitespace-normal break-words rounded-full border px-2 py-0.5 text-left text-[10px] font-semibold leading-snug sm:ml-0 ${
-                                    activePanel === "messages"
-                                      ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
-                                      : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
-                                    }`}
-                                >
-                                  {messageGroupLabel}
-                                </span>
-                              </button>
-                              <button
-                                type="button"
                                 onClick={() => setActivePanel(offerId, "inventory")}
                                 className={`group flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
                                   activePanel === "inventory"
@@ -2615,6 +2595,23 @@ export default function ProductsTab({
                                   <span>Stok çek</span>
                                 </button>
                               )}
+                              {isPriceEnabled && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!canManagePrices) return
+                                    setActivePanel(offerId, "price")
+                                  }}
+                                  className={`flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
+                                    activePanel === "price"
+                                      ? "border-accent-400 bg-accent-500/10 text-white sm:bg-transparent"
+                                      : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200 sm:border-transparent sm:bg-transparent sm:hover:border-white/30 sm:hover:bg-transparent"
+                                  } ${!canManagePrices ? "cursor-not-allowed opacity-60" : ""}`}
+                                  aria-pressed={activePanel === "price"}
+                                >
+                                  <span>Fiyat</span>
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "note")}
@@ -2634,6 +2631,27 @@ export default function ProductsTab({
                                   }`}
                                 >
                                   {noteGroupName || "Bağımsız"}
+                                </span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActivePanel(offerId, "messages")}
+                                className={`group flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
+                                  activePanel === "messages"
+                                    ? "border-accent-400 bg-accent-500/10 text-white sm:bg-transparent"
+                                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200 sm:border-transparent sm:bg-transparent sm:hover:border-white/30 sm:hover:bg-transparent"
+                                }`}
+                                aria-pressed={activePanel === "messages"}
+                              >
+                                <span>Mesaj grubu</span>
+                                <span
+                                  className={`ml-auto max-w-[220px] whitespace-normal break-words rounded-full border px-2 py-0.5 text-left text-[10px] font-semibold leading-snug sm:ml-0 ${
+                                    activePanel === "messages"
+                                      ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
+                                      : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
+                                    }`}
+                                >
+                                  {messageGroupLabel}
                                 </span>
                               </button>
                               {isStockEnabled && (
@@ -2657,23 +2675,6 @@ export default function ProductsTab({
                                   >
                                     {groupName || "Bağımsız"}
                                   </span>
-                                </button>
-                              )}
-                              {isPriceEnabled && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (!canManagePrices) return
-                                    setActivePanel(offerId, "price")
-                                  }}
-                                  className={`flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
-                                    activePanel === "price"
-                                      ? "border-accent-400 bg-accent-500/10 text-white sm:bg-transparent"
-                                      : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200 sm:border-transparent sm:bg-transparent sm:hover:border-white/30 sm:hover:bg-transparent"
-                                  } ${!canManagePrices ? "cursor-not-allowed opacity-60" : ""}`}
-                                  aria-pressed={activePanel === "price"}
-                                >
-                                  <span>Fiyat</span>
                                 </button>
                               )}
                             </div>
