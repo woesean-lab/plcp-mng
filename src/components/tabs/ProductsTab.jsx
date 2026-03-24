@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 import useEldoradoAutomationRuntime from "../../hooks/useEldoradoAutomationRuntime"
+import useEldoradoPriceCommandRuntime from "../../hooks/useEldoradoPriceCommandRuntime"
 import StockModal from "../modals/StockModal"
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -41,13 +42,52 @@ const getCategoryKey = (product) => {
   return derived || "diger"
 }
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
+const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
+const PRICE_COMMAND_VISIBLE_ROWS = 12
+const PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing>"
 const normalizeBackendKind = (value) =>
   String(value ?? "")
     .trim()
     .toLowerCase()
     .replace(/[\s_-]+/g, "")
 const isStockFetchBackendKind = (value) => normalizeBackendKind(value) === "stokcek"
+const isApplicationBackendKind = (value) => {
+  const normalized = normalizeBackendKind(value)
+  return normalized === "uygulama" || normalized === "servis"
+}
+
+const getCommandLogStatusMeta = (status) => {
+  const normalized = String(status ?? "").trim().toLowerCase()
+  if (normalized === "success") {
+    return { code: "OK", textClass: "text-emerald-300" }
+  }
+  if (normalized === "error") {
+    return { code: "ERR", textClass: "text-rose-300" }
+  }
+  if (normalized === "connecting") {
+    return { code: "CON", textClass: "text-sky-300" }
+  }
+  return { code: "RUN", textClass: "text-amber-300" }
+}
+
+const getCommandConnectionLabel = (value) => {
+  const normalized = String(value ?? "").trim().toLowerCase()
+  if (normalized === "connected") return "Baglanildi"
+  if (normalized === "connecting") return "Baglaniyor"
+  return "Baglanilmadi"
+}
+
+const getCommandConnectionBadgeClass = (value) => {
+  const normalized = String(value ?? "").trim().toLowerCase()
+  if (normalized === "connected") {
+    return "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
+  }
+  if (normalized === "connecting") {
+    return "border-sky-300/30 bg-sky-500/10 text-sky-100"
+  }
+  return "border-rose-300/30 bg-rose-500/10 text-rose-100"
+}
 
 const normalizeAutomationTarget = (entry) => {
   const id = String(entry?.id ?? "").trim()
@@ -492,10 +532,10 @@ export default function ProductsTab({
     setAutomationResultPopup,
     maxAutomationRunLogEntries: MAX_AUTOMATION_RUN_LOG_ENTRIES,
   })
-  const stockFetchAutomationBackendOptions = useMemo(() => {
+  const normalizedAutomationBackendOptions = useMemo(() => {
     const rawList = Array.isArray(automationBackendOptions) ? automationBackendOptions : []
     const seen = new Set()
-    const normalizedList = rawList
+    return rawList
       .map((entry) => {
         const key = String(entry?.key ?? entry?.backend ?? entry?.id ?? entry ?? "").trim()
         if (!key || seen.has(key)) return null
@@ -505,8 +545,38 @@ export default function ProductsTab({
         return { key, label, kind }
       })
       .filter(Boolean)
-    return normalizedList.filter((entry) => isStockFetchBackendKind(entry.kind))
   }, [automationBackendOptions])
+  const stockFetchAutomationBackendOptions = useMemo(
+    () => normalizedAutomationBackendOptions.filter((entry) => isStockFetchBackendKind(entry.kind)),
+    [normalizedAutomationBackendOptions],
+  )
+  const applicationAutomationBackendOptions = useMemo(
+    () => normalizedAutomationBackendOptions.filter((entry) => isApplicationBackendKind(entry.kind)),
+    [normalizedAutomationBackendOptions],
+  )
+  const priceCommandBackendEntry = useMemo(() => {
+    const exactMatch =
+      applicationAutomationBackendOptions.find(
+        (entry) => normalizeBackendKind(entry.key) === "eldorado",
+      ) ||
+      applicationAutomationBackendOptions.find(
+        (entry) => normalizeBackendKind(entry.label) === "eldorado",
+      )
+    return exactMatch || { key: "eldorado", label: "eldorado", kind: "uygulama" }
+  }, [applicationAutomationBackendOptions])
+  const {
+    priceCommandRunLogByOffer,
+    priceCommandIsRunningByOffer,
+    priceCommandConnectionStateByOffer,
+    handlePriceCommandRun,
+  } = useEldoradoPriceCommandRuntime({
+    activeUsername,
+    wsUrl: automationWsUrl,
+    canRunPriceCommand: canManagePrices,
+    defaultBackendKey: priceCommandBackendEntry?.key ?? "eldorado",
+    defaultBackendLabel: priceCommandBackendEntry?.label ?? "eldorado",
+    maxLogEntries: MAX_PRICE_COMMAND_RUN_LOG_ENTRIES,
+  })
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   const triggerKeyFade = (keyId) => {
     const normalizedId = String(keyId ?? "").trim()
@@ -676,8 +746,9 @@ export default function ProductsTab({
     const hasWsUrl = Boolean(String(automationWsUrl ?? "").trim())
     const probeStatus = String(automationWsProbeStatus ?? "").trim().toLowerCase()
     const isConnected = hasWsUrl && (connectedCount > 0 || probeStatus === "connected")
+    const isConnecting = !isConnected && hasWsUrl && probeStatus === "connecting"
     return {
-      label: isConnected ? "Baglanildi" : "Baglanilmadi",
+      label: isConnected ? "Baglanildi" : isConnecting ? "Baglaniyor" : "Baglanilmadi",
     }
   }, [automationConnectionStateByOffer, automationWsProbeStatus, automationWsUrl])
   const toggleOfferOpen = (offerId) => {
@@ -1950,7 +2021,7 @@ export default function ProductsTab({
                   const noteInputValue = noteDraftValue !== undefined ? noteDraftValue : storedNote
                   const noteHasChanges = String(noteInputValue ?? "").trim() !== storedNote
                   const noteGroupDraftValue = noteGroupDrafts[offerId] ?? ""
-                  const availablePanels = ["inventory", "note", "messages"]
+                  const availablePanels = ["messages", "inventory", "note"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
                   const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
                   const automationTargets = getAutomationTargets(offerId)
@@ -2034,12 +2105,13 @@ export default function ProductsTab({
                     availablePanels.push("automation")
                   }
                   const storedPanel = activePanelByOffer[offerId]
+                  const defaultPanel = availablePanels[0] ?? "inventory"
                   const activePanel =
                     storedPanel === "none"
                       ? "none"
                       : availablePanels.includes(storedPanel)
                         ? storedPanel
-                        : "inventory"
+                        : defaultPanel
                   const isNoteEditing = Boolean(noteEditingByOffer[offerId])
                   const canEditNoteText = canManageNotes && isNoteEditing
                   const canSaveNote =
@@ -2080,6 +2152,29 @@ export default function ProductsTab({
                     Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
                       ? baseNumber * (percentNumber / 100)
                       : ""
+                  const productCategory = String(product?.category ?? "").trim() || categoryKey
+                  const priceCommandLogEntries = Array.isArray(priceCommandRunLogByOffer?.[offerId])
+                    ? priceCommandRunLogByOffer[offerId]
+                    : []
+                  const visiblePriceCommandLogEntries = priceCommandLogEntries.slice(0, PRICE_COMMAND_VISIBLE_ROWS)
+                  const emptyPriceCommandLogRows = Math.max(
+                    0,
+                    PRICE_COMMAND_VISIBLE_ROWS - visiblePriceCommandLogEntries.length,
+                  )
+                  const isPriceCommandRunning = Boolean(priceCommandIsRunningByOffer?.[offerId])
+                  const priceCommandConnectionState = String(
+                    priceCommandConnectionStateByOffer?.[offerId] ?? "idle",
+                  ).trim()
+                  const priceCommandConnectionLabel = getCommandConnectionLabel(priceCommandConnectionState)
+                  const priceCommandConnectionBadgeClass =
+                    getCommandConnectionBadgeClass(priceCommandConnectionState)
+                  const canSendPriceResult =
+                    Boolean(offerId) &&
+                    canManagePrices &&
+                    canViewPriceDetails &&
+                    priceResult !== "" &&
+                    Boolean(String(automationWsUrl ?? "").trim()) &&
+                    !isPriceCommandRunning
                   const canDeleteMessageItem = messageGroupId
                     ? typeof onRemoveMessageGroupTemplate === "function"
                     : typeof onRemoveMessageTemplate === "function"
@@ -2445,6 +2540,27 @@ export default function ProductsTab({
                             <div className="grid gap-2 border-b border-white/10 pb-2 sm:flex sm:flex-wrap sm:items-end sm:gap-4 sm:pb-0" role="tablist">
                               <button
                                 type="button"
+                                onClick={() => setActivePanel(offerId, "messages")}
+                                className={`group flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
+                                  activePanel === "messages"
+                                    ? "border-accent-400 bg-accent-500/10 text-white sm:bg-transparent"
+                                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200 sm:border-transparent sm:bg-transparent sm:hover:border-white/30 sm:hover:bg-transparent"
+                                }`}
+                                aria-pressed={activePanel === "messages"}
+                              >
+                                <span>Mesaj grubu</span>
+                                <span
+                                  className={`ml-auto max-w-[220px] whitespace-normal break-words rounded-full border px-2 py-0.5 text-left text-[10px] font-semibold leading-snug sm:ml-0 ${
+                                    activePanel === "messages"
+                                      ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
+                                      : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
+                                    }`}
+                                >
+                                  {messageGroupLabel}
+                                </span>
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => setActivePanel(offerId, "inventory")}
                                 className={`group flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
                                   activePanel === "inventory"
@@ -2503,27 +2619,6 @@ export default function ProductsTab({
                                   }`}
                                 >
                                   {noteGroupName || "Bağımsız"}
-                                </span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setActivePanel(offerId, "messages")}
-                                className={`group flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
-                                  activePanel === "messages"
-                                    ? "border-accent-400 bg-accent-500/10 text-white sm:bg-transparent"
-                                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200 sm:border-transparent sm:bg-transparent sm:hover:border-white/30 sm:hover:bg-transparent"
-                                }`}
-                                aria-pressed={activePanel === "messages"}
-                              >
-                                <span>Mesaj grubu</span>
-                                <span
-                                  className={`ml-auto max-w-[220px] whitespace-normal break-words rounded-full border px-2 py-0.5 text-left text-[10px] font-semibold leading-snug sm:ml-0 ${
-                                    activePanel === "messages"
-                                      ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
-                                      : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
-                                    }`}
-                                >
-                                  {messageGroupLabel}
                                 </span>
                               </button>
                               {isStockEnabled && (
@@ -2807,64 +2902,163 @@ export default function ProductsTab({
                             )}
                             {activePanel === "price" && isPriceEnabled && (
                               <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
-                                <div className="mt-1 grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
-                                  <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
-                                    <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Fiyat gir</label>
-                                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                                      <input
-                                        type="text"
-                                        value={priceDraft.base}
-                                        onChange={(event) =>
-                                          handlePriceDraftChange(offerId, "base", event.target.value)
-                                        }
-                                        placeholder="Baz fiyat"
-                                        disabled={!canManagePrices}
-                                        className="min-w-[160px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                                      />
-                                    </div>
-                                    <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handlePriceSave(
-                                            offerId,
-                                            baseNumber,
-                                            percentNumber,
-                                            priceResult === "" ? 0 : priceResult,
-                                          )
-                                        }
-                                        disabled={priceResult === "" || !offerId || !canManagePrices}
-                                        className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-8 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                      >
-                                        KAYDET
-                                      </button>
-                                    </div>
-                                  </div>
-                                  {canViewPriceDetails && (
+                                <div className="mt-1 space-y-4">
+                                  <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
                                     <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
-                                      <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">{"Y\u00fczdelik"}</label>
-                                      <div className="mt-1 space-y-2">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                          <input
-                                            type="text"
-                                            value={priceDraft.percent}
-                                            onChange={(event) =>
-                                              handlePriceDraftChange(offerId, "percent", event.target.value)
-                                            }
-                                            placeholder="%"
-                                            disabled={!canManagePrices}
-                                            className="min-w-[120px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                                          />
-                                        </div>
-                                        <div className="flex items-center justify-between gap-3 rounded-md border border-accent-400/40 bg-accent-500/10 px-3 py-2 text-[12px] font-semibold text-accent-50">
-                                          <span className="text-[10px] font-semibold text-accent-100/80">
-                                            {"Sonu\u00e7"}
-                                          </span>
-                                          <span>{priceResult === "" ? "-" : priceResult.toFixed(2)}</span>
-                                        </div>
+                                      <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Fiyat gir</label>
+                                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                                        <input
+                                          type="text"
+                                          value={priceDraft.base}
+                                          onChange={(event) =>
+                                            handlePriceDraftChange(offerId, "base", event.target.value)
+                                          }
+                                          placeholder="Baz fiyat"
+                                          disabled={!canManagePrices}
+                                          className="min-w-[160px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                        />
+                                      </div>
+                                      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handlePriceSave(
+                                              offerId,
+                                              baseNumber,
+                                              percentNumber,
+                                              priceResult === "" ? 0 : priceResult,
+                                            )
+                                          }
+                                          disabled={priceResult === "" || !offerId || !canManagePrices}
+                                          className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-8 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          KAYDET
+                                        </button>
                                       </div>
                                     </div>
-                                  )}
+                                    {canViewPriceDetails && (
+                                      <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
+                                        <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">{"Y\u00fczdelik"}</label>
+                                        <div className="mt-1 space-y-2">
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <input
+                                              type="text"
+                                              value={priceDraft.percent}
+                                              onChange={(event) =>
+                                                handlePriceDraftChange(offerId, "percent", event.target.value)
+                                              }
+                                              placeholder="%"
+                                              disabled={!canManagePrices}
+                                              className="min-w-[120px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                            />
+                                          </div>
+                                          <div className="flex items-center justify-between gap-3 rounded-md border border-accent-400/40 bg-accent-500/10 px-3 py-2 text-[12px] font-semibold text-accent-50">
+                                            <span className="text-[10px] font-semibold text-accent-100/80">
+                                              {"Sonu\u00e7"}
+                                            </span>
+                                            <span>{priceResult === "" ? "-" : priceResult.toFixed(2)}</span>
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handlePriceCommandRun(
+                                                {
+                                                  offerId,
+                                                  productId: offerId,
+                                                  productName: name,
+                                                  category: productCategory,
+                                                  categoryKey,
+                                                  base: baseNumber,
+                                                  percent: percentNumber,
+                                                  result: priceResult,
+                                                },
+                                                {
+                                                  label: "Sonucu Gonder",
+                                                  backendKey: priceCommandBackendEntry?.key ?? "eldorado",
+                                                  backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
+                                                },
+                                              )
+                                            }
+                                            disabled={!canSendPriceResult}
+                                            className="flex h-9 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                          >
+                                            {isPriceCommandRunning ? "GONDERILIYOR..." : "SONUCU GONDER"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <section className="rounded-xl border border-white/10 bg-[#0a0d12] p-4">
+                                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                      <div>
+                                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                                          Komut ciktilari
+                                        </p>
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                          backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
+                                        </p>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="rounded-full border border-white/10 bg-ink-900/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-slate-300">
+                                          {priceCommandLogEntries.length} satir
+                                        </span>
+                                        <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${priceCommandConnectionBadgeClass}`}>
+                                          {priceCommandConnectionLabel}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {!String(automationWsUrl ?? "").trim() && (
+                                      <p className="mb-3 rounded-md border border-amber-300/25 bg-amber-500/10 px-2.5 py-1.5 font-mono text-[10px] text-amber-100">
+                                        Websocket adresi yok. Admin panelinden kaydedin.
+                                      </p>
+                                    )}
+
+                                    <div className="rounded-xl border border-slate-800 bg-[#010203] px-3 py-3 font-mono text-[11px] leading-5 sm:px-4 sm:text-[12px] sm:leading-6">
+                                      <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2 text-slate-500 sm:flex-nowrap">
+                                        <span className="hidden flex-none sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                                        <span className="flex-none sm:hidden">&gt;</span>
+                                        <span className="min-w-0 truncate text-slate-300">{priceCommandBackendEntry?.label ?? "eldorado"}</span>
+                                        <span className="flex-none text-slate-600">/</span>
+                                        <span className="min-w-0 truncate text-slate-400">{offerId || "-"}</span>
+                                        <span className="flex-none text-slate-600">/</span>
+                                        <span className="min-w-0 truncate text-slate-400">{productCategory || "-"}</span>
+                                      </div>
+
+                                      <div className="space-y-1">
+                                        {visiblePriceCommandLogEntries.map((entry) => {
+                                          const statusMeta = getCommandLogStatusMeta(entry.status)
+                                          return (
+                                            <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 sm:flex-nowrap">
+                                              <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
+                                              <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                                              <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                                              <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                                              <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                                            </div>
+                                          )
+                                        })}
+                                        {Array.from({ length: emptyPriceCommandLogRows }).map((_, index) => (
+                                          <div key={`price-command-placeholder-${offerId}-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                                            <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                                            <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                                            <span className="flex-none text-slate-700">[--:--]</span>
+                                            <span className="flex-none text-slate-700">---</span>
+                                            <span
+                                              className={`truncate text-slate-700 ${
+                                                priceCommandLogEntries.length === 0 && index === 0
+                                                  ? "text-slate-500"
+                                                  : "opacity-0"
+                                              }`}
+                                            >
+                                              {priceCommandLogEntries.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </section>
                                 </div>
                               </div>
                             )}

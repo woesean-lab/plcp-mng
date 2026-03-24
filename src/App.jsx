@@ -547,7 +547,11 @@ function App() {
   const canManageUsers = hasAnyPermission([PERMISSIONS.adminUsersManage, PERMISSIONS.adminManage])
   const canViewAdmin = canManageRoles || canManageUsers
   const automationHeaderStatusLabel =
-    automationHeaderProbeStatus === "connected" ? "Baglanildi" : "Baglanilmadi"
+    automationHeaderProbeStatus === "connected"
+      ? "Baglanildi"
+      : automationHeaderProbeStatus === "connecting"
+        ? "Baglaniyor"
+        : "Baglanilmadi"
   const automationHeaderStatusDotClass =
     automationHeaderProbeStatus === "connected"
       ? "bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,0.45)]"

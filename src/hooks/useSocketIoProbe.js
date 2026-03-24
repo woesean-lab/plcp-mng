@@ -5,6 +5,7 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
   const auto = options?.auto !== false
   const reconnectDelayMs = Math.max(1500, Number(options?.reconnectDelayMs) || 3000)
   const handshakeTimeoutMs = Math.max(2000, Number(options?.handshakeTimeoutMs) || 4500)
+  const disconnectGraceMs = Math.max(4000, Number(options?.disconnectGraceMs) || 9000)
   const [status, setStatus] = useState("idle")
   const [message, setMessage] = useState("")
   const isMountedRef = useRef(true)
@@ -12,6 +13,7 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
   const socketRef = useRef(null)
   const reconnectTimerRef = useRef(null)
   const handshakeTimeoutRef = useRef(null)
+  const disconnectGraceTimerRef = useRef(null)
   const attemptRef = useRef(0)
   const connectRef = useRef(() => {})
 
@@ -36,6 +38,13 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
     }
   }, [])
 
+  const clearDisconnectGraceTimer = useCallback(() => {
+    if (disconnectGraceTimerRef.current) {
+      window.clearTimeout(disconnectGraceTimerRef.current)
+      disconnectGraceTimerRef.current = null
+    }
+  }, [])
+
   const closeSocket = useCallback(() => {
     const socket = socketRef.current
     socketRef.current = null
@@ -57,9 +66,10 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
     return () => {
       isMountedRef.current = false
       clearReconnectTimer()
+      clearDisconnectGraceTimer()
       closeSocket()
     }
-  }, [clearReconnectTimer, closeSocket])
+  }, [clearDisconnectGraceTimer, clearReconnectTimer, closeSocket])
 
   const connect = useCallback((options = {}) => {
     const background = Boolean(options?.background)
@@ -68,12 +78,14 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
     closeSocket()
 
     if (!normalizedWsUrl) {
+      clearDisconnectGraceTimer()
       updateStatus("idle", "Websocket adresi kayitli degil.")
       return
     }
 
     const socketIoUrl = buildSocketIoWsUrl(normalizedWsUrl)
     if (!socketIoUrl) {
+      clearDisconnectGraceTimer()
       updateStatus("error", "Websocket adresi gecersiz.")
       return
     }
@@ -96,12 +108,30 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
       }, reconnectDelayMs)
     }
 
-    const handleDisconnect = (nextMessage) => {
+    const startDisconnectGrace = () => {
+      updateStatus("connecting", "Websocket baglantisi yeniden deneniyor...")
+      if (disconnectGraceTimerRef.current) return
+      disconnectGraceTimerRef.current = window.setTimeout(() => {
+        disconnectGraceTimerRef.current = null
+        if (!isMountedRef.current || statusRef.current === "connected") return
+        updateStatus("error", "Websocket baglantisi kesildi.")
+      }, disconnectGraceMs)
+    }
+
+    const shouldUseDisconnectGrace = () =>
+      hasHandshake || statusRef.current === "connected" || Boolean(disconnectGraceTimerRef.current)
+
+    const handleDisconnect = ({ nextStatus, nextMessage, withGrace = false }) => {
       if (disconnectHandled || attemptRef.current !== attemptId) return
       disconnectHandled = true
       socketRef.current = null
       clearHandshakeTimer()
-      updateStatus("error", nextMessage)
+      if (withGrace) {
+        startDisconnectGrace()
+      } else {
+        clearDisconnectGraceTimer()
+        updateStatus(nextStatus, nextMessage)
+      }
       scheduleReconnect()
     }
 
@@ -120,7 +150,14 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
       if (attemptRef.current !== attemptId) return
       clearHandshakeTimer()
       handshakeTimeoutRef.current = window.setTimeout(() => {
-        handleDisconnect("Websocket baglantisi kurulamadi.")
+        const useGrace = shouldUseDisconnectGrace()
+        handleDisconnect({
+          nextStatus: useGrace ? "connecting" : "error",
+          nextMessage: useGrace
+            ? "Websocket baglantisi yeniden deneniyor..."
+            : "Websocket baglantisi kurulamadi.",
+          withGrace: useGrace,
+        })
       }, handshakeTimeoutMs)
     }
 
@@ -141,27 +178,40 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
           hasHandshake = true
           disconnectHandled = false
           clearHandshakeTimer()
+          clearDisconnectGraceTimer()
           updateStatus("connected", "Websocket sunucusuna baglandi.")
         }
       })
     }
 
     socket.onerror = () => {
-      handleDisconnect(
-        hasHandshake ? "Websocket baglantisi kesildi." : "Websocket baglantisi kurulamadi.",
-      )
+      const useGrace = shouldUseDisconnectGrace()
+      handleDisconnect({
+        nextStatus: useGrace ? "connecting" : "error",
+        nextMessage: useGrace
+          ? "Websocket baglantisi yeniden deneniyor..."
+          : "Websocket baglantisi kurulamadi.",
+        withGrace: useGrace,
+      })
     }
 
     socket.onclose = () => {
-      handleDisconnect(
-        hasHandshake ? "Websocket baglantisi kesildi." : "Websocket baglantisi kurulamadi.",
-      )
+      const useGrace = shouldUseDisconnectGrace()
+      handleDisconnect({
+        nextStatus: useGrace ? "connecting" : "error",
+        nextMessage: useGrace
+          ? "Websocket baglantisi yeniden deneniyor..."
+          : "Websocket baglantisi kurulamadi.",
+        withGrace: useGrace,
+      })
     }
   }, [
     auto,
+    clearDisconnectGraceTimer,
     clearHandshakeTimer,
     clearReconnectTimer,
     closeSocket,
+    disconnectGraceMs,
     handshakeTimeoutMs,
     reconnectDelayMs,
     updateStatus,
@@ -184,9 +234,10 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
     return () => {
       window.clearTimeout(timerId)
       clearReconnectTimer()
+      clearDisconnectGraceTimer()
       closeSocket()
     }
-  }, [auto, clearReconnectTimer, closeSocket, connect])
+  }, [auto, clearDisconnectGraceTimer, clearReconnectTimer, closeSocket, connect])
 
   return {
     status,
