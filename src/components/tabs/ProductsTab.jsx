@@ -49,11 +49,11 @@ const getMainProductCategory = (value) => {
     .replace(/[\s_-]+/g, "")
 
   if (normalized === "currency") return "Currency"
-  if (normalized === "account" || normalized === "accounts") return "Accounts"
-  if (normalized === "customitem" || normalized === "item" || normalized === "items") return "Items"
-  if (normalized === "topup" || normalized === "topups") return "Top Ups"
-  if (normalized === "giftcard" || normalized === "giftcards") return "Gift Cards"
-  return "Items"
+  if (normalized === "topup" || normalized === "topups") return "TopUp"
+  if (normalized === "giftcard" || normalized === "giftcards") return "GiftCard"
+  if (normalized === "account" || normalized === "accounts") return "Account"
+  if (normalized === "customitem" || normalized === "item" || normalized === "items") return "CustomItem"
+  return "CustomItem"
 }
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
