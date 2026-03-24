@@ -568,6 +568,7 @@ export default function ProductsTab({
     priceCommandRunLogByOffer,
     priceCommandIsRunningByOffer,
     priceCommandConnectionStateByOffer,
+    clearPriceCommandLogs,
     handlePriceCommandRun,
   } = useEldoradoPriceCommandRuntime({
     activeUsername,
@@ -2980,7 +2981,7 @@ export default function ProductsTab({
                                               )
                                             }
                                             disabled={!canSendPriceResult}
-                                            className="flex h-9 w-full items-center justify-center rounded-md border border-sky-300/60 bg-sky-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                           >
                                             {isPriceCommandRunning ? "GONDERILIYOR..." : "SONUCU GONDER"}
                                           </button>
@@ -2989,52 +2990,57 @@ export default function ProductsTab({
                                     )}
                                   </div>
 
-                                  <section className="rounded-xl border border-white/10 bg-[#0a0d12] p-4">
-                                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                                      <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                                  <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                                        <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                                        <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                           Komut ciktilari
-                                        </p>
-                                        <p className="mt-1 text-[11px] text-slate-500">
-                                          backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
-                                        </p>
+                                        </span>
                                       </div>
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <span className="rounded-full border border-white/10 bg-ink-900/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-slate-300">
+                                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                                        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                                           {priceCommandLogEntries.length} satir
                                         </span>
-                                        <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${priceCommandConnectionBadgeClass}`}>
+                                        <span
+                                          className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${priceCommandConnectionBadgeClass}`}
+                                        >
                                           {priceCommandConnectionLabel}
                                         </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => clearPriceCommandLogs(offerId)}
+                                          disabled={priceCommandLogEntries.length === 0}
+                                          className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          Log temizle
+                                        </button>
                                       </div>
                                     </div>
-
-                                    {!String(automationWsUrl ?? "").trim() && (
-                                      <p className="mb-3 rounded-md border border-amber-300/25 bg-amber-500/10 px-2.5 py-1.5 font-mono text-[10px] text-amber-100">
-                                        Websocket adresi yok. Admin panelinden kaydedin.
-                                      </p>
-                                    )}
-
-                                    <div className="rounded-xl border border-slate-800 bg-[#010203] px-3 py-3 font-mono text-[11px] leading-5 sm:px-4 sm:text-[12px] sm:leading-6">
-                                      <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2 text-slate-500 sm:flex-nowrap">
-                                        <span className="hidden flex-none sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
-                                        <span className="flex-none sm:hidden">&gt;</span>
-                                        <span className="min-w-0 truncate text-slate-300">{priceCommandBackendEntry?.label ?? "eldorado"}</span>
-                                        <span className="flex-none text-slate-600">/</span>
-                                        <span className="min-w-0 truncate text-slate-400">{offerId || "-"}</span>
-                                        <span className="flex-none text-slate-600">/</span>
-                                        <span className="min-w-0 truncate text-slate-400">{productCategory || "-"}</span>
+                                    <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                                      {!String(automationWsUrl ?? "").trim() && (
+                                        <p className="mb-2 rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
+                                          Websocket adresi yok. Admin panelinden kaydedin.
+                                        </p>
+                                      )}
+                                      <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
+                                        <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                                        <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                                        <span className="min-w-0 break-words text-slate-400">
+                                          backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
+                                        </span>
                                       </div>
-
-                                      <div className="space-y-1">
+                                      <div className="space-y-0.5">
                                         {visiblePriceCommandLogEntries.map((entry) => {
                                           const statusMeta = getCommandLogStatusMeta(entry.status)
                                           return (
-                                            <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 sm:flex-nowrap">
+                                            <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                                              <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                                              <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                                               <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
                                               <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
-                                              <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
-                                              <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                                               <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
                                             </div>
                                           )
@@ -3044,7 +3050,7 @@ export default function ProductsTab({
                                             <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
                                             <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                                             <span className="flex-none text-slate-700">[--:--]</span>
-                                            <span className="flex-none text-slate-700">---</span>
+                                            <span className="flex-none text-slate-700">--</span>
                                             <span
                                               className={`truncate text-slate-700 ${
                                                 priceCommandLogEntries.length === 0 && index === 0
