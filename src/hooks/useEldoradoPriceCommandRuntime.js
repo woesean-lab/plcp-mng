@@ -28,22 +28,12 @@ const normalizeEventMessage = (value) => {
 
 const normalizePriceCommandPayload = (value = {}) => {
   const offerId = String(value?.offerId ?? value?.productId ?? value?.id ?? "").trim()
-  const productId = String(value?.productId ?? value?.id ?? offerId).trim() || offerId
-  const productName = String(value?.productName ?? value?.name ?? "").trim()
   const category = String(value?.category ?? "").trim()
-  const categoryKey = String(value?.categoryKey ?? "").trim()
-  const base = Number(value?.base)
-  const percent = Number(value?.percent)
   const result = Number(value?.result)
 
   return {
     offerId,
-    productId,
-    productName,
     category,
-    categoryKey,
-    base,
-    percent,
     result,
   }
 }
@@ -115,11 +105,11 @@ export default function useEldoradoPriceCommandRuntime({
     }
 
     const normalized = normalizePriceCommandPayload(payload)
-    if (!normalized.offerId || !normalized.productId) {
+    if (!normalized.offerId) {
       toast.error("Urun ID bulunamadi.")
       return
     }
-    if (!Number.isFinite(normalized.base) || !Number.isFinite(normalized.percent) || !Number.isFinite(normalized.result)) {
+    if (!Number.isFinite(normalized.result)) {
       toast.error("Gecerli fiyat verisi girin.")
       return
     }
@@ -138,14 +128,7 @@ export default function useEldoradoPriceCommandRuntime({
 
     const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, {
       backend: backendKey,
-      id: normalized.productId,
-      offerId: normalized.offerId,
-      productId: normalized.productId,
       category: normalized.category,
-      categoryKey: normalized.categoryKey,
-      productName: normalized.productName,
-      base: normalized.base,
-      percent: normalized.percent,
       result: normalized.result,
     })
     if (!triggerUrl) {
@@ -165,12 +148,12 @@ export default function useEldoradoPriceCommandRuntime({
     appendPriceCommandLog(
       normalized.offerId,
       "running",
-      `Gonderiliyor: backend=${backendLabel}, urun=${normalized.productId}, kategori=${normalized.category || normalized.categoryKey || "-"}`,
+      `Gonderiliyor: backend=${backendLabel}, kategori=${normalized.category || "-"}`,
     )
     appendPriceCommandLog(
       normalized.offerId,
       "running",
-      `Degerler: base=${normalized.base}, percent=${normalized.percent}, result=${normalized.result}`,
+      `Result: ${normalized.result}`,
     )
 
     let settled = false

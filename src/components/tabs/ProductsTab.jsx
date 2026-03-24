@@ -41,6 +41,20 @@ const getCategoryKey = (product) => {
   const derived = getCategoryKeyFromHref(product?.href)
   return derived || "diger"
 }
+
+const getMainProductCategory = (value) => {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "")
+
+  if (normalized === "currency") return "Currency"
+  if (normalized === "account" || normalized === "accounts") return "Accounts"
+  if (normalized === "customitem" || normalized === "item" || normalized === "items") return "Items"
+  if (normalized === "topup" || normalized === "topups") return "Top Ups"
+  if (normalized === "giftcard" || normalized === "giftcards") return "Gift Cards"
+  return "Items"
+}
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
@@ -2153,7 +2167,7 @@ export default function ProductsTab({
                     Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
                       ? baseNumber * (percentNumber / 100)
                       : ""
-                  const productCategory = String(product?.category ?? "").trim() || categoryKey
+                  const productCategory = getMainProductCategory(product?.category || categoryKey)
                   const priceCommandLogEntries = Array.isArray(priceCommandRunLogByOffer?.[offerId])
                     ? priceCommandRunLogByOffer[offerId]
                     : []
@@ -2965,12 +2979,7 @@ export default function ProductsTab({
                                               handlePriceCommandRun(
                                                 {
                                                   offerId,
-                                                  productId: offerId,
-                                                  productName: name,
                                                   category: productCategory,
-                                                  categoryKey,
-                                                  base: baseNumber,
-                                                  percent: percentNumber,
                                                   result: priceResult,
                                                 },
                                                 {
