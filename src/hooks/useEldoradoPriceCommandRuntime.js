@@ -128,6 +128,7 @@ export default function useEldoradoPriceCommandRuntime({
 
     const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, {
       backend: backendKey,
+      offerId: normalized.offerId,
       category: normalized.category,
       result: normalized.result,
     })
