@@ -35,14 +35,7 @@ const getCategoryKeyFromHref = (href) => {
   }
   return normalizeCategoryKey(parts[0])
 }
-const getCategoryKey = (product) => {
-  const direct = normalizeCategoryKey(product?.category)
-  if (direct) return direct
-  const derived = getCategoryKeyFromHref(product?.href)
-  return derived || "diger"
-}
-
-const getMainProductCategory = (value) => {
+const getKnownMainProductCategory = (value) => {
   const normalized = String(value ?? "")
     .trim()
     .toLowerCase()
@@ -53,8 +46,29 @@ const getMainProductCategory = (value) => {
   if (normalized === "giftcard" || normalized === "giftcards") return "GiftCard"
   if (normalized === "account" || normalized === "accounts") return "Account"
   if (normalized === "customitem" || normalized === "item" || normalized === "items") return "CustomItem"
-  return "CustomItem"
+  return ""
 }
+const getKnownProductCategoryKey = (value) => {
+  const mainCategory = getKnownMainProductCategory(value)
+  if (mainCategory === "Currency") return "currency"
+  if (mainCategory === "TopUp") return "topup"
+  if (mainCategory === "GiftCard") return "giftcard"
+  if (mainCategory === "Account") return "account"
+  if (mainCategory === "CustomItem") return "customitem"
+  return ""
+}
+const getCategoryKey = (product) => {
+  const direct = getKnownProductCategoryKey(product?.category)
+  if (direct) return direct
+  const derived = getKnownProductCategoryKey(getCategoryKeyFromHref(product?.href))
+  return derived || "diger"
+}
+
+const getMainProductCategory = (value) => getKnownMainProductCategory(value) || "CustomItem"
+const resolveMainProductCategory = (product) =>
+  getKnownMainProductCategory(product?.category) ||
+  getKnownMainProductCategory(getCategoryKeyFromHref(product?.href)) ||
+  "CustomItem"
 const isValidPriceInput = (value) => /^\d+(?:[.,]\d{1,2})?$/.test(String(value ?? "").trim())
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
@@ -2175,7 +2189,7 @@ export default function ProductsTab({
                     Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
                       ? baseNumber * (percentNumber / 100)
                       : ""
-                  const productCategory = getMainProductCategory(product?.category || categoryKey)
+                  const productCategory = resolveMainProductCategory(product)
                   const priceCommandLogEntries = Array.isArray(priceCommandRunLogByOffer?.[offerId])
                     ? priceCommandRunLogByOffer[offerId]
                     : []

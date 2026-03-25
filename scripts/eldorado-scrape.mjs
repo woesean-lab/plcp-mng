@@ -94,7 +94,13 @@ const extractIdFromHref = (href) => {
 const extractCategoryFromHref = (href) => {
   const path = normalizeHref(href)
   const parts = path.split("/").filter(Boolean)
-  return parts.length > 0 ? parts[0] : ""
+  if (parts.length === 0) return ""
+  const lowered = parts.map((part) => String(part ?? "").trim().toLowerCase())
+  const shopIndex = lowered.indexOf("shop")
+  if (lowered[0] === "users" && shopIndex >= 0 && parts[shopIndex + 1]) {
+    return String(parts[shopIndex + 1] ?? "").trim()
+  }
+  return parts[0]
 }
 
 const extractCategoryFromUrl = (url) => {
