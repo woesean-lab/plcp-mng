@@ -48,26 +48,17 @@ const getKnownMainProductCategory = (value) => {
   if (normalized === "customitem" || normalized === "item" || normalized === "items") return "CustomItem"
   return ""
 }
-const getKnownProductCategoryKey = (value) => {
-  const mainCategory = getKnownMainProductCategory(value)
-  if (mainCategory === "Currency") return "currency"
-  if (mainCategory === "TopUp") return "topup"
-  if (mainCategory === "GiftCard") return "giftcard"
-  if (mainCategory === "Account") return "account"
-  if (mainCategory === "CustomItem") return "customitem"
-  return ""
-}
 const getCategoryKey = (product) => {
-  const direct = getKnownProductCategoryKey(product?.category)
-  if (direct) return direct
-  const derived = getKnownProductCategoryKey(getCategoryKeyFromHref(product?.href))
+  const direct = normalizeCategoryKey(product?.category)
+  if (direct && direct !== "users" && direct !== "shop") return direct
+  const derived = getCategoryKeyFromHref(product?.href)
   return derived || "diger"
 }
 
 const getMainProductCategory = (value) => getKnownMainProductCategory(value) || "CustomItem"
 const resolveMainProductCategory = (product) =>
-  getKnownMainProductCategory(product?.category) ||
   getKnownMainProductCategory(getCategoryKeyFromHref(product?.href)) ||
+  getKnownMainProductCategory(product?.category) ||
   "CustomItem"
 const isValidPriceInput = (value) => /^\d+(?:[.,]\d{1,2})?$/.test(String(value ?? "").trim())
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
@@ -331,6 +322,7 @@ export default function ProductsTab({
   onRefreshOffer,
   canManagePrices: canManagePricesProp,
   canViewPriceDetails: canViewPriceDetailsProp,
+  canViewPriceCommandLogs: canViewPriceCommandLogsProp,
   canTogglePrice: canTogglePriceProp,
   canAddKeys = false,
   canDeleteKeys = false,
@@ -492,6 +484,10 @@ export default function ProductsTab({
     typeof canManagePricesProp === "boolean" ? canManagePricesProp : canAddKeys
   const canViewPriceDetails =
     typeof canViewPriceDetailsProp === "boolean" ? canViewPriceDetailsProp : canManagePrices
+  const canViewPriceCommandLogs =
+    typeof canViewPriceCommandLogsProp === "boolean"
+      ? canViewPriceCommandLogsProp
+      : canManagePrices
   const canTogglePrice =
     typeof canTogglePriceProp === "boolean" ? canTogglePriceProp : canManagePrices
   const canDeleteMessageGroup =
@@ -3036,6 +3032,7 @@ export default function ProductsTab({
                                     )}
                                   </div>
 
+                                  {canViewPriceCommandLogs && (
                                   <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
                                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
                                       <div className="flex items-center gap-2">
@@ -3111,6 +3108,7 @@ export default function ProductsTab({
                                       </div>
                                     </div>
                                   </section>
+                                  )}
                                 </div>
                               </div>
                             )}

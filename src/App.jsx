@@ -416,6 +416,10 @@ function App() {
     PERMISSIONS.productsPriceToggle,
     PERMISSIONS.productsManage,
   ])
+  const canViewProductPriceCommandLogs = hasAnyPermission([
+    PERMISSIONS.productsPriceCommandLogsView,
+    PERMISSIONS.productsManage,
+  ])
   const canToggleProductStock = hasAnyPermission([
     PERMISSIONS.productsStockToggle,
     PERMISSIONS.productsManage,
@@ -1236,6 +1240,7 @@ function App() {
               canManageMessages={canManageProductMessages}
               canManagePrices={canManageProductPrices}
               canViewPriceDetails={canViewProductPriceDetails}
+              canViewPriceCommandLogs={canViewProductPriceCommandLogs}
               canTogglePrice={canToggleProductPrice}
               canToggleStock={canToggleProductStock}
               canToggleCard={canToggleProductCard}
