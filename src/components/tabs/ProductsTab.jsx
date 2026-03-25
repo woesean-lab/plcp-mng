@@ -55,6 +55,7 @@ const getMainProductCategory = (value) => {
   if (normalized === "customitem" || normalized === "item" || normalized === "items") return "CustomItem"
   return "CustomItem"
 }
+const isValidPriceInput = (value) => /^\d+(?:[.,]\d{1,2})?$/.test(String(value ?? "").trim())
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
@@ -1014,6 +1015,10 @@ export default function ProductsTab({
   const handlePriceSave = async (offerId, base, percent, result) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
+    if (!Number.isFinite(base) || !Number.isFinite(percent) || !Number.isFinite(result)) {
+      toast.error("Gecerli bir fiyat girin. Ornek: 15.53")
+      return
+    }
     if (typeof onSavePrice === "function") {
       const ok = await onSavePrice(normalizedId, base, percent, result)
       if (!ok) return
@@ -2160,9 +2165,11 @@ export default function ProductsTab({
                   const messageGroupLabel =
                     messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
                   const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
-                  const baseValue = String(priceDraft.base ?? "").replace(",", ".")
+                  const baseInputValue = String(priceDraft.base ?? "").trim()
+                  const baseValue = baseInputValue.replace(",", ".")
                   const percentValue = String(priceDraft.percent ?? "").replace(",", ".")
-                  const baseNumber = Number(baseValue)
+                  const isBasePriceValid = isValidPriceInput(baseInputValue)
+                  const baseNumber = isBasePriceValid ? Number(baseValue) : Number.NaN
                   const percentNumber = Number(percentValue)
                   const priceResult =
                     Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
@@ -2191,6 +2198,11 @@ export default function ProductsTab({
                     priceResult !== "" &&
                     Boolean(String(automationWsUrl ?? "").trim()) &&
                     !isPriceCommandRunning
+                  const canSavePrice =
+                    Boolean(offerId) &&
+                    canManagePrices &&
+                    isBasePriceValid &&
+                    priceResult !== ""
                   const canDeleteMessageItem = messageGroupId
                     ? typeof onRemoveMessageGroupTemplate === "function"
                     : typeof onRemoveMessageTemplate === "function"
@@ -2929,11 +2941,21 @@ export default function ProductsTab({
                                           onChange={(event) =>
                                             handlePriceDraftChange(offerId, "base", event.target.value)
                                           }
+                                          inputMode="decimal"
                                           placeholder="Baz fiyat"
                                           disabled={!canManagePrices}
-                                          className="min-w-[160px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                                          className={`min-w-[160px] flex-1 rounded-md border bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30 ${
+                                            priceDraft.base !== "" && !isBasePriceValid
+                                              ? "border-rose-400/60 focus:border-rose-300 focus:ring-rose-500/20"
+                                              : "border-white/10 focus:border-accent-400"
+                                          }`}
                                         />
                                       </div>
+                                      {priceDraft.base !== "" && !isBasePriceValid && (
+                                        <p className="mt-2 text-[10px] text-rose-300">
+                                          Sadece fiyat girin. Ornek: 15.53
+                                        </p>
+                                      )}
                                       <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
                                         <button
                                           type="button"
@@ -2945,7 +2967,7 @@ export default function ProductsTab({
                                               priceResult === "" ? 0 : priceResult,
                                             )
                                           }
-                                          disabled={priceResult === "" || !offerId || !canManagePrices}
+                                          disabled={!canSavePrice}
                                           className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-8 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                           KAYDET
