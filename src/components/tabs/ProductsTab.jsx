@@ -2991,7 +2991,7 @@ export default function ProductsTab({
             </span>
           </div>
           <div className={`grid min-w-0 gap-3 ${canViewPriceDetails ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]" : ""}`}>
-            <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
+            <div className="rounded-xl border border-white/10 bg-ink-950/70 p-4">
               <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                 Fiyat gir
               </label>
@@ -3018,9 +3018,9 @@ export default function ProductsTab({
                 </p>
               )}
             </div>
-            <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
+            <div className="rounded-xl border border-white/10 bg-ink-950/70 p-4">
               <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                Sonuc hesabi
+                Yuzdelik
               </label>
               {canViewPriceDetails ? (
                 <div className="mt-2 space-y-3">
@@ -3034,12 +3034,12 @@ export default function ProductsTab({
                     disabled={!canManagePrices}
                     className="h-9 min-w-0 w-full rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <div className="rounded-xl border border-accent-400/30 bg-accent-500/10 px-3 py-3">
+                  <div className="rounded-lg border border-accent-400/30 bg-accent-500/10 px-3 py-2">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-[10px] uppercase tracking-[0.14em] text-accent-100/80">
                         Sonuc
                       </p>
-                      <p className="text-base font-semibold text-accent-50">
+                      <p className="text-sm font-semibold text-accent-50">
                         {currentResultDisplay}
                       </p>
                     </div>
@@ -3050,6 +3050,21 @@ export default function ProductsTab({
                   Sonuc ve yuzdelik detaylari icin ek goruntuleme yetkisi gerekiyor.
                 </p>
               )}
+              <button
+                type="button"
+                onClick={() =>
+                  handlePriceSave(
+                    offerId,
+                    baseNumber,
+                    percentNumber,
+                    priceResult === "" ? 0 : priceResult,
+                  )
+                }
+                disabled={!canSavePrice}
+                className="mt-3 h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Kaydet
+              </button>
             </div>
           </div>
         </section>
@@ -3092,21 +3107,6 @@ export default function ProductsTab({
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() =>
-                handlePriceSave(
-                  offerId,
-                  baseNumber,
-                  percentNumber,
-                  priceResult === "" ? 0 : priceResult,
-                )
-              }
-              disabled={!canSavePrice}
-              className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Kaydet
-            </button>
             {canViewPriceDetails && (
               <button
                 type="button"
