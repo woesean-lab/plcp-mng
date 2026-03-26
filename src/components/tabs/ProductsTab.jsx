@@ -2192,11 +2192,8 @@ export default function ProductsTab({
                       : ""
                   const productCategory = resolveMainProductCategory(product)
                   const currentResultDisplay = priceResult === "" ? "-" : priceResult.toFixed(2)
-                  const savedBaseDisplay = formatPriceMetric(savedPriceEntry?.base)
-                  const savedPercentDisplay = formatPriceMetric(savedPriceEntry?.percent)
                   const savedResultDisplay = formatPriceMetric(savedPriceEntry?.result)
-                  const hasSavedPrice =
-                    savedBaseDisplay !== "-" || savedPercentDisplay !== "-" || savedResultDisplay !== "-"
+                  const hasSavedPrice = savedResultDisplay !== "-"
                   const priceCommandLogEntries = Array.isArray(priceCommandRunLogByOffer?.[offerId])
                     ? priceCommandRunLogByOffer[offerId]
                     : []
@@ -3015,24 +3012,6 @@ export default function ProductsTab({
                   } disabled:cursor-not-allowed disabled:opacity-60`}
                 />
               </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                    Kayitli baz
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-100">
-                    {savedBaseDisplay}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                    Taslak
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-100">
-                    {priceDraft.base === "" ? "-" : baseInputValue}
-                  </p>
-                </div>
-              </div>
               {priceDraft.base !== "" && !isBasePriceValid && (
                 <p className="mt-3 rounded-lg border border-rose-300/20 bg-rose-500/10 px-2.5 py-2 text-[10px] text-rose-100/90">
                   Sadece fiyat girin. Ornek: 15.53
@@ -3055,31 +3034,15 @@ export default function ProductsTab({
                     disabled={!canManagePrices}
                     className="h-9 min-w-0 w-full rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                        Kayitli yuzde
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-100">
-                        {savedPercentDisplay}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-accent-400/30 bg-accent-500/10 px-3 py-2">
+                  <div className="rounded-xl border border-accent-400/30 bg-accent-500/10 px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
                       <p className="text-[10px] uppercase tracking-[0.14em] text-accent-100/80">
                         Sonuc
                       </p>
-                      <p className="mt-1 text-sm font-semibold text-accent-50">
+                      <p className="text-base font-semibold text-accent-50">
                         {currentResultDisplay}
                       </p>
                     </div>
-                  </div>
-                  <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                      Kayitli sonuc
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-100">
-                      {savedResultDisplay}
-                    </p>
                   </div>
                 </div>
               ) : (
@@ -3091,83 +3054,6 @@ export default function ProductsTab({
           </div>
         </section>
 
-        {canViewPriceCommandLogs && (
-          <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 xl:col-span-2">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-                <span className="h-2 w-2 rounded-full bg-amber-300/80" />
-                <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-                <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                  Komut ciktilari
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-                <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                  {priceCommandLogEntries.length} satir
-                </span>
-                <span
-                  className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${priceCommandConnectionBadgeClass}`}
-                >
-                  {priceCommandConnectionLabel}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => clearPriceCommandLogs(offerId)}
-                  disabled={priceCommandLogEntries.length === 0}
-                  className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Log temizle
-                </button>
-              </div>
-            </div>
-            <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
-              {!String(automationWsUrl ?? "").trim() && (
-                <p className="mb-2 rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
-                  Websocket adresi yok. Admin panelinden kaydedin.
-                </p>
-              )}
-              <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
-                <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
-                <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                <span className="min-w-0 break-words text-slate-400">
-                  backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
-                </span>
-              </div>
-              <div className="space-y-0.5">
-                {visiblePriceCommandLogEntries.map((entry) => {
-                  const statusMeta = getCommandLogStatusMeta(entry.status)
-                  return (
-                    <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                      <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
-                      <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                      <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
-                      <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
-                      <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
-                    </div>
-                  )
-                })}
-                {Array.from({ length: emptyPriceCommandLogRows }).map((_, index) => (
-                  <div key={`price-command-placeholder-${offerId}-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                    <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
-                    <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                    <span className="flex-none text-slate-700">[--:--]</span>
-                    <span className="flex-none text-slate-700">--</span>
-                    <span
-                      className={`truncate text-slate-700 ${
-                        priceCommandLogEntries.length === 0 && index === 0
-                          ? "text-slate-500"
-                          : "opacity-0"
-                      }`}
-                    >
-                      {priceCommandLogEntries.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
       </div>
 
       <aside className="min-w-0 rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
@@ -3253,8 +3139,85 @@ export default function ProductsTab({
         </div>
       </aside>
     </div>
+    {canViewPriceCommandLogs && (
+      <section className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+            <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+            <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+            <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+              Komut ciktilari
+            </span>
+          </div>
+          <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+            <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+              {priceCommandLogEntries.length} satir
+            </span>
+            <span
+              className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${priceCommandConnectionBadgeClass}`}
+            >
+              {priceCommandConnectionLabel}
+            </span>
+            <button
+              type="button"
+              onClick={() => clearPriceCommandLogs(offerId)}
+              disabled={priceCommandLogEntries.length === 0}
+              className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Log temizle
+            </button>
+          </div>
+        </div>
+        <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+          {!String(automationWsUrl ?? "").trim() && (
+            <p className="mb-2 rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
+              Websocket adresi yok. Admin panelinden kaydedin.
+            </p>
+          )}
+          <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
+            <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+            <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+            <span className="min-w-0 break-words text-slate-400">
+              backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
+            </span>
+          </div>
+          <div className="space-y-0.5">
+            {visiblePriceCommandLogEntries.map((entry) => {
+              const statusMeta = getCommandLogStatusMeta(entry.status)
+              return (
+                <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                  <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                  <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                  <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
+                  <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                  <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                </div>
+              )
+            })}
+            {Array.from({ length: emptyPriceCommandLogRows }).map((_, index) => (
+              <div key={`price-command-placeholder-${offerId}-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                <span className="flex-none text-slate-700">[--:--]</span>
+                <span className="flex-none text-slate-700">--</span>
+                <span
+                  className={`truncate text-slate-700 ${
+                    priceCommandLogEntries.length === 0 && index === 0
+                      ? "text-slate-500"
+                      : "opacity-0"
+                  }`}
+                >
+                  {priceCommandLogEntries.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
   </div>
-)}
+)}
                             {activePanel === "automation" && isAutomationEnabled && (
                               <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
                                 <div className="relative grid w-full min-w-0 max-w-full gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
