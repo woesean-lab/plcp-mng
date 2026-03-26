@@ -61,6 +61,10 @@ const resolveMainProductCategory = (product) =>
   (String(product?.kind ?? "").trim().toLowerCase() === "topups" ? "TopUp" : "") ||
   "CustomItem"
 const isValidPriceInput = (value) => /^\d+(?:[.,]\d{1,2})?$/.test(String(value ?? "").trim())
+const formatPriceMetric = (value) => {
+  const normalized = Number(value)
+  return Number.isFinite(normalized) ? normalized.toFixed(2) : "-"
+}
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
@@ -2175,6 +2179,7 @@ export default function ProductsTab({
                   const messageGroupLabel =
                     messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
                   const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
+                  const savedPriceEntry = savedPricesByOffer?.[offerId] ?? null
                   const baseInputValue = String(priceDraft.base ?? "").trim()
                   const baseValue = baseInputValue.replace(",", ".")
                   const percentValue = String(priceDraft.percent ?? "").replace(",", ".")
@@ -2186,6 +2191,12 @@ export default function ProductsTab({
                       ? baseNumber * (percentNumber / 100)
                       : ""
                   const productCategory = resolveMainProductCategory(product)
+                  const currentResultDisplay = priceResult === "" ? "-" : priceResult.toFixed(2)
+                  const savedBaseDisplay = formatPriceMetric(savedPriceEntry?.base)
+                  const savedPercentDisplay = formatPriceMetric(savedPriceEntry?.percent)
+                  const savedResultDisplay = formatPriceMetric(savedPriceEntry?.result)
+                  const hasSavedPrice =
+                    savedBaseDisplay !== "-" || savedPercentDisplay !== "-" || savedResultDisplay !== "-"
                   const priceCommandLogEntries = Array.isArray(priceCommandRunLogByOffer?.[offerId])
                     ? priceCommandRunLogByOffer[offerId]
                     : []
@@ -2213,6 +2224,32 @@ export default function ProductsTab({
                     canManagePrices &&
                     isBasePriceValid &&
                     priceResult !== ""
+                  const priceDraftStateLabel =
+                    isPriceCommandRunning
+                      ? "Komut calisiyor"
+                      : !isBasePriceValid && priceDraft.base !== ""
+                        ? "Gecersiz fiyat"
+                        : canSendPriceResult
+                          ? "Gonderime hazir"
+                          : canSavePrice
+                            ? "Kayda hazir"
+                            : "Taslak"
+                  const priceDraftStateClass =
+                    isPriceCommandRunning
+                      ? "border-sky-300/30 bg-sky-500/10 text-sky-100"
+                      : !isBasePriceValid && priceDraft.base !== ""
+                        ? "border-rose-300/30 bg-rose-500/10 text-rose-100"
+                        : canSendPriceResult
+                          ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
+                          : "border-white/10 bg-white/5 text-slate-300"
+                  const priceControlMessage =
+                    !isBasePriceValid && priceDraft.base !== ""
+                      ? "Kaydetmek icin gecerli bir baz fiyat girin."
+                      : canSendPriceResult
+                        ? "Secili fiyat sonucu websocket komutuna hazir."
+                        : canSavePrice
+                          ? "Fiyat ayari kaydedilmeye hazir."
+                          : "Sonuc icin baz fiyat ve yuzdelik girin."
                   const canDeleteMessageItem = messageGroupId
                     ? typeof onRemoveMessageGroupTemplate === "function"
                     : typeof onRemoveMessageTemplate === "function"
@@ -2938,180 +2975,286 @@ export default function ProductsTab({
                                 )}
                               </div>
                             )}
-                            {activePanel === "price" && isPriceEnabled && (
-                              <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
-                                <div className="mt-1 space-y-4">
-                                  <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
-                                    <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
-                                      <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Fiyat gir</label>
-                                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                                        <input
-                                          type="text"
-                                          value={priceDraft.base}
-                                          onChange={(event) =>
-                                            handlePriceDraftChange(offerId, "base", event.target.value)
-                                          }
-                                          inputMode="decimal"
-                                          placeholder="Baz fiyat"
-                                          disabled={!canManagePrices}
-                                          className={`min-w-[160px] flex-1 rounded-md border bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30 ${
-                                            priceDraft.base !== "" && !isBasePriceValid
-                                              ? "border-rose-400/60 focus:border-rose-300 focus:ring-rose-500/20"
-                                              : "border-white/10 focus:border-accent-400"
-                                          }`}
-                                        />
-                                      </div>
-                                      {priceDraft.base !== "" && !isBasePriceValid && (
-                                        <p className="mt-2 text-[10px] text-rose-300">
-                                          Sadece fiyat girin. Ornek: 15.53
-                                        </p>
-                                      )}
-                                      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handlePriceSave(
-                                              offerId,
-                                              baseNumber,
-                                              percentNumber,
-                                              priceResult === "" ? 0 : priceResult,
-                                            )
-                                          }
-                                          disabled={!canSavePrice}
-                                          className="rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-8 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                          KAYDET
-                                        </button>
-                                      </div>
-                                    </div>
-                                    {canViewPriceDetails && (
-                                      <div className="rounded-lg border border-white/10 bg-ink-900/50 p-4">
-                                        <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">{"Y\u00fczdelik"}</label>
-                                        <div className="mt-1 space-y-2">
-                                          <div className="flex flex-wrap items-center gap-2">
-                                            <input
-                                              type="text"
-                                              value={priceDraft.percent}
-                                              onChange={(event) =>
-                                                handlePriceDraftChange(offerId, "percent", event.target.value)
-                                              }
-                                              placeholder="%"
-                                              disabled={!canManagePrices}
-                                              className="min-w-[120px] flex-1 rounded-md border border-white/10 bg-ink-900/60 px-3 py-2 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-                                            />
-                                          </div>
-                                          <div className="flex items-center justify-between gap-3 rounded-md border border-accent-400/40 bg-accent-500/10 px-3 py-2 text-[12px] font-semibold text-accent-50">
-                                            <span className="text-[10px] font-semibold text-accent-100/80">
-                                              {"Sonu\u00e7"}
-                                            </span>
-                                            <span>{priceResult === "" ? "-" : priceResult.toFixed(2)}</span>
-                                          </div>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              handlePriceCommandRun(
-                                                {
-                                                  offerId,
-                                                  category: productCategory,
-                                                  result: priceResult,
-                                                },
-                                                {
-                                                  label: "Sonucu Gonder",
-                                                  backendKey: priceCommandBackendEntry?.key ?? "eldorado",
-                                                  backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
-                                                },
-                                              )
-                                            }
-                                            disabled={!canSendPriceResult}
-                                            className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                          >
-                                            {isPriceCommandRunning ? "GONDERILIYOR..." : "SONUCU GONDER"}
-                                          </button>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
+{activePanel === "price" && isPriceEnabled && (
+  <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
+    <div className="relative grid w-full min-w-0 max-w-full gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="min-w-0 space-y-3">
+        <section className="min-w-0 rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                Fiyat yonetimi
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Baz fiyat, yuzdelik ve sonuc hesaplamasi
+              </p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-ink-900/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-slate-300">
+              {productCategory}
+            </span>
+          </div>
+          <div className={`grid min-w-0 gap-3 ${canViewPriceDetails ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]" : ""}`}>
+            <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                Fiyat gir
+              </label>
+              <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  value={priceDraft.base}
+                  onChange={(event) =>
+                    handlePriceDraftChange(offerId, "base", event.target.value)
+                  }
+                  inputMode="decimal"
+                  placeholder="15.53"
+                  disabled={!canManagePrices}
+                  className={`h-9 min-w-0 w-full rounded-md border bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 ${
+                    priceDraft.base !== "" && !isBasePriceValid
+                      ? "border-rose-400/60 focus:border-rose-300 focus:ring-rose-500/20"
+                      : "border-white/10 focus:border-accent-400 focus:ring-accent-500/30"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                />
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                    Kayitli baz
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-100">
+                    {savedBaseDisplay}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                    Taslak
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-100">
+                    {priceDraft.base === "" ? "-" : baseInputValue}
+                  </p>
+                </div>
+              </div>
+              {priceDraft.base !== "" && !isBasePriceValid && (
+                <p className="mt-3 rounded-lg border border-rose-300/20 bg-rose-500/10 px-2.5 py-2 text-[10px] text-rose-100/90">
+                  Sadece fiyat girin. Ornek: 15.53
+                </p>
+              )}
+            </div>
+            <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                Sonuc hesabi
+              </label>
+              {canViewPriceDetails ? (
+                <div className="mt-2 space-y-3">
+                  <input
+                    type="text"
+                    value={priceDraft.percent}
+                    onChange={(event) =>
+                      handlePriceDraftChange(offerId, "percent", event.target.value)
+                    }
+                    placeholder="%"
+                    disabled={!canManagePrices}
+                    className="h-9 min-w-0 w-full rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                        Kayitli yuzde
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-slate-100">
+                        {savedPercentDisplay}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-accent-400/30 bg-accent-500/10 px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-accent-100/80">
+                        Sonuc
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-accent-50">
+                        {currentResultDisplay}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                      Kayitli sonuc
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-100">
+                      {savedResultDisplay}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 rounded-lg border border-white/10 bg-white/5 px-3 py-8 text-center text-[11px] text-slate-500">
+                  Sonuc ve yuzdelik detaylari icin ek goruntuleme yetkisi gerekiyor.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
 
-                                  {canViewPriceCommandLogs && (
-                                  <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
-                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
-                                      <div className="flex items-center gap-2">
-                                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-                                        <span className="h-2 w-2 rounded-full bg-amber-300/80" />
-                                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-                                        <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                          Komut ciktilari
-                                        </span>
-                                      </div>
-                                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-                                        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                                          {priceCommandLogEntries.length} satir
-                                        </span>
-                                        <span
-                                          className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${priceCommandConnectionBadgeClass}`}
-                                        >
-                                          {priceCommandConnectionLabel}
-                                        </span>
-                                        <button
-                                          type="button"
-                                          onClick={() => clearPriceCommandLogs(offerId)}
-                                          disabled={priceCommandLogEntries.length === 0}
-                                          className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                          Log temizle
-                                        </button>
-                                      </div>
-                                    </div>
-                                    <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
-                                      {!String(automationWsUrl ?? "").trim() && (
-                                        <p className="mb-2 rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
-                                          Websocket adresi yok. Admin panelinden kaydedin.
-                                        </p>
-                                      )}
-                                      <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
-                                        <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
-                                        <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                                        <span className="min-w-0 break-words text-slate-400">
-                                          backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
-                                        </span>
-                                      </div>
-                                      <div className="space-y-0.5">
-                                        {visiblePriceCommandLogEntries.map((entry) => {
-                                          const statusMeta = getCommandLogStatusMeta(entry.status)
-                                          return (
-                                            <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                                              <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
-                                              <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                                              <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
-                                              <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
-                                              <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
-                                            </div>
-                                          )
-                                        })}
-                                        {Array.from({ length: emptyPriceCommandLogRows }).map((_, index) => (
-                                          <div key={`price-command-placeholder-${offerId}-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                                            <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
-                                            <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                                            <span className="flex-none text-slate-700">[--:--]</span>
-                                            <span className="flex-none text-slate-700">--</span>
-                                            <span
-                                              className={`truncate text-slate-700 ${
-                                                priceCommandLogEntries.length === 0 && index === 0
-                                                  ? "text-slate-500"
-                                                  : "opacity-0"
-                                              }`}
-                                            >
-                                              {priceCommandLogEntries.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </section>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+        {canViewPriceCommandLogs && (
+          <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 xl:col-span-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                  Komut ciktilari
+                </span>
+              </div>
+              <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                  {priceCommandLogEntries.length} satir
+                </span>
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${priceCommandConnectionBadgeClass}`}
+                >
+                  {priceCommandConnectionLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => clearPriceCommandLogs(offerId)}
+                  disabled={priceCommandLogEntries.length === 0}
+                  className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Log temizle
+                </button>
+              </div>
+            </div>
+            <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+              {!String(automationWsUrl ?? "").trim() && (
+                <p className="mb-2 rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
+                  Websocket adresi yok. Admin panelinden kaydedin.
+                </p>
+              )}
+              <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
+                <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                <span className="min-w-0 break-words text-slate-400">
+                  backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                {visiblePriceCommandLogEntries.map((entry) => {
+                  const statusMeta = getCommandLogStatusMeta(entry.status)
+                  return (
+                    <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                      <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                      <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                      <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
+                      <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                      <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                    </div>
+                  )
+                })}
+                {Array.from({ length: emptyPriceCommandLogRows }).map((_, index) => (
+                  <div key={`price-command-placeholder-${offerId}-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                    <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                    <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                    <span className="flex-none text-slate-700">[--:--]</span>
+                    <span className="flex-none text-slate-700">--</span>
+                    <span
+                      className={`truncate text-slate-700 ${
+                        priceCommandLogEntries.length === 0 && index === 0
+                          ? "text-slate-500"
+                          : "opacity-0"
+                      }`}
+                    >
+                      {priceCommandLogEntries.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+
+      <aside className="min-w-0 rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+          Kontrol paneli
+        </p>
+        <div className="mt-3 space-y-2.5">
+          <div className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2.5">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${priceDraftStateClass}`}>
+                  {priceDraftStateLabel}
+                </span>
+                <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-slate-300">
+                  {productCategory}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                {priceControlMessage}
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-2">
+            <div className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                <span>Anlik sonuc</span>
+                <span className="text-slate-300">{currentResultDisplay}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                <span>Kayitli sonuc</span>
+                <span className="text-slate-300">{savedResultDisplay}</span>
+              </div>
+              {!hasSavedPrice && (
+                <p className="mt-2 text-[10px] text-slate-500">
+                  Henuz kayitli fiyat ayari yok.
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                handlePriceSave(
+                  offerId,
+                  baseNumber,
+                  percentNumber,
+                  priceResult === "" ? 0 : priceResult,
+                )
+              }
+              disabled={!canSavePrice}
+              className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Kaydet
+            </button>
+            {canViewPriceDetails && (
+              <button
+                type="button"
+                onClick={() =>
+                  handlePriceCommandRun(
+                    {
+                      offerId,
+                      category: productCategory,
+                      result: priceResult,
+                    },
+                    {
+                      label: "Sonucu Gonder",
+                      backendKey: priceCommandBackendEntry?.key ?? "eldorado",
+                      backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
+                    },
+                  )
+                }
+                disabled={!canSendPriceResult}
+                className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isPriceCommandRunning ? "Gonderiliyor..." : "Sonucu Gonder"}
+              </button>
+            )}
+            {!String(automationWsUrl ?? "").trim() && (
+              <p className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
+                Websocket adresi yok. Admin panelinden kaydedin.
+              </p>
+            )}
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+)}
                             {activePanel === "automation" && isAutomationEnabled && (
                               <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
                                 <div className="relative grid w-full min-w-0 max-w-full gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
