@@ -3104,14 +3104,14 @@ export default function ProductsTab({
             </div>
           </div>
           <div className="grid gap-2">
-            <div className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2.5">
-              <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
+            <div className="rounded-xl border border-sky-300/20 bg-sky-500/10 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-400">
                 <span>Anlik sonuc</span>
-                <span className="text-sky-300">{currentResultDisplay}</span>
+                <span className="text-slate-100">{currentResultDisplay}</span>
               </div>
-              <div className="mt-2 flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
+              <div className="mt-2 flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-400">
                 <span>Kayitli sonuc</span>
-                <span className="text-sky-300">{savedResultDisplay}</span>
+                <span className="text-slate-100">{savedResultDisplay}</span>
               </div>
               {!hasSavedPrice && (
                 <p className="mt-2 text-[10px] text-slate-500">
