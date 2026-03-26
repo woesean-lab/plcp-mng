@@ -65,11 +65,22 @@ const formatPriceMetric = (value) => {
   const normalized = Number(value)
   return Number.isFinite(normalized) ? normalized.toFixed(2) : "-"
 }
+const formatBulkPriceLogTime = () =>
+  new Date().toLocaleString("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
 const PRICE_COMMAND_VISIBLE_ROWS = 12
+const BULK_PRICE_COMMAND_VISIBLE_ROWS = 10
 const PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing>"
+const BULK_PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing-bulk>"
 const normalizeBackendKind = (value) =>
   String(value ?? "")
     .trim()
@@ -417,6 +428,18 @@ export default function ProductsTab({
       ? savedPricesByOfferProp
       : {},
   )
+  const [selectedPriceOfferIds, setSelectedPriceOfferIds] = useState({})
+  const [bulkPriceCommandState, setBulkPriceCommandState] = useState({
+    isRunning: false,
+    total: 0,
+    ready: 0,
+    success: 0,
+    error: 0,
+    skipped: 0,
+    currentOfferId: "",
+    currentName: "",
+  })
+  const [bulkPriceCommandLogEntries, setBulkPriceCommandLogEntries] = useState([])
   const [keyFadeById, setKeyFadeById] = useState({})
   const [noteGroupFlashByOffer, setNoteGroupFlashByOffer] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
@@ -598,6 +621,7 @@ export default function ProductsTab({
     priceCommandIsRunningByOffer,
     priceCommandConnectionStateByOffer,
     clearPriceCommandLogs,
+    runPriceCommandAsync,
     handlePriceCommandRun,
   } = useEldoradoPriceCommandRuntime({
     activeUsername,
@@ -781,6 +805,283 @@ export default function ProductsTab({
       label: isConnected ? "Baglanildi" : isConnecting ? "Baglaniyor" : "Baglanilmadi",
     }
   }, [automationConnectionStateByOffer, automationWsProbeStatus, automationWsUrl])
+  useEffect(() => {
+    const validIds = new Set(
+      allProducts
+        .map((product) => String(product?.id ?? "").trim())
+        .filter(Boolean),
+    )
+    setSelectedPriceOfferIds((prev) => {
+      const next = {}
+      let changed = false
+      Object.entries(prev).forEach(([offerId, selected]) => {
+        if (!selected) return
+        if (validIds.has(offerId)) {
+          next[offerId] = true
+        } else {
+          changed = true
+        }
+      })
+      return changed ? next : prev
+    })
+  }, [allProducts])
+  const appendBulkPriceCommandLog = (status, message) => {
+    const normalizedMessage = String(message ?? "").trim()
+    if (!normalizedMessage) return
+    setBulkPriceCommandLogEntries((prev) => [
+      {
+        id: `bulk-price-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        time: formatBulkPriceLogTime(),
+        status: String(status ?? "").trim() || "running",
+        message: normalizedMessage,
+      },
+      ...prev,
+    ].slice(0, MAX_PRICE_COMMAND_RUN_LOG_ENTRIES))
+  }
+  const clearBulkPriceCommandLogs = () => {
+    setBulkPriceCommandLogEntries([])
+    setBulkPriceCommandState((prev) => ({
+      ...prev,
+      total: 0,
+      ready: 0,
+      success: 0,
+      error: 0,
+      skipped: 0,
+      currentOfferId: "",
+      currentName: "",
+    }))
+  }
+  const buildBulkPriceCandidate = (product) => {
+    const offerId = String(product?.id ?? "").trim()
+    const name = String(product?.name ?? "").trim() || "Isimsiz urun"
+    const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
+    const baseInputValue = String(priceDraft?.base ?? "").trim()
+    const baseValue = baseInputValue.replace(",", ".")
+    const percentValue = String(priceDraft?.percent ?? "").replace(",", ".")
+    const isBaseValid = isValidPriceInput(baseInputValue)
+    const baseNumber = isBaseValid ? Number(baseValue) : Number.NaN
+    const percentNumber = Number(percentValue)
+    const result =
+      Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
+        ? baseNumber * (percentNumber / 100)
+        : Number.NaN
+    const category = resolveMainProductCategory(product)
+    if (!offerId) {
+      return { offerId: "", name, category, result, status: "skipped", reason: "Urun ID yok." }
+    }
+    if (!Boolean(priceEnabledByOffer?.[offerId])) {
+      return { offerId, name, category, result, status: "skipped", reason: "Fiyat tabi kapali." }
+    }
+    if (Boolean(priceCommandIsRunningByOffer?.[offerId])) {
+      return { offerId, name, category, result, status: "skipped", reason: "Komut zaten calisiyor." }
+    }
+    if (!isBaseValid) {
+      return { offerId, name, category, result, status: "skipped", reason: "Gecerli fiyat yok." }
+    }
+    if (!Number.isFinite(percentNumber)) {
+      return { offerId, name, category, result, status: "skipped", reason: "Gecerli yuzdelik yok." }
+    }
+    if (!Number.isFinite(result)) {
+      return { offerId, name, category, result, status: "skipped", reason: "Sonuc hesaplanamadi." }
+    }
+    return { offerId, name, category, result, status: "ready", reason: "" }
+  }
+  const selectedFilteredOfferIds = useMemo(
+    () =>
+      sortedList
+        .map((product) => String(product?.id ?? "").trim())
+        .filter(Boolean),
+    [sortedList],
+  )
+  const selectedPageOfferIds = useMemo(
+    () =>
+      paginatedList
+        .map((product) => String(product?.id ?? "").trim())
+        .filter(Boolean),
+    [paginatedList],
+  )
+  const selectedPriceCount = useMemo(
+    () => Object.values(selectedPriceOfferIds).filter(Boolean).length,
+    [selectedPriceOfferIds],
+  )
+  const selectedBulkPriceProducts = useMemo(
+    () =>
+      allProducts.filter((product) => {
+        const offerId = String(product?.id ?? "").trim()
+        return Boolean(offerId) && Boolean(selectedPriceOfferIds?.[offerId])
+      }),
+    [allProducts, selectedPriceOfferIds],
+  )
+  const selectedBulkPriceCandidates = useMemo(
+    () => selectedBulkPriceProducts.map((product) => buildBulkPriceCandidate(product)),
+    [selectedBulkPriceProducts, priceDrafts, priceEnabledByOffer, priceCommandIsRunningByOffer],
+  )
+  const bulkPriceReadyCount = useMemo(
+    () => selectedBulkPriceCandidates.filter((item) => item.status === "ready").length,
+    [selectedBulkPriceCandidates],
+  )
+  const bulkPriceSkippedCount = Math.max(0, selectedBulkPriceCandidates.length - bulkPriceReadyCount)
+  const isBulkPriceRunning = Boolean(bulkPriceCommandState.isRunning)
+  const visibleBulkPriceCommandLogs = bulkPriceCommandLogEntries.slice(0, BULK_PRICE_COMMAND_VISIBLE_ROWS)
+  const emptyBulkPriceCommandLogRows = Math.max(
+    0,
+    BULK_PRICE_COMMAND_VISIBLE_ROWS - visibleBulkPriceCommandLogs.length,
+  )
+  const areAllFilteredSelected =
+    selectedFilteredOfferIds.length > 0 &&
+    selectedFilteredOfferIds.every((offerId) => Boolean(selectedPriceOfferIds?.[offerId]))
+  const areAllPageSelected =
+    selectedPageOfferIds.length > 0 &&
+    selectedPageOfferIds.every((offerId) => Boolean(selectedPriceOfferIds?.[offerId]))
+  const canUseBulkPriceActions = canManagePrices && canViewPriceDetails
+  const togglePriceOfferSelection = (offerId, nextSelected) => {
+    const normalizedOfferId = String(offerId ?? "").trim()
+    if (!normalizedOfferId || isBulkPriceRunning) return
+    setSelectedPriceOfferIds((prev) => {
+      const shouldSelect =
+        typeof nextSelected === "boolean" ? nextSelected : !Boolean(prev?.[normalizedOfferId])
+      if (shouldSelect) {
+        return { ...prev, [normalizedOfferId]: true }
+      }
+      const next = { ...prev }
+      delete next[normalizedOfferId]
+      return next
+    })
+  }
+  const selectBulkPriceOffers = (offerIds = []) => {
+    if (isBulkPriceRunning) return
+    const normalizedIds = Array.from(
+      new Set(
+        (Array.isArray(offerIds) ? offerIds : [])
+          .map((offerId) => String(offerId ?? "").trim())
+          .filter(Boolean),
+      ),
+    )
+    if (normalizedIds.length === 0) return
+    setSelectedPriceOfferIds((prev) => {
+      const next = { ...prev }
+      normalizedIds.forEach((offerId) => {
+        next[offerId] = true
+      })
+      return next
+    })
+  }
+  const clearSelectedPriceOffers = () => {
+    if (isBulkPriceRunning) return
+    setSelectedPriceOfferIds({})
+  }
+  const handleBulkPriceCommandRun = async () => {
+    if (isBulkPriceRunning) return
+    if (!canUseBulkPriceActions) {
+      toast.error("Toplu sonuc gonderme yetkiniz yok.")
+      return
+    }
+    if (!String(automationWsUrl ?? "").trim()) {
+      toast.error("Websocket adresi bulunamadi. Admin panelinden kaydedin.")
+      return
+    }
+    if (selectedBulkPriceCandidates.length === 0) {
+      toast.error("Once urun secin.")
+      return
+    }
+
+    const readyItems = selectedBulkPriceCandidates.filter((item) => item.status === "ready")
+    const skippedItems = selectedBulkPriceCandidates.filter((item) => item.status !== "ready")
+    if (readyItems.length === 0) {
+      setBulkPriceCommandState({
+        isRunning: false,
+        total: selectedBulkPriceCandidates.length,
+        ready: 0,
+        success: 0,
+        error: 0,
+        skipped: skippedItems.length,
+        currentOfferId: "",
+        currentName: "",
+      })
+      setBulkPriceCommandLogEntries([])
+      skippedItems.forEach((item) => {
+        appendBulkPriceCommandLog("error", `${item.name} atlandi: ${item.reason}`)
+      })
+      toast.error("Gonderilecek gecerli urun yok.")
+      return
+    }
+
+    setBulkPriceCommandState({
+      isRunning: true,
+      total: selectedBulkPriceCandidates.length,
+      ready: readyItems.length,
+      success: 0,
+      error: 0,
+      skipped: skippedItems.length,
+      currentOfferId: "",
+      currentName: "",
+    })
+    setBulkPriceCommandLogEntries([])
+    appendBulkPriceCommandLog(
+      "running",
+      `Toplu gonderim basladi. Secili=${selectedBulkPriceCandidates.length}, hazir=${readyItems.length}, atlanacak=${skippedItems.length}`,
+    )
+    skippedItems.forEach((item) => {
+      appendBulkPriceCommandLog("error", `${item.name} atlandi: ${item.reason}`)
+    })
+
+    let successCount = 0
+    let errorCount = 0
+
+    for (const item of readyItems) {
+      setBulkPriceCommandState((prev) => ({
+        ...prev,
+        currentOfferId: item.offerId,
+        currentName: item.name,
+      }))
+      appendBulkPriceCommandLog("running", `${item.name} gonderiliyor...`)
+      try {
+        await runPriceCommandAsync(
+          {
+            offerId: item.offerId,
+            category: item.category,
+            result: item.result,
+          },
+          {
+            label: "Toplu Sonucu Gonder",
+            backendKey: priceCommandBackendEntry?.key ?? "eldorado",
+            backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
+            showToast: false,
+          },
+        )
+        successCount += 1
+        setBulkPriceCommandState((prev) => ({
+          ...prev,
+          success: successCount,
+        }))
+        appendBulkPriceCommandLog("success", `${item.name} tamamlandi.`)
+      } catch (error) {
+        errorCount += 1
+        setBulkPriceCommandState((prev) => ({
+          ...prev,
+          error: errorCount,
+        }))
+        appendBulkPriceCommandLog(
+          "error",
+          `${item.name} hata verdi: ${String(error?.message ?? "Bilinmeyen hata")}`,
+        )
+      }
+    }
+
+    setBulkPriceCommandState((prev) => ({
+      ...prev,
+      isRunning: false,
+      success: successCount,
+      error: errorCount,
+      currentOfferId: "",
+      currentName: "",
+    }))
+    if (errorCount > 0) {
+      toast.error(`Toplu gonderim tamamlandi. Basarili=${successCount}, Hata=${errorCount}`)
+    } else {
+      toast.success(`Toplu gonderim tamamlandi. Basarili=${successCount}`)
+    }
+  }
   const toggleOfferOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
@@ -1992,6 +2293,138 @@ export default function ProductsTab({
               </div>
             </div>
           </div>
+          {canUseBulkPriceActions && filteredList.length > 0 && (
+            <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 shadow-card">
+              <div className="flex flex-col gap-3 px-4 py-3">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+                      Secili {selectedPriceCount}
+                    </span>
+                    <span className="rounded-full border border-emerald-300/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100">
+                      Hazir {bulkPriceReadyCount}
+                    </span>
+                    <span className="rounded-full border border-amber-300/20 bg-amber-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-100">
+                      Atlanacak {bulkPriceSkippedCount}
+                    </span>
+                    {bulkPriceCommandState.total > 0 && (
+                      <span className="rounded-full border border-sky-300/20 bg-sky-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-100">
+                        Basari {bulkPriceCommandState.success} / Hata {bulkPriceCommandState.error}
+                      </span>
+                    )}
+                    {isBulkPriceRunning && bulkPriceCommandState.currentName && (
+                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                        Calisiyor: {bulkPriceCommandState.currentName}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => selectBulkPriceOffers(selectedPageOfferIds)}
+                      disabled={isBulkPriceRunning || selectedPageOfferIds.length === 0 || areAllPageSelected}
+                      className="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Bu sayfayi sec
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => selectBulkPriceOffers(selectedFilteredOfferIds)}
+                      disabled={isBulkPriceRunning || selectedFilteredOfferIds.length === 0 || areAllFilteredSelected}
+                      className="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Filtredekileri sec
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearSelectedPriceOffers}
+                      disabled={isBulkPriceRunning || selectedPriceCount === 0}
+                      className="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Secimi temizle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBulkPriceCommandRun}
+                      disabled={isBulkPriceRunning || selectedPriceCount === 0 || bulkPriceReadyCount === 0}
+                      className="h-9 rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isBulkPriceRunning ? "Gonderiliyor..." : "Secilenleri gonder"}
+                    </button>
+                  </div>
+                </div>
+                {(isBulkPriceRunning || bulkPriceCommandLogEntries.length > 0) && (
+                  <section className="overflow-hidden rounded-xl border border-white/10 bg-ink-950/40">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                        <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                        <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                          Toplu komut ciktilari
+                        </span>
+                      </div>
+                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                          {bulkPriceCommandLogEntries.length} satir
+                        </span>
+                        <button
+                          type="button"
+                          onClick={clearBulkPriceCommandLogs}
+                          disabled={bulkPriceCommandLogEntries.length === 0 || isBulkPriceRunning}
+                          className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Log temizle
+                        </button>
+                      </div>
+                    </div>
+                    <div className="no-scrollbar h-[220px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:text-[12px] sm:leading-6">
+                      <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
+                        <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                        <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                        <span className="min-w-0 break-words text-slate-400">
+                          secili={selectedPriceCount} / hazir={bulkPriceReadyCount} / backend={priceCommandBackendEntry?.label ?? "eldorado"}
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {visibleBulkPriceCommandLogs.map((entry) => {
+                          const statusMeta = getCommandLogStatusMeta(entry.status)
+                          return (
+                            <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                              <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                              <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                              <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
+                              <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                              <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                            </div>
+                          )
+                        })}
+                        {Array.from({ length: emptyBulkPriceCommandLogRows }).map((_, index) => (
+                          <div key={`bulk-price-command-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                            <span className="hidden flex-none text-slate-600 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                            <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                            <span className="flex-none text-slate-700">[--:--]</span>
+                            <span className="flex-none text-slate-700">--</span>
+                            <span
+                              className={`truncate text-slate-700 ${
+                                bulkPriceCommandLogEntries.length === 0 && index === 0
+                                  ? "text-slate-500"
+                                  : "opacity-0"
+                              }`}
+                            >
+                              {bulkPriceCommandLogEntries.length === 0 && index === 0
+                                ? "bekleniyor..."
+                                : "placeholder"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+                )}
+              </div>
+            </div>
+          )}
           <div key={activeCategoryKey} className="mt-4 space-y-2">
             {isRefreshing ? (
               <ProductsListSkeleton />
@@ -2006,6 +2439,7 @@ export default function ProductsTab({
                   const isMissing = Boolean(product?.missing)
                   const key = product?.id ?? `${name}-${index}`
                   const offerId = String(product?.id ?? "").trim()
+                  const isPriceSelected = Boolean(selectedPriceOfferIds?.[offerId])
                   const keyList = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : []
                   const stockCountRaw = Number(product?.stockCount)
                   const stockUsedRaw = Number(product?.stockUsedCount)
@@ -2273,32 +2707,52 @@ export default function ProductsTab({
                           : isOutOfStock
                             ? "border-rose-300/30 bg-ink-900/70"
                             : "bg-ink-900/70"
-                      } ${isOpen ? "border-accent-400/60" : ""}`}
+                      } ${isOpen ? "border-accent-400/60" : ""} ${isPriceSelected ? "ring-1 ring-sky-400/40" : ""}`}
                     >
                       <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:flex-nowrap">
-                        <div
-                          role="button"
-                          tabIndex={!offerId || !canToggleCard ? -1 : 0}
-                          aria-disabled={!offerId || !canToggleCard}
-                          onClick={() => {
-                            if (!offerId || !canToggleCard) return
-                            toggleOfferOpen(offerId)
-                          }}
-                          onKeyDown={(event) => {
-                            if (!offerId || !canToggleCard) return
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault()
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                          {canUseBulkPriceActions && (
+                            <label
+                              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 ${
+                                isBulkPriceRunning || !offerId ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                              }`}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isPriceSelected}
+                                onChange={(event) =>
+                                  togglePriceOfferSelection(offerId, event.target.checked)
+                                }
+                                disabled={isBulkPriceRunning || !offerId}
+                                className="h-3.5 w-3.5 rounded border-white/20 bg-transparent text-sky-400 focus:ring-sky-400/40"
+                                aria-label={`${name} toplu fiyat sonucu sec`}
+                              />
+                            </label>
+                          )}
+                          <div
+                            role="button"
+                            tabIndex={!offerId || !canToggleCard ? -1 : 0}
+                            aria-disabled={!offerId || !canToggleCard}
+                            onClick={() => {
+                              if (!offerId || !canToggleCard) return
                               toggleOfferOpen(offerId)
-                            }
-                          }}
-                          className={`min-w-0 flex-1 text-left ${
-                            !offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""
-                          }`}
-                        >
-                          <div className="flex min-h-[36px] flex-wrap items-start gap-2 sm:items-center">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 text-[11px] font-semibold text-slate-200">
-                              {imageUrl ? (
-                                <>
+                            }}
+                            onKeyDown={(event) => {
+                              if (!offerId || !canToggleCard) return
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault()
+                                toggleOfferOpen(offerId)
+                              }
+                            }}
+                            className={`min-w-0 flex-1 text-left ${
+                              !offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""
+                            }`}
+                          >
+                            <div className="flex min-h-[36px] flex-wrap items-start gap-2 sm:items-center">
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 text-[11px] font-semibold text-slate-200">
+                                {imageUrl ? (
+                                  <>
                                   <img
                                     src={imageUrl}
                                     alt={name}
@@ -2352,6 +2806,7 @@ export default function ProductsTab({
                                 )}
                               </div>
                             )}
+                            </div>
                           </div>
                         </div>
                         <div className="min-w-0">
