@@ -2991,7 +2991,7 @@ export default function ProductsTab({
             </span>
           </div>
           <div className={`grid min-w-0 gap-3 ${canViewPriceDetails ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]" : ""}`}>
-            <div className="rounded-xl border border-white/10 bg-ink-950/70 p-4">
+            <div className="rounded-xl border border-white/10 bg-ink-950/90 p-4">
               <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                 Fiyat gir
               </label>
@@ -3018,7 +3018,7 @@ export default function ProductsTab({
                 </p>
               )}
             </div>
-            <div className="rounded-xl border border-white/10 bg-ink-950/70 p-4">
+            <div className="rounded-xl border border-white/10 bg-ink-950/90 p-4">
               <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                 Yuzdelik
               </label>
