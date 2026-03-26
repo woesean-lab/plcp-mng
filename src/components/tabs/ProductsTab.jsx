@@ -429,6 +429,8 @@ export default function ProductsTab({
       : {},
   )
   const [isBulkPriceModeOpen, setIsBulkPriceModeOpen] = useState(false)
+  const [confirmBulkUsedDelete, setConfirmBulkUsedDelete] = useState(false)
+  const [isBulkUsedDeleteRunning, setIsBulkUsedDeleteRunning] = useState(false)
   const [selectedPriceOfferIds, setSelectedPriceOfferIds] = useState({})
   const [bulkPriceCommandState, setBulkPriceCommandState] = useState({
     isRunning: false,
@@ -448,9 +450,18 @@ export default function ProductsTab({
   const stockModalTextareaRef = useRef(null)
   const popupValueEditorRef = useRef(null)
   const popupValueCopyTimerRef = useRef(null)
+  const bulkUsedDeleteConfirmTimerRef = useRef(null)
   const prevNoteGroupAssignments = useRef(noteGroupAssignments)
   const prevGroupAssignments = useRef(groupAssignments)
   const prevMessageGroupAssignments = useRef(messageGroupAssignments)
+  useEffect(
+    () => () => {
+      if (bulkUsedDeleteConfirmTimerRef.current) {
+        clearTimeout(bulkUsedDeleteConfirmTimerRef.current)
+      }
+    },
+    [],
+  )
   useEffect(() => {
     if (!savedPricesByOfferProp || typeof savedPricesByOfferProp !== "object") return
     setSavedPricesByOffer(savedPricesByOfferProp)
@@ -710,6 +721,27 @@ export default function ProductsTab({
       return name.includes(normalizedQuery)
     })
   }, [list, normalizedQuery])
+  const filteredUsedStockCount = useMemo(
+    () =>
+      filteredList.reduce((total, product) => {
+        const offerId = String(product?.id ?? "").trim()
+        const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
+        if (loadedKeys) {
+          return (
+            total +
+            loadedKeys.reduce(
+              (count, item) =>
+                count +
+                (String(item?.status ?? "").trim().toLowerCase() === "used" ? 1 : 0),
+              0,
+            )
+          )
+        }
+        const rawUsedCount = Number(product?.stockUsedCount)
+        return total + (Number.isFinite(rawUsedCount) ? Math.max(0, rawUsedCount) : 0)
+      }, 0),
+    [filteredList, keysByOffer],
+  )
   const sortedList = useMemo(() => {
     if (!starredOffers || Object.keys(starredOffers).length === 0) return filteredList
     return [...filteredList].sort((a, b) => {
@@ -940,6 +972,8 @@ export default function ProductsTab({
     selectedPageOfferIds.length > 0 &&
     selectedPageOfferIds.every((offerId) => Boolean(selectedPriceOfferIds?.[offerId]))
   const canUseBulkPriceActions = canManagePrices && canViewPriceDetails
+  const canUseBulkUsedDelete =
+    canDeleteKeys && typeof onBulkDelete === "function" && typeof onLoadKeys === "function"
   const togglePriceOfferSelection = (offerId, nextSelected) => {
     const normalizedOfferId = String(offerId ?? "").trim()
     if (!normalizedOfferId || isBulkPriceRunning) return
@@ -1381,6 +1415,74 @@ export default function ProductsTab({
     }
     selected.forEach((item) => triggerKeyFade(item?.id))
     wait(180).then(() => onBulkDelete(normalizedId, selected.map((item) => item.id)))
+  }
+  const armBulkUsedDeleteConfirm = () => {
+    setConfirmBulkUsedDelete(true)
+    if (bulkUsedDeleteConfirmTimerRef.current) {
+      clearTimeout(bulkUsedDeleteConfirmTimerRef.current)
+    }
+    bulkUsedDeleteConfirmTimerRef.current = setTimeout(() => {
+      setConfirmBulkUsedDelete(false)
+      bulkUsedDeleteConfirmTimerRef.current = null
+    }, 2400)
+  }
+  const handleToolbarBulkUsedDelete = async () => {
+    if (!canUseBulkUsedDelete || isBulkUsedDeleteRunning) return
+    if (filteredUsedStockCount <= 0) {
+      toast.error("Temizlenecek kullanilan stok yok.")
+      return
+    }
+    if (!confirmBulkUsedDelete) {
+      armBulkUsedDeleteConfirm()
+      return
+    }
+
+    setConfirmBulkUsedDelete(false)
+    if (bulkUsedDeleteConfirmTimerRef.current) {
+      clearTimeout(bulkUsedDeleteConfirmTimerRef.current)
+      bulkUsedDeleteConfirmTimerRef.current = null
+    }
+
+    setIsBulkUsedDeleteRunning(true)
+    try {
+      let deletedStockCount = 0
+      let affectedOfferCount = 0
+
+      for (const product of filteredList) {
+        const offerId = String(product?.id ?? "").trim()
+        if (!offerId) continue
+
+        const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
+        const resolvedKeys = loadedKeys ?? (await onLoadKeys(offerId, { force: true }))
+        const usedKeys = Array.isArray(resolvedKeys)
+          ? resolvedKeys.filter((item) => String(item?.status ?? "").trim().toLowerCase() === "used")
+          : []
+        if (usedKeys.length === 0) continue
+
+        usedKeys.forEach((item) => triggerKeyFade(item?.id))
+        await wait(180)
+        const ok = await onBulkDelete(
+          offerId,
+          usedKeys.map((item) => item.id),
+          { silent: true },
+        )
+        if (ok === false) continue
+
+        deletedStockCount += usedKeys.length
+        affectedOfferCount += 1
+      }
+
+      if (deletedStockCount === 0) {
+        toast.error("Temizlenecek kullanilan stok bulunamadi.")
+        return
+      }
+      toast.success(`${deletedStockCount} kullanilan stok temizlendi (${affectedOfferCount} urun).`, {
+        duration: 1800,
+        position: "top-right",
+      })
+    } finally {
+      setIsBulkUsedDeleteRunning(false)
+    }
   }
   const handleGroupDraftChange = (offerId, value) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -2229,13 +2331,15 @@ export default function ProductsTab({
               </p>
             </div>
             <div className="flex w-full flex-col gap-2 xl:flex-row xl:items-stretch">
-              <div className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
-                <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
-                <div className="flex flex-1 items-center gap-2">
+              <div className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2 rounded border border-white/10 bg-ink-900 px-3 py-2 shadow-inner sm:h-11 sm:gap-3 sm:px-4 sm:py-0">
+                <span className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-slate-400 sm:text-[11px]">
+                  Ara
+                </span>
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <svg
                     aria-hidden="true"
                     viewBox="0 0 24 24"
-                    className="h-4 w-4 text-slate-500"
+                    className="h-4 w-4 shrink-0 text-slate-500"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
@@ -2256,7 +2360,7 @@ export default function ProductsTab({
                     <button
                       type="button"
                       onClick={() => setQuery("")}
-                      className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                      className="inline-flex h-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
                       title="Temizle"
                       aria-label="Temizle"
                     >
@@ -2267,7 +2371,7 @@ export default function ProductsTab({
                   )}
                 </div>
               </div>
-              {(canRefresh || (canUseBulkPriceActions && filteredList.length > 0)) && (
+              {(canRefresh || canUseBulkUsedDelete || (canUseBulkPriceActions && filteredList.length > 0)) && (
                 <div className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-2 shadow-card">
                   {canRefresh && (
                     <button
@@ -2294,6 +2398,49 @@ export default function ProductsTab({
                       >
                         <path d="M4 12a8 8 0 1 0 2.35-5.65" />
                         <path d="M4 4v4h4" />
+                      </svg>
+                    </button>
+                  )}
+                  {canUseBulkUsedDelete && (
+                    <button
+                      type="button"
+                      onClick={handleToolbarBulkUsedDelete}
+                      disabled={isBulkUsedDeleteRunning || filteredUsedStockCount <= 0}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition ${
+                        confirmBulkUsedDelete
+                          ? "border-rose-300/60 bg-rose-500/15 text-rose-50"
+                          : "border-white/10 text-slate-300 hover:border-rose-300/40 hover:bg-rose-500/10 hover:text-rose-100"
+                      } ${
+                        isBulkUsedDeleteRunning || filteredUsedStockCount <= 0
+                          ? "cursor-not-allowed opacity-60"
+                          : ""
+                      }`}
+                      title={
+                        confirmBulkUsedDelete
+                          ? "Onayla: kullanilan stoklari temizle"
+                          : "Kullanilan stoklari temizle"
+                      }
+                      aria-label={
+                        confirmBulkUsedDelete
+                          ? "Onayla: kullanilan stoklari temizle"
+                          : "Kullanilan stoklari temizle"
+                      }
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        className={`h-4 w-4 ${isBulkUsedDeleteRunning ? "animate-pulse" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4h8v2" />
+                        <path d="M6 6l1 14h10l1-14" />
+                        <path d="M10 10v6" />
+                        <path d="M14 10v6" />
                       </svg>
                     </button>
                   )}
@@ -4777,10 +4924,6 @@ export default function ProductsTab({
     </div>
   )
 }
-
-
-
-
 
 
 

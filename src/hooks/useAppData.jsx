@@ -2461,7 +2461,9 @@ export default function useAppData() {
     async (offerId, options = {}) => {
       const normalizedId = String(offerId ?? "").trim()
       if (!normalizedId) return
-      if (!options?.force && Array.isArray(eldoradoKeysByOffer[normalizedId])) return
+      if (!options?.force && Array.isArray(eldoradoKeysByOffer[normalizedId])) {
+        return eldoradoKeysByOffer[normalizedId]
+      }
 
       const assignmentsOverride = options?.assignmentsOverride
       setEldoradoKeysLoading((prev) => ({ ...prev, [normalizedId]: true }))
@@ -2476,9 +2478,11 @@ export default function useAppData() {
         } else {
           setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedId]: list }))
         }
+        return list
       } catch (error) {
         console.error(error)
         toast.error("Urun stoklari alinamadi (API/Server kontrol edin).")
+        return []
       } finally {
         setEldoradoKeysLoading((prev) => {
           const next = { ...prev }
@@ -3613,12 +3617,13 @@ const handleEldoradoNoteSave = useCallback(
   )
 
   const handleEldoradoBulkDelete = useCallback(
-    async (offerId, ids) => {
+    async (offerId, ids, options = {}) => {
       const normalizedOfferId = String(offerId ?? "").trim()
       const idList = Array.isArray(ids)
         ? ids.map((id) => String(id ?? "").trim()).filter(Boolean)
         : []
       if (!normalizedOfferId || idList.length === 0) return false
+      const silent = Boolean(options?.silent)
 
       try {
         const res = await apiFetch("/api/eldorado/keys/bulk-delete", {
@@ -3643,14 +3648,18 @@ const handleEldoradoNoteSave = useCallback(
         }
         await loadEldoradoKeys(normalizedOfferId, { force: true })
         loadEldoradoCatalog(undefined, { silent: true })
-        toast.success("Stoklar silindi", { duration: 1500, position: "top-right" })
+        if (!silent) {
+          toast.success("Stoklar silindi", { duration: 1500, position: "top-right" })
+        }
         return true
       } catch (error) {
         console.error(error)
         const detail = String(error?.message || "").trim()
-        toast.error(
-          detail ? `Stoklar silinemedi (${detail}).` : "Stoklar silinemedi (API/Server kontrol edin).",
-        )
+        if (!silent) {
+          toast.error(
+            detail ? `Stoklar silinemedi (${detail}).` : "Stoklar silinemedi (API/Server kontrol edin).",
+          )
+        }
         return false
       }
     },
