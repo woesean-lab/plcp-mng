@@ -2978,7 +2978,7 @@ export default function ProductsTab({
       <div className="min-w-0 space-y-3">
         <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f1980]">
           <div className="border-b border-white/10 px-4 py-4 sm:px-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
                   Fiyat yonetimi
@@ -2986,14 +2986,6 @@ export default function ProductsTab({
                 <p className="mt-1 text-[11px] text-slate-500">
                   Baz fiyat, yuzdelik ve sonuc hesaplamasi
                 </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${priceDraftStateClass}`}>
-                  {priceDraftStateLabel}
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-slate-300">
-                  {productCategory}
-                </span>
               </div>
             </div>
           </div>
@@ -3049,16 +3041,6 @@ export default function ProductsTab({
                     Sonucu kontrol edip ayari kaydedin
                   </p>
                 </div>
-                {canViewPriceDetails && (
-                  <div className="rounded-lg border border-accent-400/30 bg-accent-500/10 px-3 py-1.5">
-                    <p className="text-[9px] uppercase tracking-[0.16em] text-accent-100/70">
-                      Sonuc
-                    </p>
-                    <p className="mt-0.5 text-sm font-semibold text-accent-50">
-                      {currentResultDisplay}
-                    </p>
-                  </div>
-                )}
               </div>
               {canViewPriceDetails ? (
                 <div className="mt-4 space-y-3">
@@ -3125,11 +3107,11 @@ export default function ProductsTab({
             <div className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2.5">
               <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
                 <span>Anlik sonuc</span>
-                <span className="text-slate-300">{currentResultDisplay}</span>
+                <span className="text-sky-300">{currentResultDisplay}</span>
               </div>
               <div className="mt-2 flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
                 <span>Kayitli sonuc</span>
-                <span className="text-slate-300">{savedResultDisplay}</span>
+                <span className="text-sky-300">{savedResultDisplay}</span>
               </div>
               {!hasSavedPrice && (
                 <p className="mt-2 text-[10px] text-slate-500">
