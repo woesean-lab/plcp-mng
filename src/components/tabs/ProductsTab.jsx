@@ -2976,7 +2976,7 @@ export default function ProductsTab({
   <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
     <div className="relative grid w-full min-w-0 max-w-full gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0 space-y-3">
-        <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(9,12,19,0.96),rgba(6,9,16,0.94))]">
+        <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f1980]">
           <div className="border-b border-white/10 px-4 py-4 sm:px-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
