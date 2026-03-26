@@ -2998,7 +2998,7 @@ export default function ProductsTab({
             </div>
           </div>
           <div className={`grid min-w-0 gap-3 p-3 sm:p-4 ${canViewPriceDetails ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]" : ""}`}>
-            <div className="rounded-2xl border border-white/10 bg-[#060912] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200">
@@ -3039,7 +3039,7 @@ export default function ProductsTab({
                 </p>
               )}
             </div>
-            <div className="rounded-2xl border border-white/10 bg-[#060912] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200">
