@@ -2464,6 +2464,7 @@ export default function useAppData() {
       if (!options?.force && Array.isArray(eldoradoKeysByOffer[normalizedId])) {
         return eldoradoKeysByOffer[normalizedId]
       }
+      const silent = Boolean(options?.silent)
 
       const assignmentsOverride = options?.assignmentsOverride
       setEldoradoKeysLoading((prev) => ({ ...prev, [normalizedId]: true }))
@@ -2481,8 +2482,10 @@ export default function useAppData() {
         return list
       } catch (error) {
         console.error(error)
-        toast.error("Urun stoklari alinamadi (API/Server kontrol edin).")
-        return []
+        if (!silent) {
+          toast.error("Urun stoklari alinamadi (API/Server kontrol edin).")
+        }
+        return null
       } finally {
         setEldoradoKeysLoading((prev) => {
           const next = { ...prev }

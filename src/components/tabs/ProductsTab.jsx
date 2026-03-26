@@ -79,6 +79,7 @@ const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
 const PRICE_COMMAND_VISIBLE_ROWS = 12
 const BULK_PRICE_COMMAND_VISIBLE_ROWS = 10
+const DEFAULT_PRICE_PERCENT = "200"
 const PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing>"
 const BULK_PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing-bulk>"
 const normalizeBackendKind = (value) =>
@@ -431,6 +432,7 @@ export default function ProductsTab({
   const [isBulkPriceModeOpen, setIsBulkPriceModeOpen] = useState(false)
   const [confirmBulkUsedDelete, setConfirmBulkUsedDelete] = useState(false)
   const [isBulkUsedDeleteRunning, setIsBulkUsedDeleteRunning] = useState(false)
+  const [isBulkStockRefreshRunning, setIsBulkStockRefreshRunning] = useState(false)
   const [selectedPriceOfferIds, setSelectedPriceOfferIds] = useState({})
   const [bulkPriceCommandState, setBulkPriceCommandState] = useState({
     isRunning: false,
@@ -497,9 +499,10 @@ export default function ProductsTab({
         if (!offerId || !price || typeof price !== "object") return
         const hasDraft = next[offerId] && (next[offerId].base !== "" || next[offerId].percent !== "")
         if (hasDraft) return
+        const savedPercent = String(price.percent ?? "").trim()
         next[offerId] = {
           base: price.base ?? "",
-          percent: price.percent ?? "",
+          percent: savedPercent || DEFAULT_PRICE_PERCENT,
         }
       })
       return next
@@ -721,9 +724,9 @@ export default function ProductsTab({
       return name.includes(normalizedQuery)
     })
   }, [list, normalizedQuery])
-  const filteredUsedStockCount = useMemo(
+  const toolbarUsedStockCount = useMemo(
     () =>
-      filteredList.reduce((total, product) => {
+      allProducts.reduce((total, product) => {
         const offerId = String(product?.id ?? "").trim()
         const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
         if (loadedKeys) {
@@ -740,7 +743,7 @@ export default function ProductsTab({
         const rawUsedCount = Number(product?.stockUsedCount)
         return total + (Number.isFinite(rawUsedCount) ? Math.max(0, rawUsedCount) : 0)
       }, 0),
-    [filteredList, keysByOffer],
+    [allProducts, keysByOffer],
   )
   const sortedList = useMemo(() => {
     if (!starredOffers || Object.keys(starredOffers).length === 0) return filteredList
@@ -887,7 +890,7 @@ export default function ProductsTab({
   const buildBulkPriceCandidate = (product) => {
     const offerId = String(product?.id ?? "").trim()
     const name = String(product?.name ?? "").trim() || "Isimsiz urun"
-    const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
+    const priceDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
     const baseInputValue = String(priceDraft?.base ?? "").trim()
     const baseValue = baseInputValue.replace(",", ".")
     const percentValue = String(priceDraft?.percent ?? "").replace(",", ".")
@@ -974,6 +977,7 @@ export default function ProductsTab({
   const canUseBulkPriceActions = canManagePrices && canViewPriceDetails
   const canUseBulkUsedDelete =
     canDeleteKeys && typeof onBulkDelete === "function" && typeof onLoadKeys === "function"
+  const canRefreshAllStocks = typeof onLoadKeys === "function" && allProducts.length > 0
   const togglePriceOfferSelection = (offerId, nextSelected) => {
     const normalizedOfferId = String(offerId ?? "").trim()
     if (!normalizedOfferId || isBulkPriceRunning) return
@@ -1362,7 +1366,7 @@ export default function ProductsTab({
     setPriceDrafts((prev) => ({
       ...prev,
       [normalizedId]: {
-        ...(prev[normalizedId] ?? { base: "", percent: "" }),
+        ...(prev[normalizedId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }),
         [field]: value,
       },
     }))
@@ -1428,7 +1432,7 @@ export default function ProductsTab({
   }
   const handleToolbarBulkUsedDelete = async () => {
     if (!canUseBulkUsedDelete || isBulkUsedDeleteRunning) return
-    if (filteredUsedStockCount <= 0) {
+    if (toolbarUsedStockCount <= 0) {
       toast.error("Temizlenecek kullanilan stok yok.")
       return
     }
@@ -1447,13 +1451,18 @@ export default function ProductsTab({
     try {
       let deletedStockCount = 0
       let affectedOfferCount = 0
+      let failedOfferCount = 0
 
-      for (const product of filteredList) {
+      for (const product of allProducts) {
         const offerId = String(product?.id ?? "").trim()
         if (!offerId) continue
 
         const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
-        const resolvedKeys = loadedKeys ?? (await onLoadKeys(offerId, { force: true }))
+        const resolvedKeys = loadedKeys ?? (await onLoadKeys(offerId, { force: true, silent: true }))
+        if (resolvedKeys === null) {
+          failedOfferCount += 1
+          continue
+        }
         const usedKeys = Array.isArray(resolvedKeys)
           ? resolvedKeys.filter((item) => String(item?.status ?? "").trim().toLowerCase() === "used")
           : []
@@ -1466,7 +1475,10 @@ export default function ProductsTab({
           usedKeys.map((item) => item.id),
           { silent: true },
         )
-        if (ok === false) continue
+        if (ok === false) {
+          failedOfferCount += 1
+          continue
+        }
 
         deletedStockCount += usedKeys.length
         affectedOfferCount += 1
@@ -1476,12 +1488,81 @@ export default function ProductsTab({
         toast.error("Temizlenecek kullanilan stok bulunamadi.")
         return
       }
-      toast.success(`${deletedStockCount} kullanilan stok temizlendi (${affectedOfferCount} urun).`, {
-        duration: 1800,
-        position: "top-right",
-      })
+      if (failedOfferCount > 0) {
+        toast.success(
+          `${deletedStockCount} kullanilan stok temizlendi (${affectedOfferCount} urun, ${failedOfferCount} hata).`,
+          {
+            duration: 2200,
+            position: "top-right",
+          },
+        )
+      } else {
+        toast.success(`${deletedStockCount} kullanilan stok temizlendi (${affectedOfferCount} urun).`, {
+          duration: 1800,
+          position: "top-right",
+        })
+      }
     } finally {
       setIsBulkUsedDeleteRunning(false)
+    }
+  }
+  const handleToolbarRefreshAllStocks = async () => {
+    if (!canRefreshAllStocks || isBulkStockRefreshRunning) return
+    const offerIds = Array.from(
+      new Set(
+        allProducts
+          .map((product) => String(product?.id ?? "").trim())
+          .filter(Boolean),
+      ),
+    )
+    if (offerIds.length === 0) {
+      toast.error("Yenilenecek urun stogu yok.")
+      return
+    }
+
+    setIsBulkStockRefreshRunning(true)
+    setRefreshingOffers((prev) => {
+      const next = { ...prev }
+      offerIds.forEach((offerId) => {
+        next[offerId] = true
+      })
+      return next
+    })
+
+    try {
+      let failedOfferCount = 0
+      const batchSize = 6
+      for (let index = 0; index < offerIds.length; index += batchSize) {
+        const batch = offerIds.slice(index, index + batchSize)
+        const results = await Promise.all(
+          batch.map((offerId) => onLoadKeys(offerId, { force: true, silent: true })),
+        )
+        failedOfferCount += results.filter((result) => result === null).length
+      }
+
+      if (failedOfferCount > 0) {
+        toast.success(
+          `${offerIds.length - failedOfferCount} urunun stogu yenilendi (${failedOfferCount} hata).`,
+          {
+            duration: 2200,
+            position: "top-right",
+          },
+        )
+      } else {
+        toast.success(`${offerIds.length} urunun stogu yenilendi.`, {
+          duration: 1800,
+          position: "top-right",
+        })
+      }
+    } finally {
+      setRefreshingOffers((prev) => {
+        const next = { ...prev }
+        offerIds.forEach((offerId) => {
+          next[offerId] = false
+        })
+        return next
+      })
+      setIsBulkStockRefreshRunning(false)
     }
   }
   const handleGroupDraftChange = (offerId, value) => {
@@ -2371,7 +2452,7 @@ export default function ProductsTab({
                   )}
                 </div>
               </div>
-              {(canRefresh || canUseBulkUsedDelete || (canUseBulkPriceActions && filteredList.length > 0)) && (
+              {(canRefresh || canRefreshAllStocks || canUseBulkUsedDelete || (canUseBulkPriceActions && filteredList.length > 0)) && (
                 <div className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-2 shadow-card">
                   {canRefresh && (
                     <button
@@ -2383,13 +2464,43 @@ export default function ProductsTab({
                           ? "cursor-not-allowed border-white/5 text-slate-600"
                           : "hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
                       }`}
-                      title="Urunleri yenile"
-                      aria-label="Urunleri yenile"
+                      title="Urun katalogunu yenile"
+                      aria-label="Urun katalogunu yenile"
                     >
                       <svg
                         viewBox="0 0 24 24"
                         aria-hidden="true"
-                        className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                        className={`h-4 w-4 ${isRefreshing ? "animate-pulse" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m12 3 7 4v10l-7 4-7-4V7l7-4Z" />
+                        <path d="m12 12 7-4" />
+                        <path d="m12 12-7-4" />
+                        <path d="M12 12v9" />
+                      </svg>
+                    </button>
+                  )}
+                  {canRefreshAllStocks && (
+                    <button
+                      type="button"
+                      onClick={handleToolbarRefreshAllStocks}
+                      disabled={isBulkStockRefreshRunning}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition ${
+                        isBulkStockRefreshRunning
+                          ? "cursor-not-allowed border-white/5 text-slate-600"
+                          : "hover:border-white/20 hover:bg-white/5 hover:text-sky-100"
+                      }`}
+                      title="Tum urun stoklarini yenile"
+                      aria-label="Tum urun stoklarini yenile"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        className={`h-4 w-4 ${isBulkStockRefreshRunning ? "animate-spin" : ""}`}
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
@@ -2405,13 +2516,13 @@ export default function ProductsTab({
                     <button
                       type="button"
                       onClick={handleToolbarBulkUsedDelete}
-                      disabled={isBulkUsedDeleteRunning || filteredUsedStockCount <= 0}
+                      disabled={isBulkUsedDeleteRunning || toolbarUsedStockCount <= 0}
                       className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition ${
                         confirmBulkUsedDelete
                           ? "border-rose-300/60 bg-rose-500/15 text-rose-50"
                           : "border-white/10 text-slate-300 hover:border-rose-300/40 hover:bg-rose-500/10 hover:text-rose-100"
                       } ${
-                        isBulkUsedDeleteRunning || filteredUsedStockCount <= 0
+                        isBulkUsedDeleteRunning || toolbarUsedStockCount <= 0
                           ? "cursor-not-allowed opacity-60"
                           : ""
                       }`}
@@ -2819,7 +2930,7 @@ export default function ProductsTab({
                     : independentMessages
                   const messageGroupLabel =
                     messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
-                  const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
+                  const priceDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
                   const savedPriceEntry = savedPricesByOffer?.[offerId] ?? null
                   const baseInputValue = String(priceDraft.base ?? "").trim()
                   const baseValue = baseInputValue.replace(",", ".")
@@ -4924,10 +5035,6 @@ export default function ProductsTab({
     </div>
   )
 }
-
-
-
-
 
 
 
