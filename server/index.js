@@ -276,6 +276,20 @@ const readJsonFile = async (filePath) => {
   }
 }
 
+const normalizeEldoradoMainCategory = (value) => {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "")
+
+  if (normalized === "currency") return "Currency"
+  if (normalized === "topup" || normalized === "topups") return "TopUp"
+  if (normalized === "giftcard" || normalized === "giftcards") return "GiftCard"
+  if (normalized === "account" || normalized === "accounts") return "Account"
+  if (normalized === "customitem" || normalized === "item" || normalized === "items") return "CustomItem"
+  return ""
+}
+
 const normalizeEldoradoOffer = (item) => {
   const id = String(item?.id ?? "").trim()
   const name = String(item?.name ?? "").trim()
@@ -288,6 +302,9 @@ const normalizeEldoradoOffer = (item) => {
   const hasHref = Boolean(href)
   const categoryRaw = item?.category
   const category = categoryRaw === undefined || categoryRaw === null ? "" : String(categoryRaw).trim()
+  const mainCategory =
+    normalizeEldoradoMainCategory(item?.mainCategory) ||
+    normalizeEldoradoMainCategory(item?.category)
   const missing = hasHref ? Boolean(item?.missing) : true
   return {
     id,
@@ -295,6 +312,8 @@ const normalizeEldoradoOffer = (item) => {
     href,
     imageUrl,
     category,
+    mainCategory,
+    kind: String(item?.kind ?? "").trim(),
     missing,
   }
 }
@@ -663,7 +682,7 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
   const [existingRows, previousSync] = await Promise.all([
     prisma.eldoradoOffer.findMany({
       where: { id: { in: normalizedIds } },
-      select: { id: true, lastSeenAt: true },
+      select: { id: true, lastSeenAt: true, mainCategory: true },
     }),
     prisma.eldoradoSync.findUnique({
       where: { kind },
@@ -676,6 +695,10 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
     const seenInRun = offer.seenInRun === true
     const missing = offer.missing === true
     const nextLastSeenAt = seenInRun ? seenAt : existing?.lastSeenAt ?? null
+    const nextMainCategory =
+      normalizeEldoradoMainCategory(offer.mainCategory) ||
+      normalizeEldoradoMainCategory(existing?.mainCategory) ||
+      (kind === "topups" ? "TopUp" : null)
     const update = {
       name: offer.name,
       kind,
@@ -684,6 +707,7 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
       href: offer.href || null,
       imageUrl: offer.imageUrl || null,
       category: offer.category || null,
+      mainCategory: nextMainCategory,
       price: null,
     }
     return prisma.eldoradoOffer.upsert({
@@ -693,6 +717,7 @@ const syncEldoradoOffers = async (kind, offers, seenAtOverride) => {
         id: offer.id,
         name: offer.name,
         category: offer.category || null,
+        mainCategory: nextMainCategory,
         href: offer.href || null,
         imageUrl: offer.imageUrl || null,
         kind,

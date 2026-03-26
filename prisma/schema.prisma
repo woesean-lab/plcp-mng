@@ -58,6 +58,7 @@ model EldoradoOffer {
   name      String
   price     String?
   category  String?
+  mainCategory String?
   href      String?
   imageUrl  String?
   kind      String

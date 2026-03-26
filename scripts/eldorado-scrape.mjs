@@ -116,6 +116,20 @@ const extractCategoryFromUrl = (url) => {
   }
 }
 
+const normalizeMainCategory = (value) => {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "")
+
+  if (normalized === "currency") return "Currency"
+  if (normalized === "topup" || normalized === "topups") return "TopUp"
+  if (normalized === "giftcard" || normalized === "giftcards") return "GiftCard"
+  if (normalized === "account" || normalized === "accounts") return "Account"
+  if (normalized === "customitem" || normalized === "item" || normalized === "items") return "CustomItem"
+  return ""
+}
+
 const slugifyName = (value) => {
   const slug = String(value ?? "")
     .trim()
@@ -373,7 +387,13 @@ const scrapeCategory = async (startUrl) => {
     } else {
       emptyPages = 0
     }
-    scraped.push(...normalizedPageItems.map((item) => ({ ...item, category: categoryHint })))
+    scraped.push(
+      ...normalizedPageItems.map((item) => ({
+        ...item,
+        category: categoryHint,
+        mainCategory: normalizeMainCategory(categoryHint),
+      })),
+    )
     pageIndex += 1
   }
 
@@ -434,6 +454,8 @@ const run = async () => {
         href: normalizeHref(item?.href ?? ""),
         imageUrl: String(item?.imageUrl ?? "").trim(),
         category: String(item?.category ?? "").trim(),
+        mainCategory:
+          normalizeMainCategory(item?.mainCategory) || normalizeMainCategory(item?.category),
         missing: Boolean(item?.missing) && missingStreak >= MISSING_STREAK_THRESHOLD,
         missingStreak,
         seenInRun: false,
@@ -494,12 +516,17 @@ const run = async () => {
       item.category ||
       extractCategoryFromUrl(href) ||
       String(existingItem?.category ?? "").trim()
+    const mainCategory =
+      normalizeMainCategory(item?.mainCategory) ||
+      normalizeMainCategory(existingItem?.mainCategory) ||
+      normalizeMainCategory(item?.category)
     if (existingItem) {
       existingItem.id = resolvedId
       existingItem.name = name
       existingItem.href = href
       existingItem.imageUrl = imageUrl
       existingItem.category = category
+      existingItem.mainCategory = mainCategory
       existingItem.missing = false
       existingItem.missingStreak = 0
       existingItem.seenInRun = true
@@ -513,6 +540,7 @@ const run = async () => {
         href,
         imageUrl,
         category,
+        mainCategory,
         missing: false,
         missingStreak: 0,
         seenInRun: true,

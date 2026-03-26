@@ -55,10 +55,10 @@ const getCategoryKey = (product) => {
   return derived || "diger"
 }
 
-const getMainProductCategory = (value) => getKnownMainProductCategory(value) || "CustomItem"
 const resolveMainProductCategory = (product) =>
-  getKnownMainProductCategory(getCategoryKeyFromHref(product?.href)) ||
+  getKnownMainProductCategory(product?.mainCategory) ||
   getKnownMainProductCategory(product?.category) ||
+  (String(product?.kind ?? "").trim().toLowerCase() === "topups" ? "TopUp" : "") ||
   "CustomItem"
 const isValidPriceInput = (value) => /^\d+(?:[.,]\d{1,2})?$/.test(String(value ?? "").trim())
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300

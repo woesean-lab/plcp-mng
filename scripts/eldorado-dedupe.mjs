@@ -220,6 +220,19 @@ const mergeAutomationTargets = async (tx, keeperId, loserId) => {
 }
 
 const moveLoserToKeeper = async (tx, keeperId, loserId) => {
+  const [keeperOffer, loserOffer] = await Promise.all([
+    tx.eldoradoOffer.findUnique({ where: { id: keeperId } }),
+    tx.eldoradoOffer.findUnique({ where: { id: loserId } }),
+  ])
+  const keeperMainCategory = String(keeperOffer?.mainCategory ?? "").trim()
+  const loserMainCategory = String(loserOffer?.mainCategory ?? "").trim()
+  if (!keeperMainCategory && loserMainCategory) {
+    await tx.eldoradoOffer.update({
+      where: { id: keeperId },
+      data: { mainCategory: loserMainCategory },
+    })
+  }
+
   await Promise.all([
     tx.eldoradoKey.updateMany({ where: { offerId: loserId }, data: { offerId: keeperId } }),
     tx.eldoradoAutomationRunLog.updateMany({ where: { offerId: loserId }, data: { offerId: keeperId } }),
