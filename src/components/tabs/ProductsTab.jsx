@@ -2162,57 +2162,27 @@ export default function ProductsTab({
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
               Kategoriler
             </p>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
-                title={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
-                aria-label={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
-                aria-expanded={isCategoryMenuOpen}
+            <button
+              type="button"
+              onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
+              title={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
+              aria-label={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
+              aria-expanded={isCategoryMenuOpen}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className={`h-4 w-4 transition-transform ${isCategoryMenuOpen ? "" : "rotate-180"}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className={`h-4 w-4 transition-transform ${isCategoryMenuOpen ? "" : "rotate-180"}`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m6 14 6-6 6 6" />
-                </svg>
-              </button>
-              {canRefresh && (
-                <button
-                  type="button"
-                  onClick={onRefresh}
-                  disabled={isRefreshing}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition ${
-                    isRefreshing
-                      ? "cursor-not-allowed border-white/5 text-slate-600"
-                      : "hover:border-white/20 hover:bg-white/5 hover:text-slate-100 focus-visible:bg-white/5 focus-visible:text-slate-100"
-                  }`}
-                  title="Ürünleri yenile"
-                  aria-label="Ürünleri yenile"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 12a8 8 0 1 0 2.35-5.65" />
-                    <path d="M4 4v4h4" />
-                  </svg>
-                </button>
-              )}
-            </div>
+                <path d="m6 14 6-6 6 6" />
+              </svg>
+            </button>
           </div>
           {isCategoryMenuOpen ? (
             <div className="mt-3 space-y-1.5">
@@ -2258,8 +2228,8 @@ export default function ProductsTab({
                 {activeCategory?.label ?? "Tumu"} - {list.length} urun
               </p>
             </div>
-            <div className="flex w-full flex-col gap-2">
-              <div className="flex h-11 w-full items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
+            <div className="flex w-full flex-col gap-2 xl:flex-row xl:items-stretch">
+              <div className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
                 <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
                 <div className="flex flex-1 items-center gap-2">
                   <svg
@@ -2279,7 +2249,7 @@ export default function ProductsTab({
                     type="text"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Ürün adı ara"
+                    placeholder="Urun adi ara"
                     className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                   />
                   {query && (
@@ -2297,34 +2267,66 @@ export default function ProductsTab({
                   )}
                 </div>
               </div>
+              {(canRefresh || (canUseBulkPriceActions && filteredList.length > 0)) && (
+                <div className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-2 shadow-card">
+                  {canRefresh && (
+                    <button
+                      type="button"
+                      onClick={onRefresh}
+                      disabled={isRefreshing}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition ${
+                        isRefreshing
+                          ? "cursor-not-allowed border-white/5 text-slate-600"
+                          : "hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
+                      }`}
+                      title="Urunleri yenile"
+                      aria-label="Urunleri yenile"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M4 12a8 8 0 1 0 2.35-5.65" />
+                        <path d="M4 4v4h4" />
+                      </svg>
+                    </button>
+                  )}
+                  {canUseBulkPriceActions && filteredList.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsBulkPriceModeOpen((prev) => !prev)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
+                      title={isBulkPriceModeOpen ? "Toplu fiyat panelini kapat" : "Toplu fiyat panelini ac"}
+                      aria-label={isBulkPriceModeOpen ? "Toplu fiyat panelini kapat" : "Toplu fiyat panelini ac"}
+                      aria-expanded={isBulkPriceModeOpen}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        className={`h-4 w-4 transition-transform ${isBulkPriceModeOpen ? "scale-110 text-emerald-300" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 3v18" />
+                        <path d="M16.5 7.5h-6a3 3 0 0 0 0 6h3a3 3 0 0 1 0 6H7" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-          {canUseBulkPriceActions && filteredList.length > 0 && (
-            <div className="mt-3 space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsBulkPriceModeOpen((prev) => !prev)}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-ink-900/70 px-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 shadow-card transition hover:border-white/15 hover:bg-ink-900/80"
-                  aria-expanded={isBulkPriceModeOpen}
-                >
-                  <span>Toplu fiyat</span>
-                  <svg
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                    className={`h-4 w-4 transition-transform ${isBulkPriceModeOpen ? "rotate-180" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m5 7 5 6 5-6" />
-                  </svg>
-                </button>
-              </div>
-              {isBulkPriceModeOpen && (
-                <div className="overflow-hidden rounded-2xl border border-sky-500/15 bg-[linear-gradient(135deg,rgba(8,13,24,0.96),rgba(10,18,35,0.9))] shadow-card">
+          {isBulkPriceModeOpen && canUseBulkPriceActions && filteredList.length > 0 && (
+            <div className="mt-3 overflow-hidden rounded-2xl border border-sky-500/15 bg-[linear-gradient(135deg,rgba(8,13,24,0.96),rgba(10,18,35,0.9))] shadow-card">
                   <div className="px-4 py-4">
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -2482,8 +2484,6 @@ export default function ProductsTab({
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
           )}
           <div key={activeCategoryKey} className="mt-4 space-y-2">
             {isRefreshing ? (
