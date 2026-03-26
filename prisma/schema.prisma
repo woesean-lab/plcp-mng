@@ -249,6 +249,28 @@ model EldoradoAutomationRunLog {
   @@index([offerId, createdAt])
 }
 
+model EldoradoPriceCommandRunLog {
+  id        String   @id
+  offerId   String
+  time      String
+  status    String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([offerId, createdAt])
+}
+
+model EldoradoPriceCommandBulkLog {
+  id        String   @id
+  username  String
+  time      String
+  status    String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([username, createdAt])
+}
+
 model Task {
   id            String   @id @default(cuid())
   title         String

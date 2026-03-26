@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
+import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import useEldoradoAutomationRuntime from "../../hooks/useEldoradoAutomationRuntime"
 import useEldoradoPriceCommandRuntime from "../../hooks/useEldoradoPriceCommandRuntime"
 import StockModal from "../modals/StockModal"
@@ -145,6 +146,15 @@ const createBulkPriceCommandLogEntry = (status, message) => ({
   status: String(status ?? "").trim() || "running",
   message: String(message ?? "").trim(),
 })
+
+const normalizeBulkPriceCommandLogEntry = (entry) => {
+  const id = String(entry?.id ?? "").trim()
+  const time = String(entry?.time ?? "").trim()
+  const status = String(entry?.status ?? "").trim()
+  const message = String(entry?.message ?? "").trim()
+  if (!id || !time || !status || !message) return null
+  return { id, time, status, message }
+}
 
 const createBulkPriceItemStatusEntry = (status, name, message = "") => ({
   status: String(status ?? "").trim().toLowerCase() || "pending",
@@ -481,6 +491,9 @@ export default function ProductsTab({
   const [bulkPriceCommandState, setBulkPriceCommandState] = useState(createEmptyBulkPriceCommandState)
   const [bulkPriceCommandLogEntries, setBulkPriceCommandLogEntries] = useState([])
   const [bulkPriceItemStatusByOffer, setBulkPriceItemStatusByOffer] = useState({})
+  const [bulkPriceLogsLoaded, setBulkPriceLogsLoaded] = useState(false)
+  const [bulkPriceLogsLoading, setBulkPriceLogsLoading] = useState(false)
+  const [bulkPriceLogsClearing, setBulkPriceLogsClearing] = useState(false)
   const [keyFadeById, setKeyFadeById] = useState({})
   const [noteGroupFlashByOffer, setNoteGroupFlashByOffer] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
@@ -672,6 +685,8 @@ export default function ProductsTab({
     priceCommandRunLogByOffer,
     priceCommandIsRunningByOffer,
     priceCommandConnectionStateByOffer,
+    priceCommandLogsClearingByOffer,
+    loadPriceCommandLogs,
     clearPriceCommandLogs,
     runPriceCommandAsync,
     handlePriceCommandRun,
@@ -679,6 +694,7 @@ export default function ProductsTab({
     activeUsername,
     wsUrl: automationWsUrl,
     canRunPriceCommand: canManagePrices,
+    canViewPriceCommandLogs,
     defaultBackendKey: priceCommandBackendEntry?.key ?? "eldorado",
     defaultBackendLabel: priceCommandBackendEntry?.label ?? "eldorado",
     maxLogEntries: MAX_PRICE_COMMAND_RUN_LOG_ENTRIES,
@@ -1063,22 +1079,111 @@ export default function ProductsTab({
     isBulkPriceModeOpen,
     selectedPriceOfferIds,
   ])
-  const appendBulkPriceCommandLog = (status, message) => {
+  const apiFetchBulkPriceLog = useCallback(async (input, init = {}) => {
+    const headers = new Headers(init.headers || {})
+    if (typeof window !== "undefined") {
+      try {
+        const token = String(localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "").trim()
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`)
+        }
+      } catch {
+        // Ignore localStorage read errors.
+      }
+    }
+    return fetch(input, { ...init, headers })
+  }, [])
+  const persistBulkPriceCommandLogEntry = async (entry) => {
+    if (!entry) return
+    try {
+      const res = await apiFetchBulkPriceLog("/api/eldorado/price-command-bulk-logs", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(entry),
+      })
+      if (!res.ok) {
+        // Ignore API-level errors; keep UI responsive.
+      }
+    } catch {
+      // Ignore persistence errors; keep UI responsive.
+    }
+  }
+  const loadBulkPriceCommandLogs = useCallback(async (options = {}) => {
+    if (!canViewPriceCommandLogs) return false
+    const force = Boolean(options?.force)
+    if (!force && bulkPriceLogsLoaded) return true
+
+    setBulkPriceLogsLoading(true)
+    try {
+      const res = await apiFetchBulkPriceLog(
+        `/api/eldorado/price-command-bulk-logs?limit=${MAX_PRICE_COMMAND_RUN_LOG_ENTRIES}`,
+      )
+      if (!res.ok) {
+        throw new Error("bulk_price_logs_load_failed")
+      }
+      const payload = await res.json()
+      const normalized = Array.isArray(payload)
+        ? payload.map(normalizeBulkPriceCommandLogEntry).filter(Boolean)
+        : []
+      setBulkPriceCommandLogEntries((prev) => {
+        const seen = new Set()
+        return [...normalized, ...prev]
+          .filter((entry) => {
+            const id = String(entry?.id ?? "").trim()
+            if (!id || seen.has(id)) return false
+            seen.add(id)
+            return true
+          })
+          .slice(0, MAX_PRICE_COMMAND_RUN_LOG_ENTRIES)
+      })
+      setBulkPriceLogsLoaded(true)
+      return true
+    } catch {
+      toast.error("Toplu fiyat loglari alinamadi.")
+      return false
+    } finally {
+      setBulkPriceLogsLoading(false)
+    }
+  }, [apiFetchBulkPriceLog, bulkPriceLogsLoaded, canViewPriceCommandLogs])
+  const appendBulkPriceCommandLog = (status, message, options = {}) => {
     const normalizedMessage = String(message ?? "").trim()
     if (!normalizedMessage) return
+    const entry = createBulkPriceCommandLogEntry(status, normalizedMessage)
     setBulkPriceCommandLogEntries((prev) => [
-      createBulkPriceCommandLogEntry(status, normalizedMessage),
+      entry,
       ...prev,
     ].slice(0, MAX_PRICE_COMMAND_RUN_LOG_ENTRIES))
+    setBulkPriceLogsLoaded(true)
+    if (options?.persist !== false) {
+      void persistBulkPriceCommandLogEntry(entry)
+    }
   }
-  const clearBulkPriceCommandLogs = () => {
-    setBulkPriceCommandLogEntries([])
-    setBulkPriceItemStatusByOffer({})
-    setBulkPriceCommandState((prev) =>
-      createEmptyBulkPriceCommandState({
-        isRunning: prev.isRunning,
-      }),
-    )
+  const clearBulkPriceCommandLogs = async () => {
+    if (isBulkPriceRunning || bulkPriceLogsClearing) return false
+    setBulkPriceLogsClearing(true)
+    try {
+      const res = await apiFetchBulkPriceLog("/api/eldorado/price-command-bulk-logs", {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        throw new Error("bulk_price_logs_clear_failed")
+      }
+      setBulkPriceCommandLogEntries([])
+      setBulkPriceItemStatusByOffer({})
+      setBulkPriceCommandState((prev) =>
+        createEmptyBulkPriceCommandState({
+          isRunning: prev.isRunning,
+        }),
+      )
+      setBulkPriceLogsLoaded(true)
+      toast.success("Toplu fiyat loglari temizlendi.")
+      return true
+    } catch {
+      toast.error("Toplu fiyat loglari temizlenemedi.")
+      return false
+    } finally {
+      setBulkPriceLogsClearing(false)
+    }
   }
   const buildBulkPriceCandidate = (product) => {
     const offerId = String(product?.id ?? "").trim()
@@ -1183,6 +1288,10 @@ export default function ProductsTab({
       bulkPriceCommandLogEntries.length,
       bulkPriceItemStatusByOffer,
     ])
+  useEffect(() => {
+    if (!isBulkPriceModeOpen || !canViewPriceCommandLogs) return
+    void loadBulkPriceCommandLogs()
+  }, [canViewPriceCommandLogs, isBulkPriceModeOpen, loadBulkPriceCommandLogs])
   const areAllFilteredSelected =
     selectedFilteredOfferIds.length > 0 &&
     selectedFilteredOfferIds.every((offerId) => Boolean(selectedPriceOfferIds?.[offerId]))
@@ -2971,15 +3080,24 @@ export default function ProductsTab({
                             </div>
                             <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                               <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                                {bulkPriceCommandLogEntries.length} satir
+                                {bulkPriceLogsLoading
+                                  ? "Yukleniyor"
+                                  : `${bulkPriceCommandLogEntries.length} satir`}
                               </span>
                               <button
                                 type="button"
-                                onClick={clearBulkPriceCommandLogs}
-                                disabled={bulkPriceCommandLogEntries.length === 0 || isBulkPriceRunning}
+                                onClick={() => {
+                                  void clearBulkPriceCommandLogs()
+                                }}
+                                disabled={
+                                  bulkPriceCommandLogEntries.length === 0 ||
+                                  isBulkPriceRunning ||
+                                  bulkPriceLogsLoading ||
+                                  bulkPriceLogsClearing
+                                }
                                 className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                Log temizle
+                                {bulkPriceLogsClearing ? "..." : "Log temizle"}
                               </button>
                             </div>
                           </div>
@@ -3243,6 +3361,7 @@ export default function ProductsTab({
                     PRICE_COMMAND_VISIBLE_ROWS - visiblePriceCommandLogEntries.length,
                   )
                   const isPriceCommandRunning = Boolean(priceCommandIsRunningByOffer?.[offerId])
+                  const isPriceCommandLogsClearing = Boolean(priceCommandLogsClearingByOffer?.[offerId])
                   const priceCommandConnectionState = String(
                     priceCommandConnectionStateByOffer?.[offerId] ?? "idle",
                   ).trim()
@@ -3732,6 +3851,9 @@ export default function ProductsTab({
                                   onClick={() => {
                                     if (!canManagePrices) return
                                     setActivePanel(offerId, "price")
+                                    if (canViewPriceCommandLogs) {
+                                      void loadPriceCommandLogs(offerId)
+                                    }
                                   }}
                                   className={`flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
                                     activePanel === "price"
@@ -4248,11 +4370,13 @@ export default function ProductsTab({
             </span>
             <button
               type="button"
-              onClick={() => clearPriceCommandLogs(offerId)}
-              disabled={priceCommandLogEntries.length === 0}
+              onClick={() => {
+                void clearPriceCommandLogs(offerId)
+              }}
+              disabled={priceCommandLogEntries.length === 0 || isPriceCommandLogsClearing}
               className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Log temizle
+              {isPriceCommandLogsClearing ? "..." : "Log temizle"}
             </button>
           </div>
         </div>
@@ -5323,9 +5447,3 @@ export default function ProductsTab({
     </div>
   )
 }
-
-
-
-
-
-

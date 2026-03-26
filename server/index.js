@@ -933,6 +933,7 @@ const initialAutomations = [
 ]
 const AUTOMATION_LOG_LIMIT = 300
 const ELDORADO_AUTOMATION_LOG_LIMIT = 300
+const ELDORADO_PRICE_COMMAND_LOG_LIMIT = 300
 const APPLICATION_LOG_LIMIT = 300
 
 async function ensureDefaults() {
@@ -1070,6 +1071,13 @@ const PRODUCT_STOCK_FETCH_STAR_PERMISSIONS = [
   "products.stock.fetch",
   "products.manage",
 ]
+const PRODUCT_PRICE_RUN_PERMISSIONS = ["products.price.manage", "products.manage"]
+const PRODUCT_PRICE_LOGS_PERMISSIONS = [
+  "products.price.command.logs.view",
+  "products.price.manage",
+  "products.manage",
+]
+const PRODUCT_PRICE_LOGS_CLEAR_PERMISSIONS = ["products.price.manage", "products.manage"]
 const APPLICATION_VIEW_PERMISSIONS = [
   "applications.view",
   "applications.manage",
@@ -1116,6 +1124,26 @@ const normalizeEldoradoAutomationRunLogEntry = (entry, offerIdFromRoute = "") =>
   const message = String(entry?.message ?? "").trim()
   if (!offerId || !id || !time || !status || !message) return null
   return { offerId, id, time, status, message }
+}
+
+const normalizeEldoradoPriceCommandRunLogEntry = (entry, offerIdFromRoute = "") => {
+  const offerId = String(offerIdFromRoute || entry?.offerId || "").trim()
+  const id = String(entry?.id ?? "").trim()
+  const time = String(entry?.time ?? "").trim()
+  const status = String(entry?.status ?? "").trim()
+  const message = String(entry?.message ?? "").trim()
+  if (!offerId || !id || !time || !status || !message) return null
+  return { offerId, id, time, status, message }
+}
+
+const normalizeEldoradoPriceCommandBulkLogEntry = (entry, usernameFromUser = "") => {
+  const username = String(usernameFromUser || entry?.username || "").trim()
+  const id = String(entry?.id ?? "").trim()
+  const time = String(entry?.time ?? "").trim()
+  const status = String(entry?.status ?? "").trim()
+  const message = String(entry?.message ?? "").trim()
+  if (!username || !id || !time || !status || !message) return null
+  return { username, id, time, status, message }
 }
 
 const normalizeApplicationPayload = (value) => {
@@ -3791,6 +3819,182 @@ app.post(
   }
 
   res.status(201).json({ ok: true })
+  },
+)
+
+app.get(
+  "/api/eldorado/offers/:id/price-command-logs",
+  requireAnyPermission(PRODUCT_PRICE_LOGS_PERMISSIONS),
+  async (req, res) => {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+
+    const rawLimit = Number(req.query?.limit ?? ELDORADO_PRICE_COMMAND_LOG_LIMIT)
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(rawLimit, 1), ELDORADO_PRICE_COMMAND_LOG_LIMIT)
+      : ELDORADO_PRICE_COMMAND_LOG_LIMIT
+
+    const logs = await prisma.eldoradoPriceCommandRunLog.findMany({
+      where: { offerId },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit,
+    })
+
+    res.json(logs)
+  },
+)
+
+app.delete(
+  "/api/eldorado/offers/:id/price-command-logs",
+  requireAnyPermission(PRODUCT_PRICE_LOGS_CLEAR_PERMISSIONS),
+  async (req, res) => {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+
+    const removed = await prisma.eldoradoPriceCommandRunLog.deleteMany({
+      where: { offerId },
+    })
+
+    res.json({ ok: true, offerId, deletedCount: removed.count })
+  },
+)
+
+app.post(
+  "/api/eldorado/offers/:id/price-command-logs",
+  requireAnyPermission(PRODUCT_PRICE_RUN_PERMISSIONS),
+  async (req, res) => {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+
+    const normalized = normalizeEldoradoPriceCommandRunLogEntry(req.body, offerId)
+    if (!normalized) {
+      res.status(400).json({ error: "id, time, status and message are required" })
+      return
+    }
+
+    await prisma.eldoradoPriceCommandRunLog.upsert({
+      where: { id: normalized.id },
+      create: normalized,
+      update: {
+        time: normalized.time,
+        status: normalized.status,
+        message: normalized.message,
+        offerId: normalized.offerId,
+      },
+    })
+
+    const overflow = await prisma.eldoradoPriceCommandRunLog.findMany({
+      where: { offerId },
+      select: { id: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: ELDORADO_PRICE_COMMAND_LOG_LIMIT,
+    })
+    if (overflow.length > 0) {
+      await prisma.eldoradoPriceCommandRunLog.deleteMany({
+        where: {
+          id: { in: overflow.map((entry) => entry.id) },
+        },
+      })
+    }
+
+    res.status(201).json({ ok: true })
+  },
+)
+
+app.get(
+  "/api/eldorado/price-command-bulk-logs",
+  requireAnyPermission(PRODUCT_PRICE_LOGS_PERMISSIONS),
+  async (req, res) => {
+    const username = String(req.user?.username ?? "").trim()
+    if (!username) {
+      res.status(401).json({ error: "username is required" })
+      return
+    }
+
+    const rawLimit = Number(req.query?.limit ?? ELDORADO_PRICE_COMMAND_LOG_LIMIT)
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(rawLimit, 1), ELDORADO_PRICE_COMMAND_LOG_LIMIT)
+      : ELDORADO_PRICE_COMMAND_LOG_LIMIT
+
+    const logs = await prisma.eldoradoPriceCommandBulkLog.findMany({
+      where: { username },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit,
+    })
+
+    res.json(logs)
+  },
+)
+
+app.delete(
+  "/api/eldorado/price-command-bulk-logs",
+  requireAnyPermission(PRODUCT_PRICE_LOGS_CLEAR_PERMISSIONS),
+  async (req, res) => {
+    const username = String(req.user?.username ?? "").trim()
+    if (!username) {
+      res.status(401).json({ error: "username is required" })
+      return
+    }
+
+    const removed = await prisma.eldoradoPriceCommandBulkLog.deleteMany({
+      where: { username },
+    })
+
+    res.json({ ok: true, username, deletedCount: removed.count })
+  },
+)
+
+app.post(
+  "/api/eldorado/price-command-bulk-logs",
+  requireAnyPermission(PRODUCT_PRICE_RUN_PERMISSIONS),
+  async (req, res) => {
+    const username = String(req.user?.username ?? "").trim()
+    if (!username) {
+      res.status(401).json({ error: "username is required" })
+      return
+    }
+
+    const normalized = normalizeEldoradoPriceCommandBulkLogEntry(req.body, username)
+    if (!normalized) {
+      res.status(400).json({ error: "id, time, status and message are required" })
+      return
+    }
+
+    await prisma.eldoradoPriceCommandBulkLog.upsert({
+      where: { id: normalized.id },
+      create: normalized,
+      update: {
+        time: normalized.time,
+        status: normalized.status,
+        message: normalized.message,
+        username: normalized.username,
+      },
+    })
+
+    const overflow = await prisma.eldoradoPriceCommandBulkLog.findMany({
+      where: { username },
+      select: { id: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: ELDORADO_PRICE_COMMAND_LOG_LIMIT,
+    })
+    if (overflow.length > 0) {
+      await prisma.eldoradoPriceCommandBulkLog.deleteMany({
+        where: {
+          id: { in: overflow.map((entry) => entry.id) },
+        },
+      })
+    }
+
+    res.status(201).json({ ok: true })
   },
 )
 

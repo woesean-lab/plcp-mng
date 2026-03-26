@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
+import { AUTH_TOKEN_STORAGE_KEY } from "../constants/appConstants"
 import {
   buildSocketIoWsUrl,
   parseSocketIoEventPacket,
@@ -38,6 +39,15 @@ const normalizePriceCommandPayload = (value = {}) => {
   }
 }
 
+const normalizePriceCommandLogEntry = (entry) => {
+  const id = String(entry?.id ?? "").trim()
+  const time = String(entry?.time ?? "").trim()
+  const status = String(entry?.status ?? "").trim()
+  const message = String(entry?.message ?? "").trim()
+  if (!id || !time || !status || !message) return null
+  return { id, time, status, message }
+}
+
 const createPriceCommandError = (message, extra = {}) =>
   Object.assign(new Error(String(message ?? "").trim() || "Fiyat komutu hatasi"), {
     ...extra,
@@ -55,6 +65,9 @@ export default function useEldoradoPriceCommandRuntime({
   const [priceCommandRunLogByOffer, setPriceCommandRunLogByOffer] = useState({})
   const [priceCommandIsRunningByOffer, setPriceCommandIsRunningByOffer] = useState({})
   const [priceCommandConnectionStateByOffer, setPriceCommandConnectionStateByOffer] = useState({})
+  const [priceCommandLogsLoadedByOffer, setPriceCommandLogsLoadedByOffer] = useState({})
+  const [priceCommandLogsLoadingByOffer, setPriceCommandLogsLoadingByOffer] = useState({})
+  const [priceCommandLogsClearingByOffer, setPriceCommandLogsClearingByOffer] = useState({})
   const priceCommandSocketByOfferRef = useRef({})
   const priceCommandRunningRef = useRef({})
 
@@ -62,7 +75,42 @@ export default function useEldoradoPriceCommandRuntime({
     priceCommandRunningRef.current = priceCommandIsRunningByOffer
   }, [priceCommandIsRunningByOffer])
 
-  const appendPriceCommandLog = (offerId, status, message) => {
+  const apiFetchPriceCommandLog = async (input, init = {}) => {
+    const headers = new Headers(init.headers || {})
+    if (typeof window !== "undefined") {
+      try {
+        const token = String(localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "").trim()
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`)
+        }
+      } catch {
+        // Ignore localStorage read errors.
+      }
+    }
+    return fetch(input, { ...init, headers })
+  }
+
+  const persistPriceCommandLogEntry = async (offerId, entry) => {
+    const normalizedOfferId = String(offerId ?? "").trim()
+    if (!normalizedOfferId || !entry) return
+    try {
+      const res = await apiFetchPriceCommandLog(
+        `/api/eldorado/offers/${encodeURIComponent(normalizedOfferId)}/price-command-logs`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(entry),
+        },
+      )
+      if (!res.ok) {
+        // Ignore API-level errors; keep UI responsive.
+      }
+    } catch {
+      // Ignore persistence errors; keep UI responsive.
+    }
+  }
+
+  const appendPriceCommandLog = (offerId, status, message, options = {}) => {
     const normalizedOfferId = String(offerId ?? "").trim()
     const normalizedMessage = String(message ?? "").trim()
     if (!normalizedOfferId || !normalizedMessage) return
@@ -79,15 +127,78 @@ export default function useEldoradoPriceCommandRuntime({
         [normalizedOfferId]: [entry, ...current].slice(0, maxLogEntries),
       }
     })
+    if (options?.persist !== false) {
+      void persistPriceCommandLogEntry(normalizedOfferId, entry)
+    }
   }
 
-  const clearPriceCommandLogs = (offerId) => {
+  const loadPriceCommandLogs = async (offerId, options = {}) => {
     const normalizedOfferId = String(offerId ?? "").trim()
-    if (!normalizedOfferId) return
-    setPriceCommandRunLogByOffer((prev) => ({
-      ...prev,
-      [normalizedOfferId]: [],
-    }))
+    if (!normalizedOfferId) return false
+    const force = Boolean(options?.force)
+    if (!force && priceCommandLogsLoadedByOffer?.[normalizedOfferId]) return true
+
+    setPriceCommandLogsLoadingByOffer((prev) => ({ ...prev, [normalizedOfferId]: true }))
+    try {
+      const res = await apiFetchPriceCommandLog(
+        `/api/eldorado/offers/${encodeURIComponent(normalizedOfferId)}/price-command-logs?limit=${maxLogEntries}`,
+      )
+      if (!res.ok) {
+        throw new Error("price_command_logs_load_failed")
+      }
+      const payload = await res.json()
+      const normalized = Array.isArray(payload)
+        ? payload.map(normalizePriceCommandLogEntry).filter(Boolean)
+        : []
+      setPriceCommandRunLogByOffer((prev) => ({
+        ...prev,
+        [normalizedOfferId]: normalized.slice(0, maxLogEntries),
+      }))
+      setPriceCommandLogsLoadedByOffer((prev) => ({ ...prev, [normalizedOfferId]: true }))
+      return true
+    } catch {
+      toast.error("Fiyat komut loglari alinamadi.")
+      return false
+    } finally {
+      setPriceCommandLogsLoadingByOffer((prev) => {
+        const next = { ...prev }
+        delete next[normalizedOfferId]
+        return next
+      })
+    }
+  }
+
+  const clearPriceCommandLogs = async (offerId) => {
+    const normalizedOfferId = String(offerId ?? "").trim()
+    if (!normalizedOfferId || !canRunPriceCommand) return false
+    setPriceCommandLogsClearingByOffer((prev) => ({ ...prev, [normalizedOfferId]: true }))
+    try {
+      const res = await apiFetchPriceCommandLog(
+        `/api/eldorado/offers/${encodeURIComponent(normalizedOfferId)}/price-command-logs`,
+        {
+          method: "DELETE",
+        },
+      )
+      if (!res.ok) {
+        throw new Error("price_command_logs_clear_failed")
+      }
+      setPriceCommandRunLogByOffer((prev) => ({
+        ...prev,
+        [normalizedOfferId]: [],
+      }))
+      setPriceCommandLogsLoadedByOffer((prev) => ({ ...prev, [normalizedOfferId]: true }))
+      toast.success("Fiyat komut loglari temizlendi.")
+      return true
+    } catch {
+      toast.error("Fiyat komut loglari temizlenemedi.")
+      return false
+    } finally {
+      setPriceCommandLogsClearingByOffer((prev) => {
+        const next = { ...prev }
+        delete next[normalizedOfferId]
+        return next
+      })
+    }
   }
 
   const closePriceCommandSocket = (offerId) => {
@@ -433,7 +544,10 @@ export default function useEldoradoPriceCommandRuntime({
     priceCommandRunLogByOffer,
     priceCommandIsRunningByOffer,
     priceCommandConnectionStateByOffer,
+    priceCommandLogsLoadingByOffer,
+    priceCommandLogsClearingByOffer,
     appendPriceCommandLog,
+    loadPriceCommandLogs,
     clearPriceCommandLogs,
     runPriceCommandAsync,
     handlePriceCommandRun,
