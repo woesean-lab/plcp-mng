@@ -2309,12 +2309,6 @@ export default function ProductsTab({
                   aria-expanded={isBulkPriceModeOpen}
                 >
                   <span>Toplu fiyat</span>
-                  {selectedPriceCount > 0 && (
-                    <span className="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full border border-white/10 bg-white/5 px-1.5 text-[10px] text-slate-100">
-                      {selectedPriceCount}
-                    </span>
-                  )}
-                  {isBulkPriceRunning && <span className="h-2 w-2 rounded-full bg-amber-300" />}
                   <svg
                     viewBox="0 0 20 20"
                     aria-hidden="true"
