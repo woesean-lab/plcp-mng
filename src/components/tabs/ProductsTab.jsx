@@ -82,6 +82,8 @@ const BULK_PRICE_COMMAND_VISIBLE_ROWS = 10
 const DEFAULT_PRICE_PERCENT = "200"
 const PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing>"
 const BULK_PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing-bulk>"
+const BULK_PRICE_SESSION_STORAGE_KEY = "plcp:products:bulk-price-session:v1"
+const BULK_PRICE_RESUMABLE_STATUSES = new Set(["pending", "running", "error"])
 const normalizeBackendKind = (value) =>
   String(value ?? "")
     .trim()
@@ -124,6 +126,48 @@ const getCommandConnectionBadgeClass = (value) => {
   }
   return "border-rose-300/30 bg-rose-500/10 text-rose-100"
 }
+
+const createEmptyBulkPriceCommandState = (overrides = {}) => ({
+  isRunning: false,
+  total: 0,
+  ready: 0,
+  success: 0,
+  error: 0,
+  skipped: 0,
+  currentOfferId: "",
+  currentName: "",
+  ...overrides,
+})
+
+const createBulkPriceCommandLogEntry = (status, message) => ({
+  id: `bulk-price-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  time: formatBulkPriceLogTime(),
+  status: String(status ?? "").trim() || "running",
+  message: String(message ?? "").trim(),
+})
+
+const createBulkPriceItemStatusEntry = (status, name, message = "") => ({
+  status: String(status ?? "").trim().toLowerCase() || "pending",
+  name: String(name ?? "").trim() || "Isimsiz urun",
+  message: String(message ?? "").trim(),
+  updatedAt: Date.now(),
+})
+
+const countBulkPriceItemStatuses = (statusByOffer = {}) =>
+  Object.values(statusByOffer || {}).reduce(
+    (acc, entry) => {
+      const normalizedStatus = String(entry?.status ?? "").trim().toLowerCase()
+      if (!normalizedStatus) return acc
+      acc.total += 1
+      if (normalizedStatus === "success") acc.success += 1
+      else if (normalizedStatus === "error") acc.error += 1
+      else if (normalizedStatus === "skipped") acc.skipped += 1
+      else if (normalizedStatus === "running") acc.running += 1
+      else acc.pending += 1
+      return acc
+    },
+    { total: 0, success: 0, error: 0, skipped: 0, pending: 0, running: 0 },
+  )
 
 const normalizeAutomationTarget = (entry) => {
   const id = String(entry?.id ?? "").trim()
@@ -434,17 +478,9 @@ export default function ProductsTab({
   const [isBulkUsedDeleteRunning, setIsBulkUsedDeleteRunning] = useState(false)
   const [isBulkStockRefreshRunning, setIsBulkStockRefreshRunning] = useState(false)
   const [selectedPriceOfferIds, setSelectedPriceOfferIds] = useState({})
-  const [bulkPriceCommandState, setBulkPriceCommandState] = useState({
-    isRunning: false,
-    total: 0,
-    ready: 0,
-    success: 0,
-    error: 0,
-    skipped: 0,
-    currentOfferId: "",
-    currentName: "",
-  })
+  const [bulkPriceCommandState, setBulkPriceCommandState] = useState(createEmptyBulkPriceCommandState)
   const [bulkPriceCommandLogEntries, setBulkPriceCommandLogEntries] = useState([])
+  const [bulkPriceItemStatusByOffer, setBulkPriceItemStatusByOffer] = useState({})
   const [keyFadeById, setKeyFadeById] = useState({})
   const [noteGroupFlashByOffer, setNoteGroupFlashByOffer] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
@@ -453,6 +489,7 @@ export default function ProductsTab({
   const popupValueEditorRef = useRef(null)
   const popupValueCopyTimerRef = useRef(null)
   const bulkUsedDeleteConfirmTimerRef = useRef(null)
+  const bulkPriceSessionHydratedRef = useRef(false)
   const prevNoteGroupAssignments = useRef(noteGroupAssignments)
   const prevGroupAssignments = useRef(groupAssignments)
   const prevMessageGroupAssignments = useRef(messageGroupAssignments)
@@ -860,32 +897,188 @@ export default function ProductsTab({
       })
       return changed ? next : prev
     })
+    setBulkPriceItemStatusByOffer((prev) => {
+      const next = {}
+      let changed = false
+      Object.entries(prev).forEach(([offerId, entry]) => {
+        if (validIds.has(offerId)) {
+          next[offerId] = entry
+        } else {
+          changed = true
+        }
+      })
+      return changed ? next : prev
+    })
   }, [allProducts])
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      bulkPriceSessionHydratedRef.current = true
+      return
+    }
+
+    try {
+      const rawSession = window.localStorage.getItem(BULK_PRICE_SESSION_STORAGE_KEY)
+      if (!rawSession) {
+        bulkPriceSessionHydratedRef.current = true
+        return
+      }
+
+      const parsed = JSON.parse(rawSession)
+      const restoredSelectedOfferIds = Object.entries(parsed?.selectedPriceOfferIds ?? {}).reduce(
+        (acc, [offerId, selected]) => {
+          const normalizedOfferId = String(offerId ?? "").trim()
+          if (!normalizedOfferId || !selected) return acc
+          acc[normalizedOfferId] = true
+          return acc
+        },
+        {},
+      )
+      const restoredItemStatuses = Object.entries(parsed?.bulkPriceItemStatusByOffer ?? {}).reduce(
+        (acc, [offerId, entry]) => {
+          const normalizedOfferId = String(offerId ?? "").trim()
+          if (!normalizedOfferId || !entry || typeof entry !== "object") return acc
+          const normalizedStatus = String(entry.status ?? "").trim().toLowerCase()
+          if (!normalizedStatus) return acc
+          acc[normalizedOfferId] = createBulkPriceItemStatusEntry(
+            normalizedStatus === "running" ? "pending" : normalizedStatus,
+            entry.name,
+            entry.message ?? entry.reason,
+          )
+          if (Number.isFinite(Number(entry.updatedAt))) {
+            acc[normalizedOfferId].updatedAt = Number(entry.updatedAt)
+          }
+          return acc
+        },
+        {},
+      )
+      const hadInterruptedRun =
+        Boolean(parsed?.bulkPriceCommandState?.isRunning) ||
+        Object.values(parsed?.bulkPriceItemStatusByOffer ?? {}).some(
+          (entry) => String(entry?.status ?? "").trim().toLowerCase() === "running",
+        )
+      const restoredLogs = Array.isArray(parsed?.bulkPriceCommandLogEntries)
+        ? parsed.bulkPriceCommandLogEntries
+            .map((entry) => {
+              const message = String(entry?.message ?? "").trim()
+              if (!message) return null
+              return {
+                id:
+                  String(entry?.id ?? "").trim() ||
+                  `bulk-price-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                time: String(entry?.time ?? "").trim() || formatBulkPriceLogTime(),
+                status: String(entry?.status ?? "").trim() || "running",
+                message,
+              }
+            })
+            .filter(Boolean)
+            .slice(0, MAX_PRICE_COMMAND_RUN_LOG_ENTRIES)
+        : []
+
+      const nextLogs = hadInterruptedRun
+        ? [
+            createBulkPriceCommandLogEntry(
+              "error",
+              "Onceki toplu gonderim sayfadan cikildigi icin durduruldu. Tamamlanmayanlari yeniden gonderebilirsiniz.",
+            ),
+            ...restoredLogs,
+          ].slice(0, MAX_PRICE_COMMAND_RUN_LOG_ENTRIES)
+        : restoredLogs
+
+      const restoredCounts = countBulkPriceItemStatuses(restoredItemStatuses)
+      const restoredSelectedCount = Object.keys(restoredSelectedOfferIds).length
+
+      if (restoredSelectedCount > 0) {
+        setSelectedPriceOfferIds(restoredSelectedOfferIds)
+      }
+      if (Object.keys(restoredItemStatuses).length > 0) {
+        setBulkPriceItemStatusByOffer(restoredItemStatuses)
+      }
+      if (nextLogs.length > 0) {
+        setBulkPriceCommandLogEntries(nextLogs)
+      }
+      if (
+        restoredSelectedCount > 0 ||
+        nextLogs.length > 0 ||
+        Object.keys(restoredItemStatuses).length > 0 ||
+        parsed?.isBulkPriceModeOpen
+      ) {
+        setIsBulkPriceModeOpen(true)
+      }
+      setBulkPriceCommandState(
+        createEmptyBulkPriceCommandState({
+          total: Math.max(
+            Number(parsed?.bulkPriceCommandState?.total) || 0,
+            restoredCounts.total,
+            restoredSelectedCount,
+          ),
+          ready: Math.max(Number(parsed?.bulkPriceCommandState?.ready) || 0, restoredCounts.pending),
+          success: restoredCounts.success,
+          error: restoredCounts.error,
+          skipped: restoredCounts.skipped,
+        }),
+      )
+
+      if (hadInterruptedRun) {
+        toast.error("Toplu gonderim yarida kaldi. Tamamlanmayanlari yeniden gonderebilirsiniz.")
+      }
+    } catch {
+      // Ignore invalid persisted bulk session payloads.
+    } finally {
+      bulkPriceSessionHydratedRef.current = true
+    }
+  }, [])
+  useEffect(() => {
+    if (!bulkPriceSessionHydratedRef.current || typeof window === "undefined") return
+
+    const hasPersistedSession =
+      Object.values(selectedPriceOfferIds).some(Boolean) ||
+      bulkPriceCommandLogEntries.length > 0 ||
+      Object.keys(bulkPriceItemStatusByOffer).length > 0 ||
+      bulkPriceCommandState.total > 0
+
+    if (!hasPersistedSession) {
+      window.localStorage.removeItem(BULK_PRICE_SESSION_STORAGE_KEY)
+      return
+    }
+
+    try {
+      window.localStorage.setItem(
+        BULK_PRICE_SESSION_STORAGE_KEY,
+        JSON.stringify({
+          selectedPriceOfferIds,
+          bulkPriceCommandState,
+          bulkPriceCommandLogEntries,
+          bulkPriceItemStatusByOffer,
+          isBulkPriceModeOpen,
+          updatedAt: Date.now(),
+        }),
+      )
+    } catch {
+      // Ignore persistence errors.
+    }
+  }, [
+    bulkPriceCommandLogEntries,
+    bulkPriceCommandState,
+    bulkPriceItemStatusByOffer,
+    isBulkPriceModeOpen,
+    selectedPriceOfferIds,
+  ])
   const appendBulkPriceCommandLog = (status, message) => {
     const normalizedMessage = String(message ?? "").trim()
     if (!normalizedMessage) return
     setBulkPriceCommandLogEntries((prev) => [
-      {
-        id: `bulk-price-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        time: formatBulkPriceLogTime(),
-        status: String(status ?? "").trim() || "running",
-        message: normalizedMessage,
-      },
+      createBulkPriceCommandLogEntry(status, normalizedMessage),
       ...prev,
     ].slice(0, MAX_PRICE_COMMAND_RUN_LOG_ENTRIES))
   }
   const clearBulkPriceCommandLogs = () => {
     setBulkPriceCommandLogEntries([])
-    setBulkPriceCommandState((prev) => ({
-      ...prev,
-      total: 0,
-      ready: 0,
-      success: 0,
-      error: 0,
-      skipped: 0,
-      currentOfferId: "",
-      currentName: "",
-    }))
+    setBulkPriceItemStatusByOffer({})
+    setBulkPriceCommandState((prev) =>
+      createEmptyBulkPriceCommandState({
+        isRunning: prev.isRunning,
+      }),
+    )
   }
   const buildBulkPriceCandidate = (product) => {
     const offerId = String(product?.id ?? "").trim()
@@ -952,11 +1145,23 @@ export default function ProductsTab({
     () => selectedBulkPriceProducts.map((product) => buildBulkPriceCandidate(product)),
     [selectedBulkPriceProducts, priceDrafts, priceEnabledByOffer, priceCommandIsRunningByOffer],
   )
+  const resumableBulkPriceCandidates = useMemo(
+    () =>
+      selectedBulkPriceCandidates.filter((item) => {
+        if (item.status !== "ready") return false
+        const persistedStatus = String(bulkPriceItemStatusByOffer?.[item.offerId]?.status ?? "")
+          .trim()
+          .toLowerCase()
+        return BULK_PRICE_RESUMABLE_STATUSES.has(persistedStatus)
+      }),
+    [bulkPriceItemStatusByOffer, selectedBulkPriceCandidates],
+  )
   const bulkPriceReadyCount = useMemo(
     () => selectedBulkPriceCandidates.filter((item) => item.status === "ready").length,
     [selectedBulkPriceCandidates],
   )
   const bulkPriceSkippedCount = Math.max(0, selectedBulkPriceCandidates.length - bulkPriceReadyCount)
+  const bulkPriceResumeCount = resumableBulkPriceCandidates.length
   const isBulkPriceRunning = Boolean(bulkPriceCommandState.isRunning)
   const visibleBulkPriceCommandLogs = bulkPriceCommandLogEntries.slice(0, BULK_PRICE_COMMAND_VISIBLE_ROWS)
   const emptyBulkPriceCommandLogRows = Math.max(
@@ -964,10 +1169,20 @@ export default function ProductsTab({
     BULK_PRICE_COMMAND_VISIBLE_ROWS - visibleBulkPriceCommandLogs.length,
   )
   useEffect(() => {
-    if (selectedPriceCount > 0 || isBulkPriceRunning || bulkPriceCommandLogEntries.length > 0) {
+    if (
+      selectedPriceCount > 0 ||
+      isBulkPriceRunning ||
+      bulkPriceCommandLogEntries.length > 0 ||
+      Object.keys(bulkPriceItemStatusByOffer).length > 0
+    ) {
       setIsBulkPriceModeOpen(true)
     }
-  }, [selectedPriceCount, isBulkPriceRunning, bulkPriceCommandLogEntries.length])
+  }, [
+    selectedPriceCount,
+    isBulkPriceRunning,
+      bulkPriceCommandLogEntries.length,
+      bulkPriceItemStatusByOffer,
+    ])
   const areAllFilteredSelected =
     selectedFilteredOfferIds.length > 0 &&
     selectedFilteredOfferIds.every((offerId) => Boolean(selectedPriceOfferIds?.[offerId]))
@@ -1014,7 +1229,7 @@ export default function ProductsTab({
     if (isBulkPriceRunning) return
     setSelectedPriceOfferIds({})
   }
-  const handleBulkPriceCommandRun = async () => {
+  const runBulkPriceCommands = async ({ resumeOnly = false } = {}) => {
     if (isBulkPriceRunning) return
     if (!canUseBulkPriceActions) {
       toast.error("Toplu sonuc gonderme yetkiniz yok.")
@@ -1029,50 +1244,98 @@ export default function ProductsTab({
       return
     }
 
-    const readyItems = selectedBulkPriceCandidates.filter((item) => item.status === "ready")
-    const skippedItems = selectedBulkPriceCandidates.filter((item) => item.status !== "ready")
-    if (readyItems.length === 0) {
-      setBulkPriceCommandState({
-        isRunning: false,
-        total: selectedBulkPriceCandidates.length,
-        ready: 0,
-        success: 0,
-        error: 0,
-        skipped: skippedItems.length,
-        currentOfferId: "",
-        currentName: "",
-      })
-      setBulkPriceCommandLogEntries([])
-      skippedItems.forEach((item) => {
-        appendBulkPriceCommandLog("error", `${item.name} atlandi: ${item.reason}`)
-      })
-      toast.error("Gonderilecek gecerli urun yok.")
+    const resumableStatusByOffer = resumeOnly ? bulkPriceItemStatusByOffer : {}
+    const candidateScope = resumeOnly
+      ? selectedBulkPriceCandidates.filter((item) => {
+          const normalizedStatus = String(resumableStatusByOffer?.[item.offerId]?.status ?? "")
+            .trim()
+            .toLowerCase()
+          return BULK_PRICE_RESUMABLE_STATUSES.has(normalizedStatus)
+        })
+      : selectedBulkPriceCandidates
+
+    if (resumeOnly && candidateScope.length === 0) {
+      toast.error("Yeniden gonderilecek tamamlanmayan urun yok.")
       return
     }
 
-    setBulkPriceCommandState({
-      isRunning: true,
-      total: selectedBulkPriceCandidates.length,
-      ready: readyItems.length,
-      success: 0,
-      error: 0,
-      skipped: skippedItems.length,
-      currentOfferId: "",
-      currentName: "",
+    const readyItems = candidateScope.filter((item) => item.status === "ready")
+    const skippedItems = candidateScope.filter((item) => item.status !== "ready")
+    const selectedOfferIdSet = new Set(
+      selectedBulkPriceCandidates.map((item) => String(item?.offerId ?? "").trim()).filter(Boolean),
+    )
+    const nextStatusByOffer = resumeOnly
+      ? Object.entries(bulkPriceItemStatusByOffer).reduce((acc, [offerId, entry]) => {
+          if (!selectedOfferIdSet.has(offerId)) return acc
+          acc[offerId] = entry
+          return acc
+        }, {})
+      : {}
+
+    readyItems.forEach((item) => {
+      nextStatusByOffer[item.offerId] = createBulkPriceItemStatusEntry("pending", item.name)
     })
-    setBulkPriceCommandLogEntries([])
+    skippedItems.forEach((item) => {
+      nextStatusByOffer[item.offerId] = createBulkPriceItemStatusEntry("skipped", item.name, item.reason)
+    })
+
+    const nextStatusCounts = countBulkPriceItemStatuses(nextStatusByOffer)
+
+    if (readyItems.length === 0) {
+      setBulkPriceItemStatusByOffer(nextStatusByOffer)
+      if (!resumeOnly) {
+        setBulkPriceCommandLogEntries([])
+      }
+      setBulkPriceCommandState(
+        createEmptyBulkPriceCommandState({
+          total: selectedBulkPriceCandidates.length,
+          ready: 0,
+          success: nextStatusCounts.success,
+          error: nextStatusCounts.error,
+          skipped: nextStatusCounts.skipped,
+        }),
+      )
+      skippedItems.forEach((item) => {
+        appendBulkPriceCommandLog("error", `${item.name} atlandi: ${item.reason}`)
+      })
+      toast.error(
+        resumeOnly ? "Yeniden gonderilecek gecerli urun yok." : "Gonderilecek gecerli urun yok.",
+      )
+      return
+    }
+
+    setBulkPriceItemStatusByOffer(nextStatusByOffer)
+    setBulkPriceCommandState(
+      createEmptyBulkPriceCommandState({
+        isRunning: true,
+        total: selectedBulkPriceCandidates.length,
+        ready: readyItems.length,
+        success: nextStatusCounts.success,
+        error: nextStatusCounts.error,
+        skipped: nextStatusCounts.skipped,
+      }),
+    )
+    if (!resumeOnly) {
+      setBulkPriceCommandLogEntries([])
+    }
     appendBulkPriceCommandLog(
       "running",
-      `Toplu gonderim basladi. Secili=${selectedBulkPriceCandidates.length}, hazir=${readyItems.length}, atlanacak=${skippedItems.length}`,
+      resumeOnly
+        ? `Tamamlanmayan gonderim yeniden baslatildi. Secili=${selectedBulkPriceCandidates.length}, kalan=${candidateScope.length}, hazir=${readyItems.length}`
+        : `Toplu gonderim basladi. Secili=${selectedBulkPriceCandidates.length}, hazir=${readyItems.length}, atlanacak=${skippedItems.length}`,
     )
     skippedItems.forEach((item) => {
       appendBulkPriceCommandLog("error", `${item.name} atlandi: ${item.reason}`)
     })
 
-    let successCount = 0
-    let errorCount = 0
+    let successCount = nextStatusCounts.success
+    let errorCount = nextStatusCounts.error
 
     for (const item of readyItems) {
+      setBulkPriceItemStatusByOffer((prev) => ({
+        ...prev,
+        [item.offerId]: createBulkPriceItemStatusEntry("running", item.name),
+      }))
       setBulkPriceCommandState((prev) => ({
         ...prev,
         currentOfferId: item.offerId,
@@ -1094,6 +1357,10 @@ export default function ProductsTab({
           },
         )
         successCount += 1
+        setBulkPriceItemStatusByOffer((prev) => ({
+          ...prev,
+          [item.offerId]: createBulkPriceItemStatusEntry("success", item.name),
+        }))
         setBulkPriceCommandState((prev) => ({
           ...prev,
           success: successCount,
@@ -1101,13 +1368,18 @@ export default function ProductsTab({
         appendBulkPriceCommandLog("success", `${item.name} tamamlandi.`)
       } catch (error) {
         errorCount += 1
+        const errorMessage = String(error?.message ?? "Bilinmeyen hata")
+        setBulkPriceItemStatusByOffer((prev) => ({
+          ...prev,
+          [item.offerId]: createBulkPriceItemStatusEntry("error", item.name, errorMessage),
+        }))
         setBulkPriceCommandState((prev) => ({
           ...prev,
           error: errorCount,
         }))
         appendBulkPriceCommandLog(
           "error",
-          `${item.name} hata verdi: ${String(error?.message ?? "Bilinmeyen hata")}`,
+          `${item.name} hata verdi: ${errorMessage}`,
         )
       }
     }
@@ -1125,6 +1397,12 @@ export default function ProductsTab({
     } else {
       toast.success(`Toplu gonderim tamamlandi. Basarili=${successCount}`)
     }
+  }
+  const handleBulkPriceCommandRun = async () => {
+    await runBulkPriceCommands({ resumeOnly: false })
+  }
+  const handleResumeBulkPriceCommandRun = async () => {
+    await runBulkPriceCommands({ resumeOnly: true })
   }
   const toggleOfferOpen = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -2634,6 +2912,16 @@ export default function ProductsTab({
                           </div>
                         </div>
                         <div className="flex w-full flex-col gap-2 xl:w-auto xl:min-w-[240px]">
+                          <button
+                            type="button"
+                            onClick={handleResumeBulkPriceCommandRun}
+                            disabled={isBulkPriceRunning || bulkPriceResumeCount === 0}
+                            className="inline-flex h-10 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-500/10 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200/50 hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {bulkPriceResumeCount > 0
+                              ? `Tamamlanmayanlari gonder (${bulkPriceResumeCount})`
+                              : "Tamamlanmayanlari gonder"}
+                          </button>
                           <button
                             type="button"
                             onClick={handleBulkPriceCommandRun}
@@ -5035,15 +5323,6 @@ export default function ProductsTab({
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
 
 
 
