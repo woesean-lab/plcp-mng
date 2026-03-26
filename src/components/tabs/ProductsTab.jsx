@@ -428,6 +428,7 @@ export default function ProductsTab({
       ? savedPricesByOfferProp
       : {},
   )
+  const [isBulkPriceModeOpen, setIsBulkPriceModeOpen] = useState(false)
   const [selectedPriceOfferIds, setSelectedPriceOfferIds] = useState({})
   const [bulkPriceCommandState, setBulkPriceCommandState] = useState({
     isRunning: false,
@@ -927,6 +928,11 @@ export default function ProductsTab({
     0,
     BULK_PRICE_COMMAND_VISIBLE_ROWS - visibleBulkPriceCommandLogs.length,
   )
+  useEffect(() => {
+    if (selectedPriceCount > 0 || isBulkPriceRunning || bulkPriceCommandLogEntries.length > 0) {
+      setIsBulkPriceModeOpen(true)
+    }
+  }, [selectedPriceCount, isBulkPriceRunning, bulkPriceCommandLogEntries.length])
   const areAllFilteredSelected =
     selectedFilteredOfferIds.length > 0 &&
     selectedFilteredOfferIds.every((offerId) => Boolean(selectedPriceOfferIds?.[offerId]))
@@ -2294,166 +2300,210 @@ export default function ProductsTab({
             </div>
           </div>
           {canUseBulkPriceActions && filteredList.length > 0 && (
-            <div className="mt-3 overflow-hidden rounded-2xl border border-sky-500/15 bg-[linear-gradient(135deg,rgba(8,13,24,0.96),rgba(10,18,35,0.9))] shadow-card">
-              <div className="px-4 py-4">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                    <div className="min-w-0 space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex h-8 items-center rounded-full border border-sky-400/15 bg-sky-500/10 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-100">
-                          Toplu fiyat gonderimi
-                        </span>
-                        {isBulkPriceRunning && bulkPriceCommandState.currentName && (
-                          <span className="inline-flex h-8 min-w-0 items-center rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-200">
-                            <span className="truncate">Calisiyor: {bulkPriceCommandState.currentName}</span>
-                          </span>
-                        )}
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-white">Secili urunleri tek kuyrukta gonder</p>
-                        <p className="max-w-2xl text-xs leading-5 text-slate-400 sm:text-sm">
-                          Gecerli fiyat sonucu olan urunler websocket komutuna sirayla gonderilir. Hazir olmayan urunler otomatik atlanir.
-                        </p>
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Secili
-                          </span>
-                          <span className="mt-1 block text-lg font-semibold text-white">{selectedPriceCount}</span>
-                        </div>
-                        <div className="rounded-xl border border-emerald-300/15 bg-emerald-500/[0.08] px-3 py-3">
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200/80">
-                            Hazir
-                          </span>
-                          <span className="mt-1 block text-lg font-semibold text-emerald-50">{bulkPriceReadyCount}</span>
-                        </div>
-                        <div className="rounded-xl border border-amber-300/15 bg-amber-500/[0.08] px-3 py-3">
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200/80">
-                            Atlanacak
-                          </span>
-                          <span className="mt-1 block text-lg font-semibold text-amber-50">{bulkPriceSkippedCount}</span>
-                        </div>
-                        <div className="rounded-xl border border-sky-300/15 bg-sky-500/[0.08] px-3 py-3">
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
-                            Durum
-                          </span>
-                          <span className="mt-1 block text-sm font-semibold text-sky-50">
-                            {bulkPriceCommandState.total > 0
-                              ? `Basari ${bulkPriceCommandState.success} / Hata ${bulkPriceCommandState.error}`
-                              : "Beklemede"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex w-full flex-col gap-2 xl:w-auto xl:min-w-[240px]">
-                      <button
-                        type="button"
-                        onClick={handleBulkPriceCommandRun}
-                        disabled={isBulkPriceRunning || selectedPriceCount === 0 || bulkPriceReadyCount === 0}
-                        className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isBulkPriceRunning ? "Gonderiliyor..." : "Secilenleri gonder"}
-                      </button>
-                      <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
-                        <button
-                          type="button"
-                          onClick={() => selectBulkPriceOffers(selectedPageOfferIds)}
-                          disabled={isBulkPriceRunning || selectedPageOfferIds.length === 0 || areAllPageSelected}
-                          className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Bu sayfayi sec
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => selectBulkPriceOffers(selectedFilteredOfferIds)}
-                          disabled={isBulkPriceRunning || selectedFilteredOfferIds.length === 0 || areAllFilteredSelected}
-                          className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Filtredekileri sec
-                        </button>
-                        <button
-                          type="button"
-                          onClick={clearSelectedPriceOffers}
-                          disabled={isBulkPriceRunning || selectedPriceCount === 0}
-                          className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Secimi temizle
-                        </button>
-                      </div>
-                    </div>
+            <div className="mt-3 space-y-3">
+              <button
+                type="button"
+                onClick={() => setIsBulkPriceModeOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-3 text-left shadow-card transition hover:border-white/15 hover:bg-ink-900/80"
+                aria-expanded={isBulkPriceModeOpen}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex h-8 items-center rounded-full border border-sky-400/15 bg-sky-500/10 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-100">
+                      Toplu fiyat gonderimi
+                    </span>
+                    <span className="inline-flex h-8 items-center rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                      Secili {selectedPriceCount}
+                    </span>
+                    <span className="inline-flex h-8 items-center rounded-full border border-emerald-300/15 bg-emerald-500/10 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100">
+                      Hazir {bulkPriceReadyCount}
+                    </span>
+                    {isBulkPriceRunning && (
+                      <span className="inline-flex h-8 items-center rounded-full border border-amber-300/15 bg-amber-500/10 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100">
+                        Calisiyor
+                      </span>
+                    )}
                   </div>
-                  {(isBulkPriceRunning || bulkPriceCommandLogEntries.length > 0) && (
-                    <section className="overflow-hidden rounded-xl border border-white/10 bg-ink-950/45">
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-                          <span className="h-2 w-2 rounded-full bg-amber-300/80" />
-                          <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-                          <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                            Toplu komut ciktilari
-                          </span>
-                        </div>
-                        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-                          <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                            {bulkPriceCommandLogEntries.length} satir
-                          </span>
-                          <button
-                            type="button"
-                            onClick={clearBulkPriceCommandLogs}
-                            disabled={bulkPriceCommandLogEntries.length === 0 || isBulkPriceRunning}
-                            className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Log temizle
-                          </button>
-                        </div>
-                      </div>
-                      <div className="no-scrollbar h-[220px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:text-[12px] sm:leading-6">
-                        <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
-                          <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
-                          <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                          <span className="min-w-0 break-words text-slate-400">
-                            secili={selectedPriceCount} / hazir={bulkPriceReadyCount} / backend={priceCommandBackendEntry?.label ?? "eldorado"}
-                          </span>
-                        </div>
-                        <div className="space-y-0.5">
-                          {visibleBulkPriceCommandLogs.map((entry) => {
-                            const statusMeta = getCommandLogStatusMeta(entry.status)
-                            return (
-                              <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                                <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
-                                <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                                <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
-                                <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
-                                <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
-                              </div>
-                            )
-                          })}
-                          {Array.from({ length: emptyBulkPriceCommandLogRows }).map((_, index) => (
-                            <div key={`bulk-price-command-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                              <span className="hidden flex-none text-slate-600 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
-                              <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                              <span className="flex-none text-slate-700">[--:--]</span>
-                              <span className="flex-none text-slate-700">--</span>
-                              <span
-                                className={`truncate text-slate-700 ${
-                                  bulkPriceCommandLogEntries.length === 0 && index === 0
-                                    ? "text-slate-500"
-                                    : "opacity-0"
-                                }`}
-                              >
-                                {bulkPriceCommandLogEntries.length === 0 && index === 0
-                                  ? "bekleniyor..."
-                                  : "placeholder"}
+                  <p className="mt-2 text-xs leading-5 text-slate-400 sm:text-sm">
+                    Bulk mode acildiginda kart secimleri ve gonderim toolbar’i gorunur.
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-200">
+                  <span>{isBulkPriceModeOpen ? "Kapat" : "Ac"}</span>
+                  <svg
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    className={`h-4 w-4 transition-transform ${isBulkPriceModeOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m5 7 5 6 5-6" />
+                  </svg>
+                </div>
+              </button>
+              {isBulkPriceModeOpen && (
+                <div className="overflow-hidden rounded-2xl border border-sky-500/15 bg-[linear-gradient(135deg,rgba(8,13,24,0.96),rgba(10,18,35,0.9))] shadow-card">
+                  <div className="px-4 py-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                        <div className="min-w-0 space-y-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {isBulkPriceRunning && bulkPriceCommandState.currentName && (
+                              <span className="inline-flex h-8 min-w-0 items-center rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-200">
+                                <span className="truncate">Calisiyor: {bulkPriceCommandState.currentName}</span>
+                              </span>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-white">Secili urunleri tek kuyrukta gonder</p>
+                            <p className="max-w-2xl text-xs leading-5 text-slate-400 sm:text-sm">
+                              Gecerli fiyat sonucu olan urunler websocket komutuna sirayla gonderilir. Hazir olmayan urunler otomatik atlanir.
+                            </p>
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
+                              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                Secili
+                              </span>
+                              <span className="mt-1 block text-lg font-semibold text-white">{selectedPriceCount}</span>
+                            </div>
+                            <div className="rounded-xl border border-emerald-300/15 bg-emerald-500/[0.08] px-3 py-3">
+                              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200/80">
+                                Hazir
+                              </span>
+                              <span className="mt-1 block text-lg font-semibold text-emerald-50">{bulkPriceReadyCount}</span>
+                            </div>
+                            <div className="rounded-xl border border-amber-300/15 bg-amber-500/[0.08] px-3 py-3">
+                              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200/80">
+                                Atlanacak
+                              </span>
+                              <span className="mt-1 block text-lg font-semibold text-amber-50">{bulkPriceSkippedCount}</span>
+                            </div>
+                            <div className="rounded-xl border border-sky-300/15 bg-sky-500/[0.08] px-3 py-3">
+                              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
+                                Durum
+                              </span>
+                              <span className="mt-1 block text-sm font-semibold text-sky-50">
+                                {bulkPriceCommandState.total > 0
+                                  ? `Basari ${bulkPriceCommandState.success} / Hata ${bulkPriceCommandState.error}`
+                                  : "Beklemede"}
                               </span>
                             </div>
-                          ))}
+                          </div>
+                        </div>
+                        <div className="flex w-full flex-col gap-2 xl:w-auto xl:min-w-[240px]">
+                          <button
+                            type="button"
+                            onClick={handleBulkPriceCommandRun}
+                            disabled={isBulkPriceRunning || selectedPriceCount === 0 || bulkPriceReadyCount === 0}
+                            className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isBulkPriceRunning ? "Gonderiliyor..." : "Secilenleri gonder"}
+                          </button>
+                          <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+                            <button
+                              type="button"
+                              onClick={() => selectBulkPriceOffers(selectedPageOfferIds)}
+                              disabled={isBulkPriceRunning || selectedPageOfferIds.length === 0 || areAllPageSelected}
+                              className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Bu sayfayi sec
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => selectBulkPriceOffers(selectedFilteredOfferIds)}
+                              disabled={isBulkPriceRunning || selectedFilteredOfferIds.length === 0 || areAllFilteredSelected}
+                              className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Filtredekileri sec
+                            </button>
+                            <button
+                              type="button"
+                              onClick={clearSelectedPriceOffers}
+                              disabled={isBulkPriceRunning || selectedPriceCount === 0}
+                              className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Secimi temizle
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </section>
-                  )}
+                      {(isBulkPriceRunning || bulkPriceCommandLogEntries.length > 0) && (
+                        <section className="overflow-hidden rounded-xl border border-white/10 bg-ink-950/45">
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                              <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                              <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                              <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                                Toplu komut ciktilari
+                              </span>
+                            </div>
+                            <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                              <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                                {bulkPriceCommandLogEntries.length} satir
+                              </span>
+                              <button
+                                type="button"
+                                onClick={clearBulkPriceCommandLogs}
+                                disabled={bulkPriceCommandLogEntries.length === 0 || isBulkPriceRunning}
+                                className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Log temizle
+                              </button>
+                            </div>
+                          </div>
+                          <div className="no-scrollbar h-[220px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:text-[12px] sm:leading-6">
+                            <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
+                              <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                              <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                              <span className="min-w-0 break-words text-slate-400">
+                                secili={selectedPriceCount} / hazir={bulkPriceReadyCount} / backend={priceCommandBackendEntry?.label ?? "eldorado"}
+                              </span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {visibleBulkPriceCommandLogs.map((entry) => {
+                                const statusMeta = getCommandLogStatusMeta(entry.status)
+                                return (
+                                  <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                                    <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                                    <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                                    <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
+                                    <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                                    <span className="min-w-0 break-words text-slate-100">{entry.message}</span>
+                                  </div>
+                                )
+                              })}
+                              {Array.from({ length: emptyBulkPriceCommandLogRows }).map((_, index) => (
+                                <div key={`bulk-price-command-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                                  <span className="hidden flex-none text-slate-600 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                                  <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                                  <span className="flex-none text-slate-700">[--:--]</span>
+                                  <span className="flex-none text-slate-700">--</span>
+                                  <span
+                                    className={`truncate text-slate-700 ${
+                                      bulkPriceCommandLogEntries.length === 0 && index === 0
+                                        ? "text-slate-500"
+                                        : "opacity-0"
+                                    }`}
+                                  >
+                                    {bulkPriceCommandLogEntries.length === 0 && index === 0
+                                      ? "bekleniyor..."
+                                      : "placeholder"}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </section>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
           <div key={activeCategoryKey} className="mt-4 space-y-2">
@@ -2746,7 +2796,7 @@ export default function ProductsTab({
                     >
                       <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:flex-nowrap">
                         <div className="flex min-w-0 flex-1 items-start gap-3">
-                          {canUseBulkPriceActions && (
+                          {canUseBulkPriceActions && isBulkPriceModeOpen && (
                             <button
                               type="button"
                               disabled={isBulkPriceRunning || !offerId}
