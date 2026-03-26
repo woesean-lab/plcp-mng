@@ -61,10 +61,6 @@ const resolveMainProductCategory = (product) =>
   (String(product?.kind ?? "").trim().toLowerCase() === "topups" ? "TopUp" : "") ||
   "CustomItem"
 const isValidPriceInput = (value) => /^\d+(?:[.,]\d{1,2})?$/.test(String(value ?? "").trim())
-const formatPriceMetric = (value) => {
-  const normalized = Number(value)
-  return Number.isFinite(normalized) ? normalized.toFixed(2) : "-"
-}
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
@@ -2179,7 +2175,6 @@ export default function ProductsTab({
                   const messageGroupLabel =
                     messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
                   const priceDraft = priceDrafts[offerId] ?? { base: "", percent: "" }
-                  const savedPriceEntry = savedPricesByOffer?.[offerId] ?? null
                   const baseInputValue = String(priceDraft.base ?? "").trim()
                   const baseValue = baseInputValue.replace(",", ".")
                   const percentValue = String(priceDraft.percent ?? "").replace(",", ".")
@@ -2192,11 +2187,6 @@ export default function ProductsTab({
                       : ""
                   const productCategory = resolveMainProductCategory(product)
                   const currentResultDisplay = priceResult === "" ? "-" : priceResult.toFixed(2)
-                  const savedBaseDisplay = formatPriceMetric(savedPriceEntry?.base)
-                  const savedPercentDisplay = formatPriceMetric(savedPriceEntry?.percent)
-                  const savedResultDisplay = formatPriceMetric(savedPriceEntry?.result)
-                  const hasSavedPrice =
-                    savedBaseDisplay !== "-" || savedPercentDisplay !== "-" || savedResultDisplay !== "-"
                   const priceCommandLogEntries = Array.isArray(priceCommandRunLogByOffer?.[offerId])
                     ? priceCommandRunLogByOffer[offerId]
                     : []
@@ -2975,10 +2965,9 @@ export default function ProductsTab({
                                 )}
                               </div>
                             )}
-{activePanel === "price" && isPriceEnabled && (
-  <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
-    <div className="relative grid w-full min-w-0 max-w-full gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
-      <div className="min-w-0 space-y-3">
+                            {activePanel === "price" && isPriceEnabled && (
+                              <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
+                                <div className="min-w-0 space-y-3">
         <section className="min-w-0 rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -2989,9 +2978,14 @@ export default function ProductsTab({
                 Baz fiyat, yuzdelik ve sonuc hesaplamasi
               </p>
             </div>
-            <span className="rounded-full border border-white/10 bg-ink-900/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-slate-300">
-              {productCategory}
-            </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${priceDraftStateClass}`}>
+                {priceDraftStateLabel}
+              </span>
+              <span className="rounded-full border border-white/10 bg-ink-900/70 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-slate-300">
+                {productCategory}
+              </span>
+            </div>
           </div>
           <div className={`grid min-w-0 gap-3 ${canViewPriceDetails ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]" : ""}`}>
             <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
@@ -3015,24 +3009,6 @@ export default function ProductsTab({
                   } disabled:cursor-not-allowed disabled:opacity-60`}
                 />
               </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                    Kayitli baz
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-100">
-                    {savedBaseDisplay}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                    Taslak
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-100">
-                    {priceDraft.base === "" ? "-" : baseInputValue}
-                  </p>
-                </div>
-              </div>
               {priceDraft.base !== "" && !isBasePriceValid && (
                 <p className="mt-3 rounded-lg border border-rose-300/20 bg-rose-500/10 px-2.5 py-2 text-[10px] text-rose-100/90">
                   Sadece fiyat girin. Ornek: 15.53
@@ -3055,31 +3031,15 @@ export default function ProductsTab({
                     disabled={!canManagePrices}
                     className="h-9 min-w-0 w-full rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                        Kayitli yuzde
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-100">
-                        {savedPercentDisplay}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-accent-400/30 bg-accent-500/10 px-3 py-2">
+                  <div className="rounded-xl border border-accent-400/30 bg-accent-500/10 px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
                       <p className="text-[10px] uppercase tracking-[0.14em] text-accent-100/80">
                         Sonuc
                       </p>
-                      <p className="mt-1 text-sm font-semibold text-accent-50">
+                      <p className="text-base font-semibold text-accent-50">
                         {currentResultDisplay}
                       </p>
                     </div>
-                  </div>
-                  <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                      Kayitli sonuc
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-100">
-                      {savedResultDisplay}
-                    </p>
                   </div>
                 </div>
               ) : (
@@ -3089,10 +3049,58 @@ export default function ProductsTab({
               )}
             </div>
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <p className="min-w-[220px] flex-1 text-[11px] text-slate-400">
+              {priceControlMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                handlePriceSave(
+                  offerId,
+                  baseNumber,
+                  percentNumber,
+                  priceResult === "" ? 0 : priceResult,
+                )
+              }
+              disabled={!canSavePrice}
+              className="h-9 rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Kaydet
+            </button>
+            {canViewPriceDetails && (
+              <button
+                type="button"
+                onClick={() =>
+                  handlePriceCommandRun(
+                    {
+                      offerId,
+                      category: productCategory,
+                      result: priceResult,
+                    },
+                    {
+                      label: "Sonucu Gonder",
+                      backendKey: priceCommandBackendEntry?.key ?? "eldorado",
+                      backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
+                    },
+                  )
+                }
+                disabled={!canSendPriceResult}
+                className="h-9 rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isPriceCommandRunning ? "Gonderiliyor..." : "Sonucu Gonder"}
+              </button>
+            )}
+          </div>
+          {!String(automationWsUrl ?? "").trim() && (
+            <p className="mt-3 rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
+              Websocket adresi yok. Admin panelinden kaydedin.
+            </p>
+          )}
         </section>
 
         {canViewPriceCommandLogs && (
-          <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65 xl:col-span-2">
+          <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-rose-300/80" />
@@ -3168,93 +3176,9 @@ export default function ProductsTab({
             </div>
           </section>
         )}
-      </div>
-
-      <aside className="min-w-0 rounded-2xl border border-white/10 bg-[#0b0f1980] p-3.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-          Kontrol paneli
-        </p>
-        <div className="mt-3 space-y-2.5">
-          <div className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2.5">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${priceDraftStateClass}`}>
-                  {priceDraftStateLabel}
-                </span>
-                <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-slate-300">
-                  {productCategory}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                {priceControlMessage}
-              </p>
-            </div>
-          </div>
-          <div className="grid gap-2">
-            <div className="rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2.5">
-              <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                <span>Anlik sonuc</span>
-                <span className="text-slate-300">{currentResultDisplay}</span>
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                <span>Kayitli sonuc</span>
-                <span className="text-slate-300">{savedResultDisplay}</span>
-              </div>
-              {!hasSavedPrice && (
-                <p className="mt-2 text-[10px] text-slate-500">
-                  Henuz kayitli fiyat ayari yok.
-                </p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                handlePriceSave(
-                  offerId,
-                  baseNumber,
-                  percentNumber,
-                  priceResult === "" ? 0 : priceResult,
-                )
-              }
-              disabled={!canSavePrice}
-              className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Kaydet
-            </button>
-            {canViewPriceDetails && (
-              <button
-                type="button"
-                onClick={() =>
-                  handlePriceCommandRun(
-                    {
-                      offerId,
-                      category: productCategory,
-                      result: priceResult,
-                    },
-                    {
-                      label: "Sonucu Gonder",
-                      backendKey: priceCommandBackendEntry?.key ?? "eldorado",
-                      backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
-                    },
-                  )
-                }
-                disabled={!canSendPriceResult}
-                className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isPriceCommandRunning ? "Gonderiliyor..." : "Sonucu Gonder"}
-              </button>
-            )}
-            {!String(automationWsUrl ?? "").trim() && (
-              <p className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
-                Websocket adresi yok. Admin panelinden kaydedin.
-              </p>
-            )}
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-)}
+                                </div>
+                              </div>
+                            )}
                             {activePanel === "automation" && isAutomationEnabled && (
                               <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
                                 <div className="relative grid w-full min-w-0 max-w-full gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
