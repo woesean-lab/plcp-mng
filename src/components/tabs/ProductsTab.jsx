@@ -339,10 +339,6 @@ export default function ProductsTab({
   keysDeleting = {},
   groups = [],
   groupAssignments = {},
-  notesByOffer = {},
-  noteGroups = [],
-  noteGroupAssignments = {},
-  noteGroupNotes = {},
   messageGroups = [],
   messageGroupAssignments = {},
   messageGroupTemplates = {},
@@ -369,10 +365,6 @@ export default function ProductsTab({
   onCopyKey,
   onCreateGroup,
   onAssignGroup,
-  onDeleteNoteGroup,
-  onCreateNoteGroup,
-  onAssignNoteGroup,
-  onSaveNote,
   onCreateMessageGroup,
   onAssignMessageGroup,
   onDeleteMessageGroup,
@@ -400,7 +392,6 @@ export default function ProductsTab({
   canEditKeys: canEditKeysProp = false,
   canChangeKeyStatus: canChangeKeyStatusProp = false,
   canManageGroups: canManageGroupsProp,
-  canManageNotes: canManageNotesProp,
   canManageMessages: canManageMessagesProp,
   canToggleStock: canToggleStockProp,
   canToggleCard: canToggleCardProp,
@@ -422,17 +413,12 @@ export default function ProductsTab({
   const [groupDrafts, setGroupDrafts] = useState({})
   const [groupSelectionDrafts, setGroupSelectionDrafts] = useState({})
   const [bulkCounts, setBulkCounts] = useState({})
-  const [noteDrafts, setNoteDrafts] = useState({})
   const [stockModalDraft, setStockModalDraft] = useState("")
   const [stockModalTarget, setStockModalTarget] = useState(null)
   const [editingKeys, setEditingKeys] = useState({})
   const [savingKeys, setSavingKeys] = useState({})
   const [confirmGroupDelete, setConfirmGroupDelete] = useState(null)
-  const [noteGroupDrafts, setNoteGroupDrafts] = useState({})
-  const [noteGroupSelectionDrafts, setNoteGroupSelectionDrafts] = useState({})
   const [activePanelByOffer, setActivePanelByOffer] = useState({})
-  const [confirmNoteGroupDelete, setConfirmNoteGroupDelete] = useState(null)
-  const [noteEditingByOffer, setNoteEditingByOffer] = useState({})
   const [messageTemplateDrafts, setMessageTemplateDrafts] = useState({})
   const [messageGroupDrafts, setMessageGroupDrafts] = useState({})
   const [messageGroupSelectionDrafts, setMessageGroupSelectionDrafts] = useState({})
@@ -496,7 +482,6 @@ export default function ProductsTab({
   const [bulkPriceLogsLoading, setBulkPriceLogsLoading] = useState(false)
   const [bulkPriceLogsClearing, setBulkPriceLogsClearing] = useState(false)
   const [keyFadeById, setKeyFadeById] = useState({})
-  const [noteGroupFlashByOffer, setNoteGroupFlashByOffer] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
@@ -505,7 +490,6 @@ export default function ProductsTab({
   const bulkUsedDeleteConfirmTimerRef = useRef(null)
   const bulkPriceSessionHydratedRef = useRef(false)
   const bulkPriceCancelRequestedRef = useRef(false)
-  const prevNoteGroupAssignments = useRef(noteGroupAssignments)
   const prevGroupAssignments = useRef(groupAssignments)
   const prevMessageGroupAssignments = useRef(messageGroupAssignments)
   useEffect(
@@ -561,10 +545,6 @@ export default function ProductsTab({
     })
   }, [savedPricesByOfferProp])
   const canManageGroups = typeof canManageGroupsProp === "boolean" ? canManageGroupsProp : canAddKeys
-  const canManageNotes =
-    typeof canManageNotesProp === "boolean"
-      ? canManageNotesProp
-      : canAddKeys && typeof onSaveNote === "function"
   const canManageStock =
     typeof canToggleStockProp === "boolean"
       ? canToggleStockProp
@@ -2163,25 +2143,6 @@ export default function ProductsTab({
     setConfirmGroupDelete(normalizedGroupId)
     toast("Grubu silmek icin tekrar tikla", { position: "top-right" })
   }
-  const handleNoteDraftChange = (offerId, value) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setNoteDrafts((prev) => ({ ...prev, [normalizedId]: value }))
-  }
-  const handleNoteGroupDraftChange = (offerId, value) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setNoteGroupDrafts((prev) => ({ ...prev, [normalizedId]: value }))
-  }
-  const handleNoteReset = (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setNoteDrafts((prev) => {
-      const next = { ...prev }
-      delete next[normalizedId]
-      return next
-    })
-  }
   const setActivePanel = (offerId, panel) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
@@ -2190,65 +2151,6 @@ export default function ProductsTab({
       const next = current === panel ? "none" : panel
       return { ...prev, [normalizedId]: next }
     })
-  }
-  const toggleNoteEdit = (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setNoteEditingByOffer((prev) => {
-      const next = !prev[normalizedId]
-      if (!next) {
-        handleNoteReset(normalizedId)
-      }
-      return { ...prev, [normalizedId]: next }
-    })
-  }
-  const handleNoteSave = (offerId) => {
-    if (!canManageNotes) return
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    const draft = noteDrafts[normalizedId]
-    const noteGroupId = String(noteGroupAssignments?.[normalizedId] ?? "").trim()
-    const stored = noteGroupId
-      ? noteGroupNotes?.[noteGroupId] ?? ""
-      : notesByOffer?.[normalizedId] ?? ""
-    const value = draft !== undefined ? draft : stored
-    onSaveNote(normalizedId, value)
-    handleNoteReset(normalizedId)
-    setNoteEditingByOffer((prev) => ({ ...prev, [normalizedId]: false }))
-  }
-  const handleNoteGroupCreate = async (offerId) => {
-    if (typeof onCreateNoteGroup !== "function" || typeof onAssignNoteGroup !== "function") return
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    const draft = noteGroupDrafts[normalizedId] ?? ""
-    const created = await onCreateNoteGroup(draft)
-    if (!created) return
-    setNoteGroupDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
-    onAssignNoteGroup(normalizedId, created.id)
-  }
-  const handleNoteGroupAssign = (offerId, groupId) => {
-    if (typeof onAssignNoteGroup !== "function") return
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setNoteDrafts((prev) => {
-      const next = { ...prev }
-      delete next[normalizedId]
-      return next
-    })
-    setConfirmNoteGroupDelete(null)
-    onAssignNoteGroup(normalizedId, groupId)
-  }
-  const handleNoteGroupDelete = (groupId) => {
-    if (typeof onDeleteNoteGroup !== "function") return
-    const normalizedGroupId = String(groupId ?? "").trim()
-    if (!normalizedGroupId) return
-    if (confirmNoteGroupDelete === normalizedGroupId) {
-      setConfirmNoteGroupDelete(null)
-      onDeleteNoteGroup(normalizedGroupId)
-      return
-    }
-    setConfirmNoteGroupDelete(normalizedGroupId)
-    toast("Not grubunu silmek icin tekrar tikla", { position: "top-right" })
   }
   const handleMessageTemplateDraftChange = (offerId, value) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -2512,47 +2414,6 @@ export default function ProductsTab({
       prevMessageGroupAssignments.current = messageGroupAssignments
     }
   }, [messageGroupAssignments])
-  useEffect(() => {
-    const prev = prevNoteGroupAssignments.current || {}
-    const next = noteGroupAssignments || {}
-    const changed = new Set()
-    Object.keys(next).forEach((offerId) => {
-      if (next[offerId] !== prev[offerId]) changed.add(offerId)
-    })
-    Object.keys(prev).forEach((offerId) => {
-      if (!(offerId in next)) changed.add(offerId)
-    })
-    if (changed.size > 0) {
-      setNoteGroupFlashByOffer((current) => {
-        const updated = { ...current }
-        changed.forEach((offerId) => {
-          updated[offerId] = true
-        })
-        return updated
-      })
-      setTimeout(() => {
-        setNoteGroupFlashByOffer((current) => {
-          const updated = { ...current }
-          changed.forEach((offerId) => {
-            delete updated[offerId]
-          })
-          return updated
-        })
-      }, 320)
-    }
-    setNoteGroupSelectionDrafts((current) => {
-      const updated = { ...current }
-      Object.entries(updated).forEach(([offerId, draftValue]) => {
-        const assigned = String(next?.[offerId] ?? "").trim()
-        const normalizedDraft = String(draftValue ?? "").trim()
-        if (normalizedDraft === assigned) {
-          delete updated[offerId]
-        }
-      })
-      return updated
-    })
-    prevNoteGroupAssignments.current = next
-  }, [noteGroupAssignments])
   useEffect(() => {
     const defaultBackend = String(stockFetchAutomationBackendOptions?.[0]?.key ?? "").trim()
     setAutomationTargetDraftsByOffer((prev) => {
@@ -3395,22 +3256,6 @@ export default function ProductsTab({
                   const isOutOfStock = isStockEnabled && availableCount === 0
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
                   const groupDraftValue = groupDrafts[offerId] ?? ""
-                  const noteGroupId = String(noteGroupAssignments?.[offerId] ?? "").trim()
-                  const noteGroup = noteGroupId
-                    ? noteGroups.find((entry) => entry.id === noteGroupId)
-                    : null
-                  const noteGroupName = String(noteGroup?.name ?? "").trim()
-                  const noteGroupSelectionValue =
-                    noteGroupSelectionDrafts[offerId] ?? noteGroupId
-                  const isNoteGroupSelectionDirty = noteGroupSelectionValue !== noteGroupId
-                  const noteGroupNote = String(noteGroupNotes?.[noteGroupId] ?? "").trim()
-                  const storedNote = noteGroupId
-                    ? noteGroupNote
-                    : String(notesByOffer?.[offerId] ?? "").trim()
-                  const noteDraftValue = noteDrafts[offerId]
-                  const noteInputValue = noteDraftValue !== undefined ? noteDraftValue : storedNote
-                  const noteHasChanges = String(noteInputValue ?? "").trim() !== storedNote
-                  const noteGroupDraftValue = noteGroupDrafts[offerId] ?? ""
                   const availablePanels = ["inventory"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
                   const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
@@ -3491,7 +3336,7 @@ export default function ProductsTab({
                   if (isPriceEnabled) {
                     availablePanels.push("price")
                   }
-                  availablePanels.push("note", "messages")
+                  availablePanels.push("messages")
                   if (isStockEnabled) {
                     availablePanels.push("stock-group")
                   }
@@ -3503,10 +3348,6 @@ export default function ProductsTab({
                       : availablePanels.includes(storedPanel)
                         ? storedPanel
                         : defaultPanel
-                  const isNoteEditing = Boolean(noteEditingByOffer[offerId])
-                  const canEditNoteText = canManageNotes && isNoteEditing
-                  const canSaveNote =
-                    Boolean(offerId) && canManageNotes && noteHasChanges && isNoteEditing
                   const messageTemplateDraftValue = messageTemplateDrafts[offerId] ?? ""
                   const messageGroupDraftValue = messageGroupDrafts[offerId] ?? ""
                   const normalizedTemplateValue = String(messageTemplateDraftValue ?? "").trim()
@@ -4063,27 +3904,6 @@ export default function ProductsTab({
                                   <span>Fiyat</span>
                                 </button>
                               )}
-                              <button
-                                type="button"
-                                onClick={() => setActivePanel(offerId, "note")}
-                                className={`group flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
-                                  activePanel === "note"
-                                    ? "border-accent-400 bg-accent-500/10 text-white sm:bg-transparent"
-                                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200 sm:border-transparent sm:bg-transparent sm:hover:border-white/30 sm:hover:bg-transparent"
-                                }`}
-                                aria-pressed={activePanel === "note"}
-                              >
-                                <span>Ürün notu</span>
-                                <span
-                                  className={`ml-auto max-w-[220px] whitespace-normal break-words rounded-full border px-2 py-0.5 text-left text-[10px] font-semibold leading-snug sm:ml-0 ${
-                                    activePanel === "note"
-                                      ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
-                                      : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
-                                  }`}
-                                >
-                                  {noteGroupName || "Bağımsız"}
-                                </span>
-                              </button>
                               <button
                                 type="button"
                                 onClick={() => setActivePanel(offerId, "messages")}
@@ -5036,150 +4856,6 @@ export default function ProductsTab({
                                     </div>
                                   )}
                                 </div>
-                              </div>
-                            )}
-                            {activePanel === "note" && (
-                              <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
-                                {isOfferRefreshing ? (
-                                  <div className="space-y-3">
-                                    <SkeletonBlock className="h-4 w-28 rounded-lg" />
-                                    <SkeletonBlock className="h-44 w-full rounded-xl" />
-                                    <div className="flex justify-end gap-2">
-                                      <SkeletonBlock className="h-8 w-20 rounded-lg" />
-                                      <SkeletonBlock className="h-8 w-20 rounded-lg" />
-                                    </div>
-                                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                                      <SkeletonBlock className="h-24 w-full rounded-xl" />
-                                      <SkeletonBlock className="h-24 w-full rounded-xl" />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <textarea
-                                      rows={9}
-                                      value={noteInputValue ?? ""}
-                                      onChange={(event) => handleNoteDraftChange(offerId, event.target.value)}
-                                      placeholder="Ürün notu ekle"
-                                      readOnly={!canEditNoteText}
-                                      className={`block min-h-[220px] w-full rounded-xl border border-white/10 bg-ink-900/50 px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 read-only:bg-ink-900/40 read-only:text-slate-300 ${noteGroupFlashByOffer?.[offerId] ? "animate-noteSwap" : ""}`}
-                                    />
-                                    <div className="mt-3 flex flex-wrap justify-end gap-2">
-                                      {canManageNotes && (
-                                        <button
-                                          type="button"
-                                          onClick={() => toggleNoteEdit(offerId)}
-                                          className="flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20 hover:bg-white/10"
-                                        >
-                                          {isNoteEditing ? "VAZGEÇ" : "DÜZENLE"}
-                                        </button>
-                                      )}
-                                      <button
-                                        type="button"
-                                        onClick={() => handleNoteSave(offerId)}
-                                        disabled={!canSaveNote}
-                                        className="flex h-9 items-center justify-center rounded-lg border border-accent-400/60 bg-accent-500/15 px-4 text-[11px] font-semibold uppercase tracking-wide text-accent-50 transition hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                                      >
-                                        KAYDET
-                                      </button>
-                                    </div>
-                                    <div className="mt-5 border-t border-white/10 pt-5">
-                                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                                        <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
-                                          <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Not grubu</label>
-                                          <div
-                                            className={`mt-2 flex items-center gap-2 ${
-                                              selectFlashByKey[`${offerId}:note-group`] ? "animate-noteSwap" : ""
-                                            }`}
-                                          >
-                                            <select
-                                              value={noteGroupSelectionValue}
-                                              onChange={(event) =>
-                                                setNoteGroupSelectionDrafts((prev) => ({
-                                                  ...prev,
-                                                  [offerId]: event.target.value,
-                                                }))
-                                              }
-                                              disabled={!canManageNotes}
-                                              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 h-9 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                              <option value="">Bağımsız not</option>
-                                              {noteGroups.map((groupOption) => (
-                                                <option key={groupOption.id} value={groupOption.id}>
-                                                  {groupOption.name}
-                                                </option>
-                                              ))}
-                                            </select>
-                                            {noteGroupSelectionValue && canManageNotes && (
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  {
-                                                    setNoteGroupSelectionDrafts((prev) => ({
-                                                      ...prev,
-                                                      [offerId]: "",
-                                                    }))
-                                                    triggerSelectFlash(offerId, "note-group")
-                                                  }
-                                                }
-                                                className="rounded-md border border-amber-300/50 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 h-9 transition hover:border-amber-200 hover:bg-amber-500/20"
-                                              >
-                                                KALDIR
-                                              </button>
-                                            )}
-                                            {noteGroupSelectionValue && canManageNotes && (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleNoteGroupDelete(noteGroupId)}
-                                                disabled={!canManageNotes}
-                                                className="rounded-md border border-rose-300/50 bg-rose-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 h-9 transition hover:border-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                              >
-                                                {confirmNoteGroupDelete === noteGroupId ? "ONAYLA" : "SİL"}
-                                              </button>
-                                            )}
-                                            {canManageNotes && (
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  handleNoteGroupAssign(offerId, noteGroupSelectionValue)
-                                                  triggerSelectFlash(offerId, "note-group")
-                                                }}
-                                                disabled={!isNoteGroupSelectionDirty}
-                                                className="rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-9 transition hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                              >
-                                                KAYDET
-                                              </button>
-                                            )}
-                                          </div>
-                                        </div>
-                                        {canManageNotes && (
-                                          <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
-                                            <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Yeni not grubu</label>
-                                            <div className="mt-2 flex items-center gap-2">
-                                              <input
-                                                type="text"
-                                                value={noteGroupDraftValue}
-                                                onChange={(event) =>
-                                                  handleNoteGroupDraftChange(offerId, event.target.value)
-                                                }
-                                                placeholder="Yeni not grubu"
-                                                disabled={!canManageNotes}
-                                                className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 h-9 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                              />
-                                              <button
-                                                type="button"
-                                                onClick={() => handleNoteGroupCreate(offerId)}
-                                                disabled={!canManageNotes || !noteGroupDraftValue.trim()}
-                                                className="rounded-md border border-sky-300/50 bg-sky-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:border-sky-200 hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                              >
-                                                OLUŞTUR
-                                              </button>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </>
-                                )}
                               </div>
                             )}
                           </div>
