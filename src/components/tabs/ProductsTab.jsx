@@ -130,6 +130,7 @@ const getCommandConnectionBadgeClass = (value) => {
 
 const createEmptyBulkPriceCommandState = (overrides = {}) => ({
   isRunning: false,
+  cancelRequested: false,
   total: 0,
   ready: 0,
   success: 0,
@@ -504,6 +505,7 @@ export default function ProductsTab({
   const popupValueCopyTimerRef = useRef(null)
   const bulkUsedDeleteConfirmTimerRef = useRef(null)
   const bulkPriceSessionHydratedRef = useRef(false)
+  const bulkPriceCancelRequestedRef = useRef(false)
   const prevNoteGroupAssignments = useRef(noteGroupAssignments)
   const prevGroupAssignments = useRef(groupAssignments)
   const prevMessageGroupAssignments = useRef(messageGroupAssignments)
@@ -1275,11 +1277,15 @@ export default function ProductsTab({
   const bulkPriceSkippedCount = Math.max(0, selectedBulkPriceCandidates.length - bulkPriceReadyCount)
   const bulkPriceResumeCount = resumableBulkPriceCandidates.length
   const isBulkPriceRunning = Boolean(bulkPriceCommandState.isRunning)
+  const isBulkPriceCancelRequested = Boolean(bulkPriceCommandState.cancelRequested)
   const visibleBulkPriceCommandLogs = bulkPriceCommandLogEntries.slice(0, BULK_PRICE_COMMAND_VISIBLE_ROWS)
   const emptyBulkPriceCommandLogRows = Math.max(
     0,
     BULK_PRICE_COMMAND_VISIBLE_ROWS - visibleBulkPriceCommandLogs.length,
   )
+  useEffect(() => {
+    bulkPriceCancelRequestedRef.current = isBulkPriceCancelRequested
+  }, [isBulkPriceCancelRequested])
   useEffect(() => {
     if (
       selectedPriceCount > 0 ||
@@ -1352,7 +1358,37 @@ export default function ProductsTab({
     if (isBulkPriceRunning) return
     setSelectedPriceOfferIds({})
   }
-  const handleApplyBulkPricePercent = () => {
+  const persistSavedPrices = async (entries = []) => {
+    const normalizedEntries = Array.isArray(entries) ? entries : []
+    const savedRows = {}
+    let savedCount = 0
+
+    for (const entry of normalizedEntries) {
+      const normalizedId = String(entry?.offerId ?? "").trim()
+      const base = Number(entry?.base)
+      const percent = Number(entry?.percent)
+      const result = Number(entry?.result)
+      if (!normalizedId || !Number.isFinite(base) || !Number.isFinite(percent) || !Number.isFinite(result)) {
+        continue
+      }
+      if (typeof onSavePrice === "function") {
+        const ok = await onSavePrice(normalizedId, base, percent, result)
+        if (!ok) continue
+      }
+      savedRows[normalizedId] = { base, percent, result }
+      savedCount += 1
+    }
+
+    if (savedCount > 0) {
+      setSavedPricesByOffer((prev) => ({
+        ...prev,
+        ...savedRows,
+      }))
+    }
+
+    return savedCount
+  }
+  const handleApplyBulkPricePercent = async () => {
     if (isBulkPriceRunning) return
     const normalizedPercent = String(bulkPricePercentDraft ?? "").trim().replace(",", ".")
     const percentNumber = Number(normalizedPercent)
@@ -1370,20 +1406,51 @@ export default function ProductsTab({
       return
     }
 
+    const saveCandidates = []
     setPriceDrafts((prev) => {
       const next = { ...prev }
       targetOfferIds.forEach((offerId) => {
+        const currentDraft = prev[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
+        const baseInputValue = String(currentDraft.base ?? "").trim()
+        const baseNumber = isValidPriceInput(baseInputValue)
+          ? Number(baseInputValue.replace(",", "."))
+          : Number.NaN
+        const result = Number.isFinite(baseNumber) ? baseNumber * (percentNumber / 100) : Number.NaN
         next[offerId] = {
-          ...(prev[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }),
+          ...currentDraft,
           percent: normalizedPercent,
+        }
+        if (Number.isFinite(baseNumber) && Number.isFinite(result)) {
+          saveCandidates.push({
+            offerId,
+            base: baseNumber,
+            percent: percentNumber,
+            result,
+          })
         }
       })
       return next
     })
-    toast.success(`Secili ${targetOfferIds.length} urune yuzdelik uygulandi.`)
+    const savedCount = await persistSavedPrices(saveCandidates)
+    const unsavedCount = Math.max(0, targetOfferIds.length - savedCount)
+    toast.success(
+      unsavedCount > 0
+        ? `Yuzdelik uygulandi. Kaydedilen=${savedCount}, taslak kalan=${unsavedCount}`
+        : `Secili ${savedCount} urune yuzdelik uygulanip kaydedildi.`,
+    )
+  }
+  const handleCancelBulkPriceCommand = () => {
+    if (!isBulkPriceRunning || bulkPriceCancelRequestedRef.current) return
+    bulkPriceCancelRequestedRef.current = true
+    setBulkPriceCommandState((prev) => ({
+      ...prev,
+      cancelRequested: true,
+    }))
+    appendBulkPriceCommandLog("error", "Iptal istendi. Mevcut urun tamamlaninca kuyruk duracak.")
   }
   const runBulkPriceCommands = async ({ resumeOnly = false } = {}) => {
     if (isBulkPriceRunning) return
+    bulkPriceCancelRequestedRef.current = false
     if (!canUseBulkPriceActions) {
       toast.error("Toplu sonuc gonderme yetkiniz yok.")
       return
@@ -1461,6 +1528,7 @@ export default function ProductsTab({
     setBulkPriceCommandState(
       createEmptyBulkPriceCommandState({
         isRunning: true,
+        cancelRequested: false,
         total: selectedBulkPriceCandidates.length,
         ready: readyItems.length,
         success: nextStatusCounts.success,
@@ -1481,14 +1549,19 @@ export default function ProductsTab({
       appendBulkPriceCommandLog("error", `${item.name} atlandi: ${item.reason}`)
     })
 
+    const statusSnapshot = { ...nextStatusByOffer }
     let successCount = nextStatusCounts.success
     let errorCount = nextStatusCounts.error
 
     for (const item of readyItems) {
+      if (bulkPriceCancelRequestedRef.current) {
+        break
+      }
       setBulkPriceItemStatusByOffer((prev) => ({
         ...prev,
         [item.offerId]: createBulkPriceItemStatusEntry("running", item.name),
       }))
+      statusSnapshot[item.offerId] = createBulkPriceItemStatusEntry("running", item.name)
       setBulkPriceCommandState((prev) => ({
         ...prev,
         currentOfferId: item.offerId,
@@ -1514,6 +1587,7 @@ export default function ProductsTab({
           ...prev,
           [item.offerId]: createBulkPriceItemStatusEntry("success", item.name),
         }))
+        statusSnapshot[item.offerId] = createBulkPriceItemStatusEntry("success", item.name)
         setBulkPriceCommandState((prev) => ({
           ...prev,
           success: successCount,
@@ -1526,6 +1600,7 @@ export default function ProductsTab({
           ...prev,
           [item.offerId]: createBulkPriceItemStatusEntry("error", item.name, errorMessage),
         }))
+        statusSnapshot[item.offerId] = createBulkPriceItemStatusEntry("error", item.name, errorMessage)
         setBulkPriceCommandState((prev) => ({
           ...prev,
           error: errorCount,
@@ -1535,17 +1610,34 @@ export default function ProductsTab({
           `${item.name} hata verdi: ${errorMessage}`,
         )
       }
+
+      if (bulkPriceCancelRequestedRef.current) {
+        break
+      }
     }
+
+    const wasCancelled = bulkPriceCancelRequestedRef.current
+    const remainingPendingCount = Object.values(statusSnapshot).reduce((count, entry) => {
+      return count + (String(entry?.status ?? "").trim().toLowerCase() === "pending" ? 1 : 0)
+    }, 0)
 
     setBulkPriceCommandState((prev) => ({
       ...prev,
       isRunning: false,
+      cancelRequested: false,
       success: successCount,
       error: errorCount,
       currentOfferId: "",
       currentName: "",
     }))
-    if (errorCount > 0) {
+    bulkPriceCancelRequestedRef.current = false
+    if (wasCancelled || remainingPendingCount > 0) {
+      appendBulkPriceCommandLog(
+        "error",
+        `Toplu gonderim iptal edildi. Kalan islem sayisi: ${Math.max(0, remainingPendingCount)}`,
+      )
+      toast.error(`Toplu gonderim durduruldu. Kalan=${Math.max(0, remainingPendingCount)}`)
+    } else if (errorCount > 0) {
       toast.error(`Toplu gonderim tamamlandi. Basarili=${successCount}, Hata=${errorCount}`)
     } else {
       toast.success(`Toplu gonderim tamamlandi. Basarili=${successCount}`)
@@ -3106,6 +3198,16 @@ export default function ProductsTab({
                           >
                             {isBulkPriceRunning ? "Gonderiliyor..." : "Secilenleri gonder"}
                           </button>
+                          {isBulkPriceRunning && (
+                            <button
+                              type="button"
+                              onClick={handleCancelBulkPriceCommand}
+                              disabled={isBulkPriceCancelRequested}
+                              className="inline-flex h-10 items-center justify-center rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200/50 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isBulkPriceCancelRequested ? "Durduruluyor..." : "Islemi iptal et"}
+                            </button>
+                          )}
                           <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
                             <button
                               type="button"
