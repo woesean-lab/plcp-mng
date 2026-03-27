@@ -3152,48 +3152,48 @@ export default function ProductsTab({
             </div>
           </div>
           {isBulkPriceModeOpen && canUseBulkPriceActions && filteredList.length > 0 && (
-            <div className="mt-3 overflow-hidden rounded-2xl border border-sky-400/20 bg-[linear-gradient(135deg,rgba(8,13,24,0.98),rgba(12,18,34,0.96))] shadow-card">
-                  <div className="px-4 py-4">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                        <div className="min-w-0 space-y-3">
+            <div className="mt-3 overflow-hidden rounded-xl border border-sky-400/20 bg-[linear-gradient(135deg,rgba(8,13,24,0.98),rgba(12,18,34,0.96))] shadow-card">
+                  <div className="px-3 py-3">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                        <div className="min-w-0 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             {isBulkPriceRunning && bulkPriceCommandState.currentName && (
-                              <span className="inline-flex h-8 min-w-0 items-center rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-200">
+                              <span className="inline-flex h-7 min-w-0 items-center rounded-full border border-white/10 bg-white/5 px-2.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-200">
                                 <span className="truncate">Calisiyor: {bulkPriceCommandState.currentName}</span>
                               </span>
                             )}
                           </div>
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-white">Secili urunleri tek kuyrukta gonder</p>
-                            <p className="max-w-2xl text-xs leading-5 text-slate-400 sm:text-sm">
-                              Gecerli fiyat sonucu olan urunler websocket komutuna sirayla gonderilir. Hazir olmayan urunler otomatik atlanir.
+                            <p className="text-[13px] font-semibold text-white">Toplu fiyat gonderimi</p>
+                            <p className="max-w-xl text-[11px] leading-4 text-slate-400">
+                              Hazir urunler sirayla gonderilir, gecersizler otomatik atlanir.
                             </p>
                           </div>
-                          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
-                              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
+                            <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
+                              <span className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                 Secili
                               </span>
-                              <span className="mt-1 block text-lg font-semibold text-white">{selectedPriceCount}</span>
+                              <span className="mt-0.5 block text-base font-semibold text-white">{selectedPriceCount}</span>
                             </div>
-                            <div className="rounded-xl border border-emerald-300/15 bg-emerald-500/[0.08] px-3 py-3">
-                              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200/80">
+                            <div className="rounded-lg border border-emerald-300/15 bg-emerald-500/[0.08] px-2.5 py-2">
+                              <span className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-emerald-200/80">
                                 Hazir
                               </span>
-                              <span className="mt-1 block text-lg font-semibold text-emerald-50">{bulkPriceReadyCount}</span>
+                              <span className="mt-0.5 block text-base font-semibold text-emerald-50">{bulkPriceReadyCount}</span>
                             </div>
-                            <div className="rounded-xl border border-amber-300/15 bg-amber-500/[0.08] px-3 py-3">
-                              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200/80">
+                            <div className="rounded-lg border border-amber-300/15 bg-amber-500/[0.08] px-2.5 py-2">
+                              <span className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-200/80">
                                 Atlanacak
                               </span>
-                              <span className="mt-1 block text-lg font-semibold text-amber-50">{bulkPriceSkippedCount}</span>
+                              <span className="mt-0.5 block text-base font-semibold text-amber-50">{bulkPriceSkippedCount}</span>
                             </div>
-                            <div className="rounded-xl border border-sky-300/15 bg-sky-500/[0.08] px-3 py-3">
-                              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
+                            <div className="rounded-lg border border-sky-300/15 bg-sky-500/[0.08] px-2.5 py-2">
+                              <span className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-sky-200/80">
                                 Durum
                               </span>
-                              <span className="mt-1 block text-sm font-semibold text-sky-50">
+                              <span className="mt-0.5 block text-[12px] font-semibold text-sky-50">
                                 {bulkPriceCommandState.total > 0
                                   ? `Basari ${bulkPriceCommandState.success} / Hata ${bulkPriceCommandState.error}`
                                   : "Beklemede"}
@@ -3201,9 +3201,9 @@ export default function ProductsTab({
                             </div>
                           </div>
                         </div>
-                        <div className="flex w-full flex-col gap-2 xl:w-auto xl:min-w-[240px]">
-                          <div className="rounded-xl border border-white/10 bg-white/[0.04] p-2.5">
-                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                        <div className="flex w-full flex-col gap-1.5 xl:w-auto xl:min-w-[216px]">
+                          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-2">
+                            <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                               Toplu yuzdelik
                             </p>
                             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
@@ -3213,13 +3213,13 @@ export default function ProductsTab({
                                 value={bulkPricePercentDraft}
                                 onChange={(event) => setBulkPricePercentDraft(event.target.value)}
                                 placeholder="200"
-                                className="h-10 min-w-0 rounded-lg border border-white/10 bg-ink-950/80 px-3 text-sm text-white outline-none transition focus:border-accent-300/60"
+                                className="h-9 min-w-0 rounded-md border border-white/10 bg-ink-950/80 px-2.5 text-sm text-white outline-none transition focus:border-accent-300/60"
                               />
                               <button
                                 type="button"
                                 onClick={handleApplyBulkPricePercent}
                                 disabled={isBulkPriceRunning || selectedPriceCount === 0}
-                                className="inline-flex h-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-100 transition hover:border-white/20 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex h-9 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-100 transition hover:border-white/20 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 Uygula
                               </button>
@@ -3229,7 +3229,7 @@ export default function ProductsTab({
                             type="button"
                             onClick={handleResumeBulkPriceCommandRun}
                             disabled={isBulkPriceRunning || bulkPriceResumeCount === 0}
-                            className="inline-flex h-10 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-500/10 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200/50 hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-9 items-center justify-center rounded-lg border border-sky-300/30 bg-sky-500/10 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200/50 hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {bulkPriceResumeCount > 0
                               ? `Tamamlanmayanlari gonder (${bulkPriceResumeCount})`
@@ -3239,7 +3239,7 @@ export default function ProductsTab({
                             type="button"
                             onClick={handleBulkPriceCommandRun}
                             disabled={isBulkPriceRunning || selectedPriceCount === 0 || bulkPriceReadyCount === 0}
-                            className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-9 items-center justify-center rounded-lg border border-emerald-300/40 bg-emerald-500/15 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {isBulkPriceRunning ? "Gonderiliyor..." : "Secilenleri gonder"}
                           </button>
@@ -3248,17 +3248,17 @@ export default function ProductsTab({
                               type="button"
                               onClick={handleCancelBulkPriceCommand}
                               disabled={isBulkPriceCancelRequested}
-                              className="inline-flex h-10 items-center justify-center rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200/50 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-200/50 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isBulkPriceCancelRequested ? "Durduruluyor..." : "Islemi iptal et"}
                             </button>
                           )}
-                          <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+                          <div className="grid gap-1.5 sm:grid-cols-3 xl:grid-cols-1">
                             <button
                               type="button"
                               onClick={() => selectBulkPriceOffers(selectedPageOfferIds)}
                               disabled={isBulkPriceRunning || selectedPageOfferIds.length === 0 || areAllPageSelected}
-                              className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="h-8 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               Bu sayfayi sec
                             </button>
@@ -3266,7 +3266,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={() => selectBulkPriceOffers(selectedFilteredOfferIds)}
                               disabled={isBulkPriceRunning || selectedFilteredOfferIds.length === 0 || areAllFilteredSelected}
-                              className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="h-8 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               Filtredekileri sec
                             </button>
@@ -3274,7 +3274,7 @@ export default function ProductsTab({
                               type="button"
                               onClick={clearSelectedPriceOffers}
                               disabled={isBulkPriceRunning || selectedPriceCount === 0}
-                              className="h-9 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="h-8 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               Secimi temizle
                             </button>
