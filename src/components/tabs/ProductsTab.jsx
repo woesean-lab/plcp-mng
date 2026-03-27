@@ -1406,33 +1406,42 @@ export default function ProductsTab({
       return
     }
 
-    const saveCandidates = []
-    setPriceDrafts((prev) => {
-      const next = { ...prev }
-      targetOfferIds.forEach((offerId) => {
-        const currentDraft = prev[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
-        const baseInputValue = String(currentDraft.base ?? "").trim()
-        const baseNumber = isValidPriceInput(baseInputValue)
-          ? Number(baseInputValue.replace(",", "."))
-          : Number.NaN
-        const result = Number.isFinite(baseNumber) ? baseNumber * (percentNumber / 100) : Number.NaN
-        next[offerId] = {
-          ...currentDraft,
-          percent: normalizedPercent,
-        }
-        if (Number.isFinite(baseNumber) && Number.isFinite(result)) {
-          saveCandidates.push({
-            offerId,
-            base: baseNumber,
-            percent: percentNumber,
-            result,
-          })
-        }
-      })
-      return next
-    })
+    const nextDrafts = {}
+    const saveCandidates = targetOfferIds.reduce((acc, offerId) => {
+      const currentDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
+      const baseInputValue = String(currentDraft.base ?? "").trim()
+      const baseNumber = isValidPriceInput(baseInputValue)
+        ? Number(baseInputValue.replace(",", "."))
+        : Number.NaN
+      const result = Number.isFinite(baseNumber) ? baseNumber * (percentNumber / 100) : Number.NaN
+
+      nextDrafts[offerId] = {
+        ...currentDraft,
+        percent: normalizedPercent,
+      }
+
+      if (Number.isFinite(baseNumber) && Number.isFinite(result)) {
+        acc.push({
+          offerId,
+          base: baseNumber,
+          percent: percentNumber,
+          result,
+        })
+      }
+      return acc
+    }, [])
+
+    setPriceDrafts((prev) => ({
+      ...prev,
+      ...nextDrafts,
+    }))
+
     const savedCount = await persistSavedPrices(saveCandidates)
     const unsavedCount = Math.max(0, targetOfferIds.length - savedCount)
+    if (savedCount === 0 && unsavedCount > 0) {
+      toast.error("Yuzdelik uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.")
+      return
+    }
     toast.success(
       unsavedCount > 0
         ? `Yuzdelik uygulandi. Kaydedilen=${savedCount}, taslak kalan=${unsavedCount}`
