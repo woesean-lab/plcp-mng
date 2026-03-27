@@ -79,7 +79,6 @@ const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
 const PRICE_COMMAND_VISIBLE_ROWS = 12
-const BULK_PRICE_COMMAND_VISIBLE_ROWS = 10
 const DEFAULT_PRICE_PERCENT = "200"
 const PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing>"
 const BULK_PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing-bulk>"
@@ -1278,11 +1277,6 @@ export default function ProductsTab({
   const bulkPriceResumeCount = resumableBulkPriceCandidates.length
   const isBulkPriceRunning = Boolean(bulkPriceCommandState.isRunning)
   const isBulkPriceCancelRequested = Boolean(bulkPriceCommandState.cancelRequested)
-  const visibleBulkPriceCommandLogs = bulkPriceCommandLogEntries.slice(0, BULK_PRICE_COMMAND_VISIBLE_ROWS)
-  const emptyBulkPriceCommandLogRows = Math.max(
-    0,
-    BULK_PRICE_COMMAND_VISIBLE_ROWS - visibleBulkPriceCommandLogs.length,
-  )
   useEffect(() => {
     bulkPriceCancelRequestedRef.current = isBulkPriceCancelRequested
   }, [isBulkPriceCancelRequested])
@@ -3324,7 +3318,7 @@ export default function ProductsTab({
                               </span>
                             </div>
                             <div className="space-y-0.5">
-                              {visibleBulkPriceCommandLogs.map((entry) => {
+                              {bulkPriceCommandLogEntries.map((entry) => {
                                 const statusMeta = getCommandLogStatusMeta(entry.status)
                                 return (
                                   <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
@@ -3336,25 +3330,15 @@ export default function ProductsTab({
                                   </div>
                                 )
                               })}
-                              {Array.from({ length: emptyBulkPriceCommandLogRows }).map((_, index) => (
-                                <div key={`bulk-price-command-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                              {bulkPriceCommandLogEntries.length === 0 && (
+                                <div className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
                                   <span className="hidden flex-none text-slate-600 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
                                   <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                                   <span className="flex-none text-slate-700">[--:--]</span>
                                   <span className="flex-none text-slate-700">--</span>
-                                  <span
-                                    className={`truncate text-slate-700 ${
-                                      bulkPriceCommandLogEntries.length === 0 && index === 0
-                                        ? "text-slate-500"
-                                        : "opacity-0"
-                                    }`}
-                                  >
-                                    {bulkPriceCommandLogEntries.length === 0 && index === 0
-                                      ? "bekleniyor..."
-                                      : "placeholder"}
-                                  </span>
+                                  <span className="truncate text-slate-500">bekleniyor...</span>
                                 </div>
-                              ))}
+                              )}
                             </div>
                           </div>
                         </section>
