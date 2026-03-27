@@ -488,6 +488,7 @@ export default function ProductsTab({
   const [isBulkUsedDeleteRunning, setIsBulkUsedDeleteRunning] = useState(false)
   const [isBulkStockRefreshRunning, setIsBulkStockRefreshRunning] = useState(false)
   const [selectedPriceOfferIds, setSelectedPriceOfferIds] = useState({})
+  const [bulkPricePercentDraft, setBulkPricePercentDraft] = useState(DEFAULT_PRICE_PERCENT)
   const [bulkPriceCommandState, setBulkPriceCommandState] = useState(createEmptyBulkPriceCommandState)
   const [bulkPriceCommandLogEntries, setBulkPriceCommandLogEntries] = useState([])
   const [bulkPriceItemStatusByOffer, setBulkPriceItemStatusByOffer] = useState({})
@@ -900,12 +901,18 @@ export default function ProductsTab({
         .map((product) => String(product?.id ?? "").trim())
         .filter(Boolean),
     )
+    const selectableIds = new Set(
+      allProducts
+        .filter((product) => Boolean(priceEnabledByOffer?.[String(product?.id ?? "").trim()]))
+        .map((product) => String(product?.id ?? "").trim())
+        .filter(Boolean),
+    )
     setSelectedPriceOfferIds((prev) => {
       const next = {}
       let changed = false
       Object.entries(prev).forEach(([offerId, selected]) => {
         if (!selected) return
-        if (validIds.has(offerId)) {
+        if (validIds.has(offerId) && selectableIds.has(offerId)) {
           next[offerId] = true
         } else {
           changed = true
@@ -925,7 +932,7 @@ export default function ProductsTab({
       })
       return changed ? next : prev
     })
-  }, [allProducts])
+  }, [allProducts, priceEnabledByOffer])
   useEffect(() => {
     if (typeof window === "undefined") {
       bulkPriceSessionHydratedRef.current = true
@@ -1224,15 +1231,15 @@ export default function ProductsTab({
     () =>
       sortedList
         .map((product) => String(product?.id ?? "").trim())
-        .filter(Boolean),
-    [sortedList],
+        .filter((offerId) => Boolean(offerId) && Boolean(priceEnabledByOffer?.[offerId])),
+    [priceEnabledByOffer, sortedList],
   )
   const selectedPageOfferIds = useMemo(
     () =>
       paginatedList
         .map((product) => String(product?.id ?? "").trim())
-        .filter(Boolean),
-    [paginatedList],
+        .filter((offerId) => Boolean(offerId) && Boolean(priceEnabledByOffer?.[offerId])),
+    [paginatedList, priceEnabledByOffer],
   )
   const selectedPriceCount = useMemo(
     () => Object.values(selectedPriceOfferIds).filter(Boolean).length,
@@ -1304,7 +1311,13 @@ export default function ProductsTab({
   const canRefreshAllStocks = typeof onLoadKeys === "function" && allProducts.length > 0
   const togglePriceOfferSelection = (offerId, nextSelected) => {
     const normalizedOfferId = String(offerId ?? "").trim()
-    if (!normalizedOfferId || isBulkPriceRunning) return
+    if (
+      !normalizedOfferId ||
+      isBulkPriceRunning ||
+      !Boolean(priceEnabledByOffer?.[normalizedOfferId])
+    ) {
+      return
+    }
     setSelectedPriceOfferIds((prev) => {
       const shouldSelect =
         typeof nextSelected === "boolean" ? nextSelected : !Boolean(prev?.[normalizedOfferId])
@@ -1329,6 +1342,7 @@ export default function ProductsTab({
     setSelectedPriceOfferIds((prev) => {
       const next = { ...prev }
       normalizedIds.forEach((offerId) => {
+        if (!priceEnabledByOffer?.[offerId]) return
         next[offerId] = true
       })
       return next
@@ -1337,6 +1351,36 @@ export default function ProductsTab({
   const clearSelectedPriceOffers = () => {
     if (isBulkPriceRunning) return
     setSelectedPriceOfferIds({})
+  }
+  const handleApplyBulkPricePercent = () => {
+    if (isBulkPriceRunning) return
+    const normalizedPercent = String(bulkPricePercentDraft ?? "").trim().replace(",", ".")
+    const percentNumber = Number(normalizedPercent)
+    if (!normalizedPercent || !Number.isFinite(percentNumber)) {
+      toast.error("Toplu yuzdelik icin gecerli bir sayi girin.")
+      return
+    }
+
+    const targetOfferIds = selectedBulkPriceProducts
+      .map((product) => String(product?.id ?? "").trim())
+      .filter((offerId) => Boolean(offerId) && Boolean(priceEnabledByOffer?.[offerId]))
+
+    if (targetOfferIds.length === 0) {
+      toast.error("Yuzdelik uygulanacak secili fiyat urunu yok.")
+      return
+    }
+
+    setPriceDrafts((prev) => {
+      const next = { ...prev }
+      targetOfferIds.forEach((offerId) => {
+        next[offerId] = {
+          ...(prev[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }),
+          percent: normalizedPercent,
+        }
+      })
+      return next
+    })
+    toast.success(`Secili ${targetOfferIds.length} urune yuzdelik uygulandi.`)
   }
   const runBulkPriceCommands = async ({ resumeOnly = false } = {}) => {
     if (isBulkPriceRunning) return
@@ -2971,7 +3015,7 @@ export default function ProductsTab({
             </div>
           </div>
           {isBulkPriceModeOpen && canUseBulkPriceActions && filteredList.length > 0 && (
-            <div className="mt-3 overflow-hidden rounded-2xl border border-sky-500/15 bg-[linear-gradient(135deg,rgba(8,13,24,0.96),rgba(10,18,35,0.9))] shadow-card">
+            <div className="mt-3 overflow-hidden rounded-2xl border border-sky-400/20 bg-[linear-gradient(135deg,rgba(16,23,38,0.98),rgba(20,30,52,0.94))] shadow-card">
                   <div className="px-4 py-4">
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -3021,6 +3065,29 @@ export default function ProductsTab({
                           </div>
                         </div>
                         <div className="flex w-full flex-col gap-2 xl:w-auto xl:min-w-[240px]">
+                          <div className="rounded-xl border border-white/10 bg-white/[0.04] p-2.5">
+                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                              Toplu yuzdelik
+                            </p>
+                            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                value={bulkPricePercentDraft}
+                                onChange={(event) => setBulkPricePercentDraft(event.target.value)}
+                                placeholder="200"
+                                className="h-10 min-w-0 rounded-lg border border-white/10 bg-ink-950/80 px-3 text-sm text-white outline-none transition focus:border-accent-300/60"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleApplyBulkPricePercent}
+                                disabled={isBulkPriceRunning || selectedPriceCount === 0}
+                                className="inline-flex h-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-100 transition hover:border-white/20 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Uygula
+                              </button>
+                            </div>
+                          </div>
                           <button
                             type="button"
                             onClick={handleResumeBulkPriceCommandRun}
@@ -3440,7 +3507,7 @@ export default function ProductsTab({
                     >
                       <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:flex-nowrap">
                         <div className="flex min-w-0 flex-1 items-start gap-3">
-                          {canUseBulkPriceActions && isBulkPriceModeOpen && (
+                          {canUseBulkPriceActions && isBulkPriceModeOpen && isPriceEnabled && (
                             <button
                               type="button"
                               disabled={isBulkPriceRunning || !offerId}
