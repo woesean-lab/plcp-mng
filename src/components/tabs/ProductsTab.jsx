@@ -3015,7 +3015,7 @@ export default function ProductsTab({
             </div>
           </div>
           {isBulkPriceModeOpen && canUseBulkPriceActions && filteredList.length > 0 && (
-            <div className="mt-3 overflow-hidden rounded-2xl border border-sky-400/20 bg-[linear-gradient(135deg,rgba(16,23,38,0.98),rgba(20,30,52,0.94))] shadow-card">
+            <div className="mt-3 overflow-hidden rounded-2xl border border-sky-400/20 bg-[linear-gradient(135deg,rgba(8,13,24,0.98),rgba(12,18,34,0.96))] shadow-card">
                   <div className="px-4 py-4">
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
