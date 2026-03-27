@@ -1358,10 +1358,11 @@ export default function ProductsTab({
     if (isBulkPriceRunning) return
     setSelectedPriceOfferIds({})
   }
-  const persistSavedPrices = async (entries = []) => {
+  const persistSavedPrices = async (entries = [], options = {}) => {
     const normalizedEntries = Array.isArray(entries) ? entries : []
     const savedRows = {}
     let savedCount = 0
+    let processedCount = 0
 
     for (const entry of normalizedEntries) {
       const normalizedId = String(entry?.offerId ?? "").trim()
@@ -1371,12 +1372,22 @@ export default function ProductsTab({
       if (!normalizedId || !Number.isFinite(base) || !Number.isFinite(percent) || !Number.isFinite(result)) {
         continue
       }
+      let shouldSave = true
       if (typeof onSavePrice === "function") {
-        const ok = await onSavePrice(normalizedId, base, percent, result)
-        if (!ok) continue
+        shouldSave = await onSavePrice(normalizedId, base, percent, result)
       }
-      savedRows[normalizedId] = { base, percent, result }
-      savedCount += 1
+      processedCount += 1
+      if (shouldSave) {
+        savedRows[normalizedId] = { base, percent, result }
+        savedCount += 1
+      }
+      if (typeof options?.onProgress === "function") {
+        options.onProgress({
+          processed: processedCount,
+          total: normalizedEntries.length,
+          saved: savedCount,
+        })
+      }
     }
 
     if (savedCount > 0) {
@@ -1436,17 +1447,42 @@ export default function ProductsTab({
       ...nextDrafts,
     }))
 
-    const savedCount = await persistSavedPrices(saveCandidates)
+    const progressToastId =
+      saveCandidates.length > 0
+        ? toast.loading(`Toplu yuzdelik kaydediliyor... 0/${saveCandidates.length}`, {
+            position: "top-right",
+          })
+        : null
+    const savedCount = await persistSavedPrices(saveCandidates, {
+      onProgress: ({ processed, total, saved }) => {
+        if (!progressToastId || total <= 0) return
+        toast.loading(`Toplu yuzdelik kaydediliyor... ${processed}/${total} | Kaydedilen=${saved}`, {
+          id: progressToastId,
+          position: "top-right",
+        })
+      },
+    })
     const unsavedCount = Math.max(0, targetOfferIds.length - savedCount)
     if (savedCount === 0 && unsavedCount > 0) {
-      toast.error("Yuzdelik uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.")
+      if (progressToastId) {
+        toast.error("Yuzdelik uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.", {
+          id: progressToastId,
+          position: "top-right",
+        })
+      } else {
+        toast.error("Yuzdelik uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.")
+      }
       return
     }
-    toast.success(
+    const successMessage =
       unsavedCount > 0
         ? `Yuzdelik uygulandi. Kaydedilen=${savedCount}, taslak kalan=${unsavedCount}`
-        : `Secili ${savedCount} urune yuzdelik uygulanip kaydedildi.`,
-    )
+        : `Secili ${savedCount} urune yuzdelik uygulanip kaydedildi.`
+    if (progressToastId) {
+      toast.success(successMessage, { id: progressToastId, position: "top-right" })
+    } else {
+      toast.success(successMessage)
+    }
   }
   const handleCancelBulkPriceCommand = () => {
     if (!isBulkPriceRunning || bulkPriceCancelRequestedRef.current) return
