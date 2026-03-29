@@ -545,7 +545,7 @@ export default function SalesTab({
         reason: "tab-changed",
         date: targetDate,
       }
-      const cancelSent = sendSocketIoEvent(socket, "islem-iptal", cancelPayload)
+      const cancelSent = sendSocketIoEvent(socket, "cancelled", cancelPayload)
       if (!cancelSent) {
         sendSocketIoEvent(socket, "kullanici-girdisi", {
           backend: "eldoradosayim",
