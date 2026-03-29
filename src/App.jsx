@@ -306,6 +306,7 @@ function App() {
   const [tabSlideDirection, setTabSlideDirection] = useState("forward")
   const requestedTabRef = useRef(null)
   const hasMountedRef = useRef(false)
+  const [hasVisitedSalesTab, setHasVisitedSalesTab] = useState(activeTab === "sales")
   const userInitial = (activeUser?.username || "?").trim().charAt(0).toUpperCase() || "?"
   const userName = activeUser?.username ?? ""
   const {
@@ -334,6 +335,12 @@ function App() {
   useEffect(() => {
     hasMountedRef.current = true
   }, [])
+
+  useEffect(() => {
+    if (activeTab === "sales") {
+      setHasVisitedSalesTab(true)
+    }
+  }, [activeTab])
 
   const canViewDashboard = isAuthed
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
@@ -1086,8 +1093,8 @@ function App() {
           </div>
         )}
 
-        {activeTab === "sales" && canViewSales && (
-          <div className={getTabSlideClass("sales")}>
+        {canViewSales && hasVisitedSalesTab && (
+          <div className={activeTab === "sales" ? getTabSlideClass("sales") : "hidden"}>
             <SalesTab
               isLoading={isSalesTabLoading}
               panelClass={panelClass}

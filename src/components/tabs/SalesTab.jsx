@@ -792,8 +792,8 @@ export default function SalesTab({
       <>
         <div className="space-y-6">{sidebarCards}</div>
         {countResultModal.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/80 px-4">
-            <div className="w-full max-w-md rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-950/70 px-4 py-6 backdrop-blur-md">
+            <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur sticky top-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
@@ -1111,8 +1111,8 @@ export default function SalesTab({
         {sidebarCards}
       </div>
       {countResultModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/80 px-4">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-950/70 px-4 py-6 backdrop-blur-md">
+          <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur sticky top-6">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
