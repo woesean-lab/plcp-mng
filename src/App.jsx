@@ -14,6 +14,7 @@ import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
 import ApplicationsTab from "./components/tabs/ApplicationsTab"
+import CronTab from "./components/tabs/CronTab"
 import useAppData from "./hooks/useAppData"
 import useSocketIoProbe from "./hooks/useSocketIoProbe"
 import { PERMISSIONS } from "./constants/appConstants"
@@ -44,6 +45,7 @@ function App() {
     handleProfileSave,
     hasPermission,
     hasAnyPermission,
+    apiFetch,
     toastStyle,
     toastIconTheme,
     activeTab,
@@ -514,6 +516,29 @@ function App() {
     PERMISSIONS.applicationsBackendView,
     PERMISSIONS.adminManage,
   ])
+  const canViewCron = hasAnyPermission([
+    PERMISSIONS.cronView,
+    PERMISSIONS.cronManage,
+    PERMISSIONS.cronRun,
+    PERMISSIONS.cronLogsView,
+    PERMISSIONS.adminManage,
+  ])
+  const canManageCron = hasAnyPermission([PERMISSIONS.cronManage, PERMISSIONS.adminManage])
+  const canRunCron = hasAnyPermission([
+    PERMISSIONS.cronRun,
+    PERMISSIONS.cronManage,
+    PERMISSIONS.adminManage,
+  ])
+  const canViewCronLogs = hasAnyPermission([
+    PERMISSIONS.cronLogsView,
+    PERMISSIONS.cronManage,
+    PERMISSIONS.adminManage,
+  ])
+  const canClearCronLogs = hasAnyPermission([
+    PERMISSIONS.cronLogsClear,
+    PERMISSIONS.cronManage,
+    PERMISSIONS.adminManage,
+  ])
   const productSummary = useMemo(() => {
     const items = Array.isArray(eldoradoCatalog?.items) ? eldoradoCatalog.items : []
     const topups = Array.isArray(eldoradoCatalog?.topups) ? eldoradoCatalog.topups : []
@@ -579,10 +604,12 @@ function App() {
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
       { key: "applications", label: "Servisler", canView: canViewApplications },
+      { key: "cron", label: "Cron", canView: canViewCron },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
       canViewApplications,
+      canViewCron,
       canViewAdmin,
       canViewDashboard,
       canViewLists,
@@ -1274,6 +1301,20 @@ function App() {
               canViewApplicationLogs={canViewApplicationLogs}
               canClearApplicationLogs={canClearApplicationLogs}
               canViewApplicationBackendMap={canViewApplicationBackendMap}
+            />
+          </div>
+        )}
+
+        {canViewCron && (
+          <div className={activeTab === "cron" ? getTabSlideClass("cron") : "hidden"}>
+            <CronTab
+              panelClass={panelClass}
+              apiFetch={apiFetch}
+              isActive={activeTab === "cron"}
+              canManageCron={canManageCron}
+              canRunCron={canRunCron}
+              canViewCronLogs={canViewCronLogs}
+              canClearCronLogs={canClearCronLogs}
             />
           </div>
         )}

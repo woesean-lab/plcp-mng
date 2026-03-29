@@ -115,6 +115,11 @@ export const PERMISSIONS = {
   applicationsLogsView: "applications.logs.view",
   applicationsLogsClear: "applications.logs.clear",
   applicationsBackendView: "applications.backend.view",
+  cronView: "cron.view",
+  cronManage: "cron.manage",
+  cronRun: "cron.run",
+  cronLogsView: "cron.logs.view",
+  cronLogsClear: "cron.logs.clear",
   messagesView: "messages.view",
   messagesCreate: "messages.create",
   messagesTemplateEdit: "messages.template.edit",
@@ -239,6 +244,16 @@ export const PERMISSION_GROUPS = [
       { id: PERMISSIONS.applicationsLogsView, label: "Servis Konsolu log gor" },
       { id: PERMISSIONS.applicationsLogsClear, label: "Servis Konsolu log temizle" },
       { id: PERMISSIONS.applicationsBackendView, label: "Backend map goruntule" },
+    ],
+  },
+  {
+    title: "Cron",
+    items: [
+      { id: PERMISSIONS.cronView, label: "Paneli goruntule" },
+      { id: PERMISSIONS.cronManage, label: "Cron gorevi yonet" },
+      { id: PERMISSIONS.cronRun, label: "Cron gorevi calistir" },
+      { id: PERMISSIONS.cronLogsView, label: "Cron log gor" },
+      { id: PERMISSIONS.cronLogsClear, label: "Cron log temizle" },
     ],
   },
   {

@@ -254,6 +254,13 @@ export default function useAppData() {
     PERMISSIONS.applicationsLogsView,
     PERMISSIONS.adminManage,
   ])
+  const canViewCronTab = hasAnyPermission([
+    PERMISSIONS.cronView,
+    PERMISSIONS.cronManage,
+    PERMISSIONS.cronRun,
+    PERMISSIONS.cronLogsView,
+    PERMISSIONS.adminManage,
+  ])
   const availableTabs = useMemo(() => {
     const tabs = []
     if (isAuthed) tabs.push("dashboard")
@@ -264,12 +271,14 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (canViewProductsTab) tabs.push("products")
     if (canViewApplicationsTab) tabs.push("applications")
+    if (canViewCronTab) tabs.push("cron")
     if (canManageAdmin) tabs.push("admin")
     return tabs
   }, [
     permissions,
     canManageAdmin,
     canViewApplicationsTab,
+    canViewCronTab,
     canViewSales,
     canViewProductsTab,
     isAuthed,
@@ -5530,6 +5539,7 @@ const handleEldoradoNoteSave = useCallback(
     hasPermission,
     hasAnyPermission,
     canManageAdmin,
+    apiFetch,
     toastStyle,
     toastIconTheme,
     activeTab,
