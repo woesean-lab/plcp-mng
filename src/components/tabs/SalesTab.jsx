@@ -404,7 +404,10 @@ export default function SalesTab({
       toast.error(normalizedMessage, { id: toastId, position: "top-right" })
       return
     }
-    toast.loading(normalizedMessage, { id: toastId, position: "top-right" })
+    const loadingMessage = normalizedMessage.toLowerCase().startsWith("sayim aliniyor")
+      ? normalizedMessage
+      : `Sayim aliniyor... ${normalizedMessage}`
+    toast.loading(loadingMessage, { id: toastId, position: "top-right" })
   }, [])
 
   const handleCountModalClose = useCallback(() => {
@@ -786,67 +789,69 @@ export default function SalesTab({
       {countCard}
     </div>
   )
+  const countResultModalContent = countResultModal.isOpen ? (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
+            <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
+              <path d="M7.629 13.314 4.486 10.17l-1.172 1.172 4.315 4.315L16.686 6.6l-1.172-1.172z" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
+              Islem Basarili
+            </p>
+            <p className="mt-1 text-base font-semibold text-white">Sayim sonucu hazir.</p>
+            <p className="mt-1 text-xs text-slate-300">
+              Sonuc: <span className="text-emerald-100">eldoradosayim</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/10 bg-ink-950/60 px-3 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tarih</p>
+              <p className="mt-2 text-base font-semibold text-white">{formatDate(countResultModal.date)}</p>
+            </div>
+            <div className="rounded-xl border border-sky-300/20 bg-sky-500/10 px-3 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
+              <p className="mt-2 text-base font-semibold text-sky-50">{countResultModal.count}</p>
+            </div>
+          </div>
+        </div>
+        <p className="mt-1 text-[11px] text-slate-500">
+          Alinma tarihi: {formatDate(countResultModal.collectedAt)}
+        </p>
+
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            className="rounded-lg border border-sky-300/70 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleCountResultSave}
+            disabled={isCountSaving}
+          >
+            {isCountSaving ? "EKLENIYOR..." : "Ekle"}
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleCountModalClose}
+            disabled={isCountSaving}
+          >
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null
 
   if (!canViewAnalytics) {
     return (
       <>
         <div className="space-y-6">{sidebarCards}</div>
-        {countResultModal.isOpen && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-950/70 px-4 py-6 backdrop-blur-md">
-            <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur sticky top-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                    Sayim sonucu
-                  </p>
-                  <h2 className="mt-1 text-xl font-semibold text-white">Sonuc hazir</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCountModalClose}
-                  disabled={isCountSaving}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-ink-950/70 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tarih</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{formatDate(countResultModal.date)}</p>
-                </div>
-                <div className="rounded-2xl border border-sky-300/20 bg-sky-500/10 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
-                  <p className="mt-2 text-lg font-semibold text-sky-50">{countResultModal.count}</p>
-                </div>
-              </div>
-
-              <p className="mt-3 text-xs text-slate-400">
-                Alinma tarihi: {formatDate(countResultModal.collectedAt)}
-              </p>
-
-              <div className="mt-5 flex flex-wrap justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={handleCountModalClose}
-                  disabled={isCountSaving}
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 transition hover:border-white/20 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Kapat
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCountResultSave}
-                  disabled={isCountSaving}
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isCountSaving ? "Ekleniyor..." : "Ekle"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {countResultModalContent}
       </>
     )
   }
@@ -1110,62 +1115,7 @@ export default function SalesTab({
 
         {sidebarCards}
       </div>
-      {countResultModal.isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-950/70 px-4 py-6 backdrop-blur-md">
-          <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur sticky top-6">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  Sayim sonucu
-                </p>
-                <h2 className="mt-1 text-xl font-semibold text-white">Sonuc hazir</h2>
-              </div>
-              <button
-                type="button"
-                onClick={handleCountModalClose}
-                disabled={isCountSaving}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-ink-950/70 p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tarih</p>
-                <p className="mt-2 text-lg font-semibold text-white">{formatDate(countResultModal.date)}</p>
-              </div>
-              <div className="rounded-2xl border border-sky-300/20 bg-sky-500/10 p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
-                <p className="mt-2 text-lg font-semibold text-sky-50">{countResultModal.count}</p>
-              </div>
-            </div>
-
-            <p className="mt-3 text-xs text-slate-400">
-              Alinma tarihi: {formatDate(countResultModal.collectedAt)}
-            </p>
-
-            <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleCountModalClose}
-                disabled={isCountSaving}
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 transition hover:border-white/20 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Kapat
-              </button>
-              <button
-                type="button"
-                onClick={handleCountResultSave}
-                disabled={isCountSaving}
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isCountSaving ? "Ekleniyor..." : "Ekle"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {countResultModalContent}
     </div>
   )
 }
