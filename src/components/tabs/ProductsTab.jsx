@@ -1000,14 +1000,6 @@ export default function ProductsTab({
       if (nextLogs.length > 0) {
         setBulkPriceCommandLogEntries(nextLogs)
       }
-      if (
-        restoredSelectedCount > 0 ||
-        nextLogs.length > 0 ||
-        Object.keys(restoredItemStatuses).length > 0 ||
-        parsed?.isBulkPriceModeOpen
-      ) {
-        setIsBulkPriceModeOpen(true)
-      }
       setBulkPriceCommandState(
         createEmptyBulkPriceCommandState({
           total: Math.max(
@@ -1053,7 +1045,6 @@ export default function ProductsTab({
           bulkPriceCommandState,
           bulkPriceCommandLogEntries,
           bulkPriceItemStatusByOffer,
-          isBulkPriceModeOpen,
           updatedAt: Date.now(),
         }),
       )
@@ -1064,7 +1055,6 @@ export default function ProductsTab({
     bulkPriceCommandLogEntries,
     bulkPriceCommandState,
     bulkPriceItemStatusByOffer,
-    isBulkPriceModeOpen,
     selectedPriceOfferIds,
   ])
   const apiFetchBulkPriceLog = useCallback(async (input, init = {}) => {
@@ -1260,21 +1250,6 @@ export default function ProductsTab({
   useEffect(() => {
     bulkPriceCancelRequestedRef.current = isBulkPriceCancelRequested
   }, [isBulkPriceCancelRequested])
-  useEffect(() => {
-    if (
-      selectedPriceCount > 0 ||
-      isBulkPriceRunning ||
-      bulkPriceCommandLogEntries.length > 0 ||
-      Object.keys(bulkPriceItemStatusByOffer).length > 0
-    ) {
-      setIsBulkPriceModeOpen(true)
-    }
-  }, [
-    selectedPriceCount,
-    isBulkPriceRunning,
-      bulkPriceCommandLogEntries.length,
-      bulkPriceItemStatusByOffer,
-    ])
   useEffect(() => {
     if (!isBulkPriceModeOpen || !canViewPriceCommandLogs) return
     void loadBulkPriceCommandLogs()
