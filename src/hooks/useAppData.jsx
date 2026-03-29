@@ -1390,17 +1390,17 @@ export default function useAppData() {
     return false
   }
 
-  const handleSaleAdd = async () => {
-    const date = String(salesForm.date ?? "").trim()
-    const amount = Number(salesForm.amount)
+  const saveSaleRecord = async (rawDate, rawAmount, options = {}) => {
+    const date = String(rawDate ?? "").trim()
+    const amount = Number(rawAmount)
     const parsed = new Date(`${date}T00:00:00`)
     if (!date || Number.isNaN(parsed.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       toast.error("Tarih girin.")
-      return
+      throw new Error("invalid_sale_date")
     }
     if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
       toast.error("Satış adedi girin.")
-      return
+      throw new Error("invalid_sale_amount")
     }
     try {
       const res = await apiFetch("/api/sales", {
@@ -1416,11 +1416,23 @@ export default function useAppData() {
         )
         return [...next, saved]
       })
-      setSalesForm((prev) => ({ ...prev, amount: "" }))
-      toast.success("Satış kaydedildi")
+      if (options?.resetForm) {
+        setSalesForm((prev) => ({ ...prev, amount: "" }))
+      }
+      toast.success(String(options?.successMessage ?? "").trim() || "Satış kaydedildi")
+      return saved
     } catch (error) {
       console.error(error)
-      toast.error("Satış kaydedilemedi (API/DB kontrol edin).")
+      toast.error(String(options?.errorMessage ?? "").trim() || "Satış kaydedilemedi (API/DB kontrol edin).")
+      throw error
+    }
+  }
+
+  const handleSaleAdd = async () => {
+    try {
+      await saveSaleRecord(salesForm.date, salesForm.amount, { resetForm: true })
+    } catch {
+      // Validation and API errors are already surfaced to the user.
     }
   }
 
@@ -5598,6 +5610,7 @@ const handleEldoradoNoteSave = useCallback(
     setSalesRange,
     salesForm,
     setSalesForm,
+    saveSaleRecord,
     handleSaleAdd,
     salesRecords,
     recentActivity,

@@ -124,6 +124,7 @@ function App() {
     setSalesRange,
     salesForm,
     setSalesForm,
+    saveSaleRecord,
     handleSaleAdd,
     salesRecords,
     recentActivity,
@@ -1098,6 +1099,8 @@ function App() {
               canViewAnalytics={canViewSalesAnalytics}
               salesForm={salesForm}
               setSalesForm={setSalesForm}
+              automationWsUrl={eldoradoAutomationWsUrl}
+              saveSaleRecord={saveSaleRecord}
               handleSaleAdd={handleSaleAdd}
               salesRecords={salesRecords}
             />

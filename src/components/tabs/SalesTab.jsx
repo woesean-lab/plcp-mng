@@ -1,4 +1,10 @@
-import { useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { toast } from "react-hot-toast"
+import {
+  buildSocketIoWsUrl,
+  parseSocketIoEventPacket,
+  splitEnginePackets,
+} from "../../utils/socketIoClient"
 
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -58,6 +64,61 @@ const formatDate = (value) => {
   return `${day}.${month}.${year}`
 }
 
+const getLocalDateInputValue = (value = new Date()) => {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, "0")
+  const day = String(value.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+const normalizeRuntimeMessage = (value) => {
+  if (typeof value === "string") return value
+  if (value === null || value === undefined) return ""
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+const readFirstNumericValue = (value, depth = 0) => {
+  if (depth > 3 || value === null || value === undefined) return null
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? Math.floor(value) : null
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().replace(",", ".")
+    if (!normalized) return null
+    const direct = Number(normalized)
+    if (Number.isFinite(direct)) return Math.floor(direct)
+    const match = normalized.match(/-?\d+(?:\.\d+)?/)
+    if (!match) return null
+    const parsed = Number(match[0])
+    return Number.isFinite(parsed) ? Math.floor(parsed) : null
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = readFirstNumericValue(item, depth + 1)
+      if (Number.isFinite(found)) return found
+    }
+    return null
+  }
+  if (typeof value === "object") {
+    const priorityKeys = ["count", "result", "value", "amount", "total", "sayim"]
+    for (const key of priorityKeys) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        const found = readFirstNumericValue(value[key], depth + 1)
+        if (Number.isFinite(found)) return found
+      }
+    }
+    for (const item of Object.values(value)) {
+      const found = readFirstNumericValue(item, depth + 1)
+      if (Number.isFinite(found)) return found
+    }
+  }
+  return null
+}
+
 export default function SalesTab({
   isLoading,
   panelClass,
@@ -69,6 +130,8 @@ export default function SalesTab({
   setSalesRange,
   salesForm,
   setSalesForm,
+  automationWsUrl = "",
+  saveSaleRecord,
   handleSaleAdd,
   salesRecords,
 }) {
@@ -299,6 +362,318 @@ export default function SalesTab({
       minDeviation,
     }
   }, [salesList])
+  const [countRequestDate, setCountRequestDate] = useState(
+    () => String(salesForm?.date ?? "").trim() || getLocalDateInputValue(),
+  )
+  const [isCountRunning, setIsCountRunning] = useState(false)
+  const [countResultModal, setCountResultModal] = useState({
+    isOpen: false,
+    date: "",
+    count: 0,
+    collectedAt: "",
+  })
+  const [isCountSaving, setIsCountSaving] = useState(false)
+  const countSocketRef = useRef(null)
+  const countToastIdRef = useRef("")
+
+  const closeCountSocket = useCallback(() => {
+    const socket = countSocketRef.current
+    countSocketRef.current = null
+    if (!socket) return
+    try {
+      socket.onopen = null
+      socket.onmessage = null
+      socket.onerror = null
+      socket.onclose = null
+      socket.close()
+    } catch {
+      // Ignore close errors.
+    }
+  }, [])
+
+  const updateCountToast = useCallback((type, message) => {
+    const normalizedMessage = String(message ?? "").trim()
+    if (!normalizedMessage) return
+    const toastId = countToastIdRef.current || "sales-count-runtime"
+    countToastIdRef.current = toastId
+    if (type === "success") {
+      toast.success(normalizedMessage, { id: toastId, position: "top-right" })
+      return
+    }
+    if (type === "error") {
+      toast.error(normalizedMessage, { id: toastId, position: "top-right" })
+      return
+    }
+    toast.loading(normalizedMessage, { id: toastId, position: "top-right" })
+  }, [])
+
+  const handleCountModalClose = useCallback(() => {
+    if (isCountSaving) return
+    setCountResultModal((prev) => ({ ...prev, isOpen: false }))
+  }, [isCountSaving])
+
+  const handleCountResultSave = useCallback(async () => {
+    if (isCountSaving) return
+    const targetDate = String(countResultModal.date ?? "").trim()
+    const targetCount = Number(countResultModal.count)
+    if (!targetDate || !Number.isFinite(targetCount) || targetCount <= 0) {
+      toast.error("Gecerli sayim sonucu bulunamadi.")
+      return
+    }
+    if (typeof saveSaleRecord !== "function") {
+      toast.error("Satis kaydi hazir degil.")
+      return
+    }
+    setIsCountSaving(true)
+    try {
+      await saveSaleRecord(targetDate, targetCount, {
+        successMessage: "Sayim kaydi eklendi",
+        errorMessage: "Sayim kaydi eklenemedi.",
+      })
+      setCountResultModal((prev) => ({ ...prev, isOpen: false }))
+      setSalesForm((prev) => ({ ...prev, date: targetDate, amount: String(targetCount) }))
+    } catch {
+      // saveSaleRecord already surfaces the error toast.
+    } finally {
+      setIsCountSaving(false)
+    }
+  }, [countResultModal.count, countResultModal.date, isCountSaving, saveSaleRecord, setSalesForm])
+
+  const handleCountRun = useCallback(() => {
+    if (!canCreate) {
+      toast.error("Satis girme yetkiniz yok.")
+      return
+    }
+    if (isCountRunning) {
+      toast.error("Sayim islemi zaten calisiyor.")
+      return
+    }
+
+    const targetDate = String(countRequestDate ?? "").trim()
+    const parsedDate = new Date(`${targetDate}T00:00:00`)
+    if (!targetDate || Number.isNaN(parsedDate.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+      toast.error("Tarih secin.")
+      return
+    }
+
+    const wsBaseUrl = String(automationWsUrl ?? "").trim()
+    if (!wsBaseUrl) {
+      toast.error("Websocket adresi bulunamadi. Admin panelinden kaydedin.")
+      return
+    }
+
+    const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, {
+      kind: "uygulama",
+      backend: "eldoradosayim",
+    })
+    if (!triggerUrl) {
+      toast.error("Socket.IO adresi olusturulamadi.")
+      return
+    }
+
+    closeCountSocket()
+    setIsCountRunning(true)
+    setCountResultModal((prev) => ({ ...prev, isOpen: false }))
+    updateCountToast("loading", "Sayim aliniyor...")
+
+    let socket = null
+    let settled = false
+    let hasConnected = false
+    let hasResult = false
+    let timeoutId = null
+
+    const clearRunTimeout = () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+        timeoutId = null
+      }
+    }
+
+    const resetRunTimeout = (ms = 120000) => {
+      clearRunTimeout()
+      timeoutId = window.setTimeout(() => {
+        complete("error", "Sayim sonucu beklenirken zaman asimi olustu.")
+      }, ms)
+    }
+
+    const complete = (status, message) => {
+      if (settled) return
+      settled = true
+      clearRunTimeout()
+      closeCountSocket()
+      setIsCountRunning(false)
+
+      if (status === "success") {
+        updateCountToast("success", message || "Sayim sonucu alindi.")
+      } else if (status === "error") {
+        updateCountToast("error", message || "Sayim islemi tamamlanamadi.")
+      }
+    }
+
+    try {
+      socket = new WebSocket(triggerUrl)
+    } catch {
+      complete("error", "Sayim icin websocket baglantisi baslatilamadi.")
+      return
+    }
+
+    countSocketRef.current = socket
+    resetRunTimeout(15000)
+
+    socket.onmessage = (event) => {
+      if (settled) return
+      const rawPayload = typeof event.data === "string" ? event.data : ""
+      if (!rawPayload) return
+
+      const packets = splitEnginePackets(rawPayload)
+      for (const packet of packets) {
+        if (settled) return
+
+        if (packet === "2") {
+          try {
+            socket?.send("3")
+          } catch {
+            // Ignore pong send errors.
+          }
+          continue
+        }
+
+        if (packet.startsWith("0{")) {
+          try {
+            socket?.send("40")
+          } catch {
+            complete("error", "Socket.IO baglantisi baslatilamadi.")
+          }
+          continue
+        }
+
+        if (packet.startsWith("40")) {
+          hasConnected = true
+          updateCountToast("loading", "eldoradosayim baglandi.")
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (packet.startsWith("41")) {
+          if (hasResult) {
+            complete("success", "Sayim sonucu hazir.")
+          } else {
+            complete("error", "Baglanti sonuc gelmeden kapandi.")
+          }
+          return
+        }
+
+        if (packet.startsWith("44")) {
+          complete("error", "eldoradosayim tetiklenemedi.")
+          return
+        }
+
+        const eventPacket = parseSocketIoEventPacket(packet)
+        if (!eventPacket) continue
+
+        const eventName = String(eventPacket.event ?? "").trim().toLowerCase()
+        const firstArg = eventPacket.args[0]
+
+        if (eventName === "script-triggered" || eventName === "script-started") {
+          updateCountToast("loading", "Sayim script baslatildi.")
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "durum") {
+          const lines = normalizeRuntimeMessage(firstArg?.message ?? firstArg)
+            .replace(/\r/g, "")
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+          if (lines.length > 0) {
+            updateCountToast("loading", lines[lines.length - 1])
+          }
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "script-log") {
+          const lines = String(firstArg?.message ?? "")
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+          if (lines.length > 0) {
+            updateCountToast("loading", lines[lines.length - 1])
+          }
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "sonuc") {
+          const rawResult = firstArg?.value ?? firstArg
+          const countValue = readFirstNumericValue(rawResult)
+          if (!Number.isFinite(countValue) || countValue <= 0) {
+            complete("error", "Sayim sonucu gecerli bir sayi olarak donmedi.")
+            return
+          }
+
+          hasResult = true
+          setCountResultModal({
+            isOpen: true,
+            date: targetDate,
+            count: countValue,
+            collectedAt: getLocalDateInputValue(),
+          })
+          complete("success", `Sayim alindi: ${countValue}`)
+          return
+        }
+
+        if (eventName === "script-exit") {
+          const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
+          if (Number.isFinite(exitCode) && exitCode !== 0 && !hasResult) {
+            complete("error", `Script cikti. Kod: ${exitCode}`)
+            return
+          }
+          resetRunTimeout(5000)
+          continue
+        }
+
+        resetRunTimeout(300000)
+      }
+    }
+
+    socket.onerror = () => {
+      complete("error", hasConnected ? "Baglanti sirasinda hata olustu." : "Websocket baglantisi kurulamadi.")
+    }
+
+    socket.onclose = () => {
+      if (settled) return
+      if (hasResult) {
+        complete("success", "Sayim sonucu hazir.")
+        return
+      }
+      if (hasConnected) {
+        complete("error", "Baglanti acildi ancak sonuc gelmedi.")
+        return
+      }
+      complete("error", "Websocket baglantisi kapandi.")
+    }
+  }, [
+    automationWsUrl,
+    canCreate,
+    closeCountSocket,
+    countRequestDate,
+    isCountRunning,
+    updateCountToast,
+  ])
+
+  useEffect(() => {
+    if (!countRequestDate && salesForm?.date) {
+      setCountRequestDate(String(salesForm.date).trim())
+    }
+  }, [countRequestDate, salesForm?.date])
+
+  useEffect(() => {
+    return () => {
+      closeCountSocket()
+    }
+  }, [closeCountSocket])
 
   const entryCard = canCreate ? (
     <div className={`${panelClass} relative overflow-hidden bg-ink-800/60`}>
@@ -364,9 +739,115 @@ export default function SalesTab({
       </div>
     </div>
   ) : null
+  const countCard = canCreate ? (
+    <div className={`${panelClass} relative overflow-hidden bg-ink-800/60`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(59,130,246,0.16),transparent)]" />
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+            Sayim al
+          </p>
+          <p className="text-sm text-slate-400">Websocket uzerinden guncel sayimi cek.</p>
+        </div>
+        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+          backend: eldoradosayim
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-slate-200" htmlFor="sales-count-date">
+            Tarih
+          </label>
+          <input
+            id="sales-count-date"
+            type="date"
+            value={countRequestDate}
+            onChange={(event) => setCountRequestDate(event.target.value)}
+            className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleCountRun}
+          disabled={isCountRunning}
+          className="flex w-full items-center justify-center rounded-lg border border-sky-300/50 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 shadow-glow transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isCountRunning ? "Sayim aliniyor..." : "Sayim al"}
+        </button>
+      </div>
+    </div>
+  ) : null
+  const sidebarCards = (
+    <div className="space-y-6">
+      {entryCard}
+      {countCard}
+    </div>
+  )
 
   if (!canViewAnalytics) {
-    return <div className="space-y-6">{entryCard}</div>
+    return (
+      <>
+        <div className="space-y-6">{sidebarCards}</div>
+        {countResultModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/80 px-4">
+            <div className="w-full max-w-md rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    Sayim sonucu
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold text-white">Sonuc hazir</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCountModalClose}
+                  disabled={isCountSaving}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-ink-950/70 p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tarih</p>
+                  <p className="mt-2 text-lg font-semibold text-white">{formatDate(countResultModal.date)}</p>
+                </div>
+                <div className="rounded-2xl border border-sky-300/20 bg-sky-500/10 p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
+                  <p className="mt-2 text-lg font-semibold text-sky-50">{countResultModal.count}</p>
+                </div>
+              </div>
+
+              <p className="mt-3 text-xs text-slate-400">
+                Alinma tarihi: {formatDate(countResultModal.collectedAt)}
+              </p>
+
+              <div className="mt-5 flex flex-wrap justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleCountModalClose}
+                  disabled={isCountSaving}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 transition hover:border-white/20 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Kapat
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCountResultSave}
+                  disabled={isCountSaving}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCountSaving ? "Ekleniyor..." : "Ekle"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    )
   }
 
   return (
@@ -626,8 +1107,64 @@ export default function SalesTab({
           </div>
         </div>
 
-        <div className="space-y-6">{entryCard}</div>
+        {sidebarCards}
       </div>
+      {countResultModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/80 px-4">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-ink-900/95 p-5 shadow-card backdrop-blur">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  Sayim sonucu
+                </p>
+                <h2 className="mt-1 text-xl font-semibold text-white">Sonuc hazir</h2>
+              </div>
+              <button
+                type="button"
+                onClick={handleCountModalClose}
+                disabled={isCountSaving}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-ink-950/70 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tarih</p>
+                <p className="mt-2 text-lg font-semibold text-white">{formatDate(countResultModal.date)}</p>
+              </div>
+              <div className="rounded-2xl border border-sky-300/20 bg-sky-500/10 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
+                <p className="mt-2 text-lg font-semibold text-sky-50">{countResultModal.count}</p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-slate-400">
+              Alinma tarihi: {formatDate(countResultModal.collectedAt)}
+            </p>
+
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleCountModalClose}
+                disabled={isCountSaving}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 transition hover:border-white/20 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Kapat
+              </button>
+              <button
+                type="button"
+                onClick={handleCountResultSave}
+                disabled={isCountSaving}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isCountSaving ? "Ekleniyor..." : "Ekle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
