@@ -772,7 +772,7 @@ export default function SalesTab({
           type="button"
           onClick={handleCountRun}
           disabled={isCountRunning}
-          className="flex w-full items-center justify-center rounded-lg border border-sky-300/50 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 shadow-glow transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isCountRunning ? "Sayim aliniyor..." : "Sayim al"}
         </button>
