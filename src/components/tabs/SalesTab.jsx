@@ -540,20 +540,10 @@ export default function SalesTab({
     countSocketRef.current = socket
     countCancelRef.current = () => {
       if (settled) return
-      const cancelPayload = {
+      sendSocketIoEvent(socket, "cancel", {
         backend: "eldoradosayim",
-        reason: "tab-changed",
-        date: targetDate,
-      }
-      const cancelSent = sendSocketIoEvent(socket, "cancelled", cancelPayload)
-      if (!cancelSent) {
-        sendSocketIoEvent(socket, "kullanici-girdisi", {
-          backend: "eldoradosayim",
-          value: "iptal",
-          reason: "tab-changed",
-          date: targetDate,
-        })
-      }
+        reason: "user-cancelled",
+      })
       complete("error", "Sekme degistigi icin sayim islemi iptal edildi.")
     }
     resetRunTimeout(15000)
