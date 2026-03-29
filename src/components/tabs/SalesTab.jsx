@@ -122,6 +122,7 @@ const readFirstNumericValue = (value, depth = 0) => {
 
 export default function SalesTab({
   isLoading,
+  isActive = true,
   panelClass,
   canCreate,
   canViewAnalytics = true,
@@ -376,6 +377,7 @@ export default function SalesTab({
   const [isCountSaving, setIsCountSaving] = useState(false)
   const countSocketRef = useRef(null)
   const countToastIdRef = useRef("")
+  const countCancelRef = useRef(null)
 
   const closeCountSocket = useCallback(() => {
     const socket = countSocketRef.current
@@ -405,7 +407,22 @@ export default function SalesTab({
       toast.error(normalizedMessage, { id: toastId, position: "top-right" })
       return
     }
-    toast.loading(normalizedMessage, { id: toastId, position: "top-right" })
+    const loadingMessage = normalizedMessage.includes("Lutfen sekmeyi kapatmayin.")
+      ? normalizedMessage
+      : `${normalizedMessage} Lutfen sekmeyi kapatmayin.`
+    toast.loading(loadingMessage, { id: toastId, position: "top-right" })
+  }, [])
+
+  const sendSocketIoEvent = useCallback((socket, eventName, payload) => {
+    if (!socket || socket.readyState !== WebSocket.OPEN) return false
+    const normalizedEventName = String(eventName ?? "").trim()
+    if (!normalizedEventName) return false
+    try {
+      socket.send(`42${JSON.stringify([normalizedEventName, payload ?? {}])}`)
+      return true
+    } catch {
+      return false
+    }
   }, [])
 
   const handleCountModalClose = useCallback(() => {
@@ -501,6 +518,7 @@ export default function SalesTab({
     const complete = (status, message) => {
       if (settled) return
       settled = true
+      countCancelRef.current = null
       clearRunTimeout()
       closeCountSocket()
       setIsCountRunning(false)
@@ -520,6 +538,24 @@ export default function SalesTab({
     }
 
     countSocketRef.current = socket
+    countCancelRef.current = () => {
+      if (settled) return
+      const cancelPayload = {
+        backend: "eldoradosayim",
+        reason: "tab-changed",
+        date: targetDate,
+      }
+      const cancelSent = sendSocketIoEvent(socket, "islem-iptal", cancelPayload)
+      if (!cancelSent) {
+        sendSocketIoEvent(socket, "kullanici-girdisi", {
+          backend: "eldoradosayim",
+          value: "iptal",
+          reason: "tab-changed",
+          date: targetDate,
+        })
+      }
+      complete("error", "Sekme degistigi icin sayim islemi iptal edildi.")
+    }
     resetRunTimeout(15000)
 
     socket.onmessage = (event) => {
@@ -662,8 +698,17 @@ export default function SalesTab({
     closeCountSocket,
     countRequestDate,
     isCountRunning,
+    sendSocketIoEvent,
     updateCountToast,
   ])
+
+  useEffect(() => {
+    if (isActive || !isCountRunning) return
+    const cancel = countCancelRef.current
+    if (typeof cancel === "function") {
+      cancel()
+    }
+  }, [isActive, isCountRunning])
 
   useEffect(() => {
     if (!countRequestDate && salesForm?.date) {
@@ -673,6 +718,7 @@ export default function SalesTab({
 
   useEffect(() => {
     return () => {
+      countCancelRef.current = null
       closeCountSocket()
     }
   }, [closeCountSocket])

@@ -1097,6 +1097,7 @@ function App() {
           <div className={activeTab === "sales" ? getTabSlideClass("sales") : "hidden"}>
             <SalesTab
               isLoading={isSalesTabLoading}
+              isActive={activeTab === "sales"}
               panelClass={panelClass}
               canCreate={canCreateSales}
               salesSummary={salesSummary}
