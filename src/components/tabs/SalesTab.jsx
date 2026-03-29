@@ -465,6 +465,7 @@ export default function SalesTab({
     const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, {
       kind: "uygulama",
       backend: "eldoradosayim",
+      date: targetDate,
     })
     if (!triggerUrl) {
       toast.error("Socket.IO adresi olusturulamadi.")
