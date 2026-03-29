@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 import {
   buildSocketIoWsUrl,
@@ -404,10 +405,7 @@ export default function SalesTab({
       toast.error(normalizedMessage, { id: toastId, position: "top-right" })
       return
     }
-    const loadingMessage = normalizedMessage.toLowerCase().startsWith("sayim aliniyor")
-      ? normalizedMessage
-      : `Sayim aliniyor... ${normalizedMessage}`
-    toast.loading(loadingMessage, { id: toastId, position: "top-right" })
+    toast.loading(normalizedMessage, { id: toastId, position: "top-right" })
   }, [])
 
   const handleCountModalClose = useCallback(() => {
@@ -789,8 +787,10 @@ export default function SalesTab({
       {countCard}
     </div>
   )
-  const countResultModalContent = countResultModal.isOpen ? (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
+  const countResultModalContent =
+    countResultModal.isOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
@@ -844,8 +844,10 @@ export default function SalesTab({
           </button>
         </div>
       </div>
-    </div>
-  ) : null
+    </div>,
+          document.body,
+        )
+      : null
 
   if (!canViewAnalytics) {
     return (
