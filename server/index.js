@@ -211,13 +211,15 @@ const CRON_DEFAULT_TIME = "00:05"
 const CRON_POLL_INTERVAL_MS = 15 * 1000
 const CRON_RUN_LOG_LIMIT = 200
 const CRON_JOB_TYPE_ELDORADO_SAYIM = "eldoradosayim"
-const CRON_JOB_TYPES = new Set([CRON_JOB_TYPE_ELDORADO_SAYIM])
+const CRON_JOB_TYPE_HTTP = "http"
+const CRON_JOB_TYPES = new Set([CRON_JOB_TYPE_ELDORADO_SAYIM, CRON_JOB_TYPE_HTTP])
 const CRON_TARGET_DATE_MODES = new Set(["today", "yesterday"])
 const cronRuntimeState = {
   pollTimer: null,
   polling: false,
   runningJobs: new Set(),
 }
+const HTTP_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"])
 
 const padDatePart = (value) => String(value).padStart(2, "0")
 const getServerTimeZone = () =>
@@ -333,6 +335,37 @@ const normalizeCronTargetDateMode = (value) => {
   return CRON_TARGET_DATE_MODES.has(normalized) ? normalized : "yesterday"
 }
 
+const normalizeCronHttpMethod = (value) => {
+  const normalized = String(value ?? "").trim().toUpperCase()
+  return HTTP_METHODS.has(normalized) ? normalized : "GET"
+}
+
+const normalizeCronHttpHeaders = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {}
+  const normalized = {}
+  Object.entries(value).forEach(([rawKey, rawVal]) => {
+    const key = String(rawKey ?? "").trim()
+    const val = String(rawVal ?? "").trim()
+    if (!key || !val) return
+    normalized[key] = val
+  })
+  return normalized
+}
+
+const parseCronHttpHeadersInput = (value) => {
+  const raw = String(value ?? "").trim()
+  if (!raw) return { ok: true, value: {} }
+  try {
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { ok: false, error: "headers must be an object" }
+    }
+    return { ok: true, value: normalizeCronHttpHeaders(parsed) }
+  } catch {
+    return { ok: false, error: "headers json invalid" }
+  }
+}
+
 const resolveCronTargetDate = (timeZone, targetDateMode) => {
   const nowParts = getTimeZoneParts(new Date(), timeZone)
   const dateParts =
@@ -340,6 +373,13 @@ const resolveCronTargetDate = (timeZone, targetDateMode) => {
       ? nowParts
       : shiftDateParts(nowParts, -1)
   return formatDateParts(dateParts)
+}
+
+const resolveCronRunTargetValue = (job) => {
+  if (normalizeCronJobType(job?.type) === CRON_JOB_TYPE_ELDORADO_SAYIM) {
+    return resolveCronTargetDate(job?.timezone, job?.targetDateMode)
+  }
+  return ""
 }
 
 const computeCronNextRunAt = (jobLike, now = new Date()) => {
@@ -395,6 +435,11 @@ const serializeCronJob = (job) => {
     scheduleTime: job.scheduleTime,
     timezone: job.timezone,
     targetDateMode: job.targetDateMode,
+    url: job.url || "",
+    httpMethod: normalizeCronHttpMethod(job.httpMethod),
+    httpHeaders: normalizeCronHttpHeaders(job.httpHeaders),
+    httpBody: job.httpBody || "",
+    timeoutMs: Number.isFinite(Number(job.timeoutMs)) ? Number(job.timeoutMs) : null,
     isActive: Boolean(job.isActive),
     isRunning: Boolean(job.isRunning),
     lastRunAt: job.lastRunAt ? job.lastRunAt.toISOString() : null,
@@ -1457,6 +1502,67 @@ const runEldoradoSayimSocket = async (targetDate, log) => {
   })
 }
 
+const runHttpCronRequest = async (job, log) => {
+  const url = String(job?.url ?? "").trim()
+  if (!url) {
+    throw new Error("HTTP cron icin URL gerekli.")
+  }
+  let parsedUrl
+  try {
+    parsedUrl = new URL(url)
+  } catch {
+    throw new Error("HTTP cron URL gecersiz.")
+  }
+
+  const method = normalizeCronHttpMethod(job?.httpMethod)
+  const headers = normalizeCronHttpHeaders(job?.httpHeaders)
+  const body = String(job?.httpBody ?? "")
+  const timeoutMsRaw = Number(job?.timeoutMs)
+  const timeoutMs =
+    Number.isFinite(timeoutMsRaw) && timeoutMsRaw >= 1000 && timeoutMsRaw <= 300000
+      ? Math.floor(timeoutMsRaw)
+      : 30000
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  log("info", `${method} ${parsedUrl.toString()} istegi baslatildi.`)
+
+  try {
+    const response = await fetch(parsedUrl, {
+      method,
+      headers,
+      signal: controller.signal,
+      ...(method === "GET" || method === "HEAD" ? {} : { body: body || undefined }),
+    })
+
+    const responseText = await response.text().catch(() => "")
+    const compactText = responseText.replace(/\s+/g, " ").trim()
+    const preview = compactText ? compactText.slice(0, 500) : ""
+    log(
+      response.ok ? "success" : "error",
+      `${method} ${parsedUrl.toString()} -> ${response.status} ${response.statusText}`.trim(),
+    )
+    if (preview) {
+      log("info", `Response: ${preview}`)
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP istek basarisiz: ${response.status}`)
+    }
+    return {
+      statusCode: response.status,
+      responsePreview: preview,
+    }
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`HTTP istek zaman asimina ugradi (${timeoutMs}ms).`)
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 const executeCronJobRun = async (jobId, runId) => {
   cronRuntimeState.runningJobs.add(jobId)
   let logs = []
@@ -1475,11 +1581,23 @@ const executeCronJobRun = async (jobId, runId) => {
 
     logs = Array.isArray(run.logs) ? run.logs : []
     await pushLog("info", "Cron gorevi baslatildi.")
-    const result = await runEldoradoSayimSocket(run.targetDate, pushLog)
-    const savedSale = await upsertSaleRecord(run.targetDate, result)
-    logs = [...logs, normalizeCronRunLogEntry("success", `Satis kaydi guncellendi: ${savedSale.amount}`)].slice(
-      -CRON_RUN_LOG_LIMIT,
-    )
+    let resultValue = null
+    let successMessage = "Cron gorevi tamamlandi."
+    if (job.type === CRON_JOB_TYPE_ELDORADO_SAYIM) {
+      const result = await runEldoradoSayimSocket(run.targetDate, pushLog)
+      const savedSale = await upsertSaleRecord(run.targetDate, result)
+      resultValue = result
+      successMessage = `Sayim kaydi tamamlandi: ${savedSale.amount}`
+      logs = [...logs, normalizeCronRunLogEntry("success", `Satis kaydi guncellendi: ${savedSale.amount}`)].slice(
+        -CRON_RUN_LOG_LIMIT,
+      )
+    } else if (job.type === CRON_JOB_TYPE_HTTP) {
+      const result = await runHttpCronRequest(job, pushLog)
+      resultValue = Number.isFinite(Number(result?.statusCode)) ? Number(result.statusCode) : null
+      successMessage = `HTTP cron tamamlandi${resultValue ? `: ${resultValue}` : ""}`
+    } else {
+      throw new Error("Cron gorev tipi desteklenmiyor.")
+    }
     const finishedAt = new Date()
     const refreshedJob = await prisma.cronJob.findUnique({ where: { id: jobId } })
     await prisma.$transaction([
@@ -1487,8 +1605,8 @@ const executeCronJobRun = async (jobId, runId) => {
         where: { id: runId },
         data: {
           status: "success",
-          message: `Sayim kaydi tamamlandi: ${savedSale.amount}`,
-          result,
+          message: successMessage,
+          result: resultValue,
           logs,
           finishedAt,
         },
@@ -1499,7 +1617,7 @@ const executeCronJobRun = async (jobId, runId) => {
           isRunning: false,
           lastRunAt: finishedAt,
           lastRunStatus: "success",
-          lastRunMessage: `Sayim kaydi tamamlandi: ${savedSale.amount}`,
+          lastRunMessage: successMessage,
           nextRunAt: refreshedJob?.isActive ? computeCronNextRunAt(refreshedJob, finishedAt) : null,
         },
       }),
@@ -1544,7 +1662,7 @@ const queueCronJobRun = async (jobId, trigger = "manual") => {
   if (job.isRunning || cronRuntimeState.runningJobs.has(jobId)) {
     throw new Error("Cron gorevi zaten calisiyor.")
   }
-  const targetDate = resolveCronTargetDate(job.timezone, job.targetDateMode)
+  const targetDate = resolveCronRunTargetValue(job)
   const initialLogs = [normalizeCronRunLogEntry("info", "Cron gorevi siraya alindi.")]
   const nextRunAt = job.isActive ? computeCronNextRunAt(job) : null
   const run = await prisma.$transaction(async (tx) => {
@@ -3332,6 +3450,15 @@ app.post("/api/cron/jobs", requireAnyPermission(CRON_MANAGE_PERMISSIONS), async 
   const scheduleTime = normalizeCronScheduleTime(req.body?.scheduleTime)
   const timezone = normalizeCronTimezone(req.body?.timezone)
   const targetDateMode = normalizeCronTargetDateMode(req.body?.targetDateMode)
+  const url = String(req.body?.url ?? "").trim()
+  const httpMethod = normalizeCronHttpMethod(req.body?.httpMethod)
+  const httpHeadersParsed = parseCronHttpHeadersInput(req.body?.httpHeaders)
+  const httpBody = String(req.body?.httpBody ?? "")
+  const timeoutMsRaw = Number(req.body?.timeoutMs)
+  const timeoutMs =
+    Number.isFinite(timeoutMsRaw) && timeoutMsRaw >= 1000 && timeoutMsRaw <= 300000
+      ? Math.floor(timeoutMsRaw)
+      : 30000
   const isActive = req.body?.isActive === undefined ? true : Boolean(req.body?.isActive)
 
   if (!name) {
@@ -3346,6 +3473,22 @@ app.post("/api/cron/jobs", requireAnyPermission(CRON_MANAGE_PERMISSIONS), async 
     res.status(400).json({ error: "invalid scheduleTime" })
     return
   }
+  if (!httpHeadersParsed.ok) {
+    res.status(400).json({ error: httpHeadersParsed.error })
+    return
+  }
+  if (type === CRON_JOB_TYPE_HTTP) {
+    if (!url) {
+      res.status(400).json({ error: "url is required" })
+      return
+    }
+    try {
+      new URL(url)
+    } catch {
+      res.status(400).json({ error: "invalid url" })
+      return
+    }
+  }
 
   const created = await prisma.cronJob.create({
     data: {
@@ -3354,6 +3497,11 @@ app.post("/api/cron/jobs", requireAnyPermission(CRON_MANAGE_PERMISSIONS), async 
       scheduleTime,
       timezone,
       targetDateMode,
+      url: type === CRON_JOB_TYPE_HTTP ? url : null,
+      httpMethod: type === CRON_JOB_TYPE_HTTP ? httpMethod : null,
+      httpHeaders: type === CRON_JOB_TYPE_HTTP ? httpHeadersParsed.value : {},
+      httpBody: type === CRON_JOB_TYPE_HTTP ? httpBody : null,
+      timeoutMs: type === CRON_JOB_TYPE_HTTP ? timeoutMs : null,
       isActive,
       nextRunAt: isActive
         ? computeCronNextRunAt({ scheduleTime, timezone, isActive: true })
@@ -3392,6 +3540,21 @@ app.put("/api/cron/jobs/:id", requireAnyPermission(CRON_MANAGE_PERMISSIONS), asy
     req.body?.targetDateMode === undefined
       ? current.targetDateMode
       : normalizeCronTargetDateMode(req.body?.targetDateMode)
+  const url = req.body?.url === undefined ? String(current.url ?? "") : String(req.body?.url ?? "").trim()
+  const httpMethod =
+    req.body?.httpMethod === undefined
+      ? normalizeCronHttpMethod(current.httpMethod)
+      : normalizeCronHttpMethod(req.body?.httpMethod)
+  const httpHeadersParsed =
+    req.body?.httpHeaders === undefined
+      ? { ok: true, value: normalizeCronHttpHeaders(current.httpHeaders) }
+      : parseCronHttpHeadersInput(req.body?.httpHeaders)
+  const httpBody = req.body?.httpBody === undefined ? String(current.httpBody ?? "") : String(req.body?.httpBody ?? "")
+  const timeoutMsRaw = req.body?.timeoutMs === undefined ? Number(current.timeoutMs) : Number(req.body?.timeoutMs)
+  const timeoutMs =
+    Number.isFinite(timeoutMsRaw) && timeoutMsRaw >= 1000 && timeoutMsRaw <= 300000
+      ? Math.floor(timeoutMsRaw)
+      : 30000
   const isActive = req.body?.isActive === undefined ? current.isActive : Boolean(req.body?.isActive)
 
   if (!name) {
@@ -3406,6 +3569,22 @@ app.put("/api/cron/jobs/:id", requireAnyPermission(CRON_MANAGE_PERMISSIONS), asy
     res.status(400).json({ error: "invalid scheduleTime" })
     return
   }
+  if (!httpHeadersParsed.ok) {
+    res.status(400).json({ error: httpHeadersParsed.error })
+    return
+  }
+  if (type === CRON_JOB_TYPE_HTTP) {
+    if (!url) {
+      res.status(400).json({ error: "url is required" })
+      return
+    }
+    try {
+      new URL(url)
+    } catch {
+      res.status(400).json({ error: "invalid url" })
+      return
+    }
+  }
 
   const updated = await prisma.cronJob.update({
     where: { id },
@@ -3415,6 +3594,11 @@ app.put("/api/cron/jobs/:id", requireAnyPermission(CRON_MANAGE_PERMISSIONS), asy
       scheduleTime,
       timezone,
       targetDateMode,
+      url: type === CRON_JOB_TYPE_HTTP ? url : null,
+      httpMethod: type === CRON_JOB_TYPE_HTTP ? httpMethod : null,
+      httpHeaders: type === CRON_JOB_TYPE_HTTP ? httpHeadersParsed.value : {},
+      httpBody: type === CRON_JOB_TYPE_HTTP ? httpBody : null,
+      timeoutMs: type === CRON_JOB_TYPE_HTTP ? timeoutMs : null,
       isActive,
       nextRunAt: isActive
         ? computeCronNextRunAt({ scheduleTime, timezone, isActive: true })

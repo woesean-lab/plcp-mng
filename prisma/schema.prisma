@@ -313,6 +313,11 @@ model CronJob {
   scheduleTime   String
   timezone       String       @default("Europe/Istanbul")
   targetDateMode String       @default("yesterday")
+  url            String?
+  httpMethod     String?
+  httpHeaders    Json?
+  httpBody       String?
+  timeoutMs      Int?
   isActive       Boolean      @default(true)
   isRunning      Boolean      @default(false)
   lastRunAt      DateTime?
