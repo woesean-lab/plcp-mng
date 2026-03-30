@@ -40,55 +40,51 @@ function SkeletonBlock({ className = "" }) {
 
 function CronSkeleton({ panelClass }) {
   return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-4 shadow-card sm:p-6">
-        <SkeletonBlock className="h-4 w-20 rounded-full" />
-        <SkeletonBlock className="mt-4 h-8 w-56" />
-        <SkeletonBlock className="mt-3 h-4 w-2/3" />
-        <div className="mt-4 flex flex-wrap gap-2">
-          <SkeletonBlock className="h-7 w-32 rounded-full" />
-          <SkeletonBlock className="h-7 w-32 rounded-full" />
+    <div className="space-y-4">
+      <div className={`${panelClass} bg-ink-900/60`}>
+        <div className="flex flex-wrap gap-2">
+          <SkeletonBlock className="h-6 w-16 rounded-full" />
+          <SkeletonBlock className="h-6 w-36 rounded-full" />
+          <SkeletonBlock className="h-6 w-24 rounded-full" />
         </div>
+        <SkeletonBlock className="mt-3 h-7 w-48 rounded-full" />
+        <SkeletonBlock className="mt-2 h-4 w-72 rounded-full" />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, idx) => (
           <div
             key={`cron-metric-${idx}`}
-            className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-card"
+            className="rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card"
           >
-            <SkeletonBlock className="h-3 w-24 rounded-full" />
-            <SkeletonBlock className="mt-3 h-6 w-20" />
-            <SkeletonBlock className="mt-3 h-3 w-28 rounded-full" />
+            <SkeletonBlock className="h-3 w-16 rounded-full" />
+            <SkeletonBlock className="mt-2 h-5 w-14 rounded-full" />
+            <SkeletonBlock className="mt-2 h-3 w-24 rounded-full" />
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+        <div className="space-y-4">
           <div className={`${panelClass} bg-ink-900/60`}>
-            <SkeletonBlock className="h-4 w-36" />
-            <SkeletonBlock className="mt-4 h-24 w-full rounded-2xl" />
-            <SkeletonBlock className="mt-3 h-24 w-full rounded-2xl" />
-          </div>
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <SkeletonBlock className="h-4 w-28" />
-            <SkeletonBlock className="mt-4 h-52 w-full rounded-2xl" />
+            <SkeletonBlock className="h-4 w-24 rounded-full" />
+            <SkeletonBlock className="mt-3 h-20 w-full rounded-xl" />
+            <SkeletonBlock className="mt-2 h-20 w-full rounded-xl" />
           </div>
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className={`${panelClass} bg-ink-900/60`}>
-            <SkeletonBlock className="h-4 w-28" />
-            <SkeletonBlock className="mt-4 h-10 w-full rounded-xl" />
+            <SkeletonBlock className="h-4 w-20 rounded-full" />
             <SkeletonBlock className="mt-3 h-10 w-full rounded-xl" />
-            <SkeletonBlock className="mt-3 h-10 w-full rounded-xl" />
-            <SkeletonBlock className="mt-3 h-10 w-full rounded-xl" />
-          </div>
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <SkeletonBlock className="h-4 w-32" />
-            <SkeletonBlock className="mt-4 h-20 w-full rounded-xl" />
+            <SkeletonBlock className="mt-2 h-10 w-full rounded-xl" />
+            <SkeletonBlock className="mt-2 h-10 w-full rounded-xl" />
           </div>
         </div>
+      </div>
+
+      <div className={`${panelClass} bg-ink-900/60`}>
+        <SkeletonBlock className="h-4 w-28 rounded-full" />
+        <SkeletonBlock className="mt-3 h-32 w-full rounded-xl" />
       </div>
     </div>
   )
@@ -149,11 +145,11 @@ const formatJobTypeLabel = (type) =>
 
 function MetricCard({ label, value, helper, toneClass = "bg-ink-900/60" }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-white/10 p-4 shadow-card ${toneClass}`}>
+    <div className={`relative overflow-hidden rounded-xl border border-white/10 p-3 shadow-card ${toneClass}`}>
       <div className="relative">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{label}</p>
-        <p className="mt-2 text-3xl font-semibold text-white">{value}</p>
-        <p className="mt-1 text-xs text-slate-400">{helper}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
+        <p className="mt-1 text-lg font-semibold text-white">{value}</p>
+        <p className="mt-1 text-[11px] text-slate-400">{helper}</p>
       </div>
     </div>
   )
@@ -459,219 +455,165 @@ export default function CronTab({
   }
 
   return (
-    <div className="space-y-6">
-      <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
-        <div className="flex flex-col gap-4 sm:gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              Cron
-            </span>
-            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Cron Gorevleri</h1>
-            <p className="max-w-2xl text-sm text-slate-200/80">
-              Zamanlanmis backend gorevlerini yonet, manuel tetikle ve log akisini takip et.
-            </p>
+    <div className="space-y-4">
+      <header className={`${panelClass} bg-ink-900/60`}>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-200">
+                Cron
+              </span>
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300">
+                Sunucu: {formatDateTime(serverTime, serverTimeZone)}
+              </span>
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300">
+                TZ: {serverTimeZone || "-"}
+              </span>
+            </div>
+            <h1 className="mt-3 text-xl font-semibold text-white sm:text-2xl">Cron Gorevleri</h1>
+            <p className="mt-1 text-sm text-slate-400">Kompakt gorev listesi, manuel tetikleme ve log takibi.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Sunucu: {formatDateTime(serverTime, serverTimeZone)}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              TZ: {serverTimeZone || "-"}
-            </span>
+          <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3 xl:w-[320px]">
+            <MetricCard label="Toplam" value={jobs.length} helper="Gorev" />
+            <MetricCard label="Aktif" value={activeJobCount} helper="Zamanlama" />
+            <MetricCard label="Canli" value={`${runningJobCount}/${errorJobCount}`} helper="Run/Hata" />
           </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <MetricCard label="Toplam" value={jobs.length} helper="Kayitli cron gorevi" />
-        <MetricCard label="Aktif" value={activeJobCount} helper="Zamanlama acik" />
-        <MetricCard label="Calisiyor/Hata" value={`${runningJobCount}/${errorJobCount}`} helper="Canli durum ozeti" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
-        <section className="space-y-6">
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Gorev listesi</p>
-                <p className="text-sm text-slate-400">Kayitli cron gorevleri ve hizli aksiyonlar.</p>
-              </div>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200">
-                Secili: {selectedJob ? selectedJob.name : "-"}
-              </span>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+        <section className={`${panelClass} bg-ink-900/60`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Gorev listesi</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {jobs.length === 0 ? "Kayitli gorev yok." : `${jobs.length} gorev · ${activeJobCount} aktif`}
+              </p>
             </div>
-            <div className="mt-4 grid gap-3">
-              {jobs.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-8 text-sm text-slate-400">
-                  Henuz cron gorevi eklenmedi.
-                </div>
-              ) : (
-                jobs.map((job) => {
-                  const isSelected = job.id === selectedJobId
-                  const stateStatus = job.isRunning ? "running" : job.isActive ? "active" : job.lastRunStatus || "idle"
-                  return (
-                    <div
-                      key={job.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelectedJobId(job.id)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault()
-                          setSelectedJobId(job.id)
-                        }
-                      }}
-                      className={`rounded-2xl border p-4 text-left transition ${isSelected ? "border-accent-400/40 bg-accent-500/10 shadow-glow" : "border-white/10 bg-black/20 hover:border-white/15 hover:bg-white/5"}`}
-                    >
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="truncate text-sm font-semibold text-white">{job.name}</p>
-                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(stateStatus)}`}>
-                              {job.isRunning ? "Calisiyor" : job.isActive ? "Aktif" : "Pasif"}
-                            </span>
-                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                              {job.type}
-                            </span>
-                          </div>
-                          <div className="mt-2 grid gap-1 text-xs text-slate-400 sm:grid-cols-2">
-                            <p>Saat: {job.scheduleTime}</p>
-                            <p>Timezone: {job.timezone}</p>
-                            {job.type === "http" ? (
-                              <>
-                                <p>Method: {job.httpMethod || "GET"}</p>
-                                <p>Timeout: {job.timeoutMs ? `${job.timeoutMs} ms` : "-"}</p>
-                              </>
-                            ) : (
-                              <>
-                                <p>Son: {formatDateTime(job.lastRunAt, job.timezone)}</p>
-                                <p>Siradaki: {formatDateTime(job.nextRunAt, job.timezone)}</p>
-                              </>
-                            )}
-                          </div>
-                          {job.type === "http" ? (
-                            <p className="mt-2 truncate text-xs text-slate-500">URL: {job.url || "-"}</p>
-                          ) : null}
-                          <p className="mt-2 text-xs text-slate-500">Son mesaj: {job.lastRunMessage || "-"}</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2 lg:justify-end">
-                          {canRunCron ? (
-                            <button type="button" onClick={(event) => { event.stopPropagation(); handleRunNow(job) }} disabled={isManualRunningJobId === job.id || job.isRunning} className={successButtonClass}>
-                              {isManualRunningJobId === job.id ? "Baslatiliyor" : "Manuel baslat"}
-                            </button>
-                          ) : null}
-                          {canManageCron ? (
-                            <button type="button" onClick={(event) => { event.stopPropagation(); handleEdit(job) }} className={secondaryButtonClass}>
-                              Duzenle
-                            </button>
-                          ) : null}
-                          {canManageCron ? (
-                            <button type="button" onClick={(event) => { event.stopPropagation(); handleToggleActive(job) }} className={secondaryButtonClass}>
-                              {job.isActive ? "Pasif yap" : "Aktif et"}
-                            </button>
-                          ) : null}
-                          {canManageCron ? (
-                            <button type="button" onClick={(event) => { event.stopPropagation(); handleDelete(job) }} className={dangerButtonClass}>
-                              Sil
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300">
+              Secili: {selectedJob ? selectedJob.name : "-"}
+            </span>
           </div>
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Log ekrani</p>
-                <p className="text-sm text-slate-400">Secilen gorevin son calisma kayitlari.</p>
-              </div>
-              {selectedJob && canClearCronLogs ? (
-                <button type="button" onClick={() => handleClearRuns(selectedJob)} className={dangerButtonClass}>
-                  Log temizle
-                </button>
-              ) : null}
-            </div>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-ink-950/85 p-3">
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-1 pb-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    {selectedJob ? selectedJob.name : "Cron loglari"}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">CMD akisi · son 30 calisma</p>
-                </div>
-                {isRunsLoading ? <span className="text-xs text-slate-500">Yukleniyor...</span> : null}
+          <div className="mt-4 grid gap-2">
+            {jobs.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/10 bg-black/20 px-4 py-6 text-sm text-slate-500">
+                Henuz cron gorevi eklenmedi.
               </div>
-
-              <div className="mt-3 max-h-[560px] space-y-3 overflow-y-auto pr-1">
-                {!selectedJob ? (
-                  <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-sm text-slate-500">
-                    Loglari gormek icin bir cron gorevi sec.
-                  </div>
-                ) : selectedRuns.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-sm text-slate-500">
-                    Bu gorev icin log kaydi yok.
-                  </div>
-                ) : (
-                  selectedRuns.map((run) => {
-                    const runLogs = Array.isArray(run.logs) ? run.logs : []
-                    return (
-                      <div key={run.id} className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(run.status)}`}>
-                              {run.status}
-                            </span>
-                            <span className="text-xs text-slate-400">{run.trigger}</span>
-                            <span className="text-xs text-slate-500">
-                              {selectedJob?.type === "http" ? "Hedef: HTTP endpoint" : `Tarih: ${run.targetDate || "-"}`}
-                            </span>
-                          </div>
-                          <div className="text-right text-[11px] text-slate-500">
-                            <p>{formatDateTime(run.startedAt, selectedJob.timezone)}</p>
-                            <p>Sure: {formatRunDuration(run.startedAt, run.finishedAt)}</p>
-                          </div>
+            ) : (
+              jobs.map((job) => {
+                const isSelected = job.id === selectedJobId
+                const stateStatus = job.isRunning ? "running" : job.isActive ? "active" : job.lastRunStatus || "idle"
+                return (
+                  <div
+                    key={job.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedJobId(job.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault()
+                        setSelectedJobId(job.id)
+                      }
+                    }}
+                    className={`rounded-xl border px-3 py-3 text-left transition ${isSelected ? "border-accent-400/40 bg-accent-500/10 shadow-glow" : "border-white/10 bg-black/20 hover:border-white/15 hover:bg-white/5"}`}
+                  >
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-white">{job.name}</p>
+                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(stateStatus)}`}>
+                            {job.isRunning ? "Calisiyor" : job.isActive ? "Aktif" : "Pasif"}
+                          </span>
+                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+                            {formatJobTypeLabel(job.type)}
+                          </span>
                         </div>
-                        <div className="mt-3 rounded-xl border border-white/10 bg-ink-950/90 p-3 font-mono text-[12px] text-slate-200">
-                          {runLogs.length === 0 ? (
-                            <p className="text-slate-500">log bekleniyor...</p>
+
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
+                          <span>Saat: {job.scheduleTime}</span>
+                          <span>TZ: {job.timezone}</span>
+                          {job.type === "http" ? (
+                            <>
+                              <span>Method: {job.httpMethod || "GET"}</span>
+                              <span className="truncate">URL: {job.url || "-"}</span>
+                            </>
                           ) : (
-                            runLogs.map((entry, index) => (
-                              <div key={`${run.id}-${index}`} className="flex flex-wrap gap-2 leading-6">
-                                <span className="text-slate-500">[{String(entry?.time ?? "").slice(11, 19) || "--:--:--"}]</span>
-                                <span className={`uppercase ${entry?.status === "error" ? "text-rose-300" : entry?.status === "success" ? "text-emerald-300" : "text-sky-200"}`}>
-                                  {String(entry?.status ?? "info")}
-                                </span>
-                                <span className="break-all text-slate-200">{String(entry?.message ?? "")}</span>
-                              </div>
-                            ))
+                            <>
+                              <span>Hedef: {job.targetDateMode === "today" ? "Bugun" : "Dun"}</span>
+                              <span>Siradaki: {formatDateTime(job.nextRunAt, job.timezone)}</span>
+                            </>
                           )}
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-400">
-                          <span>Mesaj: {run.message || "-"}</span>
-                          <span>Sonuc: {run.result ?? "-"}</span>
-                        </div>
                       </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
+
+                      <div className="flex flex-wrap gap-2 lg:justify-end">
+                        {canRunCron ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              handleRunNow(job)
+                            }}
+                            disabled={isManualRunningJobId === job.id || job.isRunning}
+                            className={successButtonClass}
+                          >
+                            {isManualRunningJobId === job.id ? "Baslatiliyor" : "Baslat"}
+                          </button>
+                        ) : null}
+                        {canManageCron ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              handleEdit(job)
+                            }}
+                            className={secondaryButtonClass}
+                          >
+                            Duzenle
+                          </button>
+                        ) : null}
+                        {canManageCron ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              handleToggleActive(job)
+                            }}
+                            className={secondaryButtonClass}
+                          >
+                            {job.isActive ? "Pasif" : "Aktif"}
+                          </button>
+                        ) : null}
+                        {canManageCron ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              handleDelete(job)
+                            }}
+                            className={dangerButtonClass}
+                          >
+                            Sil
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
         </section>
 
-        <aside className="space-y-6">
+        <aside className="space-y-4">
           <div className={`${panelClass} bg-ink-900/60`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  {form.id ? "Cron duzenle" : "Yeni cron gorevi"}
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  {form.id ? "Cron duzenle" : "Yeni cron"}
                 </p>
-                <p className="text-sm text-slate-400">Saat, timezone ve calisma kuralini kaydet.</p>
+                <p className="mt-1 text-sm text-slate-500">Zamanlama ve gorev tipi kaydi.</p>
               </div>
               {form.id ? (
                 <button type="button" onClick={resetForm} className={secondaryButtonClass}>
@@ -680,40 +622,61 @@ export default function CronTab({
               ) : null}
             </div>
 
-            <div className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+            <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-black/20 p-3">
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Gorev adi</label>
-                <input className={fieldClass} value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="Orn: Gunluk Eldorado Sayim" />
+                <input
+                  className={fieldClass}
+                  value={form.name}
+                  onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                  placeholder="Orn: Gunluk Eldorado Sayim"
+                />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Gorev tipi</label>
-                <select
-                  className={fieldClass}
-                  value={form.type}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      type: event.target.value,
-                      httpMethod:
-                        event.target.value === "http"
-                          ? prev.httpMethod || "GET"
-                          : prev.httpMethod,
-                    }))
-                  }
-                >
-                  {JOB_TYPE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-slate-500">{JOB_TYPE_OPTIONS.find((option) => option.value === form.type)?.helper || "-"}</p>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Gorev tipi</label>
+                  <select
+                    className={fieldClass}
+                    value={form.type}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        type: event.target.value,
+                        httpMethod:
+                          event.target.value === "http"
+                            ? prev.httpMethod || "GET"
+                            : prev.httpMethod,
+                      }))
+                    }
+                  >
+                    {JOB_TYPE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Saat</label>
-                  <input className={fieldClass} type="time" value={form.scheduleTime} onChange={(event) => setForm((prev) => ({ ...prev, scheduleTime: event.target.value }))} />
+                  <input
+                    className={fieldClass}
+                    type="time"
+                    value={form.scheduleTime}
+                    onChange={(event) => setForm((prev) => ({ ...prev, scheduleTime: event.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Timezone</label>
+                  <input
+                    className={fieldClass}
+                    value={form.timezone}
+                    onChange={(event) => setForm((prev) => ({ ...prev, timezone: event.target.value }))}
+                    placeholder="Europe/Istanbul"
+                  />
                 </div>
                 {form.type === "http" ? (
                   <div className="space-y-2">
@@ -733,7 +696,11 @@ export default function CronTab({
                 ) : (
                   <div className="space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Hedef tarih</label>
-                    <select className={fieldClass} value={form.targetDateMode} onChange={(event) => setForm((prev) => ({ ...prev, targetDateMode: event.target.value }))}>
+                    <select
+                      className={fieldClass}
+                      value={form.targetDateMode}
+                      onChange={(event) => setForm((prev) => ({ ...prev, targetDateMode: event.target.value }))}
+                    >
                       {TARGET_DATE_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -744,13 +711,8 @@ export default function CronTab({
                 )}
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Timezone</label>
-                <input className={fieldClass} value={form.timezone} onChange={(event) => setForm((prev) => ({ ...prev, timezone: event.target.value }))} placeholder="Europe/Istanbul" />
-              </div>
-
               {form.type === "http" ? (
-                <div className="space-y-4 rounded-2xl border border-white/10 bg-ink-900/50 p-4">
+                <div className="space-y-3 rounded-xl border border-white/10 bg-ink-900/40 p-3">
                   <div className="space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Endpoint URL</label>
                     <input
@@ -773,7 +735,7 @@ export default function CronTab({
                   <div className="space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Headers JSON</label>
                     <textarea
-                      rows={4}
+                      rows={3}
                       className={codeFieldClass}
                       value={form.httpHeaders}
                       onChange={(event) => setForm((prev) => ({ ...prev, httpHeaders: event.target.value }))}
@@ -784,7 +746,7 @@ export default function CronTab({
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Body</label>
                       <textarea
-                        rows={5}
+                        rows={4}
                         className={codeFieldClass}
                         value={form.httpBody}
                         onChange={(event) => setForm((prev) => ({ ...prev, httpBody: event.target.value }))}
@@ -795,85 +757,142 @@ export default function CronTab({
                 </div>
               ) : null}
 
-              <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-3 text-sm text-slate-200">
-                <input type="checkbox" checked={Boolean(form.isActive)} onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.checked }))} className="h-4 w-4 rounded border-white/10 bg-ink-950 text-accent-400" />
-                Kayittan sonra aktif olsun
+              <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/70 px-3 py-2.5 text-sm text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={Boolean(form.isActive)}
+                  onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.checked }))}
+                  className="h-4 w-4 rounded border-white/10 bg-ink-950 text-accent-400"
+                />
+                Aktif olarak kaydet
               </label>
 
-              <button type="button" onClick={handleSave} disabled={!canManageCron || isSaving} className={`${primaryButtonClass} w-full px-4 py-3 text-sm`}>
-                {isSaving ? "Kaydediliyor" : form.id ? "Guncelle" : "Cron gorevini kaydet"}
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!canManageCron || isSaving}
+                className={`${primaryButtonClass} w-full px-4 py-2.5 text-sm`}
+              >
+                {isSaving ? "Kaydediliyor" : form.id ? "Guncelle" : "Kaydet"}
               </button>
             </div>
           </div>
 
           <div className={`${panelClass} bg-ink-900/60`}>
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Secili gorev ozeti</p>
-              <p className="mt-1 text-sm text-slate-400">Anlik durum ve bir sonraki calisma bilgisi.</p>
-            </div>
-            <div className="mt-4 space-y-3 text-sm text-slate-300">
-              <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Gorev</p>
-                <p className="mt-1 font-semibold text-white">{selectedJob?.name || "-"}</p>
-                {selectedJob ? (
-                  <p className="mt-1 text-xs text-slate-400">{formatJobTypeLabel(selectedJob.type)}</p>
-                ) : null}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Son durum</p>
-                  <p className="mt-1 font-semibold text-white">{selectedJob?.lastRunStatus || "-"}</p>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                    {selectedJob?.type === "http" ? "Method" : "Siradaki"}
-                  </p>
-                  <p className="mt-1 font-semibold text-white">
-                    {selectedJob?.type === "http"
-                      ? selectedJob?.httpMethod || "GET"
-                      : formatDateTime(selectedJob?.nextRunAt, selectedJob?.timezone)}
-                  </p>
-                </div>
-              </div>
-              {selectedJob?.type === "http" ? (
-                <>
-                  <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Endpoint</p>
-                    <p className="mt-1 break-all text-sm text-slate-200">{selectedJob?.url || "-"}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Secili gorev</p>
+            {!selectedJob ? (
+              <p className="mt-3 text-sm text-slate-500">Liste icinden bir gorev sec.</p>
+            ) : (
+              <div className="mt-3 space-y-3">
+                <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-white">{selectedJob.name}</p>
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(selectedJob.isRunning ? "running" : selectedJob.lastRunStatus || (selectedJob.isActive ? "active" : "idle"))}`}>
+                      {selectedJob.isRunning ? "Calisiyor" : selectedJob.lastRunStatus || (selectedJob.isActive ? "Aktif" : "Pasif")}
+                    </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Timeout</p>
-                      <p className="mt-1 font-semibold text-white">
-                        {selectedJob?.timeoutMs ? `${selectedJob.timeoutMs} ms` : "-"}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Headers</p>
-                      <p className="mt-1 font-semibold text-white">
-                        {selectedJob?.httpHeaders && Object.keys(selectedJob.httpHeaders).length > 0
-                          ? `${Object.keys(selectedJob.httpHeaders).length} adet`
-                          : "Yok"}
-                      </p>
-                    </div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
+                    <span>Tip: {formatJobTypeLabel(selectedJob.type)}</span>
+                    <span>Saat: {selectedJob.scheduleTime}</span>
+                    <span>TZ: {selectedJob.timezone}</span>
+                    {selectedJob.type === "http" ? (
+                      <span>Method: {selectedJob.httpMethod || "GET"}</span>
+                    ) : (
+                      <span>Hedef: {selectedJob.targetDateMode === "today" ? "Bugun" : "Dun"}</span>
+                    )}
                   </div>
-                </>
-              ) : (
-                <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Hedef tarih modu</p>
-                  <p className="mt-1 font-semibold text-white">
-                    {selectedJob?.targetDateMode === "today" ? "Bugun" : "Dun"}
-                  </p>
+                  {selectedJob.type === "http" ? (
+                    <p className="mt-2 break-all text-xs text-slate-500">{selectedJob.url || "-"}</p>
+                  ) : null}
+                  <p className="mt-2 text-xs text-slate-500">{selectedJob.lastRunMessage || "Son mesaj yok."}</p>
                 </div>
-              )}
-              <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Son mesaj</p>
-                <p className="mt-1 text-sm text-slate-200">{selectedJob?.lastRunMessage || "-"}</p>
               </div>
-            </div>
+            )}
           </div>
         </aside>
       </div>
+
+      <section className={`${panelClass} bg-ink-900/60`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Log ekrani</p>
+            <p className="mt-1 text-sm text-slate-500">Secilen gorevin son 30 calismasi.</p>
+          </div>
+          {selectedJob && canClearCronLogs ? (
+            <button type="button" onClick={() => handleClearRuns(selectedJob)} className={dangerButtonClass}>
+              Log temizle
+            </button>
+          ) : null}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-white/10 bg-ink-950/85 p-3">
+          <div className="flex items-center justify-between gap-3 border-b border-white/10 px-1 pb-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                {selectedJob ? selectedJob.name : "Cron loglari"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">CMD akisi</p>
+            </div>
+            {isRunsLoading ? <span className="text-xs text-slate-500">Yukleniyor...</span> : null}
+          </div>
+
+          <div className="mt-3 max-h-[520px] space-y-2 overflow-y-auto pr-1">
+            {!selectedJob ? (
+              <div className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-500">
+                Loglari gormek icin bir cron gorevi sec.
+              </div>
+            ) : selectedRuns.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-500">
+                Bu gorev icin log kaydi yok.
+              </div>
+            ) : (
+              selectedRuns.map((run) => {
+                const runLogs = Array.isArray(run.logs) ? run.logs : []
+                return (
+                  <div key={run.id} className="rounded-xl border border-white/10 bg-black/20 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(run.status)}`}>
+                          {run.status}
+                        </span>
+                        <span className="text-xs text-slate-400">{run.trigger}</span>
+                        <span className="text-xs text-slate-500">
+                          {selectedJob?.type === "http" ? "Hedef: HTTP endpoint" : `Tarih: ${run.targetDate || "-"}`}
+                        </span>
+                      </div>
+                      <div className="text-right text-[11px] text-slate-500">
+                        <p>{formatDateTime(run.startedAt, selectedJob.timezone)}</p>
+                        <p>Sure: {formatRunDuration(run.startedAt, run.finishedAt)}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 rounded-xl border border-white/10 bg-ink-950/90 p-3 font-mono text-[12px] text-slate-200">
+                      {runLogs.length === 0 ? (
+                        <p className="text-slate-500">log bekleniyor...</p>
+                      ) : (
+                        runLogs.map((entry, index) => (
+                          <div key={`${run.id}-${index}`} className="flex flex-wrap gap-2 leading-6">
+                            <span className="text-slate-500">[{String(entry?.time ?? "").slice(11, 19) || "--:--:--"}]</span>
+                            <span className={`uppercase ${entry?.status === "error" ? "text-rose-300" : entry?.status === "success" ? "text-emerald-300" : "text-sky-200"}`}>
+                              {String(entry?.status ?? "info")}
+                            </span>
+                            <span className="break-all text-slate-200">{String(entry?.message ?? "")}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-400">
+                      <span>Mesaj: {run.message || "-"}</span>
+                      <span>Sonuc: {run.result ?? "-"}</span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
