@@ -14,7 +14,6 @@ import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
 import ApplicationsTab from "./components/tabs/ApplicationsTab"
-import CronTab from "./components/tabs/CronTab"
 import useAppData from "./hooks/useAppData"
 import useSocketIoProbe from "./hooks/useSocketIoProbe"
 import { PERMISSIONS } from "./constants/appConstants"
@@ -345,7 +344,6 @@ function App() {
   }, [activeTab])
 
   const canViewDashboard = isAuthed
-  const canViewCron = isAuthed
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
   const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
   const canEditMessages = hasAnyPermission([PERMISSIONS.messagesTemplateEdit, PERMISSIONS.messagesEdit])
@@ -582,13 +580,11 @@ function App() {
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
       { key: "applications", label: "Servisler", canView: canViewApplications },
-      { key: "cron", label: "Cron", canView: canViewCron },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
       canViewApplications,
       canViewAdmin,
-      canViewCron,
       canViewDashboard,
       canViewLists,
       canViewMessages,
@@ -1051,12 +1047,6 @@ function App() {
               handleAdd={handleAdd}
               setSelectedCategory={setSelectedCategory}
             />
-          </div>
-        )}
-
-        {activeTab === "cron" && canViewCron && (
-          <div className={getTabSlideClass("cron")}>
-            <CronTab panelClass={panelClass} activeUsername={userName} />
           </div>
         )}
 

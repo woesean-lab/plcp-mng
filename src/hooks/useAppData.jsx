@@ -264,7 +264,6 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (canViewProductsTab) tabs.push("products")
     if (canViewApplicationsTab) tabs.push("applications")
-    if (isAuthed) tabs.push("cron")
     if (canManageAdmin) tabs.push("admin")
     return tabs
   }, [
