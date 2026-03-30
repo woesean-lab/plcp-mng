@@ -575,7 +575,6 @@ function App() {
         : "bg-rose-400/90 shadow-[0_0_10px_rgba(251,113,133,0.35)]"
   const tabItems = useMemo(
     () => [
-      { key: "cron", label: "Cron", canView: canViewCron },
       { key: "messages", label: "Mesaj", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
@@ -583,6 +582,7 @@ function App() {
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
       { key: "applications", label: "Servisler", canView: canViewApplications },
+      { key: "cron", label: "Cron", canView: canViewCron },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
