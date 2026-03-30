@@ -14,6 +14,7 @@ import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
 import ApplicationsTab from "./components/tabs/ApplicationsTab"
+import CronTab from "./components/tabs/CronTab"
 import useAppData from "./hooks/useAppData"
 import useSocketIoProbe from "./hooks/useSocketIoProbe"
 import { PERMISSIONS } from "./constants/appConstants"
@@ -344,6 +345,7 @@ function App() {
   }, [activeTab])
 
   const canViewDashboard = isAuthed
+  const canViewCron = isAuthed
   const canViewMessages = hasPermission(PERMISSIONS.messagesView)
   const canCreateMessages = hasAnyPermission([PERMISSIONS.messagesCreate, PERMISSIONS.messagesEdit])
   const canEditMessages = hasAnyPermission([PERMISSIONS.messagesTemplateEdit, PERMISSIONS.messagesEdit])
@@ -573,6 +575,7 @@ function App() {
         : "bg-rose-400/90 shadow-[0_0_10px_rgba(251,113,133,0.35)]"
   const tabItems = useMemo(
     () => [
+      { key: "cron", label: "Cron", canView: canViewCron },
       { key: "messages", label: "Mesaj", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
@@ -585,6 +588,7 @@ function App() {
     [
       canViewApplications,
       canViewAdmin,
+      canViewCron,
       canViewDashboard,
       canViewLists,
       canViewMessages,
@@ -1047,6 +1051,12 @@ function App() {
               handleAdd={handleAdd}
               setSelectedCategory={setSelectedCategory}
             />
+          </div>
+        )}
+
+        {activeTab === "cron" && canViewCron && (
+          <div className={getTabSlideClass("cron")}>
+            <CronTab panelClass={panelClass} activeUsername={userName} />
           </div>
         )}
 
