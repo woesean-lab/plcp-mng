@@ -99,6 +99,7 @@ export default function useEldoradoAutomationRuntime({
   const seenAutomationLiveRunIdsRef = useRef(new Set())
   const completedAutomationToastRunIdsRef = useRef(new Set())
   const shownAutomationResultRunIdsRef = useRef(new Set())
+  const activeAutomationToastRunIdsRef = useRef(new Set())
 
   const apiFetchAutomation = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -168,6 +169,13 @@ export default function useEldoradoAutomationRuntime({
 
       runs.forEach((run) => {
         if (isLiveAutomationRun(run.status)) {
+          if (!activeAutomationToastRunIdsRef.current.has(run.id)) {
+            activeAutomationToastRunIdsRef.current.add(run.id)
+            toast.loading(`${run.label} calisiyor...`, {
+              id: `automation-run-${run.id}`,
+              position: "top-right",
+            })
+          }
           seenAutomationLiveRunIdsRef.current.add(run.id)
           return
         }
@@ -177,10 +185,20 @@ export default function useEldoradoAutomationRuntime({
           !completedAutomationToastRunIdsRef.current.has(run.id)
         ) {
           completedAutomationToastRunIdsRef.current.add(run.id)
+          const toastId = activeAutomationToastRunIdsRef.current.has(run.id)
+            ? `automation-run-${run.id}`
+            : undefined
+          activeAutomationToastRunIdsRef.current.delete(run.id)
           if (run.status === "success") {
-            toast.success(run.lastMessage || `${run.label} tamamlandi.`, { position: "top-right" })
+            toast.success(run.lastMessage || `${run.label} tamamlandi.`, {
+              id: toastId,
+              position: "top-right",
+            })
           } else if (run.status === "error") {
-            toast.error(run.lastMessage || `${run.label} tamamlanamadi.`, { position: "top-right" })
+            toast.error(run.lastMessage || `${run.label} tamamlanamadi.`, {
+              id: toastId,
+              position: "top-right",
+            })
           }
         }
 

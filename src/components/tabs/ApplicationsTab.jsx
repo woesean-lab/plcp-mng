@@ -204,6 +204,7 @@ export default function ApplicationsTab({
   const dismissedRunIdsRef = useRef(new Set())
   const seenLiveRunIdsRef = useRef(new Set())
   const completedToastRunIdsRef = useRef(new Set())
+  const activeRunToastIdsRef = useRef(new Set())
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -291,7 +292,9 @@ export default function ApplicationsTab({
         startedAtMs: Number.isFinite(startedAtMs) ? startedAtMs : 0,
         endedAtMs: Number.isFinite(endedAtMs) ? endedAtMs : 0,
         createdByUsername: String(entry?.createdByUsername ?? "").trim(),
-        pendingPrompt: normalizeUserInputPrompt(entry?.pendingPrompt, backendKey),
+        pendingPrompt: entry?.pendingPrompt
+          ? normalizeUserInputPrompt(entry.pendingPrompt, backendKey)
+          : null,
       }
     },
     [normalizeUserInputPrompt],
@@ -796,6 +799,13 @@ export default function ApplicationsTab({
   useEffect(() => {
     runSessions.forEach((entry) => {
       if (isRunLive(entry.status)) {
+        if (!activeRunToastIdsRef.current.has(entry.id)) {
+          activeRunToastIdsRef.current.add(entry.id)
+          toast.loading(`${entry.label} calisiyor...`, {
+            id: `application-run-${entry.id}`,
+            position: "top-right",
+          })
+        }
         seenLiveRunIdsRef.current.add(entry.id)
         return
       }
@@ -803,12 +813,20 @@ export default function ApplicationsTab({
       if (completedToastRunIdsRef.current.has(entry.id)) return
 
       completedToastRunIdsRef.current.add(entry.id)
+      const toastId = activeRunToastIdsRef.current.has(entry.id)
+        ? `application-run-${entry.id}`
+        : undefined
+      activeRunToastIdsRef.current.delete(entry.id)
       if (entry.status === "success") {
         toast.success(`${entry.applicationName}: Servis hatasiz bitirildi.`, {
+          id: toastId,
           position: "top-right",
         })
       } else if (entry.status === "error") {
-        toast.error(`${entry.applicationName} tamamlanamadi.`, { position: "top-right" })
+        toast.error(`${entry.applicationName} tamamlanamadi.`, {
+          id: toastId,
+          position: "top-right",
+        })
       }
     })
   }, [isRunLive, runSessions])
@@ -1053,19 +1071,18 @@ export default function ApplicationsTab({
       }
 
       completedToastRunIdsRef.current.delete(runEntry.id)
+      if (isRunLive(runEntry.status)) {
+        activeRunToastIdsRef.current.add(runEntry.id)
+        toast.loading(`${runEntry.label} calisiyor...`, {
+          id: `application-run-${runEntry.id}`,
+          position: "top-right",
+        })
+      }
       setActiveConsoleTabId(runEntry.id)
-      toast.success(`${runEntry.label} baslatildi.`, { position: "top-right" })
     } catch (error) {
       toast.error(error?.message || "Servis baslatilamadi.")
     }
-  }, [
-    apiFetchApplications,
-    applyRunSnapshot,
-    automationWsUrl,
-    canRunApplications,
-    readApiError,
-    selectedApplication,
-  ])
+  }, [apiFetchApplications, applyRunSnapshot, automationWsUrl, canRunApplications, isRunLive, readApiError, selectedApplication])
 
   const handleCancelRun = useCallback(
     async (runIdOverride = "") => {
