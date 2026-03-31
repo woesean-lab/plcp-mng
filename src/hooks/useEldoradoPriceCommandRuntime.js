@@ -2,6 +2,36 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../constants/appConstants"
 
+const TRANSIENT_NETWORK_ERROR_MESSAGES = new Set([
+  "failed to fetch",
+  "load failed",
+  "network request failed",
+])
+const START_RECOVERY_WINDOW_MS = 15000
+const START_RECOVERY_DELAYS_MS = [0, 700, 1500]
+
+const isTransientNetworkError = (error) => {
+  const name = String(error?.name ?? "").trim().toLowerCase()
+  const message = String(error?.message ?? "").trim().toLowerCase()
+  return (
+    name === "aborterror" ||
+    message.includes("networkerror") ||
+    TRANSIENT_NETWORK_ERROR_MESSAGES.has(message)
+  )
+}
+
+const getRequestErrorMessage = (error, fallback) => {
+  const normalizedFallback = String(fallback ?? "").trim() || "Islem tamamlanamadi."
+  const message = String(error?.message ?? "").trim()
+  if (!message || isTransientNetworkError(error)) return normalizedFallback
+  return message
+}
+
+const waitForRetry = (delayMs) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, delayMs)
+  })
+
 const formatPriceCommandLogTime = () =>
   new Date().toLocaleString("tr-TR", {
     day: "2-digit",
@@ -227,6 +257,41 @@ export default function useEldoradoPriceCommandRuntime({
     [commitPriceCommandRunMap, maxLogEntries],
   )
 
+  const recoverPriceCommandRunAfterTransientStartError = useCallback(
+    async (offerId, startedAtMs) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      if (!normalizedOfferId) return null
+
+      for (const delayMs of START_RECOVERY_DELAYS_MS) {
+        if (delayMs > 0) {
+          await waitForRetry(delayMs)
+        }
+
+        try {
+          const res = await apiFetchPriceCommand(
+            `/api/eldorado/offers/${encodeURIComponent(normalizedOfferId)}/price-command-run`,
+          )
+          if (res.status === 404) {
+            continue
+          }
+          if (!res.ok) {
+            continue
+          }
+
+          const run = applyPriceCommandRunSnapshot(await res.json())
+          if (run && Number(run.startedAtMs ?? 0) >= startedAtMs - START_RECOVERY_WINDOW_MS) {
+            return run
+          }
+        } catch {
+          // Ignore transient recovery failures and keep retrying.
+        }
+      }
+
+      return null
+    },
+    [apiFetchPriceCommand, applyPriceCommandRunSnapshot],
+  )
+
   const fetchPriceCommandRuns = useCallback(
     async ({ silent = true } = {}) => {
       if (!canAccessPriceCommandRuns) return
@@ -367,6 +432,8 @@ export default function useEldoradoPriceCommandRuntime({
           return
         }
 
+        const requestStartedAtMs = Date.now()
+
         void (async () => {
           try {
             const res = await apiFetchPriceCommand(
@@ -420,7 +487,29 @@ export default function useEldoradoPriceCommandRuntime({
               settlePendingPriceCommand(run)
             }
           } catch (error) {
-            fail(error?.message || "Fiyat komutu baslatilamadi.")
+            if (isTransientNetworkError(error)) {
+              const recoveredRun = await recoverPriceCommandRunAfterTransientStartError(
+                normalized.offerId,
+                requestStartedAtMs,
+              )
+              if (recoveredRun) {
+                pendingPriceCommandByOfferRef.current[normalized.offerId] = {
+                  runId: recoveredRun.id,
+                  showToast,
+                  category: normalized.category,
+                  result: normalized.result,
+                  resolve,
+                  reject,
+                }
+
+                if (!isLivePriceCommandRun(recoveredRun.status)) {
+                  settlePendingPriceCommand(recoveredRun)
+                }
+                return
+              }
+            }
+
+            fail(getRequestErrorMessage(error, "Fiyat komutu baslatilamadi."))
           }
         })()
       }),
@@ -430,6 +519,7 @@ export default function useEldoradoPriceCommandRuntime({
       canRunPriceCommand,
       defaultBackendKey,
       defaultBackendLabel,
+      recoverPriceCommandRunAfterTransientStartError,
       settlePendingPriceCommand,
       wsUrl,
     ],

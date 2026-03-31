@@ -9,6 +9,35 @@ const HISTORY_CONSOLE_TAB_ID = "__history__"
 const CMD_PROMPT_PATH = "C:\\plcp\\applications>"
 const CMD_WINDOW_TITLE = "Komut Istemi"
 const LOG_URL_REGEX = /((?:https?:\/\/|www\.)[^\s<>"']+)/gi
+const TRANSIENT_NETWORK_ERROR_MESSAGES = new Set([
+  "failed to fetch",
+  "load failed",
+  "network request failed",
+])
+const START_RECOVERY_WINDOW_MS = 15000
+const START_RECOVERY_DELAYS_MS = [0, 700, 1500]
+
+const isTransientNetworkError = (error) => {
+  const name = String(error?.name ?? "").trim().toLowerCase()
+  const message = String(error?.message ?? "").trim().toLowerCase()
+  return (
+    name === "aborterror" ||
+    message.includes("networkerror") ||
+    TRANSIENT_NETWORK_ERROR_MESSAGES.has(message)
+  )
+}
+
+const getRequestErrorMessage = (error, fallback) => {
+  const normalizedFallback = String(fallback ?? "").trim() || "Islem tamamlanamadi."
+  const message = String(error?.message ?? "").trim()
+  if (!message || isTransientNetworkError(error)) return normalizedFallback
+  return message
+}
+
+const waitForRetry = (delayMs) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, delayMs)
+  })
 
 const normalizeBackendKind = (value) =>
   String(value ?? "")
@@ -440,7 +469,7 @@ export default function ApplicationsTab({
         setApplications(normalized)
       } catch (error) {
         if (!isMounted || controller.signal.aborted) return
-        toast.error(error?.message || "Servis listesi alinamadi.")
+        toast.error(getRequestErrorMessage(error, "Servis listesi alinamadi."))
       } finally {
         if (isMounted) setIsApplicationsLoading(false)
       }
@@ -532,7 +561,7 @@ export default function ApplicationsTab({
       } catch (error) {
         if (!isMounted) return
         if (!hasLoadError) {
-          toast.error(error?.message || "Servis Konsolu loglari alinamadi.")
+          toast.error(getRequestErrorMessage(error, "Servis Konsolu loglari alinamadi."))
           hasLoadError = true
         }
         hasLoadedOnce = true
@@ -702,7 +731,7 @@ export default function ApplicationsTab({
         syncRunSessions(payload)
       } catch (error) {
         if (!silent) {
-          toast.error(error?.message || "Servis oturumlari alinamadi.")
+          toast.error(getRequestErrorMessage(error, "Servis oturumlari alinamadi."))
         }
       }
     },
@@ -722,12 +751,55 @@ export default function ApplicationsTab({
         return applyRunSnapshot(await res.json())
       } catch (error) {
         if (!silent) {
-          toast.error(error?.message || "Servis oturumu alinamadi.")
+          toast.error(getRequestErrorMessage(error, "Servis oturumu alinamadi."))
         }
         return null
       }
     },
     [apiFetchApplications, applyRunSnapshot, readApiError],
+  )
+
+  const recoverApplicationRunAfterTransientStartError = useCallback(
+    async (applicationId, startedAtMs) => {
+      const normalizedApplicationId = String(applicationId ?? "").trim()
+      if (!normalizedApplicationId) return null
+
+      for (const delayMs of START_RECOVERY_DELAYS_MS) {
+        if (delayMs > 0) {
+          await waitForRetry(delayMs)
+        }
+
+        try {
+          const res = await apiFetchApplications("/api/application-runs")
+          if (!res.ok) {
+            continue
+          }
+
+          const payload = await res.json()
+          const normalizedRuns = Array.isArray(payload)
+            ? payload.map(normalizeApplicationRunSession).filter(Boolean)
+            : []
+
+          syncRunSessions(payload)
+
+          const recoveredRun =
+            normalizedRuns.find(
+              (entry) =>
+                entry.applicationId === normalizedApplicationId &&
+                Number(entry.startedAtMs ?? 0) >= startedAtMs - START_RECOVERY_WINDOW_MS,
+            ) || null
+
+          if (recoveredRun) {
+            return recoveredRun
+          }
+        } catch {
+          // Ignore transient recovery failures and keep retrying.
+        }
+      }
+
+      return null
+    },
+    [apiFetchApplications, normalizeApplicationRunSession, syncRunSessions],
   )
 
   useEffect(() => {
@@ -898,7 +970,7 @@ export default function ApplicationsTab({
         toast.success("Servis kaydedildi.")
       }
     } catch (error) {
-      toast.error(error?.message || "Servis kaydedilemedi.")
+      toast.error(getRequestErrorMessage(error, "Servis kaydedilemedi."))
       return
     }
 
@@ -956,7 +1028,7 @@ export default function ApplicationsTab({
       )
       toast.success(saved.isActive ? "Servis aktif edildi." : "Servis kapatildi.")
     } catch (error) {
-      toast.error(error?.message || "Servis durumu guncellenemedi.")
+      toast.error(getRequestErrorMessage(error, "Servis durumu guncellenemedi."))
     }
   }
 
@@ -992,7 +1064,7 @@ export default function ApplicationsTab({
       setDeleteConfirmId("")
       toast.success("Servis silindi.")
     } catch (error) {
-      toast.error(error?.message || "Servis silinemedi.")
+      toast.error(getRequestErrorMessage(error, "Servis silinemedi."))
     }
   }
 
@@ -1047,6 +1119,8 @@ export default function ApplicationsTab({
       return
     }
 
+    const requestStartedAtMs = Date.now()
+
     try {
       const res = await apiFetchApplications(
         `/api/applications/${encodeURIComponent(selectedApplication.id)}/run`,
@@ -1080,9 +1154,29 @@ export default function ApplicationsTab({
       }
       setActiveConsoleTabId(runEntry.id)
     } catch (error) {
-      toast.error(error?.message || "Servis baslatilamadi.")
+      if (isTransientNetworkError(error)) {
+        const recoveredRun = await recoverApplicationRunAfterTransientStartError(
+          selectedApplication.id,
+          requestStartedAtMs,
+        )
+        if (recoveredRun) {
+          setActiveConsoleTabId(recoveredRun.id)
+          return
+        }
+      }
+
+      toast.error(getRequestErrorMessage(error, "Servis baslatilamadi."))
     }
-  }, [apiFetchApplications, applyRunSnapshot, automationWsUrl, canRunApplications, isRunLive, readApiError, selectedApplication])
+  }, [
+    apiFetchApplications,
+    applyRunSnapshot,
+    automationWsUrl,
+    canRunApplications,
+    isRunLive,
+    readApiError,
+    recoverApplicationRunAfterTransientStartError,
+    selectedApplication,
+  ])
 
   const handleCancelRun = useCallback(
     async (runIdOverride = "") => {
@@ -1104,7 +1198,7 @@ export default function ApplicationsTab({
         applyRunSnapshot(await res.json())
         toast("Islem iptal edildi.", { position: "top-right" })
       } catch (error) {
-        toast.error(error?.message || "Islem iptal edilemedi.")
+        toast.error(getRequestErrorMessage(error, "Islem iptal edilemedi."))
       }
     },
     [activeRunId, apiFetchApplications, applyRunSnapshot, isRunLive, readApiError],
@@ -1156,7 +1250,7 @@ export default function ApplicationsTab({
         }
         applyRunSnapshot(await res.json())
       } catch (error) {
-        toast.error(error?.message || "Kullanici girdisi gonderilemedi.")
+        toast.error(getRequestErrorMessage(error, "Kullanici girdisi gonderilemedi."))
       }
     },
     [
@@ -1190,7 +1284,7 @@ export default function ApplicationsTab({
       }
       toast.success("Servis Konsolu loglari temizlendi.")
     } catch (error) {
-      toast.error(error?.message || "Servis Konsolu loglari temizlenemedi.")
+      toast.error(getRequestErrorMessage(error, "Servis Konsolu loglari temizlenemedi."))
     }
   }
 

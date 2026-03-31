@@ -2,6 +2,36 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../constants/appConstants"
 
+const TRANSIENT_NETWORK_ERROR_MESSAGES = new Set([
+  "failed to fetch",
+  "load failed",
+  "network request failed",
+])
+const START_RECOVERY_WINDOW_MS = 15000
+const START_RECOVERY_DELAYS_MS = [0, 700, 1500]
+
+const isTransientNetworkError = (error) => {
+  const name = String(error?.name ?? "").trim().toLowerCase()
+  const message = String(error?.message ?? "").trim().toLowerCase()
+  return (
+    name === "aborterror" ||
+    message.includes("networkerror") ||
+    TRANSIENT_NETWORK_ERROR_MESSAGES.has(message)
+  )
+}
+
+const getRequestErrorMessage = (error, fallback) => {
+  const normalizedFallback = String(fallback ?? "").trim() || "Islem tamamlanamadi."
+  const message = String(error?.message ?? "").trim()
+  if (!message || isTransientNetworkError(error)) return normalizedFallback
+  return message
+}
+
+const waitForRetry = (delayMs) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, delayMs)
+  })
+
 const normalizeAutomationLogEntry = (entry) => {
   const id = String(entry?.id ?? "").trim()
   const time = String(entry?.time ?? "").trim()
@@ -285,6 +315,39 @@ export default function useEldoradoAutomationRuntime({
     [commitAutomationRunMap, maxAutomationRunLogEntries],
   )
 
+  const recoverAutomationRunAfterTransientStartError = useCallback(
+    async (offerId, startedAtMs) => {
+      const normalizedId = String(offerId ?? "").trim()
+      if (!normalizedId) return null
+
+      for (const delayMs of START_RECOVERY_DELAYS_MS) {
+        if (delayMs > 0) {
+          await waitForRetry(delayMs)
+        }
+
+        try {
+          const res = await apiFetchAutomation(`/api/eldorado/offers/${normalizedId}/automation-run`)
+          if (res.status === 404) {
+            continue
+          }
+          if (!res.ok) {
+            continue
+          }
+
+          const run = applyAutomationRunSnapshot(await res.json())
+          if (run && Number(run.startedAtMs ?? 0) >= startedAtMs - START_RECOVERY_WINDOW_MS) {
+            return run
+          }
+        } catch {
+          // Ignore transient recovery failures and keep retrying.
+        }
+      }
+
+      return null
+    },
+    [apiFetchAutomation, applyAutomationRunSnapshot],
+  )
+
   const fetchAutomationRuns = useCallback(
     async ({ silent = true } = {}) => {
       if (!canAccessAutomationRuns) return
@@ -433,9 +496,9 @@ export default function useEldoradoAutomationRuntime({
         appendAutomationRunLog(
           normalizedId,
           "error",
-          `${backendDisplay} => ${error?.message || "Iki faktor kodu gonderilemedi."}`,
+          `${backendDisplay} => ${getRequestErrorMessage(error, "Iki faktor kodu gonderilemedi.")}`,
         )
-        toast.error(error?.message || "Iki faktor kodu gonderilemedi.")
+        toast.error(getRequestErrorMessage(error, "Iki faktor kodu gonderilemedi."))
       }
     },
     [
@@ -475,6 +538,8 @@ export default function useEldoradoAutomationRuntime({
         setAutomationResultPopup((prev) => ({ ...prev, isOpen: false }))
       }
 
+      const requestStartedAtMs = Date.now()
+
       try {
         const res = await apiFetchAutomation(`/api/eldorado/offers/${normalizedId}/automation-run`, {
           method: "POST",
@@ -507,7 +572,20 @@ export default function useEldoradoAutomationRuntime({
           shownAutomationResultRunIdsRef.current.delete(run.id)
         }
       } catch (error) {
-        toast.error(error?.message || "Stok cek baslatilamadi.")
+        if (isTransientNetworkError(error)) {
+          const recoveredRun = await recoverAutomationRunAfterTransientStartError(
+            normalizedId,
+            requestStartedAtMs,
+          )
+          if (recoveredRun) {
+            seenAutomationLiveRunIdsRef.current.add(recoveredRun.id)
+            completedAutomationToastRunIdsRef.current.delete(recoveredRun.id)
+            shownAutomationResultRunIdsRef.current.delete(recoveredRun.id)
+            return
+          }
+        }
+
+        toast.error(getRequestErrorMessage(error, "Stok cek baslatilamadi."))
       }
     },
     [
@@ -515,6 +593,7 @@ export default function useEldoradoAutomationRuntime({
       applyAutomationRunSnapshot,
       automationWsUrl,
       canRunAutomation,
+      recoverAutomationRunAfterTransientStartError,
       setAutomationResultPopup,
     ],
   )
