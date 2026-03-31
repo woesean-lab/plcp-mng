@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url"
 import "dotenv/config"
 import express from "express"
 import { PrismaClient } from "@prisma/client"
+import { io as createSocketIoClient } from "socket.io-client"
 import {
   buildSocketIoWsUrl,
   parseSocketIoEventPacket,
@@ -1372,13 +1373,55 @@ const queueApplicationHistoryLog = (applicationId, status, message) => {
   void persistApplicationHistoryLog(applicationId, status, message)
 }
 
+const isSocketIoClientSocket = (socket) =>
+  Boolean(socket && typeof socket.emit === "function" && typeof socket.disconnect === "function")
+
+const buildSocketIoClientTarget = (rawUrl, extraQuery = {}) => {
+  try {
+    const parsed = new URL(rawUrl)
+    const normalizedProtocol =
+      parsed.protocol === "ws:" ? "http:" : parsed.protocol === "wss:" ? "https:" : parsed.protocol
+    const origin = `${normalizedProtocol}//${parsed.host}`
+    const pathName = /\/socket\.io\/?$/i.test(parsed.pathname)
+      ? parsed.pathname.endsWith("/")
+        ? parsed.pathname
+        : `${parsed.pathname}/`
+      : "/socket.io/"
+    const query = {}
+
+    parsed.searchParams.forEach((value, key) => {
+      const normalizedValue = String(value ?? "").trim()
+      if (normalizedValue) {
+        query[key] = normalizedValue
+      }
+    })
+
+    Object.entries(extraQuery).forEach(([key, value]) => {
+      const normalizedValue = String(value ?? "").trim()
+      if (normalizedValue) {
+        query[key] = normalizedValue
+      } else {
+        delete query[key]
+      }
+    })
+
+    return { origin, pathName, query }
+  } catch {
+    return null
+  }
+}
+
 const closeApplicationRunSocket = (run) => {
   if (!run || typeof run !== "object") return
   const socket = run.socket
   run.socket = null
   if (!socket) return
   try {
-    socket.close()
+    if (isSocketIoClientSocket(socket)) {
+      socket.disconnect()
+    } else if (typeof socket.close === "function") {
+      socket.close()
+    }
   } catch {
     // Ignore close errors.
   }
@@ -1423,11 +1466,18 @@ const completeApplicationRun = (run, status, message = "") => {
 const sendApplicationRunSocketEvent = (run, eventName, payload) => {
   if (!run || typeof run !== "object") return false
   const socket = run.socket
-  const webSocketApi = globalThis.WebSocket
-  if (!webSocketApi || !socket || socket.readyState !== webSocketApi.OPEN) return false
+  if (!socket) return false
   const normalizedEventName = String(eventName ?? "").trim()
   if (!normalizedEventName) return false
   try {
+    if (isSocketIoClientSocket(socket)) {
+      if (!socket.connected) return false
+      socket.emit(normalizedEventName, payload ?? {})
+      return true
+    }
+
+    const webSocketApi = globalThis.WebSocket
+    if (!webSocketApi || socket.readyState !== webSocketApi.OPEN) return false
     socket.send(`42${JSON.stringify([normalizedEventName, payload ?? {}])}`)
     return true
   } catch {
@@ -1499,21 +1549,22 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
   appendApplicationRunLog(run, "running", `Calistiriliyor: ${run.applicationName}`)
   appendApplicationRunLog(run, "running", `Backend map: ${run.backendLabel}`)
 
-  const triggerUrl = buildSocketIoWsUrl(wsUrl, { backend: run.backendKey })
-  if (!triggerUrl) {
+  const socketTarget = buildSocketIoClientTarget(wsUrl, { backend: run.backendKey })
+  if (!socketTarget) {
     completeApplicationRun(run, "error", `${run.applicationName} icin Socket.IO adresi olusturulamadi.`)
-    return run
-  }
-
-  const WebSocketApi = globalThis.WebSocket
-  if (!WebSocketApi) {
-    completeApplicationRun(run, "error", "Sunucu ortami WebSocket istemcisini desteklemiyor.")
     return run
   }
 
   let socket = null
   try {
-    socket = new WebSocketApi(triggerUrl)
+    socket = createSocketIoClient(socketTarget.origin, {
+      path: socketTarget.pathName,
+      query: socketTarget.query,
+      transports: ["websocket"],
+      reconnection: false,
+      forceNew: true,
+      timeout: 15000,
+    })
   } catch {
     completeApplicationRun(run, "error", `${run.applicationName} icin websocket baglantisi baslatilamadi.`)
     return run
@@ -1521,166 +1572,129 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
 
   run.socket = socket
 
-  socket.addEventListener("message", (event) => {
+  socket.on("connect", () => {
     if (run.settled) return
-    const payload = typeof event.data === "string" ? event.data : ""
-    if (!payload) return
-    const packets = splitEnginePackets(payload)
+    if (run.hasSocketErrorSignal) {
+      run.hasSocketErrorSignal = false
+      appendApplicationRunLog(run, "running", `${run.applicationName} websocket baglantisi toparlandi, islem devam ediyor.`)
+    } else if (!run.hasConnected) {
+      appendApplicationRunLog(run, "running", `${run.applicationName} baglandi.`)
+    }
+    run.hasConnected = true
+    run.status = "running"
+    run.connectionState = "connected"
+  })
 
-    for (const packet of packets) {
-      if (run.settled) return
+  socket.on("script-triggered", () => {
+    if (run.settled) return
+    appendApplicationRunLog(run, "running", `${run.backendLabel} script baslatildi.`)
+  })
 
-      if (run.hasSocketErrorSignal) {
-        run.hasSocketErrorSignal = false
-        run.status = "running"
-        run.connectionState = "connected"
-        appendApplicationRunLog(
-          run,
-          "running",
-          `${run.applicationName} websocket baglantisi toparlandi, islem devam ediyor.`,
-        )
-      }
+  socket.on("script-started", () => {
+    if (run.settled) return
+    appendApplicationRunLog(run, "running", `${run.backendLabel} script baslatildi.`)
+  })
 
-      if (packet === "2") {
-        try {
-          socket.send("3")
-        } catch {
-          // Ignore pong send errors.
-        }
-        continue
-      }
+  socket.on("durum", (payload) => {
+    if (run.settled) return
+    const lines = normalizeEventMessage(
+      typeof payload?.message === "string" || typeof payload?.message === "number" ? payload.message : payload,
+    )
+      .replace(/\r/g, "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
 
-      if (packet.startsWith("0{")) {
-        try {
-          socket.send("40")
-        } catch {
-          completeApplicationRun(run, "error", `${run.applicationName} icin Socket.IO baglantisi baslatilamadi.`)
-        }
-        continue
-      }
+    if (lines.length === 0) {
+      appendApplicationRunLog(run, "running", `${run.backendLabel} => -`)
+      return
+    }
 
-      if (packet.startsWith("40")) {
-        if (!run.hasConnected) {
-          appendApplicationRunLog(run, "running", `${run.applicationName} baglandi.`)
-        }
-        run.hasConnected = true
-        run.status = "running"
-        run.connectionState = "connected"
-        continue
-      }
+    lines.forEach((line) => {
+      appendApplicationRunLog(run, "running", `${run.backendLabel} => ${line}`)
+    })
+  })
 
-      if (packet.startsWith("41")) {
-        if (run.hasResult) {
-          completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
-        } else {
-          completeApplicationRun(run, "error", `${run.applicationName} baglantisi sonuc alinmadan kapandi.`)
-        }
-        return
-      }
+  socket.on("script-log", (payload) => {
+    if (run.settled) return
+    const stream = String(payload?.stream ?? "").trim().toLowerCase()
+    const lines = String(payload?.message ?? "")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+    lines.forEach((line) => {
+      appendApplicationRunLog(run, stream === "stderr" ? "error" : "running", line)
+    })
+  })
 
-      if (packet.startsWith("44")) {
-        completeApplicationRun(run, "error", `${run.applicationName} tetiklenemedi. backend=${run.backendLabel}`)
-        return
-      }
-
-      const eventPacket = parseSocketIoEventPacket(packet)
-      if (!eventPacket) continue
-      const eventName = String(eventPacket.event ?? "").trim().toLowerCase()
-      const firstArg = eventPacket.args[0]
-
-      if (eventName === "script-triggered" || eventName === "script-started") {
-        appendApplicationRunLog(run, "running", `${run.backendLabel} script baslatildi.`)
-        continue
-      }
-
-      if (eventName === "durum") {
-        const lines = String(
-          typeof firstArg?.message === "string" || typeof firstArg?.message === "number"
-            ? firstArg.message
-            : firstArg ?? "",
-        )
-          .replace(/\r/g, "")
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean)
-
-        if (lines.length === 0) {
-          appendApplicationRunLog(run, "running", `${run.backendLabel} => -`)
-        } else {
-          lines.forEach((line) => {
-            appendApplicationRunLog(run, "running", `${run.backendLabel} => ${line}`)
-          })
-        }
-        continue
-      }
-
-      if (eventName === "script-log") {
-        const stream = String(firstArg?.stream ?? "").trim().toLowerCase()
-        const lines = String(firstArg?.message ?? "")
-          .split(/\r?\n/)
-          .map((line) => line.trim())
-          .filter(Boolean)
-        lines.forEach((line) => {
-          appendApplicationRunLog(run, stream === "stderr" ? "error" : "running", line)
-        })
-        continue
-      }
-
-      if (eventName === "kullanici-girdisi-gerekli") {
-        const promptBackend = String(firstArg?.backend ?? run.backendKey).trim() || run.backendKey
-        const prompt = normalizeApplicationRunPrompt(firstArg, promptBackend)
-        if (prompt) {
-          run.pendingPrompt = prompt
-          appendApplicationRunLog(run, "running", `${run.backendLabel} => ${prompt.message}`)
-        }
-        continue
-      }
-
-      if (eventName === "sonuc") {
-        const valueText =
-          typeof firstArg?.value === "string"
-            ? firstArg.value.trim()
-            : firstArg?.value === undefined || firstArg?.value === null
-              ? String(firstArg ?? "").trim()
-              : String(firstArg.value).trim()
-        appendApplicationRunLog(run, "success", `${run.backendLabel} => ${valueText || "-"}`)
-        run.hasResult = true
-        completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
-        return
-      }
-
-      if (eventName === "script-exit") {
-        const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
-        if (Number.isFinite(exitCode)) {
-          appendApplicationRunLog(
-            run,
-            exitCode === 0 ? "success" : "error",
-            `Script cikti. Kod: ${exitCode}`,
-          )
-        }
-        if (!run.hasResult) {
-          completeApplicationRun(run, "error", `${run.applicationName} cikti ancak sonuc alinmadi.`)
-          return
-        }
-      }
+  socket.on("kullanici-girdisi-gerekli", (payload) => {
+    if (run.settled) return
+    const promptBackend = String(payload?.backend ?? run.backendKey).trim() || run.backendKey
+    const prompt = normalizeApplicationRunPrompt(payload, promptBackend)
+    if (prompt) {
+      run.pendingPrompt = prompt
+      appendApplicationRunLog(run, "running", `${run.backendLabel} => ${prompt.message}`)
     }
   })
 
-  socket.addEventListener("error", () => {
-    if (run.settled || run.hasSocketErrorSignal) return
-    run.hasSocketErrorSignal = true
-    run.status = "running"
-    run.connectionState = "connecting"
-    appendApplicationRunLog(
+  socket.on("sonuc", (payload) => {
+    if (run.settled) return
+    const valueText =
+      typeof payload?.value === "string"
+        ? payload.value.trim()
+        : payload?.value === undefined || payload?.value === null
+          ? String(payload ?? "").trim()
+          : String(payload.value).trim()
+    appendApplicationRunLog(run, "success", `${run.backendLabel} => ${valueText || "-"}`)
+    run.hasResult = true
+    completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
+  })
+
+  socket.on("script-exit", (payload) => {
+    if (run.settled) return
+    const exitCode = Number(payload?.code ?? payload?.exitCode)
+    if (Number.isFinite(exitCode)) {
+      appendApplicationRunLog(
+        run,
+        exitCode === 0 ? "success" : "error",
+        `Script cikti. Kod: ${exitCode}`,
+      )
+    }
+    if (!run.hasResult) {
+      completeApplicationRun(run, "error", `${run.applicationName} cikti ancak sonuc alinmadi.`)
+    }
+  })
+
+  socket.on("connect_error", (error) => {
+    if (run.settled) return
+    const reason = String(error?.message ?? "").trim()
+    if (run.hasConnected) {
+      run.hasSocketErrorSignal = true
+      run.status = "running"
+      run.connectionState = "connecting"
+      appendApplicationRunLog(
+        run,
+        "running",
+        reason
+          ? `${run.applicationName} websocket baglanti hatasi algiladi: ${reason}`
+          : `${run.applicationName} websocket baglanti hatasi algiladi, baglanti takip ediliyor...`,
+      )
+      return
+    }
+
+    completeApplicationRun(
       run,
-      "running",
-      `${run.applicationName} websocket baglanti hatasi algiladi, baglanti takip ediliyor...`,
+      "error",
+      reason
+        ? `${run.applicationName} icin websocket baglantisi baslatilamadi: ${reason}`
+        : `${run.applicationName} icin websocket baglantisi baslatilamadi.`,
     )
   })
 
-  socket.addEventListener("close", () => {
+  socket.on("disconnect", (reason) => {
     if (run.settled) return
     run.socket = null
+    const normalizedReason = String(reason ?? "").trim()
     if (run.hasResult) {
       completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
       return
@@ -1689,13 +1703,19 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
       completeApplicationRun(
         run,
         "error",
-        run.hasSocketErrorSignal
-          ? `${run.applicationName} icin websocket baglanti hatasi olustu ve baglanti kapandi.`
+        normalizedReason
+          ? `${run.applicationName} baglantisi sonuc gelmeden kapandi. Sebep: ${normalizedReason}`
           : `${run.applicationName} baglantisi acildi ancak sonuc gelmedi.`,
       )
       return
     }
-    completeApplicationRun(run, "error", `${run.applicationName} icin websocket baglantisi kapandi.`)
+    completeApplicationRun(
+      run,
+      "error",
+      normalizedReason
+        ? `${run.applicationName} icin websocket baglantisi kapandi. Sebep: ${normalizedReason}`
+        : `${run.applicationName} icin websocket baglantisi kapandi.`,
+    )
   })
 
   return run
