@@ -2,11 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { RiDeleteBin6Line, RiPauseFill, RiPlayFill } from "@remixicon/react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
-import {
-  buildSocketIoWsUrl,
-  parseSocketIoEventPacket,
-  splitEnginePackets,
-} from "../../utils/socketIoClient"
 
 const MAX_LOG_ENTRIES = 300
 const MASKED_BACKEND_TEXT = "******"
@@ -36,14 +31,10 @@ const formatLogTime = () =>
     second: "2-digit",
   })
 
-const normalizeEventMessage = (value) => {
-  if (typeof value === "string") return value
-  if (value === null || value === undefined) return ""
-  try {
-    return JSON.stringify(value)
-  } catch {
-    return String(value)
-  }
+const sortRunSessionsDesc = (a, b) => {
+  const startedDiff = Number(b?.startedAtMs ?? 0) - Number(a?.startedAtMs ?? 0)
+  if (startedDiff !== 0) return startedDiff
+  return String(b?.id ?? "").localeCompare(String(a?.id ?? ""))
 }
 
 const normalizePromptOptions = (value) => {
@@ -189,7 +180,6 @@ export default function ApplicationsTab({
   isLoading = false,
   backendOptions = [],
   automationWsUrl = "",
-  activeUsername = "",
   canManageApplications = false,
   canRunApplications = false,
   canViewApplicationLogs = false,
@@ -209,12 +199,11 @@ export default function ApplicationsTab({
   const [runLogsByTab, setRunLogsByTab] = useState({})
   const [isApplicationsLoading, setIsApplicationsLoading] = useState(true)
   const [isLogsLoading, setIsLogsLoading] = useState(false)
-  const [pendingUserInputByRunId, setPendingUserInputByRunId] = useState({})
   const [pendingUserInputValueByRunId, setPendingUserInputValueByRunId] = useState({})
-  const runSocketRefs = useRef({})
-  const runCompleteRefs = useRef({})
-  const runSerialRef = useRef(0)
   const runSessionsRef = useRef([])
+  const dismissedRunIdsRef = useRef(new Set())
+  const seenLiveRunIdsRef = useRef(new Set())
+  const completedToastRunIdsRef = useRef(new Set())
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -247,6 +236,66 @@ export default function ApplicationsTab({
     if (!id || !time || !status || !message) return null
     return { id, time, status, message }
   }, [])
+
+  const normalizeUserInputPrompt = useCallback(
+    (payload, backend) => {
+      const inputType = normalizeInputType(payload?.inputType)
+      const message =
+        String(payload?.message ?? "").trim() ||
+        (inputType === "choice"
+          ? "Bir secim yapin."
+          : inputType === "confirm"
+            ? "Onay verin."
+            : "Metin girin.")
+      const options = normalizePromptOptions(payload?.options)
+      const normalizedBackend = String(backend ?? "").trim()
+      const step = String(payload?.step ?? "").trim()
+      const placeholder = String(payload?.placeholder ?? "").trim()
+      if (!normalizedBackend) return null
+      if (inputType === "choice" && options.length === 0) return null
+      return {
+        backend: normalizedBackend,
+        step,
+        inputType,
+        message,
+        options,
+        placeholder,
+      }
+    },
+    [],
+  )
+
+  const normalizeApplicationRunSession = useCallback(
+    (entry) => {
+      const id = String(entry?.id ?? "").trim()
+      const label = String(entry?.label ?? "").trim()
+      const applicationId = String(entry?.applicationId ?? "").trim()
+      const applicationName = String(entry?.applicationName ?? "").trim()
+      const applicationAbout = String(entry?.applicationAbout ?? "").trim()
+      const backendKey = String(entry?.backendKey ?? "").trim()
+      if (!id || !label || !applicationId || !applicationName || !backendKey) return null
+      const backendLabel = String(entry?.backendLabel ?? backendKey).trim() || backendKey
+      const startedAtMs = Number(entry?.startedAtMs ?? 0)
+      const endedAtMs = Number(entry?.endedAtMs ?? 0)
+      return {
+        id,
+        label,
+        serial: Number(entry?.serial ?? 0) || 0,
+        applicationId,
+        applicationName,
+        applicationAbout,
+        backendKey,
+        backendLabel,
+        status: String(entry?.status ?? "").trim() || "error",
+        connectionState: String(entry?.connectionState ?? "").trim() || "idle",
+        startedAtMs: Number.isFinite(startedAtMs) ? startedAtMs : 0,
+        endedAtMs: Number.isFinite(endedAtMs) ? endedAtMs : 0,
+        createdByUsername: String(entry?.createdByUsername ?? "").trim(),
+        pendingPrompt: normalizeUserInputPrompt(entry?.pendingPrompt, backendKey),
+      }
+    },
+    [normalizeUserInputPrompt],
+  )
 
   const applicationBackendOptions = useMemo(() => {
     const raw = Array.isArray(backendOptions) ? backendOptions : []
@@ -331,78 +380,9 @@ export default function ApplicationsTab({
     }
   }, [applicationBackendOptions, backendDraft])
 
-  const closeRunSocket = useCallback((runId) => {
-    const normalizedRunId = String(runId ?? "").trim()
-    if (!normalizedRunId) return
-    const socket = runSocketRefs.current[normalizedRunId]
-    if (socket) {
-      try {
-        socket.close()
-      } catch {
-        // Ignore close errors.
-      }
-    }
-    delete runSocketRefs.current[normalizedRunId]
-  }, [])
-
-  const closeAllRunSockets = useCallback(() => {
-    Object.keys(runSocketRefs.current).forEach((runId) => {
-      closeRunSocket(runId)
-    })
-    runCompleteRefs.current = {}
-  }, [closeRunSocket])
-
   useEffect(() => {
     runSessionsRef.current = runSessions
   }, [runSessions])
-
-  const updateRunSession = useCallback((runId, updater) => {
-    const normalizedRunId = String(runId ?? "").trim()
-    if (!normalizedRunId) return
-    setRunSessions((prev) =>
-      prev.map((entry) => {
-        if (entry.id !== normalizedRunId) return entry
-        const nextPatch = typeof updater === "function" ? updater(entry) : updater
-        if (!nextPatch || typeof nextPatch !== "object") return entry
-        return { ...entry, ...nextPatch }
-      }),
-    )
-  }, [])
-
-  const clearRunPromptState = useCallback((runId) => {
-    const normalizedRunId = String(runId ?? "").trim()
-    if (!normalizedRunId) return
-    setPendingUserInputByRunId((prev) => {
-      if (!Object.prototype.hasOwnProperty.call(prev, normalizedRunId)) return prev
-      const next = { ...prev }
-      delete next[normalizedRunId]
-      return next
-    })
-    setPendingUserInputValueByRunId((prev) => {
-      if (!Object.prototype.hasOwnProperty.call(prev, normalizedRunId)) return prev
-      const next = { ...prev }
-      delete next[normalizedRunId]
-      return next
-    })
-  }, [])
-
-  const sendSocketIoEvent = useCallback((socket, eventName, payload) => {
-    if (!socket || socket.readyState !== WebSocket.OPEN) return false
-    const normalizedEventName = String(eventName ?? "").trim()
-    if (!normalizedEventName) return false
-    try {
-      socket.send(`42${JSON.stringify([normalizedEventName, payload ?? {}])}`)
-      return true
-    } catch {
-      return false
-    }
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      closeAllRunSockets()
-    }
-  }, [closeAllRunSockets])
 
   const apiFetchApplications = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -516,34 +496,6 @@ export default function ApplicationsTab({
     [isRunLive, runSessions],
   )
 
-  const normalizeUserInputPrompt = useCallback(
-    (payload, backend) => {
-      const inputType = normalizeInputType(payload?.inputType)
-      const message =
-        String(payload?.message ?? "").trim() ||
-        (inputType === "choice"
-          ? "Bir secim yapin."
-          : inputType === "confirm"
-            ? "Onay verin."
-            : "Metin girin.")
-      const options = normalizePromptOptions(payload?.options)
-      const normalizedBackend = String(backend ?? "").trim()
-      const step = String(payload?.step ?? "").trim()
-      const placeholder = String(payload?.placeholder ?? "").trim()
-      if (!normalizedBackend) return null
-      if (inputType === "choice" && options.length === 0) return null
-      return {
-        backend: normalizedBackend,
-        step,
-        inputType,
-        message,
-        options,
-        placeholder,
-      }
-    },
-    [],
-  )
-
   useEffect(() => {
     const appId = String(selectedApplicationId ?? "").trim()
     if (!appId || !canViewApplicationLogs) {
@@ -552,13 +504,15 @@ export default function ApplicationsTab({
     }
 
     let isMounted = true
-    const controller = new AbortController()
+    let hasLoadError = false
+    let hasLoadedOnce = false
 
     const loadLogs = async () => {
-      setIsLogsLoading(true)
+      if (!hasLoadedOnce) {
+        setIsLogsLoading(true)
+      }
       try {
         const res = await apiFetchApplications(`/api/applications/${encodeURIComponent(appId)}/logs`, {
-          signal: controller.signal,
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
@@ -570,9 +524,15 @@ export default function ApplicationsTab({
           ? payload.map(normalizeApplicationLogEntry).filter(Boolean)
           : []
         setRunLogsByApplication((prev) => ({ ...prev, [appId]: normalized }))
+        hasLoadError = false
+        hasLoadedOnce = true
       } catch (error) {
-        if (!isMounted || controller.signal.aborted) return
-        toast.error(error?.message || "Servis Konsolu loglari alinamadi.")
+        if (!isMounted) return
+        if (!hasLoadError) {
+          toast.error(error?.message || "Servis Konsolu loglari alinamadi.")
+          hasLoadError = true
+        }
+        hasLoadedOnce = true
       } finally {
         if (isMounted) setIsLogsLoading(false)
       }
@@ -580,9 +540,24 @@ export default function ApplicationsTab({
 
     void loadLogs()
 
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "hidden") return
+      void loadLogs()
+    }, 3000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return
+      void loadLogs()
+    }
+
+    window.addEventListener("focus", handleVisibilityChange)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     return () => {
       isMounted = false
-      controller.abort()
+      window.clearInterval(intervalId)
+      window.removeEventListener("focus", handleVisibilityChange)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
   }, [
     apiFetchApplications,
@@ -636,41 +611,207 @@ export default function ApplicationsTab({
     [apiFetchApplications, appendLog],
   )
 
-  const appendRunTabLog = useCallback((runId, status, message) => {
-    const normalizedRunId = String(runId ?? "").trim()
-    if (!normalizedRunId) return null
-    const normalizedMessage = String(message ?? "").trim()
-    if (!normalizedMessage) return null
-    const nextEntry = {
-      id: `run-tab-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      time: formatLogTime(),
-      status: String(status ?? "").trim() || "running",
-      message: normalizedMessage,
+  const syncRunSessions = useCallback(
+    (payload) => {
+      const normalizedRuns = Array.isArray(payload)
+        ? payload.map(normalizeApplicationRunSession).filter(Boolean)
+        : []
+
+      normalizedRuns.forEach((entry) => {
+        if (isRunLive(entry.status)) {
+          seenLiveRunIdsRef.current.add(entry.id)
+        }
+      })
+
+      setRunSessions((prev) => {
+        const prevById = new Map(prev.map((entry) => [entry.id, entry]))
+        return normalizedRuns
+          .filter((entry) => !(dismissedRunIdsRef.current.has(entry.id) && !isRunLive(entry.status)))
+          .map((entry) => ({ ...(prevById.get(entry.id) || {}), ...entry }))
+          .sort(sortRunSessionsDesc)
+      })
+
+      setPendingUserInputValueByRunId((prev) => {
+        let next = prev
+        const promptRunIds = new Set(
+          normalizedRuns.filter((entry) => entry.pendingPrompt).map((entry) => entry.id),
+        )
+        const runIds = new Set(normalizedRuns.map((entry) => entry.id))
+        Object.keys(prev).forEach((runId) => {
+          if (runIds.has(runId) && promptRunIds.has(runId)) return
+          if (next === prev) next = { ...prev }
+          delete next[runId]
+        })
+        return next
+      })
+    },
+    [isRunLive, normalizeApplicationRunSession],
+  )
+
+  const applyRunSnapshot = useCallback(
+    (payload) => {
+      const normalizedRun = normalizeApplicationRunSession(payload?.run ?? payload)
+      if (!normalizedRun) return null
+
+      dismissedRunIdsRef.current.delete(normalizedRun.id)
+      if (isRunLive(normalizedRun.status)) {
+        seenLiveRunIdsRef.current.add(normalizedRun.id)
+      }
+
+      setRunSessions((prev) => {
+        const current = prev.find((entry) => entry.id === normalizedRun.id) || null
+        const next = [{ ...(current || {}), ...normalizedRun }, ...prev.filter((entry) => entry.id !== normalizedRun.id)]
+        return next.sort(sortRunSessionsDesc)
+      })
+
+      if (Array.isArray(payload?.logs)) {
+        const normalizedLogs = payload.logs.map(normalizeApplicationLogEntry).filter(Boolean)
+        setRunLogsByTab((prev) => ({
+          ...prev,
+          [normalizedRun.id]: normalizedLogs,
+        }))
+      }
+
+      if (!normalizedRun.pendingPrompt) {
+        setPendingUserInputValueByRunId((prev) => {
+          if (!Object.prototype.hasOwnProperty.call(prev, normalizedRun.id)) return prev
+          const next = { ...prev }
+          delete next[normalizedRun.id]
+          return next
+        })
+      }
+
+      return normalizedRun
+    },
+    [isRunLive, normalizeApplicationLogEntry, normalizeApplicationRunSession],
+  )
+
+  const fetchRunSessions = useCallback(
+    async ({ silent = true } = {}) => {
+      if (!canAccessApplications) return
+      try {
+        const res = await apiFetchApplications("/api/application-runs")
+        if (!res.ok) {
+          const apiError = await readApiError(res)
+          throw new Error(apiError || "Servis oturumlari alinamadi.")
+        }
+        const payload = await res.json()
+        syncRunSessions(payload)
+      } catch (error) {
+        if (!silent) {
+          toast.error(error?.message || "Servis oturumlari alinamadi.")
+        }
+      }
+    },
+    [apiFetchApplications, canAccessApplications, readApiError, syncRunSessions],
+  )
+
+  const fetchRunSnapshot = useCallback(
+    async (runId, { silent = true } = {}) => {
+      const normalizedRunId = String(runId ?? "").trim()
+      if (!normalizedRunId) return null
+      try {
+        const res = await apiFetchApplications(`/api/application-runs/${encodeURIComponent(normalizedRunId)}`)
+        if (!res.ok) {
+          const apiError = await readApiError(res)
+          throw new Error(apiError || "Servis oturumu alinamadi.")
+        }
+        return applyRunSnapshot(await res.json())
+      } catch (error) {
+        if (!silent) {
+          toast.error(error?.message || "Servis oturumu alinamadi.")
+        }
+        return null
+      }
+    },
+    [apiFetchApplications, applyRunSnapshot, readApiError],
+  )
+
+  useEffect(() => {
+    if (!canAccessApplications) {
+      setRunSessions([])
+      setRunLogsByTab({})
+      return
     }
-    setRunLogsByTab((prev) => {
-      const current = Array.isArray(prev[normalizedRunId]) ? prev[normalizedRunId] : []
-      return {
-        ...prev,
-        [normalizedRunId]: [nextEntry, ...current].slice(0, MAX_LOG_ENTRIES),
+
+    const sync = () => {
+      void fetchRunSessions({ silent: true })
+    }
+
+    sync()
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "hidden") return
+      sync()
+    }, 2500)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return
+      sync()
+    }
+
+    window.addEventListener("focus", handleVisibilityChange)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener("focus", handleVisibilityChange)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [canAccessApplications, fetchRunSessions])
+
+  useEffect(() => {
+    if (!activeRunId) return
+
+    const sync = () => {
+      void fetchRunSnapshot(activeRunId, { silent: true })
+    }
+
+    sync()
+
+    const intervalId = isRunLive(activeRunSession?.status)
+      ? window.setInterval(() => {
+          if (document.visibilityState === "hidden") return
+          sync()
+        }, 1500)
+      : null
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return
+      sync()
+    }
+
+    window.addEventListener("focus", handleVisibilityChange)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      if (intervalId) {
+        window.clearInterval(intervalId)
+      }
+      window.removeEventListener("focus", handleVisibilityChange)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [activeRunId, activeRunSession?.status, fetchRunSnapshot, isRunLive])
+
+  useEffect(() => {
+    runSessions.forEach((entry) => {
+      if (isRunLive(entry.status)) {
+        seenLiveRunIdsRef.current.add(entry.id)
+        return
+      }
+      if (!seenLiveRunIdsRef.current.has(entry.id)) return
+      if (completedToastRunIdsRef.current.has(entry.id)) return
+
+      completedToastRunIdsRef.current.add(entry.id)
+      if (entry.status === "success") {
+        toast.success(`${entry.applicationName}: Servis hatasiz bitirildi.`, {
+          position: "top-right",
+        })
+      } else if (entry.status === "error") {
+        toast.error(`${entry.applicationName} tamamlanamadi.`, { position: "top-right" })
       }
     })
-    return nextEntry
-  }, [])
-
-  const persistRunLog = useCallback(
-    (runId, appId, status, message) => {
-      const normalizedRunId = String(runId ?? "").trim()
-      const normalizedAppId = String(appId ?? "").trim()
-      if (!normalizedRunId || !normalizedAppId) return
-      const normalizedMessage = String(message ?? "").trim()
-      if (!normalizedMessage) return
-      appendRunTabLog(normalizedRunId, status, normalizedMessage)
-      const runEntry = runSessionsRef.current.find((entry) => entry.id === normalizedRunId) || null
-      const runPrefix = runEntry ? `[${runEntry.label}] ` : ""
-      void persistLog(normalizedAppId, status, `${runPrefix}${normalizedMessage}`)
-    },
-    [appendRunTabLog, persistLog],
-  )
+  }, [isRunLive, runSessions])
 
   const handleSave = async () => {
     if (!canManageApplications) {
@@ -846,17 +987,29 @@ export default function ApplicationsTab({
         toast.error("Calisan sekme kapatilamaz. Once islemi iptal edin.")
         return
       }
+      dismissedRunIdsRef.current.add(normalizedRunId)
       setRunSessions((prev) => prev.filter((entry) => entry.id !== normalizedRunId))
       runSessionsRef.current = runSessionsRef.current.filter((entry) => entry.id !== normalizedRunId)
-      clearRunPromptState(normalizedRunId)
+      setRunLogsByTab((prev) => {
+        if (!Object.prototype.hasOwnProperty.call(prev, normalizedRunId)) return prev
+        const next = { ...prev }
+        delete next[normalizedRunId]
+        return next
+      })
+      setPendingUserInputValueByRunId((prev) => {
+        if (!Object.prototype.hasOwnProperty.call(prev, normalizedRunId)) return prev
+        const next = { ...prev }
+        delete next[normalizedRunId]
+        return next
+      })
       if (activeConsoleTabId === normalizedRunId) {
         setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)
       }
     },
-    [activeConsoleTabId, clearRunPromptState, isRunLive],
+    [activeConsoleTabId, isRunLive],
   )
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     if (!canRunApplications) {
       toast.error("Servis calistirma yetkiniz yok.")
       return
@@ -876,363 +1029,79 @@ export default function ApplicationsTab({
       return
     }
 
-    const backendKey = String(selectedApplication.backendKey ?? "").trim()
-    if (!backendKey) {
-      toast.error("Servis backend map anahtari bulunamadi.")
-      return
-    }
-
-    const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, { backend: backendKey })
-    if (!triggerUrl) {
-      toast.error("Socket.IO adresi olusturulamadi.")
-      return
-    }
-
-    runSerialRef.current += 1
-    const runSerial = runSerialRef.current
-    const runId = `service-run-${Date.now()}-${runSerial}`
-    const runLabel = `${selectedApplication.name} #${runSerial}`
-    const backendDisplay = getBackendLabelForDisplay(selectedApplication.backendLabel)
-    const serviceLabel = selectedApplication.name
-    const starterUsername = String(activeUsername ?? "").trim() || "bilinmeyen-kullanici"
-    const runStartedAt = Date.now()
-    const runToastId = toast.loading(`${runLabel} calisiyor...`, { position: "top-right" })
-    const runEntry = {
-      id: runId,
-      label: runLabel,
-      serial: runSerial,
-      applicationId: selectedApplication.id,
-      applicationName: selectedApplication.name,
-      applicationAbout: selectedApplication.about,
-      backendKey,
-      backendLabel: selectedApplication.backendLabel,
-      status: "connecting",
-      connectionState: "connecting",
-      startedAtMs: runStartedAt,
-      endedAtMs: 0,
-    }
-
-    setRunSessions((prev) => [runEntry, ...prev])
-    runSessionsRef.current = [runEntry, ...runSessionsRef.current]
-    setActiveConsoleTabId(runId)
-    setPendingUserInputByRunId((prev) => ({ ...prev, [runId]: null }))
-    setPendingUserInputValueByRunId((prev) => ({ ...prev, [runId]: "" }))
-
-    void persistRunLog(runId, selectedApplication.id, "running", `Calistiran: ${starterUsername}`)
-    void persistRunLog(runId, selectedApplication.id, "running", `Calistiriliyor: ${serviceLabel}`)
-    void persistRunLog(runId, selectedApplication.id, "running", `Backend map: ${backendDisplay}`)
-
-    let settled = false
-    let hasConnected = false
-    let hasResult = false
-    let hasSocketErrorSignal = false
-
-    const completeRun = (status, message) => {
-      if (settled) return
-      settled = true
-      delete runCompleteRefs.current[runId]
-
-      const normalizedStatus = String(status ?? "").trim() || "error"
-      if (message) {
-        void persistRunLog(runId, selectedApplication.id, normalizedStatus, message)
-      }
-
-      if (normalizedStatus === "success") {
-        toast.success(message || `${serviceLabel}: Servis hatasiz bitirildi.`, {
-          id: runToastId,
-          position: "top-right",
-        })
-      } else if (normalizedStatus === "error") {
-        toast.error(message || `${serviceLabel} tamamlanamadi.`, { id: runToastId, position: "top-right" })
-      } else {
-        toast.dismiss(runToastId)
-      }
-
-      updateRunSession(runId, {
-        status: normalizedStatus,
-        connectionState: normalizedStatus === "error" ? "error" : hasConnected ? "connected" : "idle",
-        endedAtMs: Date.now(),
-      })
-      clearRunPromptState(runId)
-      closeRunSocket(runId)
-    }
-
-    runCompleteRefs.current[runId] = completeRun
-
-    let socket
     try {
-      socket = new WebSocket(triggerUrl)
-    } catch {
-      completeRun("error", `${serviceLabel} icin websocket baglantisi baslatilamadi.`)
-      return
-    }
-    runSocketRefs.current[runId] = socket
-
-    socket.addEventListener("message", (event) => {
-      if (settled) return
-      const payload = typeof event.data === "string" ? event.data : ""
-      if (!payload) return
-      const packets = splitEnginePackets(payload)
-
-      for (const packet of packets) {
-        if (settled) return
-
-        if (hasSocketErrorSignal) {
-          hasSocketErrorSignal = false
-          updateRunSession(runId, { status: "running", connectionState: "connected" })
-          void persistRunLog(
-            runId,
-            selectedApplication.id,
-            "running",
-            `${serviceLabel} websocket baglantisi toparlandi, islem devam ediyor.`,
-          )
-        }
-
-        if (packet === "2") {
-          try {
-            socket.send("3")
-          } catch {
-            // Ignore pong send errors.
-          }
-          continue
-        }
-
-        if (packet.startsWith("0{")) {
-          try {
-            socket.send("40")
-          } catch {
-            completeRun("error", `${serviceLabel} icin Socket.IO baglantisi baslatilamadi.`)
-          }
-          continue
-        }
-
-        if (packet.startsWith("40")) {
-          if (!hasConnected) {
-            void persistRunLog(runId, selectedApplication.id, "running", `${serviceLabel} baglandi.`)
-          }
-          hasConnected = true
-          updateRunSession(runId, { status: "running", connectionState: "connected" })
-          continue
-        }
-
-        if (packet.startsWith("41")) {
-          if (hasResult) {
-            completeRun("success", `${serviceLabel}: Servis hatasiz bitirildi.`)
-          } else {
-            completeRun("error", `${serviceLabel} baglantisi sonuc alinmadan kapandi.`)
-          }
-          return
-        }
-
-        if (packet.startsWith("44")) {
-          completeRun("error", `${serviceLabel} tetiklenemedi. backend=${backendDisplay}`)
-          return
-        }
-
-        const eventPacket = parseSocketIoEventPacket(packet)
-        if (!eventPacket) continue
-        const eventName = String(eventPacket.event ?? "").trim().toLowerCase()
-        const firstArg = eventPacket.args[0]
-
-        if (eventName === "script-triggered" || eventName === "script-started") {
-          void persistRunLog(runId, selectedApplication.id, "running", `${backendDisplay} script baslatildi.`)
-          continue
-        }
-
-        if (eventName === "durum") {
-          const lines = normalizeEventMessage(firstArg?.message ?? firstArg)
-            .replace(/\r/g, "")
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean)
-          if (lines.length === 0) {
-            void persistRunLog(runId, selectedApplication.id, "running", `${backendDisplay} => -`)
-          } else {
-            lines.forEach((line) => {
-              void persistRunLog(runId, selectedApplication.id, "running", `${backendDisplay} => ${line}`)
-            })
-          }
-          continue
-        }
-
-        if (eventName === "script-log") {
-          const stream = String(firstArg?.stream ?? "").trim().toLowerCase()
-          const lines = String(firstArg?.message ?? "")
-            .split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter(Boolean)
-          lines.forEach((line) => {
-            void persistRunLog(runId, selectedApplication.id, stream === "stderr" ? "error" : "running", line)
-          })
-          continue
-        }
-
-        if (eventName === "kullanici-girdisi-gerekli") {
-          const promptBackend = String(firstArg?.backend ?? backendKey).trim() || backendKey
-          const prompt = normalizeUserInputPrompt(firstArg, promptBackend)
-          if (prompt) {
-            setPendingUserInputByRunId((prev) => ({ ...prev, [runId]: prompt }))
-            setPendingUserInputValueByRunId((prev) => ({ ...prev, [runId]: "" }))
-            const promptMessage = String(prompt.message ?? "").trim() || "Kullanici girdisi gerekli."
-            void persistRunLog(runId, selectedApplication.id, "running", `${backendDisplay} => ${promptMessage}`)
-          }
-          continue
-        }
-
-        if (eventName === "sonuc") {
-          const valueText = normalizeEventMessage(firstArg?.value ?? firstArg).trim()
-          void persistRunLog(runId, selectedApplication.id, "success", `${backendDisplay} => ${valueText || "-"}`)
-          hasResult = true
-          completeRun("success", `${serviceLabel}: Servis hatasiz bitirildi.`)
-          return
-        }
-
-        if (eventName === "script-exit") {
-          const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
-          if (Number.isFinite(exitCode)) {
-            void persistRunLog(
-              runId,
-              selectedApplication.id,
-              exitCode === 0 ? "success" : "error",
-              `Script cikti. Kod: ${exitCode}`,
-            )
-          }
-          if (!hasResult) {
-            completeRun("error", `${serviceLabel} cikti ancak sonuc alinmadi.`)
-            return
-          }
-        }
-      }
-    })
-
-    socket.addEventListener("error", () => {
-      if (settled) return
-      if (hasSocketErrorSignal) return
-      hasSocketErrorSignal = true
-      updateRunSession(runId, { status: "running", connectionState: "connecting" })
-      void persistRunLog(
-        runId,
-        selectedApplication.id,
-        "running",
-        `${serviceLabel} websocket baglanti hatasi algiladi, baglanti takip ediliyor...`,
+      const res = await apiFetchApplications(
+        `/api/applications/${encodeURIComponent(selectedApplication.id)}/run`,
+        {
+          method: "POST",
+        },
       )
-    })
+      if (!res.ok) {
+        const apiError = await readApiError(res)
+        const message =
+          apiError === "automation_ws_url_missing"
+            ? "Websocket adresi bulunamadi. Admin panelinden kaydedin."
+            : apiError === "application_inactive"
+              ? "Secilen servis kapali. Once aktif edin."
+              : apiError || "Servis baslatilamadi."
+        throw new Error(message)
+      }
 
-    socket.addEventListener("close", () => {
-      if (settled) return
-      if (hasResult) {
-        completeRun("success", `${serviceLabel}: Servis hatasiz bitirildi.`)
-        return
+      const runEntry = applyRunSnapshot(await res.json())
+      if (!runEntry) {
+        throw new Error("Servis oturumu olusturulamadi.")
       }
-      if (hasConnected) {
-        completeRun(
-          "error",
-          hasSocketErrorSignal
-            ? `${serviceLabel} icin websocket baglanti hatasi olustu ve baglanti kapandi.`
-            : `${serviceLabel} baglantisi acildi ancak sonuc gelmedi.`,
-        )
-        return
-      }
-      completeRun("error", `${serviceLabel} icin websocket baglantisi kapandi.`)
-    })
+
+      completedToastRunIdsRef.current.delete(runEntry.id)
+      setActiveConsoleTabId(runEntry.id)
+      toast.success(`${runEntry.label} baslatildi.`, { position: "top-right" })
+    } catch (error) {
+      toast.error(error?.message || "Servis baslatilamadi.")
+    }
   }, [
-    activeUsername,
+    apiFetchApplications,
+    applyRunSnapshot,
     automationWsUrl,
     canRunApplications,
-    clearRunPromptState,
-    closeRunSocket,
-    getBackendLabelForDisplay,
-    normalizeUserInputPrompt,
-    persistRunLog,
+    readApiError,
     selectedApplication,
-    updateRunSession,
   ])
 
   const handleCancelRun = useCallback(
-    (runIdOverride = "") => {
+    async (runIdOverride = "") => {
       const targetRunId = String(runIdOverride || activeRunId).trim()
       if (!targetRunId) return
       const runEntry = runSessionsRef.current.find((entry) => entry.id === targetRunId) || null
       if (!runEntry || !isRunLive(runEntry.status)) return
-
-      const socket = runSocketRefs.current[targetRunId] || null
-      const pendingPrompt = pendingUserInputByRunId[targetRunId]
-      const backend = String(runEntry.backendKey ?? "").trim()
-      const step = String(pendingPrompt?.step ?? "").trim()
-
-      if (backend) {
-        const cancelPayload = {
-          backend,
-          step,
-          reason: "user-cancelled",
+      try {
+        const res = await apiFetchApplications(
+          `/api/application-runs/${encodeURIComponent(targetRunId)}/cancel`,
+          {
+            method: "POST",
+          },
+        )
+        if (!res.ok) {
+          const apiError = await readApiError(res)
+          throw new Error(apiError || "Islem iptal edilemedi.")
         }
-        const cancelSent = sendSocketIoEvent(socket, "islem-iptal", cancelPayload)
-        if (!cancelSent) {
-          sendSocketIoEvent(socket, "kullanici-girdisi", {
-            backend,
-            step,
-            value: "iptal",
-            reason: "user-cancelled",
-          })
-        } else {
-          void persistRunLog(
-            targetRunId,
-            runEntry.applicationId,
-            "running",
-            `${getBackendLabelForDisplay(runEntry.backendLabel)} => iptal eventi gonderildi.`,
-          )
-        }
+        applyRunSnapshot(await res.json())
+        toast("Islem iptal edildi.", { position: "top-right" })
+      } catch (error) {
+        toast.error(error?.message || "Islem iptal edilemedi.")
       }
-
-      const completeRun = runCompleteRefs.current[targetRunId]
-      if (typeof completeRun === "function") {
-        completeRun("error", "Islem kullanici tarafindan iptal edildi.")
-        return
-      }
-
-      closeRunSocket(targetRunId)
-      updateRunSession(targetRunId, {
-        status: "error",
-        connectionState: "error",
-        endedAtMs: Date.now(),
-      })
-      clearRunPromptState(targetRunId)
-      toast("Islem iptal edildi.", { position: "top-right" })
     },
-    [
-      activeRunId,
-      clearRunPromptState,
-      closeRunSocket,
-      getBackendLabelForDisplay,
-      isRunLive,
-      pendingUserInputByRunId,
-      persistRunLog,
-      sendSocketIoEvent,
-      updateRunSession,
-    ],
+    [activeRunId, apiFetchApplications, applyRunSnapshot, isRunLive, readApiError],
   )
 
   const handleUserInputSubmit = useCallback(
-    (forcedValue = "", runIdOverride = "") => {
+    async (forcedValue = "", runIdOverride = "") => {
       const targetRunId = String(runIdOverride || activeRunId).trim()
       if (!targetRunId) return
       const runEntry = runSessionsRef.current.find((entry) => entry.id === targetRunId) || null
       if (!runEntry || !isRunLive(runEntry.status)) return
 
-      const pendingUserInput = pendingUserInputByRunId[targetRunId]
+      const pendingUserInput = runEntry.pendingPrompt
       if (!pendingUserInput) return
-
-      const socket = runSocketRefs.current[targetRunId] || null
-      if (!socket || socket.readyState !== WebSocket.OPEN) {
-        toast.error("Websocket baglantisi acik degil.")
-        return
-      }
-
-      const backend = String(pendingUserInput.backend || runEntry.backendKey || "").trim()
-      if (!backend) {
-        toast.error("Backend bilgisi bulunamadi.")
-        return
-      }
 
       const inputType = normalizeInputType(pendingUserInput.inputType)
       const normalizedForced = String(forcedValue ?? "").trim()
@@ -1250,27 +1119,36 @@ export default function ApplicationsTab({
       }
 
       try {
-        const sent = sendSocketIoEvent(socket, "kullanici-girdisi", {
-          backend,
-          value: valueToSend,
-        })
-        if (!sent) {
-          throw new Error("Kullanici girdisi gonderilemedi.")
+        const res = await apiFetchApplications(
+          `/api/application-runs/${encodeURIComponent(targetRunId)}/input`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: valueToSend }),
+          },
+        )
+        if (!res.ok) {
+          const apiError = await readApiError(res)
+          const message =
+            apiError === "application_run_socket_not_open"
+              ? "Servis baglantisi hazir degil."
+              : apiError === "application_run_input_not_requested"
+                ? "Bekleyen bir kullanici girdisi yok."
+                : apiError || "Kullanici girdisi gonderilemedi."
+          throw new Error(message)
         }
-        void persistRunLog(targetRunId, runEntry.applicationId, "running", `> ${valueToSend}`)
-        clearRunPromptState(targetRunId)
-      } catch {
-        toast.error("Kullanici girdisi gonderilemedi.")
+        applyRunSnapshot(await res.json())
+      } catch (error) {
+        toast.error(error?.message || "Kullanici girdisi gonderilemedi.")
       }
     },
     [
       activeRunId,
-      clearRunPromptState,
+      apiFetchApplications,
+      applyRunSnapshot,
       isRunLive,
-      pendingUserInputByRunId,
       pendingUserInputValueByRunId,
-      persistRunLog,
-      sendSocketIoEvent,
+      readApiError,
     ],
   )
 
@@ -1313,7 +1191,7 @@ export default function ApplicationsTab({
     return Array.isArray(logs) ? logs : []
   }, [activeRunSession, runLogsByTab])
   const consoleLogs = activeRunSession ? activeRunLogs : historyLogs
-  const activeRunPrompt = activeRunSession ? pendingUserInputByRunId[activeRunSession.id] || null : null
+  const activeRunPrompt = activeRunSession?.pendingPrompt || null
   const activeRunPromptValue = activeRunSession
     ? String(pendingUserInputValueByRunId[activeRunSession.id] ?? "")
     : ""

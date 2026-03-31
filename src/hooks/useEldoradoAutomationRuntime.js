@@ -1,11 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../constants/appConstants"
-import {
-  buildSocketIoWsUrl,
-  parseSocketIoEventPacket,
-  splitEnginePackets,
-} from "../utils/socketIoClient"
 
 const normalizeAutomationLogEntry = (entry) => {
   const id = String(entry?.id ?? "").trim()
@@ -35,21 +30,55 @@ const normalizeMaskFunction = (maskSensitiveText) =>
         return "*".repeat(safeLength)
       }
 
-const normalizeEventMessage = (value) => {
-  if (typeof value === "string") return value
-  if (value === null || value === undefined) return ""
-  try {
-    return JSON.stringify(value)
-  } catch {
-    return String(value)
+const normalizeAutomationPrompt = (value) => {
+  const backend = String(value?.backend ?? "").trim()
+  const message = String(value?.message ?? "").trim()
+  if (!backend) return null
+  return { backend, message }
+}
+
+const normalizeAutomationResultPopup = (value) => {
+  if (!value || typeof value !== "object") return null
+  return {
+    title: String(value?.title ?? "").trim(),
+    backend: String(value?.backend ?? "").trim(),
+    value: String(value?.value ?? "").trim(),
   }
 }
-const STAR_PREFIX = "\u2605 "
+
+const normalizeAutomationRunEntry = (entry) => {
+  const id = String(entry?.id ?? "").trim()
+  const offerId = String(entry?.offerId ?? "").trim()
+  if (!id || !offerId) return null
+  return {
+    id,
+    offerId,
+    label: String(entry?.label ?? "").trim() || "Stok cek",
+    status: String(entry?.status ?? "").trim() || "error",
+    connectionState: String(entry?.connectionState ?? "").trim() || "idle",
+    startedAtMs: Number(entry?.startedAtMs ?? 0) || 0,
+    endedAtMs: Number(entry?.endedAtMs ?? 0) || 0,
+    lastMessage: String(entry?.lastMessage ?? "").trim(),
+    pendingTwoFactorPrompt: normalizeAutomationPrompt(entry?.pendingTwoFactorPrompt),
+    resultPopup: normalizeAutomationResultPopup(entry?.resultPopup),
+  }
+}
+
+const isLiveAutomationRun = (status) => {
+  const normalized = String(status ?? "").trim().toLowerCase()
+  return normalized === "running" || normalized === "connecting"
+}
+
+const sortAutomationRunsDesc = (a, b) => {
+  const startedDiff = Number(b?.startedAtMs ?? 0) - Number(a?.startedAtMs ?? 0)
+  if (startedDiff !== 0) return startedDiff
+  return String(b?.id ?? "").localeCompare(String(a?.id ?? ""))
+}
 
 export default function useEldoradoAutomationRuntime({
-  activeUsername = "",
   automationWsUrl = "",
   canRunAutomation = false,
+  canViewAutomationLogs = false,
   canClearAutomationLogs = false,
   canViewAutomationTargetDetails = true,
   maskSensitiveText,
@@ -57,6 +86,7 @@ export default function useEldoradoAutomationRuntime({
   maxAutomationRunLogEntries = 300,
 }) {
   const maskSensitive = normalizeMaskFunction(maskSensitiveText)
+  const canAccessAutomationRuns = canRunAutomation || canViewAutomationLogs
   const [automationRunLogByOffer, setAutomationRunLogByOffer] = useState({})
   const [automationIsRunningByOffer, setAutomationIsRunningByOffer] = useState({})
   const [automationConnectionStateByOffer, setAutomationConnectionStateByOffer] = useState({})
@@ -65,9 +95,12 @@ export default function useEldoradoAutomationRuntime({
   const [automationLogsLoadedByOffer, setAutomationLogsLoadedByOffer] = useState({})
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [automationLogsClearingByOffer, setAutomationLogsClearingByOffer] = useState({})
-  const automationSocketByOfferRef = useRef({})
+  const automationRunByOfferRef = useRef({})
+  const seenAutomationLiveRunIdsRef = useRef(new Set())
+  const completedAutomationToastRunIdsRef = useRef(new Set())
+  const shownAutomationResultRunIdsRef = useRef(new Set())
 
-  const apiFetchAutomationLog = async (input, init = {}) => {
+  const apiFetchAutomation = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
     if (typeof window !== "undefined") {
       try {
@@ -80,576 +113,469 @@ export default function useEldoradoAutomationRuntime({
       }
     }
     return fetch(input, { ...init, headers })
-  }
+  }, [])
 
-  const persistAutomationRunLogEntry = async (offerId, entry) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId || !entry) return
-    try {
-      const res = await apiFetchAutomationLog(`/api/eldorado/offers/${normalizedId}/automation-logs`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(entry),
-      })
-      if (!res.ok) {
-        // Ignore API-level errors; keep UI responsive.
-      }
-    } catch {
-      // Ignore persistence errors; keep UI responsive.
-    }
-  }
-
-  const appendAutomationRunLog = (offerId, status, message, options = {}) => {
-    const normalizedId = String(offerId ?? "").trim()
-    const normalizedMessage = String(message ?? "").trim()
-    if (!normalizedId || !normalizedMessage) return
-    const entryTime = formatAutomationLogTimestamp()
-    const entry = {
-      id: `auto-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      time: entryTime,
-      status: String(status ?? "").trim() || "running",
-      message: normalizedMessage,
-    }
-    setAutomationRunLogByOffer((prev) => {
-      const current = Array.isArray(prev?.[normalizedId]) ? prev[normalizedId] : []
-      return {
-        ...prev,
-        [normalizedId]: [entry, ...current].slice(0, maxAutomationRunLogEntries),
-      }
-    })
-    if (options?.persist !== false) {
-      void persistAutomationRunLogEntry(normalizedId, entry)
-    }
-  }
-
-  const closeAutomationSocket = (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    const socket = automationSocketByOfferRef.current[normalizedId]
-    if (socket) {
+  const persistAutomationRunLogEntry = useCallback(
+    async (offerId, entry) => {
+      const normalizedId = String(offerId ?? "").trim()
+      if (!normalizedId || !entry) return
       try {
-        socket.close()
+        const res = await apiFetchAutomation(`/api/eldorado/offers/${normalizedId}/automation-logs`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(entry),
+        })
+        if (!res.ok) {
+          // Ignore API-level errors; keep UI responsive.
+        }
       } catch {
-        // Ignore close errors.
+        // Ignore persistence errors; keep UI responsive.
       }
-      delete automationSocketByOfferRef.current[normalizedId]
-    }
-    setAutomationTwoFactorPromptByOffer((prev) => {
-      if (!prev?.[normalizedId]) return prev
-      const next = { ...prev }
-      delete next[normalizedId]
-      return next
-    })
-    setAutomationTwoFactorCodeByOffer((prev) => {
-      if (!prev?.[normalizedId]) return prev
-      const next = { ...prev }
-      delete next[normalizedId]
-      return next
-    })
-  }
+    },
+    [apiFetchAutomation],
+  )
 
-  const loadAutomationRunLogs = async (offerId, options = {}) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return false
-    const force = Boolean(options?.force)
-    if (!force && automationLogsLoadedByOffer?.[normalizedId]) return true
-
-    setAutomationLogsLoadingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
-    try {
-      const res = await apiFetchAutomationLog(
-        `/api/eldorado/offers/${normalizedId}/automation-logs?limit=${maxAutomationRunLogEntries}`,
-      )
-      if (!res.ok) {
-        throw new Error("automation_logs_load_failed")
+  const appendAutomationRunLog = useCallback(
+    (offerId, status, message, options = {}) => {
+      const normalizedId = String(offerId ?? "").trim()
+      const normalizedMessage = String(message ?? "").trim()
+      if (!normalizedId || !normalizedMessage) return
+      const entry = {
+        id: `auto-log-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        time: formatAutomationLogTimestamp(),
+        status: String(status ?? "").trim() || "running",
+        message: normalizedMessage,
       }
-      const payload = await res.json()
-      const normalized = Array.isArray(payload)
-        ? payload.map(normalizeAutomationLogEntry).filter(Boolean)
-        : []
-      setAutomationRunLogByOffer((prev) => ({
-        ...prev,
-        [normalizedId]: normalized.slice(0, maxAutomationRunLogEntries),
-      }))
-      setAutomationLogsLoadedByOffer((prev) => ({ ...prev, [normalizedId]: true }))
-      return true
-    } catch {
-      toast.error("CMD loglari alinamadi.")
-      return false
-    } finally {
-      setAutomationLogsLoadingByOffer((prev) => {
-        const next = { ...prev }
-        delete next[normalizedId]
+      setAutomationRunLogByOffer((prev) => {
+        const current = Array.isArray(prev?.[normalizedId]) ? prev[normalizedId] : []
+        return {
+          ...prev,
+          [normalizedId]: [entry, ...current].slice(0, maxAutomationRunLogEntries),
+        }
+      })
+      if (options?.persist !== false) {
+        void persistAutomationRunLogEntry(normalizedId, entry)
+      }
+    },
+    [maxAutomationRunLogEntries, persistAutomationRunLogEntry],
+  )
+
+  const commitAutomationRunMap = useCallback(
+    (nextMap) => {
+      const normalizedMap = { ...nextMap }
+      automationRunByOfferRef.current = normalizedMap
+      const runs = Object.values(normalizedMap).sort(sortAutomationRunsDesc)
+
+      runs.forEach((run) => {
+        if (isLiveAutomationRun(run.status)) {
+          seenAutomationLiveRunIdsRef.current.add(run.id)
+          return
+        }
+
+        if (
+          seenAutomationLiveRunIdsRef.current.has(run.id) &&
+          !completedAutomationToastRunIdsRef.current.has(run.id)
+        ) {
+          completedAutomationToastRunIdsRef.current.add(run.id)
+          if (run.status === "success") {
+            toast.success(run.lastMessage || `${run.label} tamamlandi.`, { position: "top-right" })
+          } else if (run.status === "error") {
+            toast.error(run.lastMessage || `${run.label} tamamlanamadi.`, { position: "top-right" })
+          }
+        }
+
+        if (
+          run.status === "success" &&
+          run.resultPopup &&
+          seenAutomationLiveRunIdsRef.current.has(run.id) &&
+          !shownAutomationResultRunIdsRef.current.has(run.id) &&
+          typeof setAutomationResultPopup === "function"
+        ) {
+          shownAutomationResultRunIdsRef.current.add(run.id)
+          const popupBackend = canViewAutomationTargetDetails
+            ? run.resultPopup.backend
+            : maskSensitive(run.resultPopup.backend, 8)
+          setAutomationResultPopup({
+            isOpen: true,
+            offerId: run.offerId,
+            title: run.resultPopup.title || run.label || "Stok cek",
+            backend: popupBackend || "-",
+            value: run.resultPopup.value || "-",
+          })
+        }
+      })
+
+      setAutomationIsRunningByOffer(() => {
+        const next = {}
+        runs.forEach((run) => {
+          next[run.offerId] = isLiveAutomationRun(run.status)
+        })
         return next
       })
-    }
-  }
 
-  const clearAutomationRunLogs = async (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId || !canClearAutomationLogs) return false
-    setAutomationLogsClearingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
-    try {
-      const res = await apiFetchAutomationLog(`/api/eldorado/offers/${normalizedId}/automation-logs`, {
-        method: "DELETE",
-      })
-      if (!res.ok) {
-        throw new Error("automation_logs_clear_failed")
-      }
-      setAutomationRunLogByOffer((prev) => ({
-        ...prev,
-        [normalizedId]: [],
-      }))
-      setAutomationLogsLoadedByOffer((prev) => ({ ...prev, [normalizedId]: true }))
-      toast.success("CMD loglari temizlendi.")
-      return true
-    } catch {
-      toast.error("CMD loglari temizlenemedi.")
-      return false
-    } finally {
-      setAutomationLogsClearingByOffer((prev) => {
-        const next = { ...prev }
-        delete next[normalizedId]
+      setAutomationConnectionStateByOffer(() => {
+        const next = {}
+        runs.forEach((run) => {
+          next[run.offerId] = run.connectionState || "idle"
+        })
         return next
       })
-    }
-  }
 
-  const handleAutomationTwoFactorCodeSubmit = (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId || !canRunAutomation) return
+      setAutomationTwoFactorPromptByOffer(() => {
+        const next = {}
+        runs.forEach((run) => {
+          if (run.pendingTwoFactorPrompt) {
+            next[run.offerId] = run.pendingTwoFactorPrompt
+          }
+        })
+        return next
+      })
 
-    const prompt = automationTwoFactorPromptByOffer?.[normalizedId]
-    const backend = String(prompt?.backend ?? "").trim()
-    if (!backend) {
-      toast.error("Iki faktor istegi bulunamadi.")
-      return
-    }
+      setAutomationTwoFactorCodeByOffer((prev) => {
+        let next = prev
+        const promptOfferIds = new Set(
+          runs.filter((run) => run.pendingTwoFactorPrompt).map((run) => run.offerId),
+        )
+        Object.keys(prev).forEach((offerId) => {
+          if (promptOfferIds.has(offerId)) return
+          if (next === prev) next = { ...prev }
+          delete next[offerId]
+        })
+        return next
+      })
+    },
+    [canViewAutomationTargetDetails, maskSensitive, setAutomationResultPopup],
+  )
 
-    const code = String(automationTwoFactorCodeByOffer?.[normalizedId] ?? "").trim()
-    if (!code) {
-      toast.error("Iki faktor kodunu girin.")
-      return
-    }
+  const applyAutomationRunSnapshot = useCallback(
+    (payload) => {
+      const run = normalizeAutomationRunEntry(payload?.run ?? payload)
+      if (!run) return null
+      commitAutomationRunMap({
+        ...automationRunByOfferRef.current,
+        [run.offerId]: run,
+      })
+      if (Array.isArray(payload?.logs)) {
+        const normalizedLogs = payload.logs.map(normalizeAutomationLogEntry).filter(Boolean)
+        setAutomationRunLogByOffer((prev) => ({
+          ...prev,
+          [run.offerId]: normalizedLogs.slice(0, maxAutomationRunLogEntries),
+        }))
+      }
+      return run
+    },
+    [commitAutomationRunMap, maxAutomationRunLogEntries],
+  )
 
-    const socket = automationSocketByOfferRef.current[normalizedId]
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-      appendAutomationRunLog(normalizedId, "error", "Iki faktor kodu gonderilemedi: baglanti kapali.")
-      toast.error("Websocket baglantisi acik degil.")
-      return
-    }
+  const fetchAutomationRuns = useCallback(
+    async ({ silent = true } = {}) => {
+      if (!canAccessAutomationRuns) return
+      try {
+        const res = await apiFetchAutomation("/api/eldorado/automation-runs")
+        if (!res.ok) {
+          throw new Error("automation_runs_load_failed")
+        }
+        const payload = await res.json()
+        const nextMap = {}
+        if (Array.isArray(payload)) {
+          payload.map(normalizeAutomationRunEntry).filter(Boolean).forEach((run) => {
+            nextMap[run.offerId] = run
+          })
+        }
+        commitAutomationRunMap(nextMap)
+      } catch {
+        if (!silent) {
+          toast.error("Stok cek oturumlari alinamadi.")
+        }
+      }
+    },
+    [apiFetchAutomation, canAccessAutomationRuns, commitAutomationRunMap],
+  )
 
-    const backendDisplay = canViewAutomationTargetDetails ? backend : maskSensitive(backend, 8)
+  const loadAutomationRunLogs = useCallback(
+    async (offerId, options = {}) => {
+      const normalizedId = String(offerId ?? "").trim()
+      if (!normalizedId) return false
+      const force = Boolean(options?.force)
+      const silent = Boolean(options?.silent)
+      if (!force && automationLogsLoadedByOffer?.[normalizedId]) return true
 
-    try {
-      socket.send(
-        `42${JSON.stringify([
-          "iki-faktor-kodu",
+      setAutomationLogsLoadingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+      try {
+        const res = await apiFetchAutomation(
+          `/api/eldorado/offers/${normalizedId}/automation-logs?limit=${maxAutomationRunLogEntries}`,
+        )
+        if (!res.ok) {
+          throw new Error("automation_logs_load_failed")
+        }
+        const payload = await res.json()
+        const normalized = Array.isArray(payload)
+          ? payload.map(normalizeAutomationLogEntry).filter(Boolean)
+          : []
+        setAutomationRunLogByOffer((prev) => ({
+          ...prev,
+          [normalizedId]: normalized.slice(0, maxAutomationRunLogEntries),
+        }))
+        setAutomationLogsLoadedByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+        return true
+      } catch {
+        if (!silent) {
+          toast.error("CMD loglari alinamadi.")
+        }
+        return false
+      } finally {
+        setAutomationLogsLoadingByOffer((prev) => {
+          const next = { ...prev }
+          delete next[normalizedId]
+          return next
+        })
+      }
+    },
+    [apiFetchAutomation, automationLogsLoadedByOffer, maxAutomationRunLogEntries],
+  )
+
+  const clearAutomationRunLogs = useCallback(
+    async (offerId) => {
+      const normalizedId = String(offerId ?? "").trim()
+      if (!normalizedId || !canClearAutomationLogs) return false
+      setAutomationLogsClearingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+      try {
+        const res = await apiFetchAutomation(`/api/eldorado/offers/${normalizedId}/automation-logs`, {
+          method: "DELETE",
+        })
+        if (!res.ok) {
+          throw new Error("automation_logs_clear_failed")
+        }
+        setAutomationRunLogByOffer((prev) => ({
+          ...prev,
+          [normalizedId]: [],
+        }))
+        setAutomationLogsLoadedByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+        toast.success("CMD loglari temizlendi.")
+        return true
+      } catch {
+        toast.error("CMD loglari temizlenemedi.")
+        return false
+      } finally {
+        setAutomationLogsClearingByOffer((prev) => {
+          const next = { ...prev }
+          delete next[normalizedId]
+          return next
+        })
+      }
+    },
+    [apiFetchAutomation, canClearAutomationLogs],
+  )
+
+  const handleAutomationTwoFactorCodeSubmit = useCallback(
+    async (offerId) => {
+      const normalizedId = String(offerId ?? "").trim()
+      if (!normalizedId || !canRunAutomation) return
+
+      const prompt =
+        automationRunByOfferRef.current?.[normalizedId]?.pendingTwoFactorPrompt ??
+        automationTwoFactorPromptByOffer?.[normalizedId] ??
+        null
+      const backend = String(prompt?.backend ?? "").trim()
+      if (!backend) {
+        toast.error("Iki faktor istegi bulunamadi.")
+        return
+      }
+
+      const code = String(automationTwoFactorCodeByOffer?.[normalizedId] ?? "").trim()
+      if (!code) {
+        toast.error("Iki faktor kodunu girin.")
+        return
+      }
+
+      try {
+        const res = await apiFetchAutomation(
+          `/api/eldorado/offers/${normalizedId}/automation-run/two-factor`,
           {
-            backend,
-            code,
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ code }),
           },
-        ])}`,
-      )
-      appendAutomationRunLog(normalizedId, "running", `${backendDisplay} => Iki faktor kodu gonderildi.`)
-      setAutomationTwoFactorCodeByOffer((prev) => ({ ...prev, [normalizedId]: "" }))
-      setAutomationTwoFactorPromptByOffer((prev) => {
-        const next = { ...prev }
-        delete next[normalizedId]
-        return next
-      })
-    } catch {
-      appendAutomationRunLog(normalizedId, "error", `${backendDisplay} => Iki faktor kodu gonderilemedi.`)
-      toast.error("Iki faktor kodu gonderilemedi.")
-    }
-  }
-
-  const handleAutomationRun = (offerId, target, automationName) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    if (!canRunAutomation) return
-
-    const backend = String(target?.backend ?? "").trim()
-    const runUrl = String(target?.url ?? "").trim()
-    const isStarredBackend = Boolean(target?.starred)
-    const backendMasked = maskSensitive(backend, 8)
-    const backendDisplayRaw = isStarredBackend ? `${STAR_PREFIX}${backend}` : backend
-    const backendDisplay = canViewAutomationTargetDetails
-      ? backendDisplayRaw
-      : isStarredBackend
-        ? `${STAR_PREFIX}${backendMasked}`
-        : backendMasked
-    const runUrlDisplay = canViewAutomationTargetDetails ? runUrl : maskSensitive(runUrl, 16)
-    if (!backend) {
-      toast.error("Calistirmak icin backend map secin.")
-      return
-    }
-    if (!runUrl) {
-      toast.error("Calistirmak icin URL secin.")
-      return
-    }
-
-    const wsBaseUrl = String(automationWsUrl ?? "").trim()
-    if (!wsBaseUrl) {
-      toast.error("Websocket adresi bulunamadi. Stok cek sekmesinden kaydedin.")
-      return
-    }
-
-    const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, { backend, url: runUrl })
-    if (!triggerUrl) {
-      toast.error("Socket.IO adresi olusturulamadi.")
-      return
-    }
-
-    const label = String(automationName ?? "").trim() || "Stok cek"
-    const starterUsername = String(activeUsername ?? "").trim() || "bilinmeyen-kullanici"
-    closeAutomationSocket(normalizedId)
-    setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: true }))
-    setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connecting" }))
-    if (typeof setAutomationResultPopup === "function") {
-      setAutomationResultPopup((prev) => ({ ...prev, isOpen: false }))
-    }
-    const runToastId = toast.loading(`${label} calistiriliyor...`, { position: "top-right" })
-    appendAutomationRunLog(normalizedId, "running", `Calistiran: ${starterUsername}`)
-    appendAutomationRunLog(
-      normalizedId,
-      "running",
-      `${label} tetikleniyor... backend=${backendDisplay}, url=${runUrlDisplay}`,
-    )
-
-    let settled = false
-    let hasConnected = false
-    let hasResult = false
-    let copyValueFromScriptLog = ""
-    let copyValueCaptureActive = false
-    let copyValueLines = []
-    let timeoutId = null
-
-    const clearRunTimeout = () => {
-      if (timeoutId) {
-        window.clearTimeout(timeoutId)
-        timeoutId = null
+        )
+        if (!res.ok) {
+          const errorPayload = await res.json().catch(() => null)
+          const apiError = String(errorPayload?.error ?? "").trim()
+          const message =
+            apiError === "automation_run_socket_not_open"
+              ? "Iki faktor kodu gonderilemedi: baglanti kapali."
+              : apiError === "automation_two_factor_not_requested"
+                ? "Iki faktor istegi bulunamadi."
+                : "Iki faktor kodu gonderilemedi."
+          throw new Error(message)
+        }
+        applyAutomationRunSnapshot(await res.json())
+        setAutomationTwoFactorCodeByOffer((prev) => ({ ...prev, [normalizedId]: "" }))
+      } catch (error) {
+        const backendDisplay = canViewAutomationTargetDetails ? backend : maskSensitive(backend, 8)
+        appendAutomationRunLog(
+          normalizedId,
+          "error",
+          `${backendDisplay} => ${error?.message || "Iki faktor kodu gonderilemedi."}`,
+        )
+        toast.error(error?.message || "Iki faktor kodu gonderilemedi.")
       }
-    }
+    },
+    [
+      apiFetchAutomation,
+      appendAutomationRunLog,
+      applyAutomationRunSnapshot,
+      automationTwoFactorCodeByOffer,
+      automationTwoFactorPromptByOffer,
+      canRunAutomation,
+      canViewAutomationTargetDetails,
+      maskSensitive,
+    ],
+  )
 
-    const complete = (status, message) => {
-      if (settled) return
-      settled = true
-      clearRunTimeout()
-      if (status === "success") {
-        toast.success(message, { id: runToastId, position: "top-right" })
-      } else if (status === "error") {
-        toast.error(message, { id: runToastId, position: "top-right" })
-      } else {
-        toast.dismiss(runToastId)
-      }
-      setAutomationConnectionStateByOffer((prev) => {
-        const next = { ...prev }
-        if (hasConnected) {
-          next[normalizedId] = "connected"
-        } else if (status === "error") {
-          next[normalizedId] = "error"
-        } else {
-          next[normalizedId] = "idle"
-        }
-        return next
-      })
-      appendAutomationRunLog(normalizedId, status, message)
-      setAutomationIsRunningByOffer((prev) => ({ ...prev, [normalizedId]: false }))
-      closeAutomationSocket(normalizedId)
-    }
+  const handleAutomationRun = useCallback(
+    async (offerId, target, automationName) => {
+      const normalizedId = String(offerId ?? "").trim()
+      if (!normalizedId || !canRunAutomation) return
 
-    const resetRunTimeout = (ms = 20000) => {
-      clearRunTimeout()
-      timeoutId = window.setTimeout(() => {
-        if (hasResult) {
-          complete("success", `${label} tamamlandi.`)
-          return
-        }
-        complete("error", `${label} icin sonuc yaniti alinmadi (zaman asimi).`)
-      }, ms)
-    }
-
-    const captureCopyValueFromScriptLog = (rawMessage) => {
-      const text = String(rawMessage ?? "").replace(/\r/g, "")
-      if (!text) return
-      const marker = "COPY_VALUE:"
-      const markerIndex = text.indexOf(marker)
-      if (markerIndex >= 0) {
-        copyValueCaptureActive = true
-        copyValueLines = []
-        const seededLines = text
-          .slice(markerIndex + marker.length)
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean)
-        if (seededLines.length > 0) {
-          copyValueLines.push(...seededLines)
-          copyValueFromScriptLog = copyValueLines.join("\n")
-        }
+      const backend = String(target?.backend ?? "").trim()
+      const runUrl = String(target?.url ?? "").trim()
+      const starred = Boolean(target?.starred)
+      if (!backend) {
+        toast.error("Calistirmak icin backend map secin.")
         return
       }
-      if (!copyValueCaptureActive) return
-      const appendedLines = text
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .filter((line) => !/^\[[^\]]+\]/.test(line) && !line.startsWith("Script "))
-      if (appendedLines.length === 0) return
-      copyValueLines.push(...appendedLines)
-      copyValueFromScriptLog = copyValueLines.join("\n").trim()
-    }
-
-    let socket
-    try {
-      socket = new WebSocket(triggerUrl)
-    } catch {
-      complete("error", `${label} icin websocket baglantisi baslatilamadi.`)
-      return
-    }
-
-    automationSocketByOfferRef.current[normalizedId] = socket
-    resetRunTimeout(15000)
-
-    socket.addEventListener("message", (event) => {
-      if (settled) return
-      const payload = typeof event.data === "string" ? event.data : ""
-      if (!payload) return
-      const packets = splitEnginePackets(payload)
-
-      for (const packet of packets) {
-        if (settled) return
-
-        if (packet === "2") {
-          try {
-            socket.send("3")
-          } catch {
-            // Ignore pong send errors.
-          }
-          continue
-        }
-
-        if (packet.startsWith("0{")) {
-          try {
-            socket.send("40")
-          } catch {
-            complete("error", `${label} icin Socket.IO connect paketi gonderilemedi.`)
-          }
-          continue
-        }
-
-        if (packet.startsWith("40")) {
-          if (!hasConnected) {
-            appendAutomationRunLog(normalizedId, "running", "Baglandi.")
-          }
-          hasConnected = true
-          setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "connected" }))
-          resetRunTimeout(300000)
-          continue
-        }
-
-        if (packet.startsWith("41")) {
-          if (hasResult) {
-            complete("success", `${label} tamamlandi.`)
-          } else {
-            complete("error", `${label} tamamlanmadan baglanti kapandi (sonuc yok).`)
-          }
-          return
-        }
-
-        if (packet.startsWith("44")) {
-          complete("error", `${label} tetiklenemedi. backend=${backendDisplay}`)
-          return
-        }
-
-        const eventPacket = parseSocketIoEventPacket(packet)
-        if (!eventPacket) continue
-        const eventName = eventPacket.event.toLowerCase()
-        const firstArg = eventPacket.args[0]
-
-        if (eventName === "script-triggered" || eventName === "script-started") {
-          appendAutomationRunLog(normalizedId, "running", `${backendDisplay} script baslatildi.`)
-          resetRunTimeout(300000)
-          continue
-        }
-
-        if (eventName === "script-log") {
-          const stream = String(firstArg?.stream ?? "").trim().toLowerCase()
-          const rawMessage = String(firstArg?.message ?? "")
-          if (rawMessage) {
-            captureCopyValueFromScriptLog(rawMessage)
-            const lines = rawMessage
-              .split(/\r?\n/)
-              .map((line) => line.trim())
-              .filter(Boolean)
-            lines.forEach((line) => {
-              appendAutomationRunLog(
-                normalizedId,
-                stream === "stderr" ? "error" : "running",
-                line,
-              )
-            })
-          }
-          resetRunTimeout(300000)
-          continue
-        }
-
-        if (eventName === "iki-faktor-gerekli") {
-          const rawTwoFactorBackend = String(firstArg?.backend ?? backend).trim() || backend
-          const twoFactorBackendRaw =
-            rawTwoFactorBackend === backend && isStarredBackend
-              ? `${STAR_PREFIX}${rawTwoFactorBackend}`
-              : rawTwoFactorBackend
-          const twoFactorBackendMaskedBase = maskSensitive(rawTwoFactorBackend, 8)
-          const twoFactorBackend = canViewAutomationTargetDetails
-            ? twoFactorBackendRaw
-            : rawTwoFactorBackend === backend && isStarredBackend
-              ? `${STAR_PREFIX}${twoFactorBackendMaskedBase}`
-              : twoFactorBackendMaskedBase
-          const normalizedTwoFactorMessage =
-            normalizeEventMessage(firstArg?.message ?? firstArg).replace(/\s+/g, " ").trim() ||
-            "Iki faktor kodu gerekli."
-          setAutomationTwoFactorPromptByOffer((prev) => ({
-            ...prev,
-            [normalizedId]: {
-              backend: rawTwoFactorBackend,
-              message: normalizedTwoFactorMessage,
-            },
-          }))
-          setAutomationTwoFactorCodeByOffer((prev) => ({ ...prev, [normalizedId]: "" }))
-          appendAutomationRunLog(
-            normalizedId,
-            "running",
-            `${twoFactorBackend} => ${normalizedTwoFactorMessage}`,
-          )
-          resetRunTimeout(300000)
-          continue
-        }
-
-        if (eventName === "durum") {
-          const rawDurumBackend = String(firstArg?.backend ?? backend).trim() || backend
-          const durumBackendRaw =
-            rawDurumBackend === backend && isStarredBackend
-              ? `${STAR_PREFIX}${rawDurumBackend}`
-              : rawDurumBackend
-          const durumBackendMaskedBase = maskSensitive(rawDurumBackend, 8)
-          const durumBackend = canViewAutomationTargetDetails
-            ? durumBackendRaw
-            : rawDurumBackend === backend && isStarredBackend
-              ? `${STAR_PREFIX}${durumBackendMaskedBase}`
-              : durumBackendMaskedBase
-          const durumLines = normalizeEventMessage(firstArg?.message ?? firstArg)
-            .replace(/\r/g, "")
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean)
-
-          if (durumLines.length === 0) {
-            appendAutomationRunLog(normalizedId, "running", `${durumBackend} => -`)
-          } else {
-            durumLines.forEach((line) => {
-              appendAutomationRunLog(normalizedId, "running", `${durumBackend} => ${line}`)
-            })
-          }
-          resetRunTimeout(300000)
-          continue
-        }
-
-        if (eventName === "script-exit") {
-          copyValueCaptureActive = false
-          const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
-          if (Number.isFinite(exitCode)) {
-            appendAutomationRunLog(
-              normalizedId,
-              exitCode === 0 ? "success" : "error",
-              `Script cikti. Kod: ${exitCode}`,
-            )
-          } else {
-            appendAutomationRunLog(normalizedId, "running", "Script cikis olayi alindi.")
-          }
-          if (!hasResult) {
-            complete("error", `${label} cikti ancak sonuc alinmadi.`)
-            return
-          }
-          resetRunTimeout(5000)
-          continue
-        }
-
-        if (eventName === "sonuc") {
-          const rawResultBackend = String(firstArg?.backend ?? backend).trim() || backend
-          const resultBackendRaw =
-            rawResultBackend === backend && isStarredBackend
-              ? `${STAR_PREFIX}${rawResultBackend}`
-              : rawResultBackend
-          const resultBackendMaskedBase = maskSensitive(rawResultBackend, 8)
-          const resultBackend = canViewAutomationTargetDetails
-            ? resultBackendRaw
-            : rawResultBackend === backend && isStarredBackend
-              ? `${STAR_PREFIX}${resultBackendMaskedBase}`
-              : resultBackendMaskedBase
-
-          const normalizedRawValue = normalizeEventMessage(firstArg?.value)
-          const normalizedLogValue = String(copyValueFromScriptLog ?? "")
-          const trimmedRawValue = normalizedRawValue.trim()
-          const trimmedLogValue = normalizedLogValue.trim()
-          const hasMultilineLogValue = copyValueLines.length > 1 || normalizedLogValue.includes("\n")
-          const useLogValueAsFallback =
-            Boolean(trimmedLogValue) &&
-            (hasMultilineLogValue ||
-              !trimmedRawValue ||
-              (!normalizedRawValue.includes("\n") && trimmedLogValue.length > trimmedRawValue.length))
-          const finalRawValue = useLogValueAsFallback ? trimmedLogValue : normalizedRawValue
-          const valueText = String(finalRawValue ?? "").trim()
-          appendAutomationRunLog(normalizedId, "success", `${resultBackend} => ${valueText || "-"}`)
-          if (typeof setAutomationResultPopup === "function") {
-            setAutomationResultPopup({
-              isOpen: true,
-              offerId: normalizedId,
-              title: label,
-              backend: resultBackend,
-              value: finalRawValue || "-",
-            })
-          }
-          copyValueCaptureActive = false
-          hasResult = true
-          complete("success", `${label} tamamlandi.`)
-          return
-        }
-
-        resetRunTimeout(300000)
-      }
-    })
-
-    socket.addEventListener("error", () => {
-      setAutomationConnectionStateByOffer((prev) => ({ ...prev, [normalizedId]: "error" }))
-      complete("error", `${label} icin websocket baglanti hatasi olustu.`)
-    })
-
-    socket.addEventListener("close", () => {
-      if (settled) return
-      if (hasResult) {
-        complete("success", `${label} tamamlandi.`)
+      if (!runUrl) {
+        toast.error("Calistirmak icin URL secin.")
         return
       }
-      if (hasConnected) {
-        complete("error", `${label} baglantisi acildi ancak sonuc gelmedi.`)
+      if (!String(automationWsUrl ?? "").trim()) {
+        toast.error("Websocket adresi bulunamadi. Stok cek sekmesinden kaydedin.")
         return
       }
-      complete("error", `${label} icin websocket baglantisi kapandi.`)
-    })
-  }
+
+      if (typeof setAutomationResultPopup === "function") {
+        setAutomationResultPopup((prev) => ({ ...prev, isOpen: false }))
+      }
+
+      try {
+        const res = await apiFetchAutomation(`/api/eldorado/offers/${normalizedId}/automation-run`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            backend,
+            url: runUrl,
+            starred,
+            label: String(automationName ?? "").trim() || "Stok cek",
+          }),
+        })
+        if (!res.ok) {
+          const errorPayload = await res.json().catch(() => null)
+          const apiError = String(errorPayload?.error ?? "").trim()
+          if (apiError === "automation_run_in_progress") {
+            applyAutomationRunSnapshot(errorPayload)
+            throw new Error("Bu urun icin stok cek zaten calisiyor.")
+          }
+          const message =
+            apiError === "automation_ws_url_missing"
+              ? "Websocket adresi bulunamadi. Stok cek sekmesinden kaydedin."
+              : apiError || "Stok cek baslatilamadi."
+          throw new Error(message)
+        }
+
+        const run = applyAutomationRunSnapshot(await res.json())
+        if (run) {
+          seenAutomationLiveRunIdsRef.current.add(run.id)
+          completedAutomationToastRunIdsRef.current.delete(run.id)
+          shownAutomationResultRunIdsRef.current.delete(run.id)
+        }
+      } catch (error) {
+        toast.error(error?.message || "Stok cek baslatilamadi.")
+      }
+    },
+    [
+      apiFetchAutomation,
+      applyAutomationRunSnapshot,
+      automationWsUrl,
+      canRunAutomation,
+      setAutomationResultPopup,
+    ],
+  )
 
   useEffect(() => {
-    return () => {
-      Object.values(automationSocketByOfferRef.current).forEach((socket) => {
-        try {
-          socket?.close()
-        } catch {
-          // Ignore close errors.
-        }
-      })
-      automationSocketByOfferRef.current = {}
+    if (!canAccessAutomationRuns) {
+      commitAutomationRunMap({})
+      return
     }
-  }, [])
+
+    const sync = () => {
+      void fetchAutomationRuns({ silent: true })
+    }
+
+    sync()
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "hidden") return
+      sync()
+    }, 2500)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return
+      sync()
+    }
+
+    window.addEventListener("focus", handleVisibilityChange)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener("focus", handleVisibilityChange)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [canAccessAutomationRuns, commitAutomationRunMap, fetchAutomationRuns])
+
+  useEffect(() => {
+    if (!canAccessAutomationRuns) return
+
+    const trackedOfferIds = Array.from(
+      new Set([
+        ...Object.keys(automationLogsLoadedByOffer || {}).filter((offerId) => automationLogsLoadedByOffer?.[offerId]),
+        ...Object.keys(automationIsRunningByOffer || {}).filter((offerId) => automationIsRunningByOffer?.[offerId]),
+      ]),
+    )
+    if (trackedOfferIds.length === 0) return
+
+    const syncLogs = () => {
+      trackedOfferIds.forEach((offerId) => {
+        void loadAutomationRunLogs(offerId, { force: true, silent: true })
+      })
+    }
+
+    syncLogs()
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "hidden") return
+      syncLogs()
+    }, 3000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return
+      syncLogs()
+    }
+
+    window.addEventListener("focus", handleVisibilityChange)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener("focus", handleVisibilityChange)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [
+    automationIsRunningByOffer,
+    automationLogsLoadedByOffer,
+    canAccessAutomationRuns,
+    loadAutomationRunLogs,
+  ])
 
   return {
     automationRunLogByOffer,

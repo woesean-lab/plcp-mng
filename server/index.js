@@ -1211,6 +1211,1356 @@ const normalizeApplicationRunLogEntry = (entry, applicationIdFromRoute = "") => 
   return { applicationId, id, time, status, message }
 }
 
+const normalizeEventMessage = (value) => {
+  if (typeof value === "string") return value
+  if (value === null || value === undefined) return ""
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+const APPLICATION_RUN_SESSION_LIMIT = 60
+const APPLICATION_RUN_RETENTION_MS = 1000 * 60 * 60 * 12
+let applicationRunSerial = 0
+const applicationRunSessions = new Map()
+
+const formatApplicationRunTime = () =>
+  new Date().toLocaleString("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+
+const normalizeApplicationRunPromptOptions = (value) => {
+  const raw = Array.isArray(value) ? value : []
+  return raw
+    .map((entry) => {
+      if (entry && typeof entry === "object") {
+        const optionValue = String(entry.value ?? entry.key ?? "").trim()
+        const optionLabel = String(entry.label ?? entry.name ?? optionValue).trim() || optionValue
+        if (!optionValue) return null
+        return { value: optionValue, label: optionLabel }
+      }
+      const normalized = String(entry ?? "").trim()
+      if (!normalized) return null
+      return { value: normalized, label: normalized }
+    })
+    .filter(Boolean)
+}
+
+const normalizeApplicationRunPromptInputType = (value) => {
+  const normalized = String(value ?? "").trim().toLowerCase()
+  if (normalized === "choice" || normalized === "confirm" || normalized === "text") return normalized
+  return "text"
+}
+
+const normalizeApplicationRunPrompt = (payload, backendFallback = "") => {
+  const inputType = normalizeApplicationRunPromptInputType(payload?.inputType)
+  const message =
+    String(payload?.message ?? "").trim() ||
+    (inputType === "choice"
+      ? "Bir secim yapin."
+      : inputType === "confirm"
+        ? "Onay verin."
+        : "Metin girin.")
+  const options = normalizeApplicationRunPromptOptions(payload?.options)
+  const backend = String(payload?.backend ?? backendFallback ?? "").trim()
+  const step = String(payload?.step ?? "").trim()
+  const placeholder = String(payload?.placeholder ?? "").trim()
+  if (!backend) return null
+  if (inputType === "choice" && options.length === 0) return null
+  return {
+    backend,
+    step,
+    inputType,
+    message,
+    options,
+    placeholder,
+  }
+}
+
+const isApplicationRunLiveStatus = (value) => {
+  const normalized = String(value ?? "").trim().toLowerCase()
+  return normalized === "running" || normalized === "connecting"
+}
+
+const sortApplicationRunsDesc = (a, b) => {
+  const startedDiff = Number(b?.startedAtMs ?? 0) - Number(a?.startedAtMs ?? 0)
+  if (startedDiff !== 0) return startedDiff
+  return String(b?.id ?? "").localeCompare(String(a?.id ?? ""))
+}
+
+const cloneApplicationRunPrompt = (entry) => {
+  if (!entry || typeof entry !== "object") return null
+  const normalized = normalizeApplicationRunPrompt(entry, entry.backend)
+  if (!normalized) return null
+  return {
+    ...normalized,
+    options: normalized.options.map((option) => ({ ...option })),
+  }
+}
+
+const serializeApplicationRunSession = (entry) => {
+  if (!entry || typeof entry !== "object") return null
+  return {
+    id: String(entry.id ?? "").trim(),
+    label: String(entry.label ?? "").trim(),
+    serial: Number(entry.serial ?? 0) || 0,
+    applicationId: String(entry.applicationId ?? "").trim(),
+    applicationName: String(entry.applicationName ?? "").trim(),
+    applicationAbout: String(entry.applicationAbout ?? "").trim(),
+    backendKey: String(entry.backendKey ?? "").trim(),
+    backendLabel: String(entry.backendLabel ?? "").trim(),
+    status: String(entry.status ?? "").trim() || "error",
+    connectionState: String(entry.connectionState ?? "").trim() || "idle",
+    startedAtMs: Number(entry.startedAtMs ?? 0) || 0,
+    endedAtMs: Number(entry.endedAtMs ?? 0) || 0,
+    createdByUsername: String(entry.createdByUsername ?? "").trim(),
+    pendingPrompt: cloneApplicationRunPrompt(entry.pendingPrompt),
+  }
+}
+
+const serializeApplicationRunLog = (entry) => {
+  if (!entry || typeof entry !== "object") return null
+  const id = String(entry.id ?? "").trim()
+  const time = String(entry.time ?? "").trim()
+  const status = String(entry.status ?? "").trim()
+  const message = String(entry.message ?? "").trim()
+  if (!id || !time || !status || !message) return null
+  return { id, time, status, message }
+}
+
+const persistApplicationHistoryLog = async (applicationId, status, message) => {
+  const normalizedApplicationId = String(applicationId ?? "").trim()
+  const normalizedMessage = String(message ?? "").trim()
+  const normalizedStatus = String(status ?? "").trim() || "running"
+  if (!normalizedApplicationId || !normalizedMessage) return
+
+  const entry = {
+    id: `app-log-${Date.now()}-${crypto.randomUUID()}`,
+    applicationId: normalizedApplicationId,
+    time: formatApplicationRunTime(),
+    status: normalizedStatus,
+    message: normalizedMessage,
+  }
+
+  try {
+    await prisma.applicationRunLog.create({ data: entry })
+
+    const overflow = await prisma.applicationRunLog.findMany({
+      where: { applicationId: normalizedApplicationId },
+      select: { id: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: APPLICATION_LOG_LIMIT,
+    })
+    if (overflow.length > 0) {
+      await prisma.applicationRunLog.deleteMany({
+        where: { id: { in: overflow.map((item) => item.id) } },
+      })
+    }
+  } catch (error) {
+    console.error("Application run log persistence failed", error)
+  }
+}
+
+const queueApplicationHistoryLog = (applicationId, status, message) => {
+  void persistApplicationHistoryLog(applicationId, status, message)
+}
+
+const closeApplicationRunSocket = (run) => {
+  if (!run || typeof run !== "object") return
+  const socket = run.socket
+  run.socket = null
+  if (!socket) return
+  try {
+    socket.close()
+  } catch {
+    // Ignore close errors.
+  }
+}
+
+const appendApplicationRunLog = (run, status, message, options = {}) => {
+  if (!run || typeof run !== "object") return null
+  const normalizedMessage = String(message ?? "").trim()
+  if (!normalizedMessage) return null
+  const entry = {
+    id: `run-log-${Date.now()}-${crypto.randomUUID()}`,
+    time: formatApplicationRunTime(),
+    status: String(status ?? "").trim() || "running",
+    message: normalizedMessage,
+  }
+
+  const currentLogs = Array.isArray(run.logs) ? run.logs : []
+  run.logs = [entry, ...currentLogs].slice(0, APPLICATION_LOG_LIMIT)
+
+  if (options.persist !== false) {
+    const runLabel = String(run.label ?? "").trim()
+    const historyMessage = runLabel ? `[${runLabel}] ${normalizedMessage}` : normalizedMessage
+    queueApplicationHistoryLog(run.applicationId, entry.status, historyMessage)
+  }
+
+  return entry
+}
+
+const completeApplicationRun = (run, status, message = "") => {
+  if (!run || typeof run !== "object" || run.settled) return
+  run.settled = true
+  run.pendingPrompt = null
+  run.status = String(status ?? "").trim() || "error"
+  run.connectionState = run.status === "error" ? "error" : run.hasConnected ? "connected" : "idle"
+  run.endedAtMs = Date.now()
+  if (message) {
+    appendApplicationRunLog(run, run.status, message)
+  }
+  closeApplicationRunSocket(run)
+}
+
+const sendApplicationRunSocketEvent = (run, eventName, payload) => {
+  if (!run || typeof run !== "object") return false
+  const socket = run.socket
+  const webSocketApi = globalThis.WebSocket
+  if (!webSocketApi || !socket || socket.readyState !== webSocketApi.OPEN) return false
+  const normalizedEventName = String(eventName ?? "").trim()
+  if (!normalizedEventName) return false
+  try {
+    socket.send(`42${JSON.stringify([normalizedEventName, payload ?? {}])}`)
+    return true
+  } catch {
+    return false
+  }
+}
+
+const pruneApplicationRunSessions = () => {
+  const now = Date.now()
+  const completedRuns = Array.from(applicationRunSessions.values())
+    .filter((run) => !isApplicationRunLiveStatus(run.status))
+    .sort(sortApplicationRunsDesc)
+
+  completedRuns.forEach((run, index) => {
+    const endedAtMs = Number(run.endedAtMs ?? 0) || Number(run.startedAtMs ?? 0)
+    const ageMs = now - endedAtMs
+    const shouldRemove = index >= APPLICATION_RUN_SESSION_LIMIT || ageMs > APPLICATION_RUN_RETENTION_MS
+    if (!shouldRemove) return
+    closeApplicationRunSocket(run)
+    applicationRunSessions.delete(run.id)
+  })
+}
+
+const canManageApplicationRuns = (user) => {
+  const permissions = user?.role?.permissions || []
+  return permissions.includes("applications.manage") || permissions.includes("admin.manage")
+}
+
+const canAccessApplicationRunSession = (run, user) => {
+  if (!run || !user) return false
+  if (canManageApplicationRuns(user)) return true
+  return String(run.createdByUsername ?? "").trim() === String(user?.username ?? "").trim()
+}
+
+const createApplicationRunSession = ({ application, wsUrl, username }) => {
+  pruneApplicationRunSessions()
+
+  applicationRunSerial += 1
+  const serial = applicationRunSerial
+  const startedAtMs = Date.now()
+  const run = {
+    id: `service-run-${startedAtMs}-${serial}`,
+    label: `${application.name} #${serial}`,
+    serial,
+    applicationId: String(application.id ?? "").trim(),
+    applicationName: String(application.name ?? "").trim(),
+    applicationAbout: String(application.about ?? "").trim(),
+    backendKey: String(application.backendKey ?? "").trim(),
+    backendLabel:
+      String(application.backendLabel ?? application.backendKey ?? "").trim() ||
+      String(application.backendKey ?? "").trim(),
+    status: "connecting",
+    connectionState: "connecting",
+    startedAtMs,
+    endedAtMs: 0,
+    createdByUsername: String(username ?? "").trim() || "bilinmeyen-kullanici",
+    pendingPrompt: null,
+    logs: [],
+    socket: null,
+    settled: false,
+    hasConnected: false,
+    hasResult: false,
+    hasSocketErrorSignal: false,
+  }
+
+  applicationRunSessions.set(run.id, run)
+
+  appendApplicationRunLog(run, "running", `Calistiran: ${run.createdByUsername}`)
+  appendApplicationRunLog(run, "running", `Calistiriliyor: ${run.applicationName}`)
+  appendApplicationRunLog(run, "running", `Backend map: ${run.backendLabel}`)
+
+  const triggerUrl = buildSocketIoWsUrl(wsUrl, { backend: run.backendKey })
+  if (!triggerUrl) {
+    completeApplicationRun(run, "error", `${run.applicationName} icin Socket.IO adresi olusturulamadi.`)
+    return run
+  }
+
+  const WebSocketApi = globalThis.WebSocket
+  if (!WebSocketApi) {
+    completeApplicationRun(run, "error", "Sunucu ortami WebSocket istemcisini desteklemiyor.")
+    return run
+  }
+
+  let socket = null
+  try {
+    socket = new WebSocketApi(triggerUrl)
+  } catch {
+    completeApplicationRun(run, "error", `${run.applicationName} icin websocket baglantisi baslatilamadi.`)
+    return run
+  }
+
+  run.socket = socket
+
+  socket.addEventListener("message", (event) => {
+    if (run.settled) return
+    const payload = typeof event.data === "string" ? event.data : ""
+    if (!payload) return
+    const packets = splitEnginePackets(payload)
+
+    for (const packet of packets) {
+      if (run.settled) return
+
+      if (run.hasSocketErrorSignal) {
+        run.hasSocketErrorSignal = false
+        run.status = "running"
+        run.connectionState = "connected"
+        appendApplicationRunLog(
+          run,
+          "running",
+          `${run.applicationName} websocket baglantisi toparlandi, islem devam ediyor.`,
+        )
+      }
+
+      if (packet === "2") {
+        try {
+          socket.send("3")
+        } catch {
+          // Ignore pong send errors.
+        }
+        continue
+      }
+
+      if (packet.startsWith("0{")) {
+        try {
+          socket.send("40")
+        } catch {
+          completeApplicationRun(run, "error", `${run.applicationName} icin Socket.IO baglantisi baslatilamadi.`)
+        }
+        continue
+      }
+
+      if (packet.startsWith("40")) {
+        if (!run.hasConnected) {
+          appendApplicationRunLog(run, "running", `${run.applicationName} baglandi.`)
+        }
+        run.hasConnected = true
+        run.status = "running"
+        run.connectionState = "connected"
+        continue
+      }
+
+      if (packet.startsWith("41")) {
+        if (run.hasResult) {
+          completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
+        } else {
+          completeApplicationRun(run, "error", `${run.applicationName} baglantisi sonuc alinmadan kapandi.`)
+        }
+        return
+      }
+
+      if (packet.startsWith("44")) {
+        completeApplicationRun(run, "error", `${run.applicationName} tetiklenemedi. backend=${run.backendLabel}`)
+        return
+      }
+
+      const eventPacket = parseSocketIoEventPacket(packet)
+      if (!eventPacket) continue
+      const eventName = String(eventPacket.event ?? "").trim().toLowerCase()
+      const firstArg = eventPacket.args[0]
+
+      if (eventName === "script-triggered" || eventName === "script-started") {
+        appendApplicationRunLog(run, "running", `${run.backendLabel} script baslatildi.`)
+        continue
+      }
+
+      if (eventName === "durum") {
+        const lines = String(
+          typeof firstArg?.message === "string" || typeof firstArg?.message === "number"
+            ? firstArg.message
+            : firstArg ?? "",
+        )
+          .replace(/\r/g, "")
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+
+        if (lines.length === 0) {
+          appendApplicationRunLog(run, "running", `${run.backendLabel} => -`)
+        } else {
+          lines.forEach((line) => {
+            appendApplicationRunLog(run, "running", `${run.backendLabel} => ${line}`)
+          })
+        }
+        continue
+      }
+
+      if (eventName === "script-log") {
+        const stream = String(firstArg?.stream ?? "").trim().toLowerCase()
+        const lines = String(firstArg?.message ?? "")
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+        lines.forEach((line) => {
+          appendApplicationRunLog(run, stream === "stderr" ? "error" : "running", line)
+        })
+        continue
+      }
+
+      if (eventName === "kullanici-girdisi-gerekli") {
+        const promptBackend = String(firstArg?.backend ?? run.backendKey).trim() || run.backendKey
+        const prompt = normalizeApplicationRunPrompt(firstArg, promptBackend)
+        if (prompt) {
+          run.pendingPrompt = prompt
+          appendApplicationRunLog(run, "running", `${run.backendLabel} => ${prompt.message}`)
+        }
+        continue
+      }
+
+      if (eventName === "sonuc") {
+        const valueText =
+          typeof firstArg?.value === "string"
+            ? firstArg.value.trim()
+            : firstArg?.value === undefined || firstArg?.value === null
+              ? String(firstArg ?? "").trim()
+              : String(firstArg.value).trim()
+        appendApplicationRunLog(run, "success", `${run.backendLabel} => ${valueText || "-"}`)
+        run.hasResult = true
+        completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
+        return
+      }
+
+      if (eventName === "script-exit") {
+        const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
+        if (Number.isFinite(exitCode)) {
+          appendApplicationRunLog(
+            run,
+            exitCode === 0 ? "success" : "error",
+            `Script cikti. Kod: ${exitCode}`,
+          )
+        }
+        if (!run.hasResult) {
+          completeApplicationRun(run, "error", `${run.applicationName} cikti ancak sonuc alinmadi.`)
+          return
+        }
+      }
+    }
+  })
+
+  socket.addEventListener("error", () => {
+    if (run.settled || run.hasSocketErrorSignal) return
+    run.hasSocketErrorSignal = true
+    run.status = "running"
+    run.connectionState = "connecting"
+    appendApplicationRunLog(
+      run,
+      "running",
+      `${run.applicationName} websocket baglanti hatasi algiladi, baglanti takip ediliyor...`,
+    )
+  })
+
+  socket.addEventListener("close", () => {
+    if (run.settled) return
+    run.socket = null
+    if (run.hasResult) {
+      completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
+      return
+    }
+    if (run.hasConnected) {
+      completeApplicationRun(
+        run,
+        "error",
+        run.hasSocketErrorSignal
+          ? `${run.applicationName} icin websocket baglanti hatasi olustu ve baglanti kapandi.`
+          : `${run.applicationName} baglantisi acildi ancak sonuc gelmedi.`,
+      )
+      return
+    }
+    completeApplicationRun(run, "error", `${run.applicationName} icin websocket baglantisi kapandi.`)
+  })
+
+  return run
+}
+
+const ELDORADO_RUN_RETENTION_MS = 1000 * 60 * 60 * 12
+const AUTOMATION_STAR_PREFIX = "\u2605 "
+const eldoradoAutomationRunsByOffer = new Map()
+const eldoradoPriceCommandRunsByOffer = new Map()
+
+const persistEldoradoAutomationHistoryLog = async (offerId, status, message) => {
+  const normalizedOfferId = String(offerId ?? "").trim()
+  const normalizedMessage = String(message ?? "").trim()
+  const normalizedStatus = String(status ?? "").trim() || "running"
+  if (!normalizedOfferId || !normalizedMessage) return
+
+  const entry = {
+    id: `eldorado-auto-log-${Date.now()}-${crypto.randomUUID()}`,
+    offerId: normalizedOfferId,
+    time: formatApplicationRunTime(),
+    status: normalizedStatus,
+    message: normalizedMessage,
+  }
+
+  try {
+    await prisma.eldoradoAutomationRunLog.create({ data: entry })
+
+    const overflow = await prisma.eldoradoAutomationRunLog.findMany({
+      where: { offerId: normalizedOfferId },
+      select: { id: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: ELDORADO_AUTOMATION_LOG_LIMIT,
+    })
+    if (overflow.length > 0) {
+      await prisma.eldoradoAutomationRunLog.deleteMany({
+        where: { id: { in: overflow.map((item) => item.id) } },
+      })
+    }
+  } catch (error) {
+    console.error("Eldorado automation log persistence failed", error)
+  }
+}
+
+const persistEldoradoPriceCommandHistoryLog = async (offerId, status, message) => {
+  const normalizedOfferId = String(offerId ?? "").trim()
+  const normalizedMessage = String(message ?? "").trim()
+  const normalizedStatus = String(status ?? "").trim() || "running"
+  if (!normalizedOfferId || !normalizedMessage) return
+
+  const entry = {
+    id: `eldorado-price-log-${Date.now()}-${crypto.randomUUID()}`,
+    offerId: normalizedOfferId,
+    time: formatApplicationRunTime(),
+    status: normalizedStatus,
+    message: normalizedMessage,
+  }
+
+  try {
+    await prisma.eldoradoPriceCommandRunLog.create({ data: entry })
+
+    const overflow = await prisma.eldoradoPriceCommandRunLog.findMany({
+      where: { offerId: normalizedOfferId },
+      select: { id: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: ELDORADO_PRICE_COMMAND_LOG_LIMIT,
+    })
+    if (overflow.length > 0) {
+      await prisma.eldoradoPriceCommandRunLog.deleteMany({
+        where: { id: { in: overflow.map((item) => item.id) } },
+      })
+    }
+  } catch (error) {
+    console.error("Eldorado price command log persistence failed", error)
+  }
+}
+
+const queueEldoradoAutomationHistoryLog = (offerId, status, message) => {
+  void persistEldoradoAutomationHistoryLog(offerId, status, message)
+}
+
+const queueEldoradoPriceCommandHistoryLog = (offerId, status, message) => {
+  void persistEldoradoPriceCommandHistoryLog(offerId, status, message)
+}
+
+const closeEldoradoAutomationSocket = (run) => {
+  if (!run || typeof run !== "object") return
+  const socket = run.socket
+  run.socket = null
+  if (!socket) return
+  try {
+    socket.close()
+  } catch {
+    // Ignore close errors.
+  }
+}
+
+const closeEldoradoPriceCommandSocket = (run) => {
+  if (!run || typeof run !== "object") return
+  const socket = run.socket
+  run.socket = null
+  if (!socket) return
+  try {
+    socket.close()
+  } catch {
+    // Ignore close errors.
+  }
+}
+
+const clearEldoradoAutomationRunTimeout = (run) => {
+  if (!run?.timeoutId) return
+  clearTimeout(run.timeoutId)
+  run.timeoutId = null
+}
+
+const clearEldoradoPriceCommandRunTimeout = (run) => {
+  if (!run?.timeoutId) return
+  clearTimeout(run.timeoutId)
+  run.timeoutId = null
+}
+
+const appendEldoradoAutomationRunLog = (run, status, message, options = {}) => {
+  if (!run || typeof run !== "object") return null
+  const normalizedMessage = String(message ?? "").trim()
+  if (!normalizedMessage) return null
+  const entry = {
+    id: `eldorado-auto-run-log-${Date.now()}-${crypto.randomUUID()}`,
+    time: formatApplicationRunTime(),
+    status: String(status ?? "").trim() || "running",
+    message: normalizedMessage,
+  }
+  const currentLogs = Array.isArray(run.logs) ? run.logs : []
+  run.logs = [entry, ...currentLogs].slice(0, ELDORADO_AUTOMATION_LOG_LIMIT)
+  if (options.persist !== false) {
+    queueEldoradoAutomationHistoryLog(run.offerId, entry.status, normalizedMessage)
+  }
+  return entry
+}
+
+const appendEldoradoPriceCommandRunLog = (run, status, message, options = {}) => {
+  if (!run || typeof run !== "object") return null
+  const normalizedMessage = String(message ?? "").trim()
+  if (!normalizedMessage) return null
+  const entry = {
+    id: `eldorado-price-run-log-${Date.now()}-${crypto.randomUUID()}`,
+    time: formatApplicationRunTime(),
+    status: String(status ?? "").trim() || "running",
+    message: normalizedMessage,
+  }
+  const currentLogs = Array.isArray(run.logs) ? run.logs : []
+  run.logs = [entry, ...currentLogs].slice(0, ELDORADO_PRICE_COMMAND_LOG_LIMIT)
+  if (options.persist !== false) {
+    queueEldoradoPriceCommandHistoryLog(run.offerId, entry.status, normalizedMessage)
+  }
+  return entry
+}
+
+const cloneEldoradoAutomationPrompt = (prompt) => {
+  if (!prompt || typeof prompt !== "object") return null
+  const backend = String(prompt.backend ?? "").trim()
+  const message = String(prompt.message ?? "").trim()
+  if (!backend) return null
+  return { backend, message }
+}
+
+const cloneEldoradoAutomationResultPopup = (value) => {
+  if (!value || typeof value !== "object") return null
+  return {
+    title: String(value.title ?? "").trim(),
+    backend: String(value.backend ?? "").trim(),
+    value: String(value.value ?? "").trim(),
+  }
+}
+
+const serializeEldoradoAutomationRun = (run) => {
+  if (!run || typeof run !== "object") return null
+  const lastLog = Array.isArray(run.logs) ? run.logs[0] : null
+  return {
+    id: String(run.id ?? "").trim(),
+    offerId: String(run.offerId ?? "").trim(),
+    label: String(run.label ?? "").trim(),
+    status: String(run.status ?? "").trim() || "error",
+    connectionState: String(run.connectionState ?? "").trim() || "idle",
+    startedAtMs: Number(run.startedAtMs ?? 0) || 0,
+    endedAtMs: Number(run.endedAtMs ?? 0) || 0,
+    lastMessage: String(lastLog?.message ?? "").trim(),
+    pendingTwoFactorPrompt: cloneEldoradoAutomationPrompt(run.pendingTwoFactorPrompt),
+    resultPopup: cloneEldoradoAutomationResultPopup(run.resultPopup),
+  }
+}
+
+const serializeEldoradoPriceCommandRun = (run) => {
+  if (!run || typeof run !== "object") return null
+  const lastLog = Array.isArray(run.logs) ? run.logs[0] : null
+  return {
+    id: String(run.id ?? "").trim(),
+    offerId: String(run.offerId ?? "").trim(),
+    label: String(run.label ?? "").trim(),
+    status: String(run.status ?? "").trim() || "error",
+    connectionState: String(run.connectionState ?? "").trim() || "idle",
+    startedAtMs: Number(run.startedAtMs ?? 0) || 0,
+    endedAtMs: Number(run.endedAtMs ?? 0) || 0,
+    category: String(run.category ?? "").trim(),
+    result: Number(run.result ?? Number.NaN),
+    lastMessage: String(lastLog?.message ?? "").trim(),
+  }
+}
+
+const serializeManagedRunLogEntry = (entry) => {
+  if (!entry || typeof entry !== "object") return null
+  const id = String(entry.id ?? "").trim()
+  const time = String(entry.time ?? "").trim()
+  const status = String(entry.status ?? "").trim()
+  const message = String(entry.message ?? "").trim()
+  if (!id || !time || !status || !message) return null
+  return { id, time, status, message }
+}
+
+const pruneEldoradoAutomationRuns = () => {
+  const now = Date.now()
+  Array.from(eldoradoAutomationRunsByOffer.entries()).forEach(([offerId, run]) => {
+    if (isApplicationRunLiveStatus(run?.status)) return
+    const referenceMs = Number(run?.endedAtMs ?? 0) || Number(run?.startedAtMs ?? 0)
+    if (referenceMs <= 0 || now - referenceMs <= ELDORADO_RUN_RETENTION_MS) return
+    closeEldoradoAutomationSocket(run)
+    eldoradoAutomationRunsByOffer.delete(offerId)
+  })
+}
+
+const pruneEldoradoPriceCommandRuns = () => {
+  const now = Date.now()
+  Array.from(eldoradoPriceCommandRunsByOffer.entries()).forEach(([offerId, run]) => {
+    if (isApplicationRunLiveStatus(run?.status)) return
+    const referenceMs = Number(run?.endedAtMs ?? 0) || Number(run?.startedAtMs ?? 0)
+    if (referenceMs <= 0 || now - referenceMs <= ELDORADO_RUN_RETENTION_MS) return
+    closeEldoradoPriceCommandSocket(run)
+    eldoradoPriceCommandRunsByOffer.delete(offerId)
+  })
+}
+
+const buildEldoradoAutomationBackendDisplay = (run, backendOverride = "") => {
+  if (!run || typeof run !== "object") return ""
+  const rawBackend = String(backendOverride || run.backend || "").trim()
+  if (!rawBackend) return ""
+  return rawBackend === run.backend && run.starred ? `${AUTOMATION_STAR_PREFIX}${rawBackend}` : rawBackend
+}
+
+const finalizeEldoradoAutomationCopyValue = (run, rawValue) => {
+  const normalizedRawValue =
+    typeof rawValue === "string"
+      ? rawValue
+      : rawValue === null || rawValue === undefined
+        ? ""
+        : (() => {
+            try {
+              return JSON.stringify(rawValue)
+            } catch {
+              return String(rawValue)
+            }
+          })()
+  const normalizedLogValue = String(run?.copyValueFromScriptLog ?? "")
+  const trimmedRawValue = normalizedRawValue.trim()
+  const trimmedLogValue = normalizedLogValue.trim()
+  const hasMultilineLogValue =
+    Array.isArray(run?.copyValueLines) && (run.copyValueLines.length > 1 || normalizedLogValue.includes("\n"))
+  const useLogValueAsFallback =
+    Boolean(trimmedLogValue) &&
+    (hasMultilineLogValue ||
+      !trimmedRawValue ||
+      (!normalizedRawValue.includes("\n") && trimmedLogValue.length > trimmedRawValue.length))
+  return (useLogValueAsFallback ? trimmedLogValue : normalizedRawValue) || ""
+}
+
+const completeEldoradoAutomationRun = (run, status, message = "") => {
+  if (!run || typeof run !== "object" || run.settled) return
+  run.settled = true
+  run.status = String(status ?? "").trim() || "error"
+  run.connectionState = run.status === "error" ? "error" : run.hasConnected ? "connected" : "idle"
+  run.endedAtMs = Date.now()
+  run.pendingTwoFactorPrompt = null
+  clearEldoradoAutomationRunTimeout(run)
+  if (message) {
+    appendEldoradoAutomationRunLog(run, run.status, message)
+  }
+  closeEldoradoAutomationSocket(run)
+}
+
+const completeEldoradoPriceCommandRun = (run, status, message = "") => {
+  if (!run || typeof run !== "object" || run.settled) return
+  run.settled = true
+  run.status = String(status ?? "").trim() || "error"
+  run.connectionState = run.status === "error" ? "error" : run.hasConnected ? "connected" : "idle"
+  run.endedAtMs = Date.now()
+  clearEldoradoPriceCommandRunTimeout(run)
+  if (message) {
+    appendEldoradoPriceCommandRunLog(run, run.status, message)
+  }
+  closeEldoradoPriceCommandSocket(run)
+}
+
+const resetEldoradoAutomationRunTimeout = (run, ms = 20000) => {
+  if (!run || typeof run !== "object") return
+  clearEldoradoAutomationRunTimeout(run)
+  run.timeoutId = setTimeout(() => {
+    if (run.hasResult) {
+      completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandi.`)
+      return
+    }
+    completeEldoradoAutomationRun(run, "error", `${run.label} icin sonuc yaniti alinmadi (zaman asimi).`)
+  }, ms)
+}
+
+const resetEldoradoPriceCommandRunTimeout = (run, ms = 120000) => {
+  if (!run || typeof run !== "object") return
+  clearEldoradoPriceCommandRunTimeout(run)
+  run.timeoutId = setTimeout(() => {
+    if (run.hasResult) {
+      completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandi.`)
+      return
+    }
+    completeEldoradoPriceCommandRun(run, "error", `${run.label} icin sonuc yaniti alinmadi (zaman asimi).`)
+  }, ms)
+}
+
+const sendEldoradoAutomationSocketEvent = (run, eventName, payload) => {
+  if (!run || typeof run !== "object") return false
+  const socket = run.socket
+  const webSocketApi = globalThis.WebSocket
+  if (!webSocketApi || !socket || socket.readyState !== webSocketApi.OPEN) return false
+  const normalizedEventName = String(eventName ?? "").trim()
+  if (!normalizedEventName) return false
+  try {
+    socket.send(`42${JSON.stringify([normalizedEventName, payload ?? {}])}`)
+    return true
+  } catch {
+    return false
+  }
+}
+
+const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, label, username, wsUrl }) => {
+  pruneEldoradoAutomationRuns()
+
+  const normalizedOfferId = String(offerId ?? "").trim()
+  const normalizedBackend = String(backend ?? "").trim()
+  const normalizedUrl = String(url ?? "").trim()
+  const normalizedLabel = String(label ?? "").trim() || "Stok cek"
+  const existingRun = eldoradoAutomationRunsByOffer.get(normalizedOfferId)
+  if (existingRun && isApplicationRunLiveStatus(existingRun.status)) {
+    return { run: existingRun, conflict: true }
+  }
+
+  const startedAtMs = Date.now()
+  const run = {
+    id: `eldorado-automation-run-${startedAtMs}-${crypto.randomUUID()}`,
+    offerId: normalizedOfferId,
+    backend: normalizedBackend,
+    url: normalizedUrl,
+    starred: Boolean(starred),
+    label: normalizedLabel,
+    status: "connecting",
+    connectionState: "connecting",
+    startedAtMs,
+    endedAtMs: 0,
+    logs: [],
+    socket: null,
+    settled: false,
+    hasConnected: false,
+    hasResult: false,
+    timeoutId: null,
+    pendingTwoFactorPrompt: null,
+    resultPopup: null,
+    copyValueFromScriptLog: "",
+    copyValueCaptureActive: false,
+    copyValueLines: [],
+  }
+
+  eldoradoAutomationRunsByOffer.set(normalizedOfferId, run)
+
+  appendEldoradoAutomationRunLog(run, "running", `Calistiran: ${String(username ?? "").trim() || "bilinmeyen-kullanici"}`)
+  appendEldoradoAutomationRunLog(
+    run,
+    "running",
+    `${normalizedLabel} tetikleniyor... backend=${buildEldoradoAutomationBackendDisplay(run)}, url=${normalizedUrl}`,
+  )
+
+  const triggerUrl = buildSocketIoWsUrl(wsUrl, { backend: normalizedBackend, url: normalizedUrl })
+  if (!triggerUrl) {
+    completeEldoradoAutomationRun(run, "error", "Socket.IO adresi olusturulamadi.")
+    return { run, conflict: false }
+  }
+
+  const WebSocketApi = globalThis.WebSocket
+  if (!WebSocketApi) {
+    completeEldoradoAutomationRun(run, "error", "Sunucu ortami WebSocket istemcisini desteklemiyor.")
+    return { run, conflict: false }
+  }
+
+  let socket = null
+  try {
+    socket = new WebSocketApi(triggerUrl)
+  } catch {
+    completeEldoradoAutomationRun(run, "error", `${normalizedLabel} icin websocket baglantisi baslatilamadi.`)
+    return { run, conflict: false }
+  }
+
+  run.socket = socket
+  resetEldoradoAutomationRunTimeout(run, 15000)
+
+  socket.addEventListener("message", (event) => {
+    if (run.settled) return
+    const payload = typeof event.data === "string" ? event.data : ""
+    if (!payload) return
+    const packets = splitEnginePackets(payload)
+
+    for (const packet of packets) {
+      if (run.settled) return
+
+      if (packet === "2") {
+        try {
+          socket.send("3")
+        } catch {
+          // Ignore pong send errors.
+        }
+        continue
+      }
+
+      if (packet.startsWith("0{")) {
+        try {
+          socket.send("40")
+        } catch {
+          completeEldoradoAutomationRun(run, "error", `${run.label} icin Socket.IO connect paketi gonderilemedi.`)
+        }
+        continue
+      }
+
+      if (packet.startsWith("40")) {
+        if (!run.hasConnected) {
+          appendEldoradoAutomationRunLog(run, "running", "Baglandi.")
+        }
+        run.hasConnected = true
+        run.status = "running"
+        run.connectionState = "connected"
+        resetEldoradoAutomationRunTimeout(run, 300000)
+        continue
+      }
+
+      if (packet.startsWith("41")) {
+        if (run.hasResult) {
+          completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandi.`)
+        } else {
+          completeEldoradoAutomationRun(run, "error", `${run.label} tamamlanmadan baglanti kapandi (sonuc yok).`)
+        }
+        return
+      }
+
+      if (packet.startsWith("44")) {
+        completeEldoradoAutomationRun(
+          run,
+          "error",
+          `${run.label} tetiklenemedi. backend=${buildEldoradoAutomationBackendDisplay(run)}`,
+        )
+        return
+      }
+
+      const eventPacket = parseSocketIoEventPacket(packet)
+      if (!eventPacket) continue
+      const eventName = String(eventPacket.event ?? "").trim().toLowerCase()
+      const firstArg = eventPacket.args[0]
+
+      if (eventName === "script-triggered" || eventName === "script-started") {
+        appendEldoradoAutomationRunLog(
+          run,
+          "running",
+          `${buildEldoradoAutomationBackendDisplay(run)} script baslatildi.`,
+        )
+        resetEldoradoAutomationRunTimeout(run, 300000)
+        continue
+      }
+
+      if (eventName === "script-log") {
+        const stream = String(firstArg?.stream ?? "").trim().toLowerCase()
+        const rawMessage = String(firstArg?.message ?? "")
+        if (rawMessage) {
+          const marker = "COPY_VALUE:"
+          const markerIndex = rawMessage.replace(/\r/g, "").indexOf(marker)
+          if (markerIndex >= 0) {
+            run.copyValueCaptureActive = true
+            run.copyValueLines = []
+            const seededLines = rawMessage
+              .replace(/\r/g, "")
+              .slice(markerIndex + marker.length)
+              .split("\n")
+              .map((line) => line.trim())
+              .filter(Boolean)
+            if (seededLines.length > 0) {
+              run.copyValueLines.push(...seededLines)
+              run.copyValueFromScriptLog = run.copyValueLines.join("\n")
+            }
+          } else if (run.copyValueCaptureActive) {
+            const appendedLines = rawMessage
+              .replace(/\r/g, "")
+              .split("\n")
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .filter((line) => !/^\[[^\]]+\]/.test(line) && !line.startsWith("Script "))
+            if (appendedLines.length > 0) {
+              run.copyValueLines.push(...appendedLines)
+              run.copyValueFromScriptLog = run.copyValueLines.join("\n").trim()
+            }
+          }
+
+          rawMessage
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .forEach((line) => {
+              appendEldoradoAutomationRunLog(run, stream === "stderr" ? "error" : "running", line)
+            })
+        }
+        resetEldoradoAutomationRunTimeout(run, 300000)
+        continue
+      }
+
+      if (eventName === "iki-faktor-gerekli") {
+        const promptBackend = String(firstArg?.backend ?? run.backend).trim() || run.backend
+        const promptMessage =
+          (typeof firstArg?.message === "string" ? firstArg.message : normalizeEventMessage(firstArg?.message ?? firstArg))
+            .replace(/\s+/g, " ")
+            .trim() || "Iki faktor kodu gerekli."
+        run.pendingTwoFactorPrompt = {
+          backend: promptBackend,
+          message: promptMessage,
+        }
+        appendEldoradoAutomationRunLog(
+          run,
+          "running",
+          `${buildEldoradoAutomationBackendDisplay(run, promptBackend)} => ${promptMessage}`,
+        )
+        resetEldoradoAutomationRunTimeout(run, 300000)
+        continue
+      }
+
+      if (eventName === "durum") {
+        const durumBackend = String(firstArg?.backend ?? run.backend).trim() || run.backend
+        const lines = normalizeEventMessage(firstArg?.message ?? firstArg)
+          .replace(/\r/g, "")
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+
+        if (lines.length === 0) {
+          appendEldoradoAutomationRunLog(run, "running", `${buildEldoradoAutomationBackendDisplay(run, durumBackend)} => -`)
+        } else {
+          lines.forEach((line) => {
+            appendEldoradoAutomationRunLog(
+              run,
+              "running",
+              `${buildEldoradoAutomationBackendDisplay(run, durumBackend)} => ${line}`,
+            )
+          })
+        }
+        resetEldoradoAutomationRunTimeout(run, 300000)
+        continue
+      }
+
+      if (eventName === "script-exit") {
+        run.copyValueCaptureActive = false
+        const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
+        if (Number.isFinite(exitCode)) {
+          appendEldoradoAutomationRunLog(
+            run,
+            exitCode === 0 ? "success" : "error",
+            `Script cikti. Kod: ${exitCode}`,
+          )
+        } else {
+          appendEldoradoAutomationRunLog(run, "running", "Script cikis olayi alindi.")
+        }
+        if (!run.hasResult) {
+          completeEldoradoAutomationRun(run, "error", `${run.label} cikti ancak sonuc alinmadi.`)
+          return
+        }
+        resetEldoradoAutomationRunTimeout(run, 5000)
+        continue
+      }
+
+      if (eventName === "sonuc") {
+        const resultBackend = String(firstArg?.backend ?? run.backend).trim() || run.backend
+        const finalValue = finalizeEldoradoAutomationCopyValue(run, firstArg?.value)
+        const valueText = String(finalValue ?? "").trim()
+        const backendDisplay = buildEldoradoAutomationBackendDisplay(run, resultBackend)
+        appendEldoradoAutomationRunLog(run, "success", `${backendDisplay} => ${valueText || "-"}`)
+        run.resultPopup = {
+          title: run.label,
+          backend: backendDisplay,
+          value: valueText || "-",
+        }
+        run.copyValueCaptureActive = false
+        run.hasResult = true
+        completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandi.`)
+        return
+      }
+
+      resetEldoradoAutomationRunTimeout(run, 300000)
+    }
+  })
+
+  socket.addEventListener("error", () => {
+    run.connectionState = "error"
+    completeEldoradoAutomationRun(run, "error", `${run.label} icin websocket baglanti hatasi olustu.`)
+  })
+
+  socket.addEventListener("close", () => {
+    if (run.settled) return
+    if (run.hasResult) {
+      completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandi.`)
+      return
+    }
+    if (run.hasConnected) {
+      completeEldoradoAutomationRun(run, "error", `${run.label} baglantisi acildi ancak sonuc gelmedi.`)
+      return
+    }
+    completeEldoradoAutomationRun(run, "error", `${run.label} icin websocket baglantisi kapandi.`)
+  })
+
+  return { run, conflict: false }
+}
+
+const createEldoradoPriceCommandRun = ({
+  offerId,
+  category,
+  result,
+  label,
+  username,
+  backendKey,
+  backendLabel,
+  wsUrl,
+}) => {
+  pruneEldoradoPriceCommandRuns()
+
+  const normalizedOfferId = String(offerId ?? "").trim()
+  const existingRun = eldoradoPriceCommandRunsByOffer.get(normalizedOfferId)
+  if (existingRun && isApplicationRunLiveStatus(existingRun.status)) {
+    return { run: existingRun, conflict: true }
+  }
+
+  const normalizedCategory = String(category ?? "").trim()
+  const normalizedResult = Number(result)
+  const normalizedLabel = String(label ?? "").trim() || "Sonucu Gonder"
+  const normalizedBackendKey = String(backendKey ?? "").trim() || "eldorado"
+  const normalizedBackendLabel =
+    String(backendLabel ?? normalizedBackendKey).trim() || normalizedBackendKey
+  const startedAtMs = Date.now()
+  const run = {
+    id: `eldorado-price-command-run-${startedAtMs}-${crypto.randomUUID()}`,
+    offerId: normalizedOfferId,
+    category: normalizedCategory,
+    result: normalizedResult,
+    label: normalizedLabel,
+    backendKey: normalizedBackendKey,
+    backendLabel: normalizedBackendLabel,
+    status: "connecting",
+    connectionState: "connecting",
+    startedAtMs,
+    endedAtMs: 0,
+    logs: [],
+    socket: null,
+    settled: false,
+    hasConnected: false,
+    hasResult: false,
+    timeoutId: null,
+  }
+
+  eldoradoPriceCommandRunsByOffer.set(normalizedOfferId, run)
+
+  appendEldoradoPriceCommandRunLog(run, "running", `Calistiran: ${String(username ?? "").trim() || "bilinmeyen-kullanici"}`)
+  appendEldoradoPriceCommandRunLog(
+    run,
+    "running",
+    `Gonderiliyor: backend=${normalizedBackendLabel}, kategori=${normalizedCategory || "-"}`,
+  )
+  appendEldoradoPriceCommandRunLog(run, "running", `Result: ${normalizedResult}`)
+
+  const triggerUrl = buildSocketIoWsUrl(wsUrl, {
+    backend: normalizedBackendKey,
+    offerId: normalizedOfferId,
+    category: normalizedCategory,
+    result: normalizedResult,
+  })
+  if (!triggerUrl) {
+    completeEldoradoPriceCommandRun(run, "error", "Socket.IO adresi olusturulamadi.")
+    return { run, conflict: false }
+  }
+
+  const WebSocketApi = globalThis.WebSocket
+  if (!WebSocketApi) {
+    completeEldoradoPriceCommandRun(run, "error", "Sunucu ortami WebSocket istemcisini desteklemiyor.")
+    return { run, conflict: false }
+  }
+
+  let socket = null
+  try {
+    socket = new WebSocketApi(triggerUrl)
+  } catch {
+    completeEldoradoPriceCommandRun(run, "error", `${normalizedLabel} icin websocket baglantisi baslatilamadi.`)
+    return { run, conflict: false }
+  }
+
+  run.socket = socket
+  resetEldoradoPriceCommandRunTimeout(run, 15000)
+
+  socket.addEventListener("message", (event) => {
+    if (run.settled) return
+    const rawPayload = typeof event.data === "string" ? event.data : ""
+    if (!rawPayload) return
+    const packets = splitEnginePackets(rawPayload)
+
+    for (const packet of packets) {
+      if (run.settled) return
+
+      if (packet === "2") {
+        try {
+          socket.send("3")
+        } catch {
+          // Ignore pong send errors.
+        }
+        continue
+      }
+
+      if (packet.startsWith("0{")) {
+        try {
+          socket.send("40")
+        } catch {
+          completeEldoradoPriceCommandRun(run, "error", `${run.label} icin Socket.IO baglantisi baslatilamadi.`)
+        }
+        continue
+      }
+
+      if (packet.startsWith("40")) {
+        if (!run.hasConnected) {
+          appendEldoradoPriceCommandRunLog(run, "running", "Baglandi.")
+        }
+        run.hasConnected = true
+        run.status = "running"
+        run.connectionState = "connected"
+        resetEldoradoPriceCommandRunTimeout(run, 300000)
+        continue
+      }
+
+      if (packet.startsWith("41")) {
+        if (run.hasResult) {
+          completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandi.`)
+        } else {
+          completeEldoradoPriceCommandRun(run, "error", `${run.label} tamamlanmadan baglanti kapandi.`)
+        }
+        return
+      }
+
+      if (packet.startsWith("44")) {
+        completeEldoradoPriceCommandRun(run, "error", `${run.label} tetiklenemedi. backend=${run.backendLabel}`)
+        return
+      }
+
+      const eventPacket = parseSocketIoEventPacket(packet)
+      if (!eventPacket) continue
+      const eventName = String(eventPacket.event ?? "").trim().toLowerCase()
+      const firstArg = eventPacket.args[0]
+
+      if (eventName === "script-triggered" || eventName === "script-started") {
+        appendEldoradoPriceCommandRunLog(run, "running", `${run.backendLabel} script baslatildi.`)
+        resetEldoradoPriceCommandRunTimeout(run, 300000)
+        continue
+      }
+
+      if (eventName === "durum") {
+        const lines = normalizeEventMessage(firstArg?.message ?? firstArg)
+          .replace(/\r/g, "")
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+        if (lines.length === 0) {
+          appendEldoradoPriceCommandRunLog(run, "running", `${run.backendLabel} => -`)
+        } else {
+          lines.forEach((line) => {
+            appendEldoradoPriceCommandRunLog(run, "running", `${run.backendLabel} => ${line}`)
+          })
+        }
+        resetEldoradoPriceCommandRunTimeout(run, 300000)
+        continue
+      }
+
+      if (eventName === "script-log") {
+        String(firstArg?.message ?? "")
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .forEach((line) => {
+            appendEldoradoPriceCommandRunLog(
+              run,
+              String(firstArg?.stream ?? "").trim().toLowerCase() === "stderr" ? "error" : "running",
+              line,
+            )
+          })
+        resetEldoradoPriceCommandRunTimeout(run, 300000)
+        continue
+      }
+
+      if (eventName === "kullanici-girdisi-gerekli") {
+        appendEldoradoPriceCommandRunLog(
+          run,
+          "error",
+          `${run.backendLabel} => Kullanici girdisi istendi. Bu panel bu akisi desteklemiyor.`,
+        )
+        completeEldoradoPriceCommandRun(run, "error", `${run.label} kullanici girdisi bekliyor.`)
+        return
+      }
+
+      if (eventName === "sonuc") {
+        const valueText = normalizeEventMessage(firstArg?.value ?? firstArg).trim()
+        appendEldoradoPriceCommandRunLog(run, "success", `${run.backendLabel} => ${valueText || "-"}`)
+        run.hasResult = true
+        completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandi.`)
+        return
+      }
+
+      if (eventName === "script-exit") {
+        const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
+        if (Number.isFinite(exitCode)) {
+          appendEldoradoPriceCommandRunLog(
+            run,
+            exitCode === 0 ? "success" : "error",
+            `Script cikti. Kod: ${exitCode}`,
+          )
+        }
+        if (!run.hasResult) {
+          completeEldoradoPriceCommandRun(run, "error", `${run.label} cikti ancak sonuc alinmadi.`)
+          return
+        }
+        resetEldoradoPriceCommandRunTimeout(run, 5000)
+        continue
+      }
+
+      resetEldoradoPriceCommandRunTimeout(run, 300000)
+    }
+  })
+
+  socket.addEventListener("error", () => {
+    run.connectionState = "error"
+    completeEldoradoPriceCommandRun(run, "error", `${run.label} icin websocket baglanti hatasi olustu.`)
+  })
+
+  socket.addEventListener("close", () => {
+    if (run.settled) return
+    if (run.hasResult) {
+      completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandi.`)
+      return
+    }
+    if (run.hasConnected) {
+      completeEldoradoPriceCommandRun(run, "error", `${run.label} baglantisi acildi ancak sonuc gelmedi.`)
+      return
+    }
+    completeEldoradoPriceCommandRun(run, "error", `${run.label} icin websocket baglantisi kapandi.`)
+  })
+
+  return { run, conflict: false }
+}
+
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true })
 })
@@ -1635,6 +2985,198 @@ app.delete("/api/applications/:id/logs", requireAnyPermission(APPLICATION_LOGS_C
 
   await prisma.applicationRunLog.deleteMany({ where: { applicationId: id } })
   res.json({ ok: true, id })
+})
+
+app.get("/api/application-runs", requireAnyPermission(APPLICATION_LOGS_VIEW_PERMISSIONS), async (req, res) => {
+  pruneApplicationRunSessions()
+  const canViewAll = canManageApplicationRuns(req.user)
+  const username = String(req.user?.username ?? "").trim()
+
+  const runs = Array.from(applicationRunSessions.values())
+    .filter((run) => {
+      if (canViewAll) return true
+      return String(run.createdByUsername ?? "").trim() === username
+    })
+    .sort(sortApplicationRunsDesc)
+    .map(serializeApplicationRunSession)
+    .filter(Boolean)
+
+  res.json(runs)
+})
+
+app.get("/api/application-runs/:runId", requireAnyPermission(APPLICATION_LOGS_VIEW_PERMISSIONS), async (req, res) => {
+  pruneApplicationRunSessions()
+  const runId = String(req.params?.runId ?? "").trim()
+  if (!runId) {
+    res.status(400).json({ error: "runId is required" })
+    return
+  }
+
+  const run = applicationRunSessions.get(runId)
+  if (!run) {
+    res.status(404).json({ error: "application_run_not_found" })
+    return
+  }
+  if (!canAccessApplicationRunSession(run, req.user)) {
+    res.status(403).json({ error: "forbidden" })
+    return
+  }
+
+  res.json({
+    run: serializeApplicationRunSession(run),
+    logs: Array.isArray(run.logs) ? run.logs.map(serializeApplicationRunLog).filter(Boolean) : [],
+  })
+})
+
+app.post("/api/applications/:id/run", requireAnyPermission(APPLICATION_RUN_PERMISSIONS), async (req, res) => {
+  const id = String(req.params?.id ?? "").trim()
+  if (!id) {
+    res.status(400).json({ error: "id is required" })
+    return
+  }
+
+  const application = await prisma.application.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      about: true,
+      backendKey: true,
+      backendLabel: true,
+      isActive: true,
+    },
+  })
+  if (!application) {
+    res.status(404).json({ error: "application_not_found" })
+    return
+  }
+  if (!application.isActive) {
+    res.status(409).json({ error: "application_inactive" })
+    return
+  }
+
+  const automationConfig = await prisma.automationConfig.findUnique({
+    where: { id: "default" },
+    select: { wsUrl: true },
+  })
+  const wsUrl = String(automationConfig?.wsUrl ?? "").trim()
+  if (!wsUrl) {
+    res.status(409).json({ error: "automation_ws_url_missing" })
+    return
+  }
+
+  const username = String(req.user?.username ?? "").trim() || "bilinmeyen-kullanici"
+  const run = createApplicationRunSession({ application, wsUrl, username })
+
+  res.status(201).json({
+    run: serializeApplicationRunSession(run),
+    logs: Array.isArray(run.logs) ? run.logs.map(serializeApplicationRunLog).filter(Boolean) : [],
+  })
+})
+
+app.post("/api/application-runs/:runId/cancel", requireAnyPermission(APPLICATION_RUN_PERMISSIONS), async (req, res) => {
+  pruneApplicationRunSessions()
+  const runId = String(req.params?.runId ?? "").trim()
+  if (!runId) {
+    res.status(400).json({ error: "runId is required" })
+    return
+  }
+
+  const run = applicationRunSessions.get(runId)
+  if (!run) {
+    res.status(404).json({ error: "application_run_not_found" })
+    return
+  }
+  if (!canAccessApplicationRunSession(run, req.user)) {
+    res.status(403).json({ error: "forbidden" })
+    return
+  }
+
+  if (isApplicationRunLiveStatus(run.status)) {
+    const backend = String(run.pendingPrompt?.backend ?? run.backendKey ?? "").trim()
+    const step = String(run.pendingPrompt?.step ?? "").trim()
+    if (backend) {
+      const cancelPayload = {
+        backend,
+        step,
+        reason: "user-cancelled",
+      }
+      const cancelSent = sendApplicationRunSocketEvent(run, "islem-iptal", cancelPayload)
+      if (!cancelSent) {
+        sendApplicationRunSocketEvent(run, "kullanici-girdisi", {
+          backend,
+          step,
+          value: "iptal",
+          reason: "user-cancelled",
+        })
+      } else {
+        appendApplicationRunLog(run, "running", `${run.backendLabel} => iptal eventi gonderildi.`)
+      }
+    }
+
+    completeApplicationRun(run, "error", "Islem kullanici tarafindan iptal edildi.")
+  }
+
+  res.json({
+    run: serializeApplicationRunSession(run),
+    logs: Array.isArray(run.logs) ? run.logs.map(serializeApplicationRunLog).filter(Boolean) : [],
+  })
+})
+
+app.post("/api/application-runs/:runId/input", requireAnyPermission(APPLICATION_RUN_PERMISSIONS), async (req, res) => {
+  pruneApplicationRunSessions()
+  const runId = String(req.params?.runId ?? "").trim()
+  if (!runId) {
+    res.status(400).json({ error: "runId is required" })
+    return
+  }
+
+  const run = applicationRunSessions.get(runId)
+  if (!run) {
+    res.status(404).json({ error: "application_run_not_found" })
+    return
+  }
+  if (!canAccessApplicationRunSession(run, req.user)) {
+    res.status(403).json({ error: "forbidden" })
+    return
+  }
+  if (!isApplicationRunLiveStatus(run.status)) {
+    res.status(409).json({ error: "application_run_not_live" })
+    return
+  }
+  if (!run.pendingPrompt) {
+    res.status(409).json({ error: "application_run_input_not_requested" })
+    return
+  }
+
+  const value = String(req.body?.value ?? "").trim()
+  if (!value) {
+    res.status(400).json({ error: "value is required" })
+    return
+  }
+
+  const backend = String(run.pendingPrompt.backend ?? run.backendKey ?? "").trim()
+  if (!backend) {
+    res.status(400).json({ error: "backend is required" })
+    return
+  }
+
+  const sent = sendApplicationRunSocketEvent(run, "kullanici-girdisi", {
+    backend,
+    value,
+  })
+  if (!sent) {
+    res.status(409).json({ error: "application_run_socket_not_open" })
+    return
+  }
+
+  appendApplicationRunLog(run, "running", `> ${value}`)
+  run.pendingPrompt = null
+
+  res.json({
+    run: serializeApplicationRunSession(run),
+    logs: Array.isArray(run.logs) ? run.logs.map(serializeApplicationRunLog).filter(Boolean) : [],
+  })
 })
 
 app.get("/api/templates", async (req, res) => {
@@ -2894,7 +4436,7 @@ app.get("/api/eldorado/refresh-status", async (_req, res) => {
   })
 })
 
-app.post("/api/eldorado/refresh", async (_req, res, next) => {
+app.post("/api/eldorado/refresh", async (_req, res) => {
   if (eldoradoRefreshInFlight) {
     res.status(409).json({
       error: "refresh_in_progress",
@@ -3851,6 +5393,154 @@ app.post(
 )
 
 app.get(
+  "/api/eldorado/automation-runs",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_LOGS_PERMISSIONS),
+  async (_req, res) => {
+    pruneEldoradoAutomationRuns()
+    const runs = Array.from(eldoradoAutomationRunsByOffer.values())
+      .map(serializeEldoradoAutomationRun)
+      .filter(Boolean)
+      .sort(sortApplicationRunsDesc)
+    res.json(runs)
+  },
+)
+
+app.get(
+  "/api/eldorado/offers/:id/automation-run",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_LOGS_PERMISSIONS),
+  async (req, res) => {
+    pruneEldoradoAutomationRuns()
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+    const run = eldoradoAutomationRunsByOffer.get(offerId)
+    if (!run) {
+      res.status(404).json({ error: "automation_run_not_found" })
+      return
+    }
+    res.json({
+      run: serializeEldoradoAutomationRun(run),
+      logs: Array.isArray(run.logs) ? run.logs.map(serializeManagedRunLogEntry).filter(Boolean) : [],
+    })
+  },
+)
+
+app.post(
+  "/api/eldorado/offers/:id/automation-run",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_RUN_PERMISSIONS),
+  async (req, res) => {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+
+    const backend = String(req.body?.backend ?? "").trim()
+    const url = String(req.body?.url ?? "").trim()
+    const label = String(req.body?.label ?? "").trim() || "Stok cek"
+    const starredRaw = req.body?.starred
+    const starred =
+      typeof starredRaw === "boolean" ? starredRaw : String(starredRaw ?? "").toLowerCase() === "true"
+
+    if (!backend || !url) {
+      res.status(400).json({ error: "backend and url are required" })
+      return
+    }
+
+    const automationConfig = await prisma.automationConfig.findUnique({
+      where: { id: "default" },
+      select: { wsUrl: true },
+    })
+    const wsUrl = String(automationConfig?.wsUrl ?? "").trim()
+    if (!wsUrl) {
+      res.status(409).json({ error: "automation_ws_url_missing" })
+      return
+    }
+
+    const { run, conflict } = createEldoradoAutomationRun({
+      offerId,
+      backend,
+      url,
+      starred,
+      label,
+      username: req.user?.username,
+      wsUrl,
+    })
+
+    if (conflict) {
+      res.status(409).json({
+        error: "automation_run_in_progress",
+        run: serializeEldoradoAutomationRun(run),
+        logs: Array.isArray(run.logs) ? run.logs.map(serializeManagedRunLogEntry).filter(Boolean) : [],
+      })
+      return
+    }
+
+    res.status(201).json({
+      run: serializeEldoradoAutomationRun(run),
+      logs: Array.isArray(run.logs) ? run.logs.map(serializeManagedRunLogEntry).filter(Boolean) : [],
+    })
+  },
+)
+
+app.post(
+  "/api/eldorado/offers/:id/automation-run/two-factor",
+  requireAnyPermission(PRODUCT_STOCK_FETCH_RUN_PERMISSIONS),
+  async (req, res) => {
+    pruneEldoradoAutomationRuns()
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+
+    const run = eldoradoAutomationRunsByOffer.get(offerId)
+    if (!run) {
+      res.status(404).json({ error: "automation_run_not_found" })
+      return
+    }
+    if (!isApplicationRunLiveStatus(run.status)) {
+      res.status(409).json({ error: "automation_run_not_live" })
+      return
+    }
+    if (!run.pendingTwoFactorPrompt?.backend) {
+      res.status(409).json({ error: "automation_two_factor_not_requested" })
+      return
+    }
+
+    const code = String(req.body?.code ?? "").trim()
+    if (!code) {
+      res.status(400).json({ error: "code is required" })
+      return
+    }
+
+    const backend = String(run.pendingTwoFactorPrompt.backend ?? "").trim()
+    const sent = sendEldoradoAutomationSocketEvent(run, "iki-faktor-kodu", {
+      backend,
+      code,
+    })
+    if (!sent) {
+      res.status(409).json({ error: "automation_run_socket_not_open" })
+      return
+    }
+
+    appendEldoradoAutomationRunLog(
+      run,
+      "running",
+      `${buildEldoradoAutomationBackendDisplay(run, backend)} => Iki faktor kodu gonderildi.`,
+    )
+    run.pendingTwoFactorPrompt = null
+
+    res.json({
+      run: serializeEldoradoAutomationRun(run),
+      logs: Array.isArray(run.logs) ? run.logs.map(serializeManagedRunLogEntry).filter(Boolean) : [],
+    })
+  },
+)
+
+app.get(
   "/api/eldorado/offers/:id/price-command-logs",
   requireAnyPermission(PRODUCT_PRICE_LOGS_PERMISSIONS),
   async (req, res) => {
@@ -3935,6 +5625,94 @@ app.post(
     }
 
     res.status(201).json({ ok: true })
+  },
+)
+
+app.get(
+  "/api/eldorado/price-command-runs",
+  requireAnyPermission(PRODUCT_PRICE_LOGS_PERMISSIONS),
+  async (_req, res) => {
+    pruneEldoradoPriceCommandRuns()
+    const runs = Array.from(eldoradoPriceCommandRunsByOffer.values())
+      .map(serializeEldoradoPriceCommandRun)
+      .filter(Boolean)
+      .sort(sortApplicationRunsDesc)
+    res.json(runs)
+  },
+)
+
+app.get(
+  "/api/eldorado/offers/:id/price-command-run",
+  requireAnyPermission(PRODUCT_PRICE_LOGS_PERMISSIONS),
+  async (req, res) => {
+    pruneEldoradoPriceCommandRuns()
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+    const run = eldoradoPriceCommandRunsByOffer.get(offerId)
+    if (!run) {
+      res.status(404).json({ error: "price_command_run_not_found" })
+      return
+    }
+    res.json({
+      run: serializeEldoradoPriceCommandRun(run),
+      logs: Array.isArray(run.logs) ? run.logs.map(serializeManagedRunLogEntry).filter(Boolean) : [],
+    })
+  },
+)
+
+app.post(
+  "/api/eldorado/offers/:id/price-command-run",
+  requireAnyPermission(PRODUCT_PRICE_RUN_PERMISSIONS),
+  async (req, res) => {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+
+    const result = Number(req.body?.result)
+    if (!Number.isFinite(result)) {
+      res.status(400).json({ error: "result must be a finite number" })
+      return
+    }
+
+    const automationConfig = await prisma.automationConfig.findUnique({
+      where: { id: "default" },
+      select: { wsUrl: true },
+    })
+    const wsUrl = String(automationConfig?.wsUrl ?? "").trim()
+    if (!wsUrl) {
+      res.status(409).json({ error: "automation_ws_url_missing" })
+      return
+    }
+
+    const { run, conflict } = createEldoradoPriceCommandRun({
+      offerId,
+      category: String(req.body?.category ?? "").trim(),
+      result,
+      label: String(req.body?.label ?? "").trim() || "Sonucu Gonder",
+      username: req.user?.username,
+      backendKey: String(req.body?.backendKey ?? "").trim() || "eldorado",
+      backendLabel: String(req.body?.backendLabel ?? "").trim() || "eldorado",
+      wsUrl,
+    })
+
+    if (conflict) {
+      res.status(409).json({
+        error: "price_command_run_in_progress",
+        run: serializeEldoradoPriceCommandRun(run),
+        logs: Array.isArray(run.logs) ? run.logs.map(serializeManagedRunLogEntry).filter(Boolean) : [],
+      })
+      return
+    }
+
+    res.status(201).json({
+      run: serializeEldoradoPriceCommandRun(run),
+      logs: Array.isArray(run.logs) ? run.logs.map(serializeManagedRunLogEntry).filter(Boolean) : [],
+    })
   },
 )
 

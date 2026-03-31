@@ -625,6 +625,7 @@ export default function ProductsTab({
     activeUsername,
     automationWsUrl,
     canRunAutomation,
+    canViewAutomationLogs,
     canClearAutomationLogs,
     canViewAutomationTargetDetails,
     maskSensitiveText,
