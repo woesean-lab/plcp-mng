@@ -143,32 +143,40 @@ const getConsoleStatusMeta = (status) => {
   if (normalized === "success") {
     return {
       code: "OK",
+      label: "Tamam",
       dotClass: "bg-emerald-300",
       textClass: "text-emerald-300",
       badgeClass: "border-slate-700 bg-slate-900/90 text-emerald-300",
+      rowClass: "border-emerald-500/20 bg-emerald-500/[0.06]",
     }
   }
   if (normalized === "error") {
     return {
       code: "ERR",
+      label: "Hata",
       dotClass: "bg-rose-300",
       textClass: "text-rose-300",
       badgeClass: "border-slate-700 bg-slate-900/90 text-rose-300",
+      rowClass: "border-rose-500/20 bg-rose-500/[0.05]",
     }
   }
   if (normalized === "connecting") {
     return {
       code: "CON",
+      label: "Baglanti",
       dotClass: "bg-sky-300",
       textClass: "text-sky-300",
       badgeClass: "border-slate-700 bg-slate-900/90 text-sky-300",
+      rowClass: "border-sky-500/20 bg-sky-500/[0.05]",
     }
   }
   return {
     code: "RUN",
+    label: "Canli",
     dotClass: "bg-slate-300",
     textClass: "text-slate-300",
     badgeClass: "border-slate-700 bg-slate-900/90 text-slate-200",
+    rowClass: "border-white/6 bg-white/[0.02]",
   }
 }
 
@@ -1351,13 +1359,15 @@ export default function ApplicationsTab({
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600 hover:bg-slate-800`
   const terminalIconButtonBaseClass =
-    "inline-flex h-9 w-full items-center justify-center rounded-md border transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-9"
+    "inline-flex h-9 w-full items-center justify-center rounded-xl border transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-9"
   const terminalActionButtonClass =
-    `${terminalIconButtonBaseClass} border-sky-900 bg-[#0b1624] text-sky-200 hover:border-sky-800 hover:bg-[#102033] focus:ring-sky-800/30`
+    `${terminalIconButtonBaseClass} border-slate-700 bg-[#0b1220] text-slate-200 hover:border-slate-500 hover:bg-[#10192c] focus:ring-slate-600/30`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
-    "inline-flex h-9 min-w-[170px] items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 px-3 transition"
+    "inline-flex h-10 min-w-[148px] items-center gap-2 rounded-full border px-3 transition"
+  const terminalInfoPillClass =
+    "rounded-full border border-slate-800 bg-slate-950/80 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1392,129 +1402,129 @@ export default function ApplicationsTab({
 
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
         <section className="order-1 min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-[#040506] shadow-card lg:col-span-2">
-          <div className="border-b border-slate-800 bg-[#17191d] px-4 py-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-3 w-3 rounded-sm border border-slate-700 bg-slate-900" />
-                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200">
-                  {CMD_WINDOW_TITLE}
-                </span>
-              </div>
-              <span className="hidden font-mono text-[10px] text-slate-400 sm:inline">C:\Windows\System32\cmd.exe</span>
-            </div>
-          </div>
+          <div className="border-b border-slate-800 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.12),_transparent_32%),linear-gradient(180deg,_#111827_0%,_#070b11_100%)] px-4 py-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/80 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-200">
+                      <span className="inline-flex h-2 w-2 rounded-full bg-emerald-300" />
+                      {CMD_WINDOW_TITLE}
+                    </span>
+                    <span className={`${terminalInfoPillClass} ${connectionBadgeClass}`}>{connectionLabel}</span>
+                  </div>
+                  <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+                    <h2 className="min-w-0 truncate font-mono text-sm font-semibold text-slate-50 sm:text-[15px]">
+                      {activeConsoleTitle}
+                    </h2>
+                    <span className={terminalInfoPillClass}>{activeConsoleBackend}</span>
+                  </div>
+                  <p className="mt-2 max-w-2xl text-xs text-slate-400">{activeConsoleAbout}</p>
+                  <p className="mt-2 font-mono text-[11px] text-slate-500">{CMD_PROMPT_PATH}</p>
+                </div>
 
-          <div className="border-b border-slate-800 bg-[#0b0d10] px-3 py-3 sm:px-4">
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <div className="relative min-w-0">
-                <select
-                  value={selectedApplicationId}
-                  onChange={(event) => setSelectedApplicationId(event.target.value)}
-                  disabled={!hasApplications}
-                  className={`${terminalFieldClass} pr-10`}
-                >
-                  <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
-                  {runDropdownApplications.map((entry) => (
-                    <option key={`run-app-${entry.id}`} value={entry.id}>
-                      {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
-                    </option>
-                  ))}
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500">
-                  <svg
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
+                  <button
+                    type="button"
+                    onClick={handleRun}
+                    disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
+                    className={terminalActionButtonClass}
+                    aria-label="Servisi calistir"
+                    title="Calistir"
                   >
-                    <path d="m5 8 5 5 5-5" />
-                  </svg>
-                </span>
+                    <RiPlayFill size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCancelRun()}
+                    disabled={!canCancelActiveRun}
+                    className={terminalActionButtonClass}
+                    aria-label="Aktif calistirmayi iptal et"
+                    title="Iptal"
+                  >
+                    <RiPauseFill size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearLogs}
+                    disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
+                    className={terminalActionButtonClass}
+                    aria-label="Loglari temizle"
+                    title="Log temizle"
+                  >
+                    <RiDeleteBin6Line size={16} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
-                <button
-                  type="button"
-                  onClick={handleRun}
-                  disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                  className={terminalActionButtonClass}
-                  aria-label="Servisi calistir"
-                  title="Calistir"
-                >
-                  <RiPlayFill size={16} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCancelRun()}
-                  disabled={!canCancelActiveRun}
-                  className={terminalActionButtonClass}
-                  aria-label="Aktif calistirmayi iptal et"
-                  title="Iptal"
-                >
-                  <RiPauseFill size={16} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClearLogs}
-                  disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                  className={terminalActionButtonClass}
-                  aria-label="Loglari temizle"
-                  title="Log temizle"
-                >
-                  <RiDeleteBin6Line size={16} aria-hidden="true" />
-                </button>
+
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                <div className="relative min-w-0">
+                  <select
+                    value={selectedApplicationId}
+                    onChange={(event) => setSelectedApplicationId(event.target.value)}
+                    disabled={!hasApplications}
+                    className={`${terminalFieldClass} h-10 rounded-xl bg-slate-950/80 pr-10`}
+                  >
+                    <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
+                    {runDropdownApplications.map((entry) => (
+                      <option key={`run-app-${entry.id}`} value={entry.id}>
+                        {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500">
+                    <svg
+                      viewBox="0 0 20 20"
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m5 8 5 5 5-5" />
+                    </svg>
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <span className={terminalInfoPillClass}>
+                    {canViewApplicationLogs
+                      ? !activeRunSession && isLogsLoading
+                        ? "yukleniyor"
+                        : `${consoleLogs.length} satir`
+                      : "log yetkisi yok"}
+                  </span>
+                  <span className={terminalInfoPillClass}>{runSessions.length} oturum</span>
+                </div>
               </div>
+
+              {!hasWsUrl && (
+                <p className="rounded-xl border border-amber-300/25 bg-amber-500/10 px-3 py-2 font-mono text-[10px] text-amber-100">
+                  Websocket adresi yok. Admin panelinden kaydedin.
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="border-b border-slate-800 bg-[#06080b] px-4 py-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-2 font-mono text-[11px]">
-              <span className="flex-none text-slate-500">{CMD_PROMPT_PATH}</span>
-              <span className="min-w-0 truncate text-slate-100">{activeConsoleTitle}</span>
-              <span className="flex-none text-slate-600">/</span>
-              <span className="min-w-0 truncate text-slate-400">{activeConsoleBackend}</span>
+          <div className="border-b border-slate-800 bg-[#05070a] px-4 py-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">Oturumlar</p>
+              <span className="font-mono text-[10px] text-slate-600">{runSessions.length} acik sekme</span>
             </div>
-            <p className="mt-2 text-xs text-slate-500">{activeConsoleAbout}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full border border-slate-700 bg-slate-900/90 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
-                {canViewApplicationLogs
-                  ? !activeRunSession && isLogsLoading
-                    ? "yukleniyor..."
-                    : `${consoleLogs.length} satir`
-                  : "log yetkisi yok"}
-              </span>
-              <span
-                className={`rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${connectionBadgeClass}`}
-              >
-                {connectionLabel}
-              </span>
-              <span className="rounded-full border border-slate-700 bg-slate-900/90 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
-                {runSessions.length} oturum
-              </span>
-            </div>
-            {!hasWsUrl && (
-              <p className="mt-3 rounded-md border border-amber-300/25 bg-amber-500/10 px-2.5 py-1.5 font-mono text-[10px] text-amber-100">
-                Websocket adresi yok. Admin panelinden kaydedin.
-              </p>
-            )}
-          </div>
-
-          <div className="border-b border-slate-800 bg-[#040607] px-4 py-2.5">
-            <div className="no-scrollbar flex gap-2 overflow-x-auto">
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
               <button
                 type="button"
                 onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
                 className={`${terminalTabBaseClass} justify-between ${
                   activeRunSession
-                    ? "text-slate-400 hover:border-slate-700 hover:bg-slate-800/90"
-                    : "border-slate-600 bg-slate-800 text-slate-100"
+                    ? "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-600 hover:text-slate-200"
+                    : "border-sky-400/30 bg-sky-500/10 text-sky-100"
                 }`}
               >
                 <span className="truncate font-mono text-[11px] font-semibold tracking-[0.04em]">Genel Log</span>
-                <span className="rounded-full border border-slate-700 bg-slate-950 px-1.5 py-0.5 font-mono text-[9px] text-slate-400">
+                <span className="rounded-full border border-current/15 bg-black/20 px-1.5 py-0.5 font-mono text-[9px]">
                   {historyLogs.length}
                 </span>
               </button>
@@ -1527,10 +1537,10 @@ export default function ApplicationsTab({
                 return (
                   <div
                     key={`run-tab-${entry.id}`}
-                    className={`${terminalTabBaseClass} min-w-[196px] pl-2.5 pr-1.5 ${
+                    className={`${terminalTabBaseClass} min-w-[178px] pl-2.5 pr-1.5 ${
                       entryIsActive
-                        ? "border-slate-600 bg-slate-800 text-slate-100"
-                        : "text-slate-400 hover:border-slate-700 hover:bg-slate-800/90"
+                        ? "border-sky-400/30 bg-sky-500/10 text-sky-100"
+                        : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-600 hover:text-slate-200"
                     }`}
                   >
                     <button
@@ -1539,7 +1549,7 @@ export default function ApplicationsTab({
                       className="inline-flex min-w-0 flex-1 items-center gap-2 text-left"
                     >
                       <span className={`h-1.5 w-1.5 flex-none rounded-full ${statusMeta.dotClass}`} />
-                      <span className="min-w-0 flex-1 truncate font-mono text-[11px] font-semibold tracking-[0.04em] text-slate-100">
+                      <span className="min-w-0 flex-1 truncate font-mono text-[11px] font-semibold tracking-[0.04em]">
                         {entry.label}
                       </span>
                       <span
@@ -1552,7 +1562,7 @@ export default function ApplicationsTab({
                       <button
                         type="button"
                         onClick={() => handleCloseRunTab(entry.id)}
-                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-md border border-slate-700 bg-slate-950 font-mono text-[10px] text-slate-500 transition hover:border-slate-600 hover:bg-slate-900 hover:text-slate-200"
+                        className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-full border border-slate-700 bg-black/20 font-mono text-[10px] text-slate-500 transition hover:border-slate-500 hover:bg-slate-900 hover:text-slate-200"
                         aria-label={`${entry.label} sekmesini kapat`}
                       >
                         x
@@ -1564,7 +1574,7 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="no-scrollbar h-[52vh] min-h-[280px] max-h-[420px] overflow-y-auto overflow-x-hidden bg-[#010203] px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:px-4 sm:text-[12px] sm:leading-6">
+          <div className="no-scrollbar h-[52vh] min-h-[280px] max-h-[420px] overflow-y-auto overflow-x-hidden bg-[linear-gradient(180deg,_#04060a_0%,_#020305_100%)] px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:px-4 sm:text-[12px] sm:leading-6">
             {!canViewApplicationLogs ? (
               <div className="flex h-full items-center justify-center text-slate-500">
                 Servis Konsolu log goruntuleme yetkiniz yok.
@@ -1572,17 +1582,20 @@ export default function ApplicationsTab({
             ) : !activeRunSession && isLogsLoading ? (
               <div className="flex h-full items-center justify-center text-slate-500">Loglar yukleniyor...</div>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-2.5">
                 {activeRunPrompt && isActiveRunLive && (
-                  <div className="mb-3 rounded-md border border-slate-800 bg-slate-900/70 px-3 py-3">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap">
-                      <span className="hidden flex-none text-slate-500 sm:inline">{CMD_PROMPT_PATH}</span>
-                      <span className="flex-none text-emerald-300">INPUT</span>
-                      <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
+                  <div className="mb-4 rounded-2xl border border-amber-400/20 bg-amber-500/[0.06] px-3 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center rounded-full border border-amber-300/25 bg-black/20 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-100">
+                        Girdi Bekleniyor
+                      </span>
+                      {activeRunPrompt.step && (
+                        <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-slate-400">
+                          Step: {activeRunPrompt.step}
+                        </span>
+                      )}
                     </div>
-                    {activeRunPrompt.step && (
-                      <p className="mt-1 text-[10px] text-slate-500">Step: {activeRunPrompt.step}</p>
-                    )}
+                    <p className="mt-2 break-words text-[12px] leading-6 text-slate-100">{activeRunPrompt.message}</p>
                     <div className="mt-3">
                       {activeRunPrompt.inputType === "choice" && (
                         <div className="grid gap-1.5 sm:grid-cols-2">
@@ -1656,12 +1669,22 @@ export default function ApplicationsTab({
                   const messageSegments = splitLogMessageLinks(sanitizedMessage)
 
                   return (
-                    <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 sm:flex-nowrap">
-                      <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
-                      <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
-                      <span className="hidden flex-none text-slate-600 sm:inline">{CMD_PROMPT_PATH}</span>
-                      <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                      <span className="min-w-0 break-words text-slate-100">
+                    <div
+                      key={entry.id}
+                      className={`rounded-2xl border px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.015)] ${statusMeta.rowClass}`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-slate-500">
+                          {entry.time}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] ${statusMeta.badgeClass}`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
+                          {statusMeta.label}
+                        </span>
+                      </div>
+                      <div className="mt-2 min-w-0 break-words font-mono text-[12px] leading-6 text-slate-100">
                         {messageSegments.map((segment, index) =>
                           segment.type === "link" ? (
                             <button
@@ -1677,17 +1700,18 @@ export default function ApplicationsTab({
                             <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
                           ),
                         )}
-                      </span>
+                      </div>
                     </div>
                   )
                 })}
                 {consoleLogs.length === 0 && (
-                  <div className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                    <span className="hidden flex-none text-slate-600 sm:inline">{CMD_PROMPT_PATH}</span>
-                    <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                    <span className="flex-none text-slate-700">[--:--]</span>
-                    <span className="flex-none text-slate-700">---</span>
-                    <span className="text-slate-500">bekleniyor...</span>
+                  <div className="flex h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-black/10 px-4 text-center">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-600">
+                      Konsol Hazir
+                    </span>
+                    <p className="mt-2 max-w-sm text-sm text-slate-500">
+                      Burada secili servisin gecmis loglari veya aktif oturum akisi gorunecek.
+                    </p>
                   </div>
                 )}
               </div>
