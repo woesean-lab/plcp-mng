@@ -23,7 +23,7 @@ const getCategoryKeyFromHref = (href) => {
   if (raw.startsWith("http://") || raw.startsWith("https://")) {
     try {
       path = new URL(raw).pathname
-    } catch (error) {
+    } catch {
       path = raw
     }
   }
@@ -66,6 +66,13 @@ const formatPriceMetric = (value) => {
   const normalized = Number(value)
   return Number.isFinite(normalized) ? normalized.toFixed(2) : "-"
 }
+const normalizeDecimalInput = (value) => String(value ?? "").trim().replace(",", ".")
+const roundPriceControlValue = (value) => Math.round(Number(value) * 100) / 100
+const formatPriceControlNumber = (value) => {
+  const normalized = roundPriceControlValue(value)
+  if (!Number.isFinite(normalized)) return "-"
+  return normalized.toFixed(2).replace(/\.?0+$/, "")
+}
 const formatBulkPriceLogTime = () =>
   new Date().toLocaleString("tr-TR", {
     day: "2-digit",
@@ -79,11 +86,53 @@ const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
 const PRICE_COMMAND_VISIBLE_ROWS = 12
-const DEFAULT_PRICE_PERCENT = "200"
+const DEFAULT_PRICE_MULTIPLIER = 2
+const DEFAULT_PRICE_PERCENT = String(DEFAULT_PRICE_MULTIPLIER * 100)
+const PRICE_MULTIPLIER_MIN = 0.25
+const PRICE_MULTIPLIER_MAX = 20
+const PRICE_MULTIPLIER_PRESETS = [1.25, 1.5, 2, 2.5, 3, 4]
+const PRICE_MULTIPLIER_ADJUSTMENTS = [-0.25, -0.05, 0.05, 0.25]
 const PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing>"
 const BULK_PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing-bulk>"
 const BULK_PRICE_SESSION_STORAGE_KEY = "plcp:products:bulk-price-session:v1"
 const BULK_PRICE_RESUMABLE_STATUSES = new Set(["pending", "running", "error"])
+const clampPriceMultiplier = (value, fallback = DEFAULT_PRICE_MULTIPLIER) => {
+  const multiplier = Number(normalizeDecimalInput(value))
+  if (!Number.isFinite(multiplier) || multiplier <= 0) return fallback
+  return Math.min(PRICE_MULTIPLIER_MAX, Math.max(PRICE_MULTIPLIER_MIN, roundPriceControlValue(multiplier)))
+}
+const percentToMultiplier = (value, fallback = Number.NaN) => {
+  const percent = Number(normalizeDecimalInput(value))
+  if (!Number.isFinite(percent) || percent <= 0) return fallback
+  return roundPriceControlValue(percent / 100)
+}
+const multiplierToPercent = (value, fallback = Number.NaN) => {
+  const multiplier = Number(normalizeDecimalInput(value))
+  if (!Number.isFinite(multiplier) || multiplier <= 0) return fallback
+  return roundPriceControlValue(multiplier * 100)
+}
+const formatMultiplierDisplay = (value) => {
+  const normalized = roundPriceControlValue(value)
+  if (!Number.isFinite(normalized)) return "-"
+  return `${normalized.toFixed(2)}x`
+}
+const formatMultiplierToken = (value) => {
+  const normalized = roundPriceControlValue(value)
+  if (!Number.isFinite(normalized)) return "-"
+  return `${formatPriceControlNumber(normalized)}x`
+}
+const formatPercentToken = (value) => {
+  const percent = multiplierToPercent(value)
+  if (!Number.isFinite(percent)) return "-"
+  return `%${formatPriceControlNumber(percent)}`
+}
+const formatPercentDraftValue = (value) => {
+  const normalized = roundPriceControlValue(value)
+  if (!Number.isFinite(normalized)) return ""
+  return normalized.toFixed(2).replace(/\.?0+$/, "")
+}
+const isSameMultiplierValue = (left, right) =>
+  Math.abs(roundPriceControlValue(left) - roundPriceControlValue(right)) < 0.001
 const normalizeBackendKind = (value) =>
   String(value ?? "")
     .trim()
@@ -251,6 +300,104 @@ const maskAutomationLogMessage = (message, backendCandidates = []) => {
   })
 
   return masked
+}
+
+function PriceMultiplierControl({
+  label = "Katsayi",
+  description = "",
+  value = DEFAULT_PRICE_MULTIPLIER,
+  onChange,
+  disabled = false,
+  compact = false,
+}) {
+  const normalizedValue = clampPriceMultiplier(value)
+  const handleSelect = (nextValue) => {
+    if (disabled || typeof onChange !== "function") return
+    onChange(clampPriceMultiplier(nextValue))
+  }
+
+  return (
+    <div className={compact ? "rounded-2xl border border-white/10 bg-white/[0.045] p-3" : ""}>
+      <div
+        className={`flex flex-wrap items-start justify-between gap-3 ${compact ? "" : "md:items-center"}`}
+      >
+        <div>
+          <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200">
+            {label}
+          </label>
+          {description ? <p className="mt-1 text-[11px] text-slate-500">{description}</p> : null}
+        </div>
+        <div className="min-w-[132px] rounded-2xl border border-amber-300/20 bg-amber-500/[0.08] px-3 py-2.5 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-amber-100/75">
+            Aktif oran
+          </p>
+          <div className="mt-1 flex items-end justify-end gap-2">
+            <span className="text-lg font-semibold tracking-[-0.02em] text-white sm:text-xl">
+              {formatMultiplierDisplay(normalizedValue)}
+            </span>
+            <span className="pb-0.5 text-[10px] uppercase tracking-[0.16em] text-amber-100/70">
+              {formatPercentToken(normalizedValue)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className={`grid gap-2 ${compact ? "mt-3 grid-cols-3" : "mt-4 grid-cols-2 sm:grid-cols-3"}`}>
+        {PRICE_MULTIPLIER_PRESETS.map((presetValue) => {
+          const isActive = isSameMultiplierValue(normalizedValue, presetValue)
+          return (
+            <button
+              key={`price-multiplier-preset-${presetValue}`}
+              type="button"
+              onClick={() => handleSelect(presetValue)}
+              disabled={disabled}
+              className={`rounded-xl border px-3 py-2 text-left transition ${
+                isActive
+                  ? "border-amber-200/70 bg-amber-500/20 text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.18)]"
+                  : "border-white/10 bg-ink-950/55 text-slate-200 hover:border-white/20 hover:bg-white/[0.08]"
+              } disabled:cursor-not-allowed disabled:opacity-60`}
+            >
+              <span className="block text-sm font-semibold tracking-[-0.01em]">
+                {formatMultiplierToken(presetValue)}
+              </span>
+              <span className={`mt-1 block text-[10px] ${isActive ? "text-amber-100/75" : "text-slate-500"}`}>
+                {formatPercentToken(presetValue)}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-white/10 bg-ink-950/45 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">Ince ayar</p>
+          <p className="text-[10px] text-slate-500">Butonlarla 0.05x ve 0.25x adimlayin.</p>
+        </div>
+        <div className={`grid gap-2 ${compact ? "mt-2 grid-cols-4" : "mt-3 grid-cols-2 sm:grid-cols-4"}`}>
+          {PRICE_MULTIPLIER_ADJUSTMENTS.map((stepValue) => {
+            const nextValue = clampPriceMultiplier(normalizedValue + stepValue)
+            const isNegative = stepValue < 0
+            const labelText = `${isNegative ? "" : "+"}${formatPriceControlNumber(stepValue)}x`
+            return (
+              <button
+                key={`price-multiplier-step-${stepValue}`}
+                type="button"
+                onClick={() => handleSelect(nextValue)}
+                disabled={disabled}
+                className={`inline-flex items-center justify-center rounded-xl border px-2.5 py-2 text-[11px] font-semibold transition ${
+                  isNegative
+                    ? "border-rose-300/20 bg-rose-500/[0.07] text-rose-100 hover:border-rose-200/40 hover:bg-rose-500/[0.12]"
+                    : "border-emerald-300/20 bg-emerald-500/[0.07] text-emerald-100 hover:border-emerald-200/40 hover:bg-emerald-500/[0.12]"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                {labelText}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function ProductsSkeleton({ panelClass }) {
@@ -474,7 +621,7 @@ export default function ProductsTab({
   const [isBulkUsedDeleteRunning, setIsBulkUsedDeleteRunning] = useState(false)
   const [isBulkStockRefreshRunning, setIsBulkStockRefreshRunning] = useState(false)
   const [selectedPriceOfferIds, setSelectedPriceOfferIds] = useState({})
-  const [bulkPricePercentDraft, setBulkPricePercentDraft] = useState(DEFAULT_PRICE_PERCENT)
+  const [bulkPriceMultiplierDraft, setBulkPriceMultiplierDraft] = useState(DEFAULT_PRICE_MULTIPLIER)
   const [bulkPriceCommandState, setBulkPriceCommandState] = useState(createEmptyBulkPriceCommandState)
   const [bulkPriceCommandLogEntries, setBulkPriceCommandLogEntries] = useState([])
   const [bulkPriceItemStatusByOffer, setBulkPriceItemStatusByOffer] = useState({})
@@ -1169,14 +1316,15 @@ export default function ProductsTab({
     const name = String(product?.name ?? "").trim() || "Isimsiz urun"
     const priceDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
     const baseInputValue = String(priceDraft?.base ?? "").trim()
-    const baseValue = baseInputValue.replace(",", ".")
-    const percentValue = String(priceDraft?.percent ?? "").replace(",", ".")
+    const baseValue = normalizeDecimalInput(baseInputValue)
+    const percentValue = normalizeDecimalInput(priceDraft?.percent)
     const isBaseValid = isValidPriceInput(baseInputValue)
     const baseNumber = isBaseValid ? Number(baseValue) : Number.NaN
     const percentNumber = Number(percentValue)
+    const multiplierNumber = Number.isFinite(percentNumber) ? percentToMultiplier(percentNumber) : Number.NaN
     const result =
-      Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
-        ? baseNumber * (percentNumber / 100)
+      Number.isFinite(baseNumber) && Number.isFinite(multiplierNumber)
+        ? baseNumber * multiplierNumber
         : Number.NaN
     const category = resolveMainProductCategory(product)
     if (!offerId) {
@@ -1191,8 +1339,8 @@ export default function ProductsTab({
     if (!isBaseValid) {
       return { offerId, name, category, result, status: "skipped", reason: "Gecerli fiyat yok." }
     }
-    if (!Number.isFinite(percentNumber)) {
-      return { offerId, name, category, result, status: "skipped", reason: "Gecerli yuzdelik yok." }
+    if (!Number.isFinite(multiplierNumber)) {
+      return { offerId, name, category, result, status: "skipped", reason: "Gecerli katsayi yok." }
     }
     if (!Number.isFinite(result)) {
       return { offerId, name, category, result, status: "skipped", reason: "Sonuc hesaplanamadi." }
@@ -1353,12 +1501,13 @@ export default function ProductsTab({
 
     return savedCount
   }
-  const handleApplyBulkPricePercent = async () => {
+  const handleApplyBulkPriceMultiplier = async () => {
     if (isBulkPriceRunning) return
-    const normalizedPercent = String(bulkPricePercentDraft ?? "").trim().replace(",", ".")
-    const percentNumber = Number(normalizedPercent)
-    if (!normalizedPercent || !Number.isFinite(percentNumber)) {
-      toast.error("Toplu yuzdelik icin gecerli bir sayi girin.")
+    const multiplierNumber = clampPriceMultiplier(bulkPriceMultiplierDraft)
+    const percentNumber = multiplierToPercent(multiplierNumber)
+    const normalizedPercent = formatPercentDraftValue(percentNumber)
+    if (!Number.isFinite(multiplierNumber) || !Number.isFinite(percentNumber) || !normalizedPercent) {
+      toast.error("Toplu katsayi icin gecerli bir deger secin.")
       return
     }
 
@@ -1367,7 +1516,7 @@ export default function ProductsTab({
       .filter((offerId) => Boolean(offerId) && Boolean(priceEnabledByOffer?.[offerId]))
 
     if (targetOfferIds.length === 0) {
-      toast.error("Yuzdelik uygulanacak secili fiyat urunu yok.")
+      toast.error("Katsayi uygulanacak secili fiyat urunu yok.")
       return
     }
 
@@ -1376,9 +1525,9 @@ export default function ProductsTab({
       const currentDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
       const baseInputValue = String(currentDraft.base ?? "").trim()
       const baseNumber = isValidPriceInput(baseInputValue)
-        ? Number(baseInputValue.replace(",", "."))
+        ? Number(normalizeDecimalInput(baseInputValue))
         : Number.NaN
-      const result = Number.isFinite(baseNumber) ? baseNumber * (percentNumber / 100) : Number.NaN
+      const result = Number.isFinite(baseNumber) ? baseNumber * multiplierNumber : Number.NaN
 
       nextDrafts[offerId] = {
         ...currentDraft,
@@ -1403,14 +1552,14 @@ export default function ProductsTab({
 
     const progressToastId =
       saveCandidates.length > 0
-        ? toast.loading(`Toplu yuzdelik kaydediliyor... 0/${saveCandidates.length}`, {
+        ? toast.loading(`Toplu katsayi kaydediliyor... 0/${saveCandidates.length}`, {
             position: "top-right",
           })
         : null
     const savedCount = await persistSavedPrices(saveCandidates, {
       onProgress: ({ processed, total, saved }) => {
         if (!progressToastId || total <= 0) return
-        toast.loading(`Toplu yuzdelik kaydediliyor... ${processed}/${total} | Kaydedilen=${saved}`, {
+        toast.loading(`Toplu katsayi kaydediliyor... ${processed}/${total} | Kaydedilen=${saved}`, {
           id: progressToastId,
           position: "top-right",
         })
@@ -1419,19 +1568,19 @@ export default function ProductsTab({
     const unsavedCount = Math.max(0, targetOfferIds.length - savedCount)
     if (savedCount === 0 && unsavedCount > 0) {
       if (progressToastId) {
-        toast.error("Yuzdelik uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.", {
+        toast.error("Katsayi uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.", {
           id: progressToastId,
           position: "top-right",
         })
       } else {
-        toast.error("Yuzdelik uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.")
+        toast.error("Katsayi uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.")
       }
       return
     }
     const successMessage =
       unsavedCount > 0
-        ? `Yuzdelik uygulandi. Kaydedilen=${savedCount}, taslak kalan=${unsavedCount}`
-        : `Secili ${savedCount} urune yuzdelik uygulanip kaydedildi.`
+        ? `Katsayi uygulandi. Kaydedilen=${savedCount}, taslak kalan=${unsavedCount}`
+        : `Secili ${savedCount} urune katsayi uygulanip kaydedildi.`
     if (progressToastId) {
       toast.success(successMessage, { id: progressToastId, position: "top-right" })
     } else {
@@ -1892,6 +2041,11 @@ export default function ProductsTab({
         [field]: value,
       },
     }))
+  }
+  const handlePriceMultiplierChange = (offerId, multiplierValue) => {
+    const percentValue = formatPercentDraftValue(multiplierToPercent(multiplierValue))
+    if (!percentValue) return
+    handlePriceDraftChange(offerId, "percent", percentValue)
   }
   const handlePriceSave = async (offerId, base, percent, result) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -3019,54 +3173,53 @@ export default function ProductsTab({
                           </span>
                         </div>
                       </div>
-                      <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
-                        <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                          Yuzdelik
-                        </span>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={bulkPricePercentDraft}
-                          onChange={(event) => setBulkPricePercentDraft(event.target.value)}
-                          placeholder="200"
-                          className="h-9 w-[88px] rounded-lg border border-white/10 bg-ink-950/80 px-2.5 text-sm text-white outline-none transition focus:border-accent-300/60"
+                      <div className="flex w-full flex-col gap-2 xl:w-[430px] xl:items-stretch">
+                        <PriceMultiplierControl
+                          compact
+                          label="Toplu katsayi"
+                          description="Secili urunlere ayni carpan uygulanir."
+                          value={bulkPriceMultiplierDraft}
+                          onChange={setBulkPriceMultiplierDraft}
+                          disabled={isBulkPriceRunning}
                         />
-                        <button
-                          type="button"
-                          onClick={handleApplyBulkPricePercent}
-                          disabled={isBulkPriceRunning || selectedPriceCount === 0}
-                          className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-100 transition hover:border-white/20 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Uygula
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleResumeBulkPriceCommandRun}
-                          disabled={isBulkPriceRunning || bulkPriceResumeCount === 0}
-                          className="inline-flex h-9 items-center justify-center rounded-lg border border-sky-300/30 bg-sky-500/10 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200/50 hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {bulkPriceResumeCount > 0
-                            ? `Kalanlari gonder (${bulkPriceResumeCount})`
-                            : "Kalanlari gonder"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleBulkPriceCommandRun}
-                          disabled={isBulkPriceRunning || selectedPriceCount === 0 || bulkPriceReadyCount === 0}
-                          className="inline-flex h-9 items-center justify-center rounded-lg border border-emerald-300/40 bg-emerald-500/15 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {isBulkPriceRunning ? "Gonderiliyor..." : "Secilenleri gonder"}
-                        </button>
-                        {isBulkPriceRunning && (
+                        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
                           <button
                             type="button"
-                            onClick={handleCancelBulkPriceCommand}
-                            disabled={isBulkPriceCancelRequested}
-                            className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-rose-50 transition hover:border-rose-200/50 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={handleApplyBulkPriceMultiplier}
+                            disabled={isBulkPriceRunning || selectedPriceCount === 0}
+                            className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-100 transition hover:border-white/20 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {isBulkPriceCancelRequested ? "Durduruluyor..." : "Iptal et"}
+                            Uygula
                           </button>
-                        )}
+                          <button
+                            type="button"
+                            onClick={handleResumeBulkPriceCommandRun}
+                            disabled={isBulkPriceRunning || bulkPriceResumeCount === 0}
+                            className="inline-flex h-9 items-center justify-center rounded-lg border border-sky-300/30 bg-sky-500/10 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200/50 hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {bulkPriceResumeCount > 0
+                              ? `Kalanlari gonder (${bulkPriceResumeCount})`
+                              : "Kalanlari gonder"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleBulkPriceCommandRun}
+                            disabled={isBulkPriceRunning || selectedPriceCount === 0 || bulkPriceReadyCount === 0}
+                            className="inline-flex h-9 items-center justify-center rounded-lg border border-emerald-300/40 bg-emerald-500/15 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isBulkPriceRunning ? "Gonderiliyor..." : "Secilenleri gonder"}
+                          </button>
+                          {isBulkPriceRunning && (
+                            <button
+                              type="button"
+                              onClick={handleCancelBulkPriceCommand}
+                              disabled={isBulkPriceCancelRequested}
+                              className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-rose-50 transition hover:border-rose-200/50 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isBulkPriceCancelRequested ? "Durduruluyor..." : "Iptal et"}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 border-t border-white/10 pt-2">
@@ -3338,14 +3491,18 @@ export default function ProductsTab({
                   const priceDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
                   const savedPriceEntry = savedPricesByOffer?.[offerId] ?? null
                   const baseInputValue = String(priceDraft.base ?? "").trim()
-                  const baseValue = baseInputValue.replace(",", ".")
-                  const percentValue = String(priceDraft.percent ?? "").replace(",", ".")
+                  const baseValue = normalizeDecimalInput(baseInputValue)
+                  const percentValue = normalizeDecimalInput(priceDraft.percent)
                   const isBasePriceValid = isValidPriceInput(baseInputValue)
                   const baseNumber = isBasePriceValid ? Number(baseValue) : Number.NaN
                   const percentNumber = Number(percentValue)
+                  const multiplierNumber =
+                    Number.isFinite(percentNumber) && percentNumber > 0
+                      ? percentToMultiplier(percentNumber)
+                      : DEFAULT_PRICE_MULTIPLIER
                   const priceResult =
                     Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
-                      ? baseNumber * (percentNumber / 100)
+                      ? baseNumber * multiplierNumber
                       : ""
                   const productCategory = resolveMainProductCategory(product)
                   const currentResultDisplay = priceResult === "" ? "-" : priceResult.toFixed(2)
@@ -3404,7 +3561,7 @@ export default function ProductsTab({
                         ? "Secili fiyat sonucu websocket komutuna hazir."
                         : canSavePrice
                           ? "Fiyat ayari kaydedilmeye hazir."
-                          : "Sonuc icin baz fiyat ve yuzdelik girin."
+                          : "Sonuc icin baz fiyat ve katsayi secin."
                   const canDeleteMessageItem = messageGroupId
                     ? typeof onRemoveMessageGroupTemplate === "function"
                     : typeof onRemoveMessageTemplate === "function"
@@ -4159,7 +4316,7 @@ export default function ProductsTab({
                   Fiyat yonetimi
                 </p>
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Baz fiyat, yuzdelik ve sonuc hesaplamasi
+                  Baz fiyat, katsayi ve sonuc hesaplamasi
                 </p>
               </div>
             </div>
@@ -4207,32 +4364,17 @@ export default function ProductsTab({
               )}
             </div>
             <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200">
-                    Yuzdelik
-                  </label>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Sonucu kontrol edip ayari kaydedin
-                  </p>
-                </div>
-              </div>
               {canViewPriceDetails ? (
-                <div className="mt-4 space-y-3">
-                  <input
-                    type="text"
-                    value={priceDraft.percent}
-                    onChange={(event) =>
-                      handlePriceDraftChange(offerId, "percent", event.target.value)
-                    }
-                    placeholder="%"
-                    disabled={!canManagePrices}
-                    className="h-10 min-w-0 w-full rounded-lg border border-white/10 bg-ink-900/90 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                  />
-                </div>
+                <PriceMultiplierControl
+                  label="Katsayi sec"
+                  description="Preset carpanlarla hizi koruyun, ince ayarla sonucu toparlayin."
+                  value={multiplierNumber}
+                  onChange={(nextValue) => handlePriceMultiplierChange(offerId, nextValue)}
+                  disabled={!canManagePrices}
+                />
               ) : (
                 <p className="mt-4 rounded-lg border border-white/10 bg-white/5 px-3 py-8 text-center text-[11px] text-slate-500">
-                  Sonuc ve yuzdelik detaylari icin ek goruntuleme yetkisi gerekiyor.
+                  Sonuc ve katsayi detaylari icin ek goruntuleme yetkisi gerekiyor.
                 </p>
               )}
               <div className="mt-4 border-t border-white/10 pt-3">
