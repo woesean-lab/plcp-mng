@@ -1,5 +1,6 @@
 ﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
+import { normalizePricePayloadValues } from "../utils/priceMath"
 import LoadingIndicator from "../components/LoadingIndicator"
 import {
   AUTH_TOKEN_STORAGE_KEY,
@@ -2953,11 +2954,20 @@ const handleEldoradoNoteSave = useCallback(
     async (offerId, base, percent, result) => {
       const normalizedOfferId = String(offerId ?? "").trim()
       if (!normalizedOfferId) return false
+      const normalizedPayload = normalizePricePayloadValues({ base, percent, result })
+      if (
+        !Number.isFinite(normalizedPayload.base) ||
+        !Number.isFinite(normalizedPayload.percent) ||
+        !Number.isFinite(normalizedPayload.result)
+      ) {
+        toast.error("Fiyat kaydedilemedi (gecersiz fiyat).")
+        return false
+      }
       try {
         const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/price`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ base, percent, result }),
+          body: JSON.stringify(normalizedPayload),
         })
         if (!res.ok) {
           const detail = await readApiError(res)
@@ -2967,9 +2977,9 @@ const handleEldoradoNoteSave = useCallback(
         setEldoradoOfferPrices((prev) => ({
           ...prev,
           [normalizedOfferId]: {
-            base: payload?.base ?? base,
-            percent: payload?.percent ?? percent,
-            result: payload?.result ?? result,
+            base: payload?.base ?? normalizedPayload.base,
+            percent: payload?.percent ?? normalizedPayload.percent,
+            result: payload?.result ?? normalizedPayload.result,
           },
         }))
         return true

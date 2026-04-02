@@ -13,6 +13,11 @@ import {
   parseSocketIoEventPacket,
   splitEnginePackets,
 } from "../src/utils/socketIoClient.js"
+import {
+  formatRoundedPriceNumber,
+  normalizePricePayloadValues,
+  roundPriceNumber,
+} from "../src/utils/priceMath.js"
 
 const prisma = new PrismaClient()
 
@@ -2361,7 +2366,8 @@ const createEldoradoPriceCommandRun = ({
   }
 
   const normalizedCategory = String(category ?? "").trim()
-  const normalizedResult = Number(result)
+  const normalizedResult = roundPriceNumber(result)
+  const normalizedResultToken = formatRoundedPriceNumber(normalizedResult)
   const normalizedLabel = String(label ?? "").trim() || "Sonucu Gonder"
   const normalizedBackendKey = String(backendKey ?? "").trim() || "eldorado"
   const normalizedBackendLabel =
@@ -2395,13 +2401,17 @@ const createEldoradoPriceCommandRun = ({
     "running",
     `Gonderiliyor: backend=${normalizedBackendLabel}, kategori=${normalizedCategory || "-"}`,
   )
-  appendEldoradoPriceCommandRunLog(run, "running", `Result: ${normalizedResult}`)
+  appendEldoradoPriceCommandRunLog(
+    run,
+    "running",
+    `Result: ${normalizedResultToken || normalizedResult}`,
+  )
 
   const triggerUrl = buildSocketIoWsUrl(wsUrl, {
     backend: normalizedBackendKey,
     offerId: normalizedOfferId,
     category: normalizedCategory,
-    result: normalizedResult,
+    result: normalizedResultToken || normalizedResult,
   })
   if (!triggerUrl) {
     completeEldoradoPriceCommandRun(run, "error", "Socket.IO adresi olusturulamadi.")
@@ -4521,12 +4531,11 @@ app.post("/api/eldorado/offers/:id/price", async (req, res) => {
     return
   }
 
-  const baseRaw = req.body?.base
-  const percentRaw = req.body?.percent
-  const resultRaw = req.body?.result
-  const base = Number(baseRaw)
-  const percent = Number(percentRaw)
-  const result = Number(resultRaw)
+  const { base, percent, result } = normalizePricePayloadValues({
+    base: req.body?.base,
+    percent: req.body?.percent,
+    result: req.body?.result,
+  })
 
   if (!Number.isFinite(base) || !Number.isFinite(percent) || !Number.isFinite(result)) {
     res.status(400).json({ error: "invalid_price_payload" })
@@ -5693,7 +5702,7 @@ app.post(
       return
     }
 
-    const result = Number(req.body?.result)
+    const result = roundPriceNumber(req.body?.result)
     if (!Number.isFinite(result)) {
       res.status(400).json({ error: "result must be a finite number" })
       return

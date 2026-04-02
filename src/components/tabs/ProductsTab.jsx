@@ -4,6 +4,11 @@ import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import useEldoradoAutomationRuntime from "../../hooks/useEldoradoAutomationRuntime"
 import useEldoradoPriceCommandRuntime from "../../hooks/useEldoradoPriceCommandRuntime"
+import {
+  calculateRoundedPriceResult,
+  normalizePricePayloadValues,
+  roundPriceNumber,
+} from "../../utils/priceMath"
 import StockModal from "../modals/StockModal"
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -1331,10 +1336,7 @@ export default function ProductsTab({
     const baseNumber = isBaseValid ? Number(baseValue) : Number.NaN
     const percentNumber = Number(percentValue)
     const multiplierNumber = Number.isFinite(percentNumber) ? percentToMultiplier(percentNumber) : Number.NaN
-    const result =
-      Number.isFinite(baseNumber) && Number.isFinite(multiplierNumber)
-        ? baseNumber * multiplierNumber
-        : Number.NaN
+    const result = calculateRoundedPriceResult(baseNumber, multiplierNumber)
     const category = resolveMainProductCategory(product)
     if (!offerId) {
       return { offerId: "", name, category, result, status: "skipped", reason: "Urun ID yok." }
@@ -1536,7 +1538,7 @@ export default function ProductsTab({
       const baseNumber = isValidPriceInput(baseInputValue)
         ? Number(normalizeDecimalInput(baseInputValue))
         : Number.NaN
-      const result = Number.isFinite(baseNumber) ? baseNumber * multiplierNumber : Number.NaN
+      const result = calculateRoundedPriceResult(baseNumber, multiplierNumber)
 
       nextDrafts[offerId] = {
         ...currentDraft,
@@ -1544,11 +1546,17 @@ export default function ProductsTab({
       }
 
       if (Number.isFinite(baseNumber) && Number.isFinite(result)) {
-        acc.push({
+        const normalizedPayload = normalizePricePayloadValues({
           offerId,
           base: baseNumber,
           percent: percentNumber,
           result,
+        })
+        acc.push({
+          offerId,
+          base: normalizedPayload.base,
+          percent: normalizedPayload.percent,
+          result: normalizedPayload.result,
         })
       }
       return acc
@@ -2059,20 +2067,30 @@ export default function ProductsTab({
   const handlePriceSave = async (offerId, base, percent, result) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    if (!Number.isFinite(base) || !Number.isFinite(percent) || !Number.isFinite(result)) {
+    const normalizedPayload = normalizePricePayloadValues({ base, percent, result })
+    if (
+      !Number.isFinite(normalizedPayload.base) ||
+      !Number.isFinite(normalizedPayload.percent) ||
+      !Number.isFinite(normalizedPayload.result)
+    ) {
       toast.error("Gecerli bir fiyat girin. Ornek: 15.53")
       return
     }
     if (typeof onSavePrice === "function") {
-      const ok = await onSavePrice(normalizedId, base, percent, result)
+      const ok = await onSavePrice(
+        normalizedId,
+        normalizedPayload.base,
+        normalizedPayload.percent,
+        normalizedPayload.result,
+      )
       if (!ok) return
     }
     setSavedPricesByOffer((prev) => ({
       ...prev,
       [normalizedId]: {
-        base,
-        percent,
-        result,
+        base: normalizedPayload.base,
+        percent: normalizedPayload.percent,
+        result: normalizedPayload.result,
       },
     }))
     toast.success("Fiyat kaydedildi.")
@@ -3508,12 +3526,12 @@ export default function ProductsTab({
                     Number.isFinite(percentNumber) && percentNumber > 0
                       ? percentToMultiplier(percentNumber)
                       : DEFAULT_PRICE_MULTIPLIER
-                  const priceResult =
-                    Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
-                      ? baseNumber * multiplierNumber
-                      : ""
+                  const priceResult = Number.isFinite(baseNumber)
+                    ? calculateRoundedPriceResult(baseNumber, multiplierNumber)
+                    : ""
                   const productCategory = resolveMainProductCategory(product)
-                  const currentResultDisplay = priceResult === "" ? "-" : priceResult.toFixed(2)
+                  const currentResultDisplay =
+                    priceResult === "" ? "-" : roundPriceNumber(priceResult).toFixed(2)
                   const savedResultDisplay = formatPriceMetric(savedPriceEntry?.result)
                   const hasSavedPrice = savedResultDisplay !== "-"
                   const priceCommandLogEntries = Array.isArray(priceCommandRunLogByOffer?.[offerId])

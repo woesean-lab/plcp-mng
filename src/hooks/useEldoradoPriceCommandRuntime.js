@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../constants/appConstants"
+import { roundPriceNumber } from "../utils/priceMath"
 
 const TRANSIENT_NETWORK_ERROR_MESSAGES = new Set([
   "failed to fetch",
@@ -45,7 +46,7 @@ const formatPriceCommandLogTime = () =>
 const normalizePriceCommandPayload = (value = {}) => {
   const offerId = String(value?.offerId ?? value?.productId ?? value?.id ?? "").trim()
   const category = String(value?.category ?? "").trim()
-  const result = Number(value?.result)
+  const result = roundPriceNumber(value?.result)
 
   return {
     offerId,
@@ -77,7 +78,7 @@ const normalizePriceCommandRunEntry = (entry) => {
     startedAtMs: Number(entry?.startedAtMs ?? 0) || 0,
     endedAtMs: Number(entry?.endedAtMs ?? 0) || 0,
     category: String(entry?.category ?? "").trim(),
-    result: Number.isFinite(result) ? result : Number.NaN,
+    result: Number.isFinite(result) ? roundPriceNumber(result) : Number.NaN,
     lastMessage: String(entry?.lastMessage ?? "").trim(),
   }
 }
