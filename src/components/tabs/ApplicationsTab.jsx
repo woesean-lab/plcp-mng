@@ -207,6 +207,7 @@ function ApplicationsSkeleton({ panelClass }) {
 export default function ApplicationsTab({
   panelClass = "",
   isLoading = false,
+  isActive = false,
   backendOptions = [],
   automationWsUrl = "",
   canManageApplications = false,
@@ -234,6 +235,8 @@ export default function ApplicationsTab({
   const seenLiveRunIdsRef = useRef(new Set())
   const completedToastRunIdsRef = useRef(new Set())
   const activeRunToastIdsRef = useRef(new Set())
+  const runSessionsRequestInFlightRef = useRef(false)
+  const runSnapshotRequestByIdRef = useRef({})
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -721,6 +724,8 @@ export default function ApplicationsTab({
   const fetchRunSessions = useCallback(
     async ({ silent = true } = {}) => {
       if (!canAccessApplications) return
+      if (runSessionsRequestInFlightRef.current) return
+      runSessionsRequestInFlightRef.current = true
       try {
         const res = await apiFetchApplications("/api/application-runs")
         if (!res.ok) {
@@ -733,6 +738,8 @@ export default function ApplicationsTab({
         if (!silent) {
           toast.error(getRequestErrorMessage(error, "Servis oturumlari alinamadi."))
         }
+      } finally {
+        runSessionsRequestInFlightRef.current = false
       }
     },
     [apiFetchApplications, canAccessApplications, readApiError, syncRunSessions],
@@ -742,6 +749,8 @@ export default function ApplicationsTab({
     async (runId, { silent = true } = {}) => {
       const normalizedRunId = String(runId ?? "").trim()
       if (!normalizedRunId) return null
+      if (runSnapshotRequestByIdRef.current?.[normalizedRunId]) return null
+      runSnapshotRequestByIdRef.current[normalizedRunId] = true
       try {
         const res = await apiFetchApplications(`/api/application-runs/${encodeURIComponent(normalizedRunId)}`)
         if (!res.ok) {
@@ -754,6 +763,8 @@ export default function ApplicationsTab({
           toast.error(getRequestErrorMessage(error, "Servis oturumu alinamadi."))
         }
         return null
+      } finally {
+        delete runSnapshotRequestByIdRef.current[normalizedRunId]
       }
     },
     [apiFetchApplications, applyRunSnapshot, readApiError],
@@ -808,6 +819,7 @@ export default function ApplicationsTab({
       setRunLogsByTab({})
       return
     }
+    if (!isActive) return
 
     const sync = () => {
       void fetchRunSessions({ silent: true })
@@ -833,10 +845,10 @@ export default function ApplicationsTab({
       window.removeEventListener("focus", handleVisibilityChange)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [canAccessApplications, fetchRunSessions])
+  }, [canAccessApplications, fetchRunSessions, isActive])
 
   useEffect(() => {
-    if (!activeRunId) return
+    if (!activeRunId || !isActive) return
 
     const sync = () => {
       void fetchRunSnapshot(activeRunId, { silent: true })
@@ -866,7 +878,7 @@ export default function ApplicationsTab({
       window.removeEventListener("focus", handleVisibilityChange)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [activeRunId, activeRunSession?.status, fetchRunSnapshot, isRunLive])
+  }, [activeRunId, activeRunSession?.status, fetchRunSnapshot, isActive, isRunLive])
 
   useEffect(() => {
     runSessions.forEach((entry) => {

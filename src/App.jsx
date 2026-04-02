@@ -1182,6 +1182,7 @@ function App() {
               panelClass={panelClass}
               catalog={eldoradoCatalog}
               isLoading={activeTab === "products" ? isProductsTabLoading : false}
+              isActive={activeTab === "products"}
               isRefreshing={isEldoradoRefreshing}
               onRefresh={refreshEldoradoCatalog}
               keysByOffer={eldoradoKeysByOffer}
@@ -1267,6 +1268,7 @@ function App() {
             <ApplicationsTab
               panelClass={panelClass}
               isLoading={activeTab === "applications" ? isApplicationsTabLoading : false}
+              isActive={activeTab === "applications"}
               backendOptions={eldoradoAutomationBackendOptions}
               automationWsUrl={eldoradoAutomationWsUrl}
               activeUsername={userName}

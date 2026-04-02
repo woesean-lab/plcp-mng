@@ -106,6 +106,8 @@ export default function useEldoradoPriceCommandRuntime({
   defaultBackendKey = "eldorado",
   defaultBackendLabel = "eldorado",
   maxLogEntries = 120,
+  isActive = false,
+  trackedLogOfferIds = [],
 }) {
   const canAccessPriceCommandRuns = canRunPriceCommand || canViewPriceCommandLogs
   const [priceCommandRunLogByOffer, setPriceCommandRunLogByOffer] = useState({})
@@ -117,6 +119,8 @@ export default function useEldoradoPriceCommandRuntime({
   const priceCommandRunByOfferRef = useRef({})
   const priceCommandRunningRef = useRef({})
   const pendingPriceCommandByOfferRef = useRef({})
+  const priceCommandRunsRequestInFlightRef = useRef(false)
+  const priceCommandLogsRequestByOfferRef = useRef({})
 
   const apiFetchPriceCommand = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -295,6 +299,8 @@ export default function useEldoradoPriceCommandRuntime({
   const fetchPriceCommandRuns = useCallback(
     async ({ silent = true } = {}) => {
       if (!canAccessPriceCommandRuns) return
+      if (priceCommandRunsRequestInFlightRef.current) return
+      priceCommandRunsRequestInFlightRef.current = true
       try {
         const res = await apiFetchPriceCommand("/api/eldorado/price-command-runs")
         if (!res.ok) {
@@ -312,6 +318,8 @@ export default function useEldoradoPriceCommandRuntime({
         if (!silent) {
           toast.error("Fiyat komut oturumlari alinamadi.")
         }
+      } finally {
+        priceCommandRunsRequestInFlightRef.current = false
       }
     },
     [apiFetchPriceCommand, canAccessPriceCommandRuns, commitPriceCommandRunMap],
@@ -324,6 +332,9 @@ export default function useEldoradoPriceCommandRuntime({
       const force = Boolean(options?.force)
       const silent = Boolean(options?.silent)
       if (!force && priceCommandLogsLoadedByOffer?.[normalizedOfferId]) return true
+      if (priceCommandLogsRequestByOfferRef.current?.[normalizedOfferId]) return false
+
+      priceCommandLogsRequestByOfferRef.current[normalizedOfferId] = true
 
       setPriceCommandLogsLoadingByOffer((prev) => ({ ...prev, [normalizedOfferId]: true }))
       try {
@@ -354,6 +365,7 @@ export default function useEldoradoPriceCommandRuntime({
           delete next[normalizedOfferId]
           return next
         })
+        delete priceCommandLogsRequestByOfferRef.current[normalizedOfferId]
       }
     },
     [apiFetchPriceCommand, maxLogEntries, priceCommandLogsLoadedByOffer],
@@ -537,6 +549,7 @@ export default function useEldoradoPriceCommandRuntime({
       commitPriceCommandRunMap({})
       return
     }
+    if (!isActive) return
 
     const sync = () => {
       void fetchPriceCommandRuns({ silent: true })
@@ -562,17 +575,19 @@ export default function useEldoradoPriceCommandRuntime({
       window.removeEventListener("focus", handleVisibilityChange)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [canAccessPriceCommandRuns, commitPriceCommandRunMap, fetchPriceCommandRuns])
+  }, [canAccessPriceCommandRuns, commitPriceCommandRunMap, fetchPriceCommandRuns, isActive])
 
   useEffect(() => {
-    if (!canAccessPriceCommandRuns) return
+    if (!canAccessPriceCommandRuns || !isActive) return
 
     const trackedOfferIds = Array.from(
       new Set([
-        ...Object.keys(priceCommandLogsLoadedByOffer || {}).filter((offerId) => priceCommandLogsLoadedByOffer?.[offerId]),
+        ...(Array.isArray(trackedLogOfferIds) ? trackedLogOfferIds : []).map((offerId) =>
+          String(offerId ?? "").trim(),
+        ),
         ...Object.keys(priceCommandIsRunningByOffer || {}).filter((offerId) => priceCommandIsRunningByOffer?.[offerId]),
       ]),
-    )
+    ).filter(Boolean)
     if (trackedOfferIds.length === 0) return
 
     const syncLogs = () => {
@@ -603,9 +618,10 @@ export default function useEldoradoPriceCommandRuntime({
     }
   }, [
     canAccessPriceCommandRuns,
+    isActive,
     loadPriceCommandLogs,
     priceCommandIsRunningByOffer,
-    priceCommandLogsLoadedByOffer,
+    trackedLogOfferIds,
   ])
 
   return {

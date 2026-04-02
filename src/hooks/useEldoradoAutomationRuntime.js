@@ -111,6 +111,8 @@ export default function useEldoradoAutomationRuntime({
   canViewAutomationLogs = false,
   canClearAutomationLogs = false,
   canViewAutomationTargetDetails = true,
+  isActive = false,
+  trackedLogOfferIds = [],
   maskSensitiveText,
   setAutomationResultPopup,
   maxAutomationRunLogEntries = 300,
@@ -126,6 +128,8 @@ export default function useEldoradoAutomationRuntime({
   const [automationLogsLoadingByOffer, setAutomationLogsLoadingByOffer] = useState({})
   const [automationLogsClearingByOffer, setAutomationLogsClearingByOffer] = useState({})
   const automationRunByOfferRef = useRef({})
+  const automationRunsRequestInFlightRef = useRef(false)
+  const automationLogsRequestByOfferRef = useRef({})
   const seenAutomationLiveRunIdsRef = useRef(new Set())
   const completedAutomationToastRunIdsRef = useRef(new Set())
   const shownAutomationResultRunIdsRef = useRef(new Set())
@@ -351,6 +355,8 @@ export default function useEldoradoAutomationRuntime({
   const fetchAutomationRuns = useCallback(
     async ({ silent = true } = {}) => {
       if (!canAccessAutomationRuns) return
+      if (automationRunsRequestInFlightRef.current) return
+      automationRunsRequestInFlightRef.current = true
       try {
         const res = await apiFetchAutomation("/api/eldorado/automation-runs")
         if (!res.ok) {
@@ -368,6 +374,8 @@ export default function useEldoradoAutomationRuntime({
         if (!silent) {
           toast.error("Stok cek oturumlari alinamadi.")
         }
+      } finally {
+        automationRunsRequestInFlightRef.current = false
       }
     },
     [apiFetchAutomation, canAccessAutomationRuns, commitAutomationRunMap],
@@ -380,6 +388,9 @@ export default function useEldoradoAutomationRuntime({
       const force = Boolean(options?.force)
       const silent = Boolean(options?.silent)
       if (!force && automationLogsLoadedByOffer?.[normalizedId]) return true
+      if (automationLogsRequestByOfferRef.current?.[normalizedId]) return false
+
+      automationLogsRequestByOfferRef.current[normalizedId] = true
 
       setAutomationLogsLoadingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
       try {
@@ -410,6 +421,7 @@ export default function useEldoradoAutomationRuntime({
           delete next[normalizedId]
           return next
         })
+        delete automationLogsRequestByOfferRef.current[normalizedId]
       }
     },
     [apiFetchAutomation, automationLogsLoadedByOffer, maxAutomationRunLogEntries],
@@ -603,6 +615,7 @@ export default function useEldoradoAutomationRuntime({
       commitAutomationRunMap({})
       return
     }
+    if (!isActive) return
 
     const sync = () => {
       void fetchAutomationRuns({ silent: true })
@@ -628,17 +641,19 @@ export default function useEldoradoAutomationRuntime({
       window.removeEventListener("focus", handleVisibilityChange)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [canAccessAutomationRuns, commitAutomationRunMap, fetchAutomationRuns])
+  }, [canAccessAutomationRuns, commitAutomationRunMap, fetchAutomationRuns, isActive])
 
   useEffect(() => {
-    if (!canAccessAutomationRuns) return
+    if (!canAccessAutomationRuns || !isActive) return
 
     const trackedOfferIds = Array.from(
       new Set([
-        ...Object.keys(automationLogsLoadedByOffer || {}).filter((offerId) => automationLogsLoadedByOffer?.[offerId]),
+        ...(Array.isArray(trackedLogOfferIds) ? trackedLogOfferIds : []).map((offerId) =>
+          String(offerId ?? "").trim(),
+        ),
         ...Object.keys(automationIsRunningByOffer || {}).filter((offerId) => automationIsRunningByOffer?.[offerId]),
       ]),
-    )
+    ).filter(Boolean)
     if (trackedOfferIds.length === 0) return
 
     const syncLogs = () => {
@@ -669,9 +684,10 @@ export default function useEldoradoAutomationRuntime({
     }
   }, [
     automationIsRunningByOffer,
-    automationLogsLoadedByOffer,
     canAccessAutomationRuns,
+    isActive,
     loadAutomationRunLogs,
+    trackedLogOfferIds,
   ])
 
   return {

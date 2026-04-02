@@ -467,6 +467,7 @@ export default function ProductsTab({
   panelClass = "",
   catalog,
   isLoading = false,
+  isActive = false,
   isRefreshing = false,
   onRefresh,
   keysByOffer = {},
@@ -679,6 +680,22 @@ export default function ProductsTab({
       return next
     })
   }, [savedPricesByOfferProp])
+  const trackedAutomationLogOfferIds = useMemo(
+    () =>
+      Object.entries(openOffers || {})
+        .filter(([, isOpen]) => Boolean(isOpen))
+        .map(([offerId]) => String(offerId ?? "").trim())
+        .filter((offerId) => activePanelByOffer?.[offerId] === "automation"),
+    [activePanelByOffer, openOffers],
+  )
+  const trackedPriceLogOfferIds = useMemo(
+    () =>
+      Object.entries(openOffers || {})
+        .filter(([, isOpen]) => Boolean(isOpen))
+        .map(([offerId]) => String(offerId ?? "").trim())
+        .filter((offerId) => activePanelByOffer?.[offerId] === "price"),
+    [activePanelByOffer, openOffers],
+  )
   const canManageGroups = typeof canManageGroupsProp === "boolean" ? canManageGroupsProp : canAddKeys
   const canManageStock =
     typeof canToggleStockProp === "boolean"
@@ -763,6 +780,8 @@ export default function ProductsTab({
     canViewAutomationLogs,
     canClearAutomationLogs,
     canViewAutomationTargetDetails,
+    isActive,
+    trackedLogOfferIds: trackedAutomationLogOfferIds,
     maskSensitiveText,
     setAutomationResultPopup,
     maxAutomationRunLogEntries: MAX_AUTOMATION_RUN_LOG_ENTRIES,
@@ -816,6 +835,8 @@ export default function ProductsTab({
     defaultBackendKey: priceCommandBackendEntry?.key ?? "eldorado",
     defaultBackendLabel: priceCommandBackendEntry?.label ?? "eldorado",
     maxLogEntries: MAX_PRICE_COMMAND_RUN_LOG_ENTRIES,
+    isActive,
+    trackedLogOfferIds: trackedPriceLogOfferIds,
   })
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
   const triggerKeyFade = (keyId) => {
