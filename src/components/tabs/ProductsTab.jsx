@@ -309,6 +309,7 @@ function PriceMultiplierControl({
   onChange,
   disabled = false,
   compact = false,
+  framed = compact,
 }) {
   const normalizedValue = clampPriceMultiplier(value)
   const presetValues = compact ? [1.5, 2, 2.5] : PRICE_MULTIPLIER_PRESETS
@@ -318,7 +319,7 @@ function PriceMultiplierControl({
   }
 
   return (
-    <div className={`${compact ? "rounded-xl border border-white/10 bg-white/[0.03] p-2" : "space-y-2"}`}>
+    <div className={`${framed ? "rounded-xl border border-white/10 bg-white/[0.03] p-2" : "space-y-2"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200">
@@ -3490,22 +3491,6 @@ export default function ProductsTab({
                     Number.isFinite(baseNumber) && Number.isFinite(percentNumber)
                       ? baseNumber * multiplierNumber
                       : ""
-                  const currentResultNumber = priceResult === "" ? Number.NaN : Number(priceResult)
-                  const savedResultNumber = Number(savedPriceEntry?.result)
-                  const resultDelta =
-                    Number.isFinite(currentResultNumber) && Number.isFinite(savedResultNumber)
-                      ? currentResultNumber - savedResultNumber
-                      : Number.NaN
-                  const resultDeltaDisplay = Number.isFinite(resultDelta)
-                    ? `${resultDelta > 0 ? "+" : ""}${resultDelta.toFixed(2)}`
-                    : "-"
-                  const resultDeltaClass = Number.isFinite(resultDelta)
-                    ? resultDelta > 0
-                      ? "border-emerald-300/20 bg-emerald-500/10 text-emerald-100"
-                      : resultDelta < 0
-                        ? "border-rose-300/20 bg-rose-500/10 text-rose-100"
-                        : "border-white/10 bg-white/5 text-slate-200"
-                    : "border-white/10 bg-white/5 text-slate-400"
                   const productCategory = resolveMainProductCategory(product)
                   const currentResultDisplay = priceResult === "" ? "-" : priceResult.toFixed(2)
                   const savedResultDisplay = formatPriceMetric(savedPriceEntry?.result)
@@ -4323,7 +4308,7 @@ export default function ProductsTab({
               </div>
             </div>
           </div>
-          <div className={`grid min-w-0 gap-3 p-3 sm:p-4 ${canViewPriceDetails ? "lg:grid-cols-[minmax(0,1fr)_minmax(240px,0.76fr)]" : ""}`}>
+          <div className={`grid min-w-0 gap-3 p-3 sm:p-4 ${canViewPriceDetails ? "lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.72fr)]" : ""}`}>
             <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -4365,10 +4350,11 @@ export default function ProductsTab({
                 </p>
               )}
             </div>
-            <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               {canViewPriceDetails ? (
                 <PriceMultiplierControl
                   compact
+                  framed={false}
                   label="Katsayi"
                   value={multiplierNumber}
                   onChange={(nextValue) => handlePriceMultiplierChange(offerId, nextValue)}
@@ -4423,26 +4409,20 @@ export default function ProductsTab({
             </div>
           </div>
           <div className="grid gap-2">
-            <div className="rounded-xl border border-sky-300/20 bg-gradient-to-br from-sky-500/10 via-ink-900/75 to-ink-900/95 p-2.5">
+            <div className="rounded-xl border border-white/10 bg-ink-900/70 p-2.5">
               <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
+                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
                   <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500">Anlik sonuc</p>
-                  <p className="mt-1 text-lg font-semibold tracking-[-0.02em] text-white">
+                  <p className="mt-1 text-sm font-semibold text-white">
                     {currentResultDisplay}
                   </p>
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
+                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
                   <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500">Kayitli sonuc</p>
-                  <p className="mt-1 text-lg font-semibold tracking-[-0.02em] text-white">
+                  <p className="mt-1 text-sm font-semibold text-white">
                     {savedResultDisplay}
                   </p>
                 </div>
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-ink-950/35 px-3 py-2">
-                <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Fark</span>
-                <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${resultDeltaClass}`}>
-                  {resultDeltaDisplay}
-                </span>
               </div>
               {!hasSavedPrice && (
                 <p className="mt-2 text-[10px] text-slate-500">
