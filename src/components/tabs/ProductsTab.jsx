@@ -311,39 +311,29 @@ function PriceMultiplierControl({
   compact = false,
 }) {
   const normalizedValue = clampPriceMultiplier(value)
+  const presetValues = compact ? [1.5, 2, 2.5] : PRICE_MULTIPLIER_PRESETS
   const handleSelect = (nextValue) => {
     if (disabled || typeof onChange !== "function") return
     onChange(clampPriceMultiplier(nextValue))
   }
 
   return (
-    <div className={compact ? "rounded-2xl border border-white/10 bg-white/[0.045] p-3" : ""}>
-      <div
-        className={`flex flex-wrap items-start justify-between gap-3 ${compact ? "" : "md:items-center"}`}
-      >
-        <div>
+    <div className={`${compact ? "rounded-xl border border-white/10 bg-white/[0.035] p-2.5" : "space-y-2.5"}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
           <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200">
             {label}
           </label>
-          {description ? <p className="mt-1 text-[11px] text-slate-500">{description}</p> : null}
+          {description ? <p className="mt-0.5 text-[10px] text-slate-500">{description}</p> : null}
         </div>
-        <div className="min-w-[132px] rounded-2xl border border-amber-300/20 bg-amber-500/[0.08] px-3 py-2.5 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-amber-100/75">
-            Aktif oran
-          </p>
-          <div className="mt-1 flex items-end justify-end gap-2">
-            <span className="text-lg font-semibold tracking-[-0.02em] text-white sm:text-xl">
-              {formatMultiplierDisplay(normalizedValue)}
-            </span>
-            <span className="pb-0.5 text-[10px] uppercase tracking-[0.16em] text-amber-100/70">
-              {formatPercentToken(normalizedValue)}
-            </span>
-          </div>
-        </div>
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[11px]">
+          <span className="font-semibold text-white">{formatMultiplierDisplay(normalizedValue)}</span>
+          <span className="text-slate-500">{formatPercentToken(normalizedValue)}</span>
+        </span>
       </div>
 
-      <div className={`grid gap-2 ${compact ? "mt-3 grid-cols-3" : "mt-4 grid-cols-2 sm:grid-cols-3"}`}>
-        {PRICE_MULTIPLIER_PRESETS.map((presetValue) => {
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {presetValues.map((presetValue) => {
           const isActive = isSameMultiplierValue(normalizedValue, presetValue)
           return (
             <button
@@ -351,50 +341,39 @@ function PriceMultiplierControl({
               type="button"
               onClick={() => handleSelect(presetValue)}
               disabled={disabled}
-              className={`rounded-xl border px-3 py-2 text-left transition ${
+              className={`inline-flex h-8 items-center justify-center rounded-full border px-3 text-[11px] font-semibold transition ${
                 isActive
-                  ? "border-amber-200/70 bg-amber-500/20 text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.18)]"
-                  : "border-white/10 bg-ink-950/55 text-slate-200 hover:border-white/20 hover:bg-white/[0.08]"
+                  ? "border-amber-200/60 bg-amber-500/15 text-amber-50"
+                  : "border-white/10 bg-ink-950/40 text-slate-300 hover:border-white/20 hover:bg-white/[0.06]"
               } disabled:cursor-not-allowed disabled:opacity-60`}
             >
-              <span className="block text-sm font-semibold tracking-[-0.01em]">
-                {formatMultiplierToken(presetValue)}
-              </span>
-              <span className={`mt-1 block text-[10px] ${isActive ? "text-amber-100/75" : "text-slate-500"}`}>
-                {formatPercentToken(presetValue)}
-              </span>
+              {formatMultiplierToken(presetValue)}
             </button>
           )
         })}
       </div>
 
-      <div className="mt-3 rounded-2xl border border-white/10 bg-ink-950/45 p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">Ince ayar</p>
-          <p className="text-[10px] text-slate-500">Butonlarla 0.05x ve 0.25x adimlayin.</p>
-        </div>
-        <div className={`grid gap-2 ${compact ? "mt-2 grid-cols-4" : "mt-3 grid-cols-2 sm:grid-cols-4"}`}>
-          {PRICE_MULTIPLIER_ADJUSTMENTS.map((stepValue) => {
-            const nextValue = clampPriceMultiplier(normalizedValue + stepValue)
-            const isNegative = stepValue < 0
-            const labelText = `${isNegative ? "" : "+"}${formatPriceControlNumber(stepValue)}x`
-            return (
-              <button
-                key={`price-multiplier-step-${stepValue}`}
-                type="button"
-                onClick={() => handleSelect(nextValue)}
-                disabled={disabled}
-                className={`inline-flex items-center justify-center rounded-xl border px-2.5 py-2 text-[11px] font-semibold transition ${
-                  isNegative
-                    ? "border-rose-300/20 bg-rose-500/[0.07] text-rose-100 hover:border-rose-200/40 hover:bg-rose-500/[0.12]"
-                    : "border-emerald-300/20 bg-emerald-500/[0.07] text-emerald-100 hover:border-emerald-200/40 hover:bg-emerald-500/[0.12]"
-                } disabled:cursor-not-allowed disabled:opacity-60`}
-              >
-                {labelText}
-              </button>
-            )
-          })}
-        </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {PRICE_MULTIPLIER_ADJUSTMENTS.map((stepValue) => {
+          const nextValue = clampPriceMultiplier(normalizedValue + stepValue)
+          const isNegative = stepValue < 0
+          const labelText = `${isNegative ? "" : "+"}${formatPriceControlNumber(stepValue)}x`
+          return (
+            <button
+              key={`price-multiplier-step-${stepValue}`}
+              type="button"
+              onClick={() => handleSelect(nextValue)}
+              disabled={disabled}
+              className={`inline-flex h-8 items-center justify-center rounded-lg border px-2.5 text-[11px] font-semibold transition ${
+                isNegative
+                  ? "border-rose-300/15 bg-rose-500/[0.05] text-rose-100 hover:border-rose-200/30 hover:bg-rose-500/[0.1]"
+                  : "border-emerald-300/15 bg-emerald-500/[0.05] text-emerald-100 hover:border-emerald-200/30 hover:bg-emerald-500/[0.1]"
+              } disabled:cursor-not-allowed disabled:opacity-60`}
+            >
+              {labelText}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
@@ -3173,11 +3152,10 @@ export default function ProductsTab({
                           </span>
                         </div>
                       </div>
-                      <div className="flex w-full flex-col gap-2 xl:w-[430px] xl:items-stretch">
+                      <div className="flex w-full flex-col gap-2 xl:w-[360px] xl:items-stretch">
                         <PriceMultiplierControl
                           compact
                           label="Toplu katsayi"
-                          description="Secili urunlere ayni carpan uygulanir."
                           value={bulkPriceMultiplierDraft}
                           onChange={setBulkPriceMultiplierDraft}
                           disabled={isBulkPriceRunning}
@@ -4316,7 +4294,7 @@ export default function ProductsTab({
                   Fiyat yonetimi
                 </p>
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Baz fiyat, katsayi ve sonuc hesaplamasi
+                  Baz fiyat ve katsayi
                 </p>
               </div>
             </div>
@@ -4366,8 +4344,7 @@ export default function ProductsTab({
             <div className="rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               {canViewPriceDetails ? (
                 <PriceMultiplierControl
-                  label="Katsayi sec"
-                  description="Preset carpanlarla hizi koruyun, ince ayarla sonucu toparlayin."
+                  label="Katsayi"
                   value={multiplierNumber}
                   onChange={(nextValue) => handlePriceMultiplierChange(offerId, nextValue)}
                   disabled={!canManagePrices}
