@@ -2305,7 +2305,8 @@ export default function useAppData() {
 
   const loadEldoradoCatalog = useCallback(
     async (signal, options = {}) => {
-      if (!options.silent) {
+      const silent = Boolean(options?.silent)
+      if (!silent) {
         setIsEldoradoLoading(true)
       }
       try {
@@ -2316,10 +2317,12 @@ export default function useAppData() {
         setEldoradoCatalog(applyEldoradoKeyCounts(normalized))
       } catch (error) {
         if (error?.name === "AbortError") return
-        setEldoradoCatalog(applyEldoradoKeyCounts(null))
-        toast.error("Urunler alinamadi (API/Server kontrol edin).")
+        if (!silent) {
+          setEldoradoCatalog(applyEldoradoKeyCounts(null))
+          toast.error("Urunler alinamadi (API/Server kontrol edin).")
+        }
       } finally {
-        if (!options.silent) {
+        if (!silent) {
           setIsEldoradoLoading(false)
         }
       }
@@ -2519,6 +2522,22 @@ export default function useAppData() {
     },
     [loadEldoradoKeys, loadEldoradoStore],
   )
+
+  const refreshLoadedEldoradoStockState = useCallback(async () => {
+    const loadedOfferIds = Object.keys(eldoradoKeysByOffer || {}).filter(Boolean)
+    const seenTargets = new Set()
+    const refreshOfferIds = loadedOfferIds.filter((offerId) => {
+      const assignedGroupId = String(eldoradoGroupAssignments?.[offerId] ?? "").trim()
+      const targetKey = assignedGroupId ? `group:${assignedGroupId}` : `offer:${offerId}`
+      if (seenTargets.has(targetKey)) return false
+      seenTargets.add(targetKey)
+      return true
+    })
+    await Promise.allSettled([
+      loadEldoradoCatalog(undefined, { silent: true }),
+      ...refreshOfferIds.map((offerId) => loadEldoradoKeys(offerId, { force: true, silent: true })),
+    ])
+  }, [eldoradoGroupAssignments, eldoradoKeysByOffer, loadEldoradoCatalog, loadEldoradoKeys])
 
   const handleEldoradoGroupCreate = async (name) => {
     const trimmed = String(name ?? "").trim()
@@ -3959,6 +3978,38 @@ const handleEldoradoNoteSave = useCallback(
     loadEldoradoCatalog(controller.signal)
     return () => controller.abort()
   }, [activeTab, canViewProductsTab, isAuthed, loadEldoradoCatalog])
+
+  useEffect(() => {
+    if (!isAuthed || activeTab !== "products" || !canViewProductsTab) return
+    let isSyncing = false
+    let lastSyncAt = 0
+    const minSyncGapMs = 1500
+
+    const syncIfNeeded = () => {
+      if (document.visibilityState !== "visible") return
+      const now = Date.now()
+      if (isSyncing || now - lastSyncAt < minSyncGapMs) return
+      isSyncing = true
+      lastSyncAt = now
+      void refreshLoadedEldoradoStockState().finally(() => {
+        isSyncing = false
+      })
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncIfNeeded()
+      }
+    }
+
+    window.addEventListener("focus", syncIfNeeded)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener("focus", syncIfNeeded)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [activeTab, canViewProductsTab, isAuthed, refreshLoadedEldoradoStockState])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDelayDone(true), 1200)
