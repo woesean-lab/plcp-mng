@@ -165,9 +165,9 @@ const getCommandLogStatusMeta = (status) => {
 
 const getCommandConnectionLabel = (value) => {
   const normalized = String(value ?? "").trim().toLowerCase()
-  if (normalized === "connected") return "Bağlandı"
-  if (normalized === "connecting") return "Bağlanıyor"
-  return "Bağlanılmadı"
+  if (normalized === "connected") return "Baglanildi"
+  if (normalized === "connecting") return "Baglaniyor"
+  return "Baglanilmadi"
 }
 
 const getCommandConnectionBadgeClass = (value) => {
@@ -212,7 +212,7 @@ const normalizeBulkPriceCommandLogEntry = (entry) => {
 
 const createBulkPriceItemStatusEntry = (status, name, message = "") => ({
   status: String(status ?? "").trim().toLowerCase() || "pending",
-  name: String(name ?? "").trim() || "İsimsiz ürün",
+  name: String(name ?? "").trim() || "Isimsiz urun",
   message: String(message ?? "").trim(),
   updatedAt: Date.now(),
 })
@@ -308,7 +308,7 @@ const maskAutomationLogMessage = (message, backendCandidates = []) => {
 }
 
 function PriceMultiplierControl({
-  label = "Katsayı",
+  label = "Katsayi",
   description = "",
   value = DEFAULT_PRICE_MULTIPLIER,
   onChange,
@@ -1035,7 +1035,7 @@ export default function ProductsTab({
     const isConnected = hasWsUrl && (connectedCount > 0 || probeStatus === "connected")
     const isConnecting = !isConnected && hasWsUrl && probeStatus === "connecting"
     return {
-      label: isConnected ? "Bağlandı" : isConnecting ? "Bağlanıyor" : "Bağlanılmadı",
+      label: isConnected ? "Baglanildi" : isConnecting ? "Baglaniyor" : "Baglanilmadi",
     }
   }, [automationConnectionStateByOffer, automationWsProbeStatus, automationWsUrl])
   useEffect(() => {
@@ -1144,7 +1144,7 @@ export default function ProductsTab({
         ? [
             createBulkPriceCommandLogEntry(
               "error",
-              "Önceki toplu gönderim sayfadan çıkıldığı için durduruldu. Tamamlanmayanlari yeniden gönderebilirsiniz.",
+              "Onceki toplu gonderim sayfadan cikildigi icin durduruldu. Tamamlanmayanlari yeniden gonderebilirsiniz.",
             ),
             ...restoredLogs,
           ].slice(0, MAX_PRICE_COMMAND_RUN_LOG_ENTRIES)
@@ -1177,7 +1177,7 @@ export default function ProductsTab({
       )
 
       if (hadInterruptedRun) {
-        toast.error("Toplu gönderim yarıda kaldı. Tamamlanmayanlari yeniden gönderebilirsiniz.")
+        toast.error("Toplu gonderim yarida kaldi. Tamamlanmayanlari yeniden gonderebilirsiniz.")
       }
     } catch {
       // Ignore invalid persisted bulk session payloads.
@@ -1279,7 +1279,7 @@ export default function ProductsTab({
       setBulkPriceLogsLoaded(true)
       return true
     } catch {
-      toast.error("Toplu fiyat logları alınamadı.")
+      toast.error("Toplu fiyat loglari alinamadi.")
       return false
     } finally {
       setBulkPriceLogsLoading(false)
@@ -1316,10 +1316,10 @@ export default function ProductsTab({
         }),
       )
       setBulkPriceLogsLoaded(true)
-      toast.success("Toplu fiyat logları temizlendi.")
+      toast.success("Toplu fiyat loglari temizlendi.")
       return true
     } catch {
-      toast.error("Toplu fiyat logları temizlenemedi.")
+      toast.error("Toplu fiyat loglari temizlenemedi.")
       return false
     } finally {
       setBulkPriceLogsClearing(false)
@@ -1327,7 +1327,7 @@ export default function ProductsTab({
   }
   const buildBulkPriceCandidate = (product) => {
     const offerId = String(product?.id ?? "").trim()
-    const name = String(product?.name ?? "").trim() || "İsimsiz ürün"
+    const name = String(product?.name ?? "").trim() || "Isimsiz urun"
     const priceDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
     const baseInputValue = String(priceDraft?.base ?? "").trim()
     const baseValue = normalizeDecimalInput(baseInputValue)
@@ -1339,22 +1339,22 @@ export default function ProductsTab({
     const result = calculateRoundedPriceResult(baseNumber, multiplierNumber)
     const category = resolveMainProductCategory(product)
     if (!offerId) {
-      return { offerId: "", name, category, result, status: "skipped", reason: "Ürün ID yok." }
+      return { offerId: "", name, category, result, status: "skipped", reason: "Urun ID yok." }
     }
     if (!Boolean(priceEnabledByOffer?.[offerId])) {
-      return { offerId, name, category, result, status: "skipped", reason: "Fiyat takibi kapalı." }
+      return { offerId, name, category, result, status: "skipped", reason: "Fiyat tabi kapali." }
     }
     if (Boolean(priceCommandIsRunningByOffer?.[offerId])) {
-      return { offerId, name, category, result, status: "skipped", reason: "Komut zaten çalışıyor." }
+      return { offerId, name, category, result, status: "skipped", reason: "Komut zaten calisiyor." }
     }
     if (!isBaseValid) {
-      return { offerId, name, category, result, status: "skipped", reason: "Geçerli fiyat yok." }
+      return { offerId, name, category, result, status: "skipped", reason: "Gecerli fiyat yok." }
     }
     if (!Number.isFinite(multiplierNumber)) {
-      return { offerId, name, category, result, status: "skipped", reason: "Geçerli katsayı yok." }
+      return { offerId, name, category, result, status: "skipped", reason: "Gecerli katsayi yok." }
     }
     if (!Number.isFinite(result)) {
-      return { offerId, name, category, result, status: "skipped", reason: "Sonuç hesaplanamadi." }
+      return { offerId, name, category, result, status: "skipped", reason: "Sonuc hesaplanamadi." }
     }
     return { offerId, name, category, result, status: "ready", reason: "" }
   }
@@ -1518,7 +1518,7 @@ export default function ProductsTab({
     const percentNumber = multiplierToPercent(multiplierNumber)
     const normalizedPercent = formatPercentDraftValue(percentNumber)
     if (!Number.isFinite(multiplierNumber) || !Number.isFinite(percentNumber) || !normalizedPercent) {
-      toast.error("Toplu katsayı için geçerli bir değer seçin.")
+      toast.error("Toplu katsayi icin gecerli bir deger secin.")
       return
     }
 
@@ -1527,7 +1527,7 @@ export default function ProductsTab({
       .filter((offerId) => Boolean(offerId) && Boolean(priceEnabledByOffer?.[offerId]))
 
     if (targetOfferIds.length === 0) {
-      toast.error("Katsayı uygulanacak seçili fiyat ürünü yok.")
+      toast.error("Katsayi uygulanacak secili fiyat urunu yok.")
       return
     }
 
@@ -1569,14 +1569,14 @@ export default function ProductsTab({
 
     const progressToastId =
       saveCandidates.length > 0
-        ? toast.loading(`Toplu katsayı kaydediliyor... 0/${saveCandidates.length}`, {
+        ? toast.loading(`Toplu katsayi kaydediliyor... 0/${saveCandidates.length}`, {
             position: "top-right",
           })
         : null
     const savedCount = await persistSavedPrices(saveCandidates, {
       onProgress: ({ processed, total, saved }) => {
         if (!progressToastId || total <= 0) return
-        toast.loading(`Toplu katsayı kaydediliyor... ${processed}/${total} | Kaydedilen=${saved}`, {
+        toast.loading(`Toplu katsayi kaydediliyor... ${processed}/${total} | Kaydedilen=${saved}`, {
           id: progressToastId,
           position: "top-right",
         })
@@ -1585,19 +1585,19 @@ export default function ProductsTab({
     const unsavedCount = Math.max(0, targetOfferIds.length - savedCount)
     if (savedCount === 0 && unsavedCount > 0) {
       if (progressToastId) {
-        toast.error("Katsayı uygulandi ama kaydedilecek geçerli baz fiyat bulunamadı.", {
+        toast.error("Katsayi uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.", {
           id: progressToastId,
           position: "top-right",
         })
       } else {
-        toast.error("Katsayı uygulandi ama kaydedilecek geçerli baz fiyat bulunamadı.")
+        toast.error("Katsayi uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.")
       }
       return
     }
     const successMessage =
       unsavedCount > 0
-        ? `Katsayı uygulandi. Kaydedilen=${savedCount}, taslak kalan=${unsavedCount}`
-        : `Seçili ${savedCount} ürüne katsayı uygulanip kaydedildi.`
+        ? `Katsayi uygulandi. Kaydedilen=${savedCount}, taslak kalan=${unsavedCount}`
+        : `Secili ${savedCount} urune katsayi uygulanip kaydedildi.`
     if (progressToastId) {
       toast.success(successMessage, { id: progressToastId, position: "top-right" })
     } else {
@@ -1611,21 +1611,21 @@ export default function ProductsTab({
       ...prev,
       cancelRequested: true,
     }))
-    appendBulkPriceCommandLog("error", "İptal istendi. Mevcut ürün tamamlanınca kuyruk duracak.")
+    appendBulkPriceCommandLog("error", "Iptal istendi. Mevcut urun tamamlaninca kuyruk duracak.")
   }
   const runBulkPriceCommands = async ({ resumeOnly = false } = {}) => {
     if (isBulkPriceRunning) return
     bulkPriceCancelRequestedRef.current = false
     if (!canUseBulkPriceActions) {
-      toast.error("Toplu sonuç gönderme yetkiniz yok.")
+      toast.error("Toplu sonuc gonderme yetkiniz yok.")
       return
     }
     if (!String(automationWsUrl ?? "").trim()) {
-      toast.error("Websocket adresi bulunamadı. Admin panelinden kaydedin.")
+      toast.error("Websocket adresi bulunamadi. Admin panelinden kaydedin.")
       return
     }
     if (selectedBulkPriceCandidates.length === 0) {
-      toast.error("Önce ürün seçin.")
+      toast.error("Once urun secin.")
       return
     }
 
@@ -1640,7 +1640,7 @@ export default function ProductsTab({
       : selectedBulkPriceCandidates
 
     if (resumeOnly && candidateScope.length === 0) {
-      toast.error("Yeniden gönderilecek tamamlanmayan ürün yok.")
+      toast.error("Yeniden gonderilecek tamamlanmayan urun yok.")
       return
     }
 
@@ -1681,10 +1681,10 @@ export default function ProductsTab({
         }),
       )
       skippedItems.forEach((item) => {
-        appendBulkPriceCommandLog("error", `${item.name} atlandı: ${item.reason}`)
+        appendBulkPriceCommandLog("error", `${item.name} atlandi: ${item.reason}`)
       })
       toast.error(
-        resumeOnly ? "Yeniden gönderilecek geçerli ürün yok." : "Gönderilecek geçerli ürün yok.",
+        resumeOnly ? "Yeniden gonderilecek gecerli urun yok." : "Gonderilecek gecerli urun yok.",
       )
       return
     }
@@ -1707,11 +1707,11 @@ export default function ProductsTab({
     appendBulkPriceCommandLog(
       "running",
       resumeOnly
-        ? `Tamamlanmayan gönderim yeniden başlatıldı. Seçili=${selectedBulkPriceCandidates.length}, kalan=${candidateScope.length}, hazır=${readyItems.length}`
-        : `Toplu gönderim başladı. Seçili=${selectedBulkPriceCandidates.length}, hazır=${readyItems.length}, atlanacak=${skippedItems.length}`,
+        ? `Tamamlanmayan gonderim yeniden baslatildi. Secili=${selectedBulkPriceCandidates.length}, kalan=${candidateScope.length}, hazir=${readyItems.length}`
+        : `Toplu gonderim basladi. Secili=${selectedBulkPriceCandidates.length}, hazir=${readyItems.length}, atlanacak=${skippedItems.length}`,
     )
     skippedItems.forEach((item) => {
-      appendBulkPriceCommandLog("error", `${item.name} atlandı: ${item.reason}`)
+      appendBulkPriceCommandLog("error", `${item.name} atlandi: ${item.reason}`)
     })
 
     const statusSnapshot = { ...nextStatusByOffer }
@@ -1732,7 +1732,7 @@ export default function ProductsTab({
         currentOfferId: item.offerId,
         currentName: item.name,
       }))
-      appendBulkPriceCommandLog("running", `${item.name} gönderiliyor...`)
+      appendBulkPriceCommandLog("running", `${item.name} gonderiliyor...`)
       try {
         await runPriceCommandAsync(
           {
@@ -1741,7 +1741,7 @@ export default function ProductsTab({
             result: item.result,
           },
           {
-            label: "Toplu Sonucu Gönder",
+            label: "Toplu Sonucu Gonder",
             backendKey: priceCommandBackendEntry?.key ?? "eldorado",
             backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
             showToast: false,
@@ -1757,7 +1757,7 @@ export default function ProductsTab({
           ...prev,
           success: successCount,
         }))
-        appendBulkPriceCommandLog("success", `${item.name} tamamlandı.`)
+        appendBulkPriceCommandLog("success", `${item.name} tamamlandi.`)
       } catch (error) {
         errorCount += 1
         const errorMessage = String(error?.message ?? "Bilinmeyen hata")
@@ -1799,13 +1799,13 @@ export default function ProductsTab({
     if (wasCancelled || remainingPendingCount > 0) {
       appendBulkPriceCommandLog(
         "error",
-        `Toplu gönderim iptal edildi. Kalan işlem sayısı: ${Math.max(0, remainingPendingCount)}`,
+        `Toplu gonderim iptal edildi. Kalan islem sayisi: ${Math.max(0, remainingPendingCount)}`,
       )
-      toast.error(`Toplu gönderim durduruldu. Kalan=${Math.max(0, remainingPendingCount)}`)
+      toast.error(`Toplu gonderim durduruldu. Kalan=${Math.max(0, remainingPendingCount)}`)
     } else if (errorCount > 0) {
-      toast.error(`Toplu gönderim tamamlandı. Başarılı=${successCount}, Hata=${errorCount}`)
+      toast.error(`Toplu gonderim tamamlandi. Basarili=${successCount}, Hata=${errorCount}`)
     } else {
-      toast.success(`Toplu gönderim tamamlandı. Başarılı=${successCount}`)
+      toast.success(`Toplu gonderim tamamlandi. Basarili=${successCount}`)
     }
   }
   const handleBulkPriceCommandRun = async () => {
@@ -1921,7 +1921,7 @@ export default function ProductsTab({
       return
     }
     if (!backend) {
-      toast.error("Backend map seçin.")
+      toast.error("Backend map secin.")
       return
     }
 
@@ -2073,7 +2073,7 @@ export default function ProductsTab({
       !Number.isFinite(normalizedPayload.percent) ||
       !Number.isFinite(normalizedPayload.result)
     ) {
-      toast.error("Geçerli bir fiyat girin. Örnek: 15.53")
+      toast.error("Gecerli bir fiyat girin. Ornek: 15.53")
       return
     }
     if (typeof onSavePrice === "function") {
@@ -2136,7 +2136,7 @@ export default function ProductsTab({
   const handleToolbarBulkUsedDelete = async () => {
     if (!canUseBulkUsedDelete || isBulkUsedDeleteRunning) return
     if (toolbarUsedStockCount <= 0) {
-      toast.error("Temizlenecek kullanılan stok yok.")
+      toast.error("Temizlenecek kullanilan stok yok.")
       return
     }
     if (!confirmBulkUsedDelete) {
@@ -2188,19 +2188,19 @@ export default function ProductsTab({
       }
 
       if (deletedStockCount === 0) {
-        toast.error("Temizlenecek kullanılan stok bulunamadı.")
+        toast.error("Temizlenecek kullanilan stok bulunamadi.")
         return
       }
       if (failedOfferCount > 0) {
         toast.success(
-          `${deletedStockCount} kullanılan stok temizlendi (${affectedOfferCount} ürün, ${failedOfferCount} hata).`,
+          `${deletedStockCount} kullanilan stok temizlendi (${affectedOfferCount} urun, ${failedOfferCount} hata).`,
           {
             duration: 2200,
             position: "top-right",
           },
         )
       } else {
-        toast.success(`${deletedStockCount} kullanılan stok temizlendi (${affectedOfferCount} ürün).`, {
+        toast.success(`${deletedStockCount} kullanilan stok temizlendi (${affectedOfferCount} urun).`, {
           duration: 1800,
           position: "top-right",
         })
@@ -2219,7 +2219,7 @@ export default function ProductsTab({
       ),
     )
     if (offerIds.length === 0) {
-      toast.error("Yenilenecek ürün stogu yok.")
+      toast.error("Yenilenecek urun stogu yok.")
       return
     }
 
@@ -2245,14 +2245,14 @@ export default function ProductsTab({
 
       if (failedOfferCount > 0) {
         toast.success(
-          `${offerIds.length - failedOfferCount} ürünün stogu yenilendi (${failedOfferCount} hata).`,
+          `${offerIds.length - failedOfferCount} urunun stogu yenilendi (${failedOfferCount} hata).`,
           {
             duration: 2200,
             position: "top-right",
           },
         )
       } else {
-        toast.success(`${offerIds.length} ürünün stogu yenilendi.`, {
+        toast.success(`${offerIds.length} urunun stogu yenilendi.`, {
           duration: 1800,
           position: "top-right",
         })
@@ -2302,7 +2302,7 @@ export default function ProductsTab({
       return
     }
     setConfirmGroupDelete(normalizedGroupId)
-    toast("Grubu silmek için tekrar tıkla", { position: "top-right" })
+    toast("Grubu silmek icin tekrar tikla", { position: "top-right" })
   }
   const setActivePanel = (offerId, panel) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -2353,7 +2353,7 @@ export default function ProductsTab({
       return
     }
     setConfirmMessageGroupDelete(normalizedGroupId)
-    toast("Mesaj grubunu silmek için tekrar tıkla", { position: "top-right" })
+    toast("Mesaj grubunu silmek icin tekrar tikla", { position: "top-right" })
   }
   const handleMessageTemplateAdd = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -2528,7 +2528,7 @@ export default function ProductsTab({
       return
     }
     setConfirmOfferDelete(normalizedId)
-    toast("Silmek için tekrar tıkla", { duration: 1400, position: "top-right" })
+    toast("Silmek icin tekrar tikla", { duration: 1400, position: "top-right" })
   }
   useEffect(() => {
     if (!categories.some((category) => category.key === activeCategoryKey)) {
@@ -2648,9 +2648,9 @@ export default function ProductsTab({
     const valueToCopy = String(automationResultPopup.value || "-")
     try {
       await navigator.clipboard.writeText(valueToCopy)
-      toast.success("Sonuç kopyalandı", { position: "top-right" })
+      toast.success("Sonuc kopyalandi", { position: "top-right" })
     } catch {
-      toast.error("Sonuç kopyalanamadı", { position: "top-right" })
+      toast.error("Sonuc kopyalanamadi", { position: "top-right" })
     }
   }
   const schedulePopupValueCopy = () => {
@@ -2685,7 +2685,7 @@ export default function ProductsTab({
   }
   const handlePopupAddToStock = async () => {
     if (typeof onAddKeys !== "function") {
-      toast.error("Stoga ekleme işlemi kullanılamıyor.")
+      toast.error("Stoga ekleme islemi kullanilamiyor.")
       return
     }
 
@@ -2701,11 +2701,11 @@ export default function ProductsTab({
       .replace(/\s{2,}/g, " ")
       .trim()
     if (!offerId) {
-      toast.error("Aktif ürün bulunamadı.")
+      toast.error("Aktif urun bulunamadi.")
       return
     }
     if (!valueToAdd || valueToAdd === "-") {
-      toast.error("Eklenecek değer bulunamadı.")
+      toast.error("Eklenecek deger bulunamadi.")
       return
     }
     if (isPopupValueEditing) {
@@ -2723,7 +2723,7 @@ export default function ProductsTab({
       appendAutomationRunLog(
         offerId,
         "success",
-        "Stoga eklendi: 1 satır",
+        "Stoga eklendi: 1 satir",
       )
       setAutomationResultPopup((prev) => ({
         ...prev,
@@ -2747,13 +2747,13 @@ export default function ProductsTab({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
-              İşlem Başarılı
+              Islem Basarili
             </p>
             <p className="mt-1 text-base font-semibold text-white">
-              {automationResultPopup.title || "Stok çek"} tamamlandı.
+              {automationResultPopup.title || "Stok çek"} tamamlandi.
             </p>
             <p className="mt-1 text-xs text-slate-300">
-              Sonuç: <span className="text-emerald-100">{automationResultPopup.backend || "-"}</span>
+              Sonuc: <span className="text-emerald-100">{automationResultPopup.backend || "-"}</span>
             </p>
           </div>
         </div>
@@ -2762,7 +2762,7 @@ export default function ProductsTab({
           className={`mt-4 rounded-xl border border-white/10 bg-black/25 p-3 ${
             isPopupValueEditing ? "" : "cursor-copy"
           }`}
-          title={isPopupValueEditing ? "Düzenleme modu" : "Tek tıkla kopyala, çift tıkla düzenle"}
+          title={isPopupValueEditing ? "Duzenleme modu" : "Tek tikla kopyala, cift tikla duzenle"}
           onClick={() => {
             schedulePopupValueCopy()
           }}
@@ -2780,7 +2780,7 @@ export default function ProductsTab({
                 onChange={(event) => setPopupValueDraft(event.target.value)}
                 rows={6}
                 className="w-full resize-y rounded-md border border-white/15 bg-ink-950/70 px-2.5 py-2 font-mono text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
-                placeholder="Sonuç değeri"
+                placeholder="Sonuc degeri"
                 onClick={(event) => event.stopPropagation()}
                 onKeyDown={(event) => {
                   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
@@ -2803,7 +2803,7 @@ export default function ProductsTab({
                     cancelPopupValueEditing()
                   }}
                 >
-                  İptal
+                  Iptal
                 </button>
                 <button
                   type="button"
@@ -2823,7 +2823,7 @@ export default function ProductsTab({
             </pre>
           )}
         </div>
-        <p className="mt-1 text-[11px] text-slate-500">Tek tıkla kopyala, çift tıkla düzenle</p>
+        <p className="mt-1 text-[11px] text-slate-500">Tek tikla kopyala, cift tikla duzenle</p>
 
         <div className="mt-4 flex items-center justify-between gap-2">
           <button
@@ -2873,7 +2873,7 @@ export default function ProductsTab({
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
                 <div className="relative">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Toplam ürün
+                    Toplam urun
                   </p>
                   <p className="mt-1 text-xl font-semibold text-white">{productStats.totalOffers}</p>
                   <p className="text-[11px] text-slate-400">Katalogdaki teklifler</p>
@@ -2883,10 +2883,10 @@ export default function ProductsTab({
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(59,130,246,0.18),transparent)]" />
                 <div className="relative">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Stok açık
+                    Stok acik
                   </p>
                   <p className="mt-1 text-xl font-semibold text-white">{productStats.stockEnabled}</p>
-                  <p className="text-[11px] text-slate-400">Stok takibi açık ürün</p>
+                  <p className="text-[11px] text-slate-400">Stok takibi acik urun</p>
                 </div>
               </div>
               <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
@@ -2896,14 +2896,14 @@ export default function ProductsTab({
                     Toplam stok
                   </p>
                   <p className="mt-1 text-xl font-semibold text-white">{productStats.totalStock}</p>
-                  <p className="text-[11px] text-slate-400">Kayıtlı anahtar</p>
+                  <p className="text-[11px] text-slate-400">Kayitli anahtar</p>
                 </div>
               </div>
               <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(245,158,11,0.18),transparent)]" />
                 <div className="relative">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Kullanılan stok
+                    Kullanilan stok
                   </p>
                   <p className="mt-1 text-xl font-semibold text-white">{productStats.usedStock}</p>
                   <p className="text-[11px] text-slate-400">Isaretlenen anahtar</p>
@@ -2913,10 +2913,10 @@ export default function ProductsTab({
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(20,184,166,0.18),transparent)]" />
                 <div className="relative">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                    Otomasyon açık
+                    Otomasyon acik
                   </p>
                   <p className="mt-1 text-xl font-semibold text-white">{productStats.automationEnabled}</p>
-                  <p className="text-[11px] text-slate-400">Aktif stok çek ürünü - {automationWsSummary.label}</p>
+                  <p className="text-[11px] text-slate-400">Aktif stok cek urunu - {automationWsSummary.label}</p>
                 </div>
               </div>
             </div>
@@ -2933,8 +2933,8 @@ export default function ProductsTab({
               type="button"
               onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
-              title={isCategoryMenuOpen ? "Kategori menüsü kapat" : "Kategori menüsü aç"}
-              aria-label={isCategoryMenuOpen ? "Kategori menüsü kapat" : "Kategori menüsü aç"}
+              title={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
+              aria-label={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
               aria-expanded={isCategoryMenuOpen}
             >
               <svg
@@ -2985,7 +2985,7 @@ export default function ProductsTab({
               })}
             </div>
           ) : (
-            <p className="mt-3 text-xs text-slate-500">Kategori menüsü kapalı.</p>
+            <p className="mt-3 text-xs text-slate-500">Kategori menusu kapali.</p>
           )}
         </aside>
         <div className={`${panelClass} bg-ink-800/60`}>
@@ -3018,7 +3018,7 @@ export default function ProductsTab({
                     type="text"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Ürün adı ara"
+                    placeholder="Urun adi ara"
                     className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                   />
                   {query && (
@@ -3048,8 +3048,8 @@ export default function ProductsTab({
                           ? "cursor-not-allowed border-white/5 text-slate-600"
                           : "hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
                       }`}
-                      title="Ürün katalogunu yenile"
-                      aria-label="Ürün katalogunu yenile"
+                      title="Urun katalogunu yenile"
+                      aria-label="Urun katalogunu yenile"
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -3078,8 +3078,8 @@ export default function ProductsTab({
                           ? "cursor-not-allowed border-white/5 text-slate-600"
                           : "hover:border-white/20 hover:bg-white/5 hover:text-sky-100"
                       }`}
-                      title="Tüm ürün stoklarini yenile"
-                      aria-label="Tüm ürün stoklarini yenile"
+                      title="Tum urun stoklarini yenile"
+                      aria-label="Tum urun stoklarini yenile"
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -3112,13 +3112,13 @@ export default function ProductsTab({
                       }`}
                       title={
                         confirmBulkUsedDelete
-                          ? "Onayla: kullanılan stoklari temizle"
-                          : "Kullanılan stoklari temizle"
+                          ? "Onayla: kullanilan stoklari temizle"
+                          : "Kullanilan stoklari temizle"
                       }
                       aria-label={
                         confirmBulkUsedDelete
-                          ? "Onayla: kullanılan stoklari temizle"
-                          : "Kullanılan stoklari temizle"
+                          ? "Onayla: kullanilan stoklari temizle"
+                          : "Kullanilan stoklari temizle"
                       }
                     >
                       <svg
@@ -3144,8 +3144,8 @@ export default function ProductsTab({
                       type="button"
                       onClick={() => setIsBulkPriceModeOpen((prev) => !prev)}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100"
-                      title={isBulkPriceModeOpen ? "Toplu fiyat panelini kapat" : "Toplu fiyat panelini aç"}
-                      aria-label={isBulkPriceModeOpen ? "Toplu fiyat panelini kapat" : "Toplu fiyat panelini aç"}
+                      title={isBulkPriceModeOpen ? "Toplu fiyat panelini kapat" : "Toplu fiyat panelini ac"}
+                      aria-label={isBulkPriceModeOpen ? "Toplu fiyat panelini kapat" : "Toplu fiyat panelini ac"}
                       aria-expanded={isBulkPriceModeOpen}
                     >
                       <svg
@@ -3175,23 +3175,23 @@ export default function ProductsTab({
                     <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <p className="text-[13px] font-semibold text-white">Toplu fiyat gönderimi</p>
+                          <p className="text-[13px] font-semibold text-white">Toplu fiyat gonderimi</p>
                           <span className="inline-flex items-center rounded-full border border-sky-300/15 bg-sky-500/[0.08] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-sky-100">
                             {bulkPriceStatusLabel}
                           </span>
                           {isBulkPriceRunning && bulkPriceCommandState.currentName && (
                             <span className="inline-flex min-w-0 items-center rounded-full border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-100">
-                              <span className="truncate">Çalışıyor: {bulkPriceCommandState.currentName}</span>
+                              <span className="truncate">Calisiyor: {bulkPriceCommandState.currentName}</span>
                             </span>
                           )}
                         </div>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] text-slate-200">
-                            <span className="text-slate-500">Seçili</span>
+                            <span className="text-slate-500">Secili</span>
                             <span className="font-semibold text-white">{selectedPriceCount}</span>
                           </span>
                           <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300/15 bg-emerald-500/[0.08] px-2 py-1 text-[10px] text-emerald-100">
-                            <span className="text-emerald-200/80">Hazır</span>
+                            <span className="text-emerald-200/80">Hazir</span>
                             <span className="font-semibold">{bulkPriceReadyCount}</span>
                           </span>
                           <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-300/15 bg-amber-500/[0.08] px-2 py-1 text-[10px] text-amber-100">
@@ -3203,7 +3203,7 @@ export default function ProductsTab({
                       <div className="flex w-full flex-col gap-2 xl:w-[360px] xl:items-stretch">
                         <PriceMultiplierControl
                           compact
-                          label="Toplu katsayı"
+                          label="Toplu katsayi"
                           value={bulkPriceMultiplierDraft}
                           onChange={setBulkPriceMultiplierDraft}
                           disabled={isBulkPriceRunning}
@@ -3224,8 +3224,8 @@ export default function ProductsTab({
                             className="inline-flex h-9 items-center justify-center rounded-lg border border-sky-300/30 bg-sky-500/10 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-sky-50 transition hover:border-sky-200/50 hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {bulkPriceResumeCount > 0
-                              ? `Kalanlari gönder (${bulkPriceResumeCount})`
-                              : "Kalanlari gönder"}
+                              ? `Kalanlari gonder (${bulkPriceResumeCount})`
+                              : "Kalanlari gonder"}
                           </button>
                           <button
                             type="button"
@@ -3233,7 +3233,7 @@ export default function ProductsTab({
                             disabled={isBulkPriceRunning || selectedPriceCount === 0 || bulkPriceReadyCount === 0}
                             className="inline-flex h-9 items-center justify-center rounded-lg border border-emerald-300/40 bg-emerald-500/15 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {isBulkPriceRunning ? "Gönderiliyor..." : "Secilenleri gönder"}
+                            {isBulkPriceRunning ? "Gonderiliyor..." : "Secilenleri gonder"}
                           </button>
                           {isBulkPriceRunning && (
                             <button
@@ -3242,7 +3242,7 @@ export default function ProductsTab({
                               disabled={isBulkPriceCancelRequested}
                               className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-rose-50 transition hover:border-rose-200/50 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              {isBulkPriceCancelRequested ? "Durduruluyor..." : "İptal et"}
+                              {isBulkPriceCancelRequested ? "Durduruluyor..." : "Iptal et"}
                             </button>
                           )}
                         </div>
@@ -3255,7 +3255,7 @@ export default function ProductsTab({
                         disabled={isBulkPriceRunning || selectedPageOfferIds.length === 0 || areAllPageSelected}
                         className="h-8 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Bu sayfayı seç
+                        Bu sayfayi sec
                       </button>
                       <button
                         type="button"
@@ -3263,7 +3263,7 @@ export default function ProductsTab({
                         disabled={isBulkPriceRunning || selectedFilteredOfferIds.length === 0 || areAllFilteredSelected}
                         className="h-8 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Filtredekileri seç
+                        Filtredekileri sec
                       </button>
                       <button
                         type="button"
@@ -3289,8 +3289,8 @@ export default function ProductsTab({
                             <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                               <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                                 {bulkPriceLogsLoading
-                                  ? "Yükleniyor"
-                                  : `${bulkPriceCommandLogEntries.length} satır`}
+                                  ? "Yukleniyor"
+                                  : `${bulkPriceCommandLogEntries.length} satir`}
                               </span>
                               <button
                                 type="button"
@@ -3314,7 +3314,7 @@ export default function ProductsTab({
                               <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
                               <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                               <span className="min-w-0 break-words text-slate-400">
-                                secili={selectedPriceCount} / hazır={bulkPriceReadyCount} / backend={priceCommandBackendEntry?.label ?? "eldorado"}
+                                secili={selectedPriceCount} / hazir={bulkPriceReadyCount} / backend={priceCommandBackendEntry?.label ?? "eldorado"}
                               </span>
                             </div>
                             <div className="space-y-0.5">
@@ -3564,13 +3564,13 @@ export default function ProductsTab({
                     priceResult !== ""
                   const priceDraftStateLabel =
                     isPriceCommandRunning
-                      ? "Komut çalışıyor"
+                      ? "Komut calisiyor"
                       : !isBasePriceValid && priceDraft.base !== ""
-                        ? "Geçersiz fiyat"
+                        ? "Gecersiz fiyat"
                         : canSendPriceResult
-                          ? "Gönderime hazır"
+                          ? "Gonderime hazir"
                           : canSavePrice
-                            ? "Kayda hazır"
+                            ? "Kayda hazir"
                             : "Taslak"
                   const priceDraftStateClass =
                     isPriceCommandRunning
@@ -3582,12 +3582,12 @@ export default function ProductsTab({
                           : "border-white/10 bg-white/5 text-slate-300"
                   const priceControlMessage =
                     !isBasePriceValid && priceDraft.base !== ""
-                      ? "Kaydetmek için geçerli bir baz fiyat girin."
+                      ? "Kaydetmek icin gecerli bir baz fiyat girin."
                       : canSendPriceResult
-                        ? "Seçili fiyat sonucu websocket komutuna hazır."
+                        ? "Secili fiyat sonucu websocket komutuna hazir."
                         : canSavePrice
-                          ? "Fiyat ayarı kaydedilmeye hazır."
-                          : "Sonuç için baz fiyat ve katsayı seçin."
+                          ? "Fiyat ayari kaydedilmeye hazir."
+                          : "Sonuc icin baz fiyat ve katsayi secin."
                   const canDeleteMessageItem = messageGroupId
                     ? typeof onRemoveMessageGroupTemplate === "function"
                     : typeof onRemoveMessageTemplate === "function"
@@ -3626,7 +3626,7 @@ export default function ProductsTab({
                             <button
                               type="button"
                               disabled={isBulkPriceRunning || !offerId}
-                              aria-label={`${name} toplu fiyat sonucu seç`}
+                              aria-label={`${name} toplu fiyat sonucu sec`}
                               className={`mt-0.5 inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition ${
                                 isPriceSelected
                                   ? "border-sky-300/30 bg-sky-500/15 text-sky-50"
@@ -3648,7 +3648,7 @@ export default function ProductsTab({
                                   isPriceSelected ? "bg-sky-300" : "bg-slate-500"
                                 }`}
                               />
-                              <span>{isPriceSelected ? "Seçili" : "Seç"}</span>
+                              <span>{isPriceSelected ? "Secili" : "Sec"}</span>
                             </button>
                           )}
                           <div
@@ -3803,8 +3803,8 @@ export default function ProductsTab({
                                   ? "cursor-not-allowed opacity-60"
                                   : ""
                               }`}
-                              aria-label="Stok çek aç/kapat"
-                              title={isAutomationEnabled ? "Stok çek açık" : "Stok çek kapalı"}
+                              aria-label="Stok cek ac/kapat"
+                              title={isAutomationEnabled ? "Stok cek acik" : "Stok cek kapali"}
                             >
                               <span
                                 className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
@@ -3885,7 +3885,7 @@ export default function ProductsTab({
                                 className={`relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7 ${
                                   !offerId ? "cursor-not-allowed opacity-60" : ""
                                 } ${confirmOfferDelete === offerId ? "bg-rose-500/20 text-rose-100" : ""}`}
-                                aria-label="Ürün sil"
+                                aria-label="Urun sil"
                                 title={confirmOfferDelete === offerId ? "Onayla" : "Sil"}
                               >
                                 <svg
@@ -4339,10 +4339,10 @@ export default function ProductsTab({
             <div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
-                  Fiyat yönetimi
+                  Fiyat yonetimi
                 </p>
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Baz fiyat ve katsayı
+                  Baz fiyat ve katsayi
                 </p>
               </div>
             </div>
@@ -4355,7 +4355,7 @@ export default function ProductsTab({
                     Fiyat gir
                   </label>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Sadece fiyat değeri girin
+                    Sadece fiyat degeri girin
                   </p>
                 </div>
                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-slate-400">
@@ -4381,11 +4381,11 @@ export default function ProductsTab({
               </div>
               {priceDraft.base !== "" && !isBasePriceValid ? (
                 <p className="mt-3 rounded-lg border border-rose-300/20 bg-rose-500/10 px-2.5 py-2 text-[10px] text-rose-100/90">
-                  Sadece fiyat girin. Örnek: 15.53
+                  Sadece fiyat girin. Ornek: 15.53
                 </p>
               ) : (
                 <p className="mt-3 text-[10px] text-slate-500">
-                  Ondalık girebilirsiniz. Örnek: 15.53
+                  Ondalik girebilirsiniz. Ornek: 15.53
                 </p>
               )}
             </div>
@@ -4394,14 +4394,14 @@ export default function ProductsTab({
                 <PriceMultiplierControl
                   compact
                   framed={false}
-                  label="Katsayı"
+                  label="Katsayi"
                   value={multiplierNumber}
                   onChange={(nextValue) => handlePriceMultiplierChange(offerId, nextValue)}
                   disabled={!canManagePrices}
                 />
               ) : (
                 <p className="mt-4 rounded-lg border border-white/10 bg-white/5 px-3 py-8 text-center text-[11px] text-slate-500">
-                  Sonuç ve katsayı detayları için ek görüntüleme yetkisi gerekiyor.
+                  Sonuc ve katsayi detaylari icin ek goruntuleme yetkisi gerekiyor.
                 </p>
               )}
               <div className="mt-4 border-t border-white/10 pt-3">
@@ -4451,13 +4451,13 @@ export default function ProductsTab({
             <div className="rounded-xl border border-white/10 bg-ink-900/70 p-2.5">
               <div className="grid grid-cols-2 gap-2">
                 <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
-                  <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500">Anlık sonuç</p>
+                  <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500">Anlik sonuc</p>
                   <p className="mt-1 text-sm font-semibold text-white">
                     {currentResultDisplay}
                   </p>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
-                  <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500">Kayıtlı sonuç</p>
+                  <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500">Kayitli sonuc</p>
                   <p className="mt-1 text-sm font-semibold text-white">
                     {savedResultDisplay}
                   </p>
@@ -4465,7 +4465,7 @@ export default function ProductsTab({
               </div>
               {!hasSavedPrice && (
                 <p className="mt-2 text-[10px] text-slate-500">
-                  Henüz kayıtlı fiyat ayarı yok.
+                  Henuz kayitli fiyat ayari yok.
                 </p>
               )}
             </div>
@@ -4480,7 +4480,7 @@ export default function ProductsTab({
                       result: priceResult,
                     },
                     {
-                      label: "Sonucu Gönder",
+                      label: "Sonucu Gonder",
                       backendKey: priceCommandBackendEntry?.key ?? "eldorado",
                       backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
                     },
@@ -4489,7 +4489,7 @@ export default function ProductsTab({
                 disabled={!canSendPriceResult}
                 className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isPriceCommandRunning ? "Gönderiliyor..." : "Sonucu Gönder"}
+                {isPriceCommandRunning ? "Gonderiliyor..." : "Sonucu Gonder"}
               </button>
             )}
             {!String(automationWsUrl ?? "").trim() && (
@@ -4514,7 +4514,7 @@ export default function ProductsTab({
           </div>
           <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
             <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-              {priceCommandLogEntries.length} satır
+              {priceCommandLogEntries.length} satir
             </span>
             <span
               className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] ${priceCommandConnectionBadgeClass}`}
@@ -4543,7 +4543,7 @@ export default function ProductsTab({
             <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
             <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
             <span className="min-w-0 break-words text-slate-400">
-              backend={priceCommandBackendEntry?.label ?? "eldorado"} / ürün={offerId || "-"} / kategori={productCategory || "-"}
+              backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
             </span>
           </div>
           <div className="space-y-0.5">
@@ -4590,7 +4590,7 @@ export default function ProductsTab({
                                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                                         <div>
                                           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                            Hedef yönetimi
+                                            Hedef yonetimi
                                           </p>
                                           <p className="mt-1 text-[11px] text-slate-500">
                                             URL ve backend map kaydet
@@ -4625,7 +4625,7 @@ export default function ProductsTab({
                                           <option value="">
                                             {stockFetchAutomationBackendOptions.length === 0
                                               ? "Backend map yok"
-                                              : "Backend seç"}
+                                              : "Backend sec"}
                                           </option>
                                           {stockFetchAutomationBackendOptions.map((option) => {
                                             const optionKey = String(option?.key ?? "").trim()
@@ -4659,13 +4659,13 @@ export default function ProductsTab({
                                     <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f1980]">
                                       <div className="border-b border-white/10 px-3 py-2">
                                         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                          Kayıtlı servisler
+                                          Kayitli servisler
                                         </p>
                                       </div>
                                       <div className="no-scrollbar max-h-[228px] overflow-y-auto overflow-x-hidden p-2.5">
                                         {automationTargets.length === 0 ? (
                                           <p className="rounded-xl border border-dashed border-white/10 px-3 py-8 text-center text-[11px] text-slate-500">
-                                            Henüz servis kaydı yok.
+                                            Henuz servis kaydi yok.
                                           </p>
                                         ) : (
                                           <div className="space-y-2">
@@ -4747,7 +4747,7 @@ export default function ProductsTab({
                                                             ? "border-amber-300/40 bg-amber-500/15 text-amber-100 hover:border-amber-200/60 hover:bg-amber-500/25"
                                                             : "border-white/15 bg-white/5 text-slate-300 hover:border-white/30 hover:bg-white/10"
                                                         }`}
-                                                        title={isStarred ? "Yıldızı kaldır" : "Yıldızla"}
+                                                        title={isStarred ? "Yildizi kaldir" : "Yildizla"}
                                                       >
                                                         {isStarring ? (
                                                           "..."
@@ -4825,17 +4825,17 @@ export default function ProductsTab({
                                               </span>
                                               {selectedAutomationTargetIsStarred && (
                                                 <span className="rounded-md border border-amber-300/40 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100">
-                                                  Yıldızlı
+                                                  Yildizli
                                                 </span>
                                               )}
                                             </div>
                                             <p className="text-[11px] text-slate-400">
-                                              Seçili hedef çalıştırmaya hazır.
+                                              Secili hedef calistirmaya hazir.
                                             </p>
                                           </div>
                                         ) : (
                                           <p className="text-[11px] text-slate-500">
-                                            Çalıştırmak için bir servis seçin.
+                                            Calistirmak icin bir servis secin.
                                           </p>
                                         )}
                                       </div>
@@ -4851,11 +4851,11 @@ export default function ProductsTab({
                                         }
                                         className="h-9 w-full rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
-                                        {isAutomationRunning ? "Çalışıyor..." : "Çalıştır"}
+                                        {isAutomationRunning ? "Calisiyor..." : "Calistir"}
                                       </button>
                                       {!String(automationWsUrl ?? "").trim() && (
                                         <p className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100/90">
-                                          Websocket adresi yok. Stok çek sekmesinden kaydedin.
+                                          Websocket adresi yok. Stok cek sekmesinden kaydedin.
                                         </p>
                                       )}
                                     </div>
@@ -4874,7 +4874,7 @@ export default function ProductsTab({
                                         </div>
                                         <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                                           <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                                            {automationRunLogEntries.length} satır
+                                            {automationRunLogEntries.length} satir
                                           </span>
                                           {canClearAutomationLogs && (
                                             <button
@@ -4987,7 +4987,7 @@ export default function ProductsTab({
                                     </section>
                                   ) : (
                                     <div className="rounded-2xl border border-white/10 bg-ink-900/60 px-3 py-3 text-[11px] text-slate-400 xl:col-span-2">
-                                      CMD loglarini görüntüleme izniniz yok.
+                                      CMD loglarini goruntuleme izniniz yok.
                                     </div>
                                   )}
                                 </div>
@@ -5010,7 +5010,7 @@ export default function ProductsTab({
                                 <>
                               {isKeysLoading && (
                                 <div className="rounded-2xl border border-white/10 bg-ink-900/40 px-4 py-3 text-xs text-slate-400 shadow-inner">
-                                  Stoklar yükleniyor...
+                                  Stoklar yukleniyor...
                                 </div>
                               )}
                               {!isKeysLoading && availableKeys.length === 0 && (

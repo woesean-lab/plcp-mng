@@ -435,18 +435,18 @@ export default function SalesTab({
     const targetDate = String(countResultModal.date ?? "").trim()
     const targetCount = Number(countResultModal.count)
     if (!targetDate || !Number.isFinite(targetCount) || targetCount <= 0) {
-      toast.error("Geçerli sayım sonucu bulunamadı.")
+      toast.error("Gecerli sayim sonucu bulunamadi.")
       return
     }
     if (typeof saveSaleRecord !== "function") {
-      toast.error("Satış kaydı hazır değil.")
+      toast.error("Satis kaydi hazir degil.")
       return
     }
     setIsCountSaving(true)
     try {
       await saveSaleRecord(targetDate, targetCount, {
-        successMessage: "Sayım kaydı eklendi",
-        errorMessage: "Sayım kaydı eklenemedi.",
+        successMessage: "Sayim kaydi eklendi",
+        errorMessage: "Sayim kaydi eklenemedi.",
       })
       setCountResultModal((prev) => ({ ...prev, isOpen: false }))
       setSalesForm((prev) => ({ ...prev, date: targetDate, amount: String(targetCount) }))
@@ -459,24 +459,24 @@ export default function SalesTab({
 
   const handleCountRun = useCallback(() => {
     if (!canCreate) {
-      toast.error("Satış girme yetkiniz yok.")
+      toast.error("Satis girme yetkiniz yok.")
       return
     }
     if (isCountRunning) {
-      toast.error("Sayım işlemi zaten çalışıyor.")
+      toast.error("Sayim islemi zaten calisiyor.")
       return
     }
 
     const targetDate = String(countRequestDate ?? "").trim()
     const parsedDate = new Date(`${targetDate}T00:00:00`)
     if (!targetDate || Number.isNaN(parsedDate.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
-      toast.error("Tarih seçin.")
+      toast.error("Tarih secin.")
       return
     }
 
     const wsBaseUrl = String(automationWsUrl ?? "").trim()
     if (!wsBaseUrl) {
-      toast.error("Websocket adresi bulunamadı. Admin panelinden kaydedin.")
+      toast.error("Websocket adresi bulunamadi. Admin panelinden kaydedin.")
       return
     }
 
@@ -493,7 +493,7 @@ export default function SalesTab({
     closeCountSocket()
     setIsCountRunning(true)
     setCountResultModal((prev) => ({ ...prev, isOpen: false }))
-    updateCountToast("loading", "Sayım aliniyor...")
+    updateCountToast("loading", "Sayim aliniyor...")
 
     let socket = null
     let settled = false
@@ -511,7 +511,7 @@ export default function SalesTab({
     const resetRunTimeout = (ms = 120000) => {
       clearRunTimeout()
       timeoutId = window.setTimeout(() => {
-        complete("error", "Sayım sonucu beklenirken zaman aşımı oluştu.")
+        complete("error", "Sayim sonucu beklenirken zaman asimi olustu.")
       }, ms)
     }
 
@@ -524,16 +524,16 @@ export default function SalesTab({
       setIsCountRunning(false)
 
       if (status === "success") {
-        updateCountToast("success", message || "Sayım sonucu alındı.")
+        updateCountToast("success", message || "Sayim sonucu alindi.")
       } else if (status === "error") {
-        updateCountToast("error", message || "Sayım işlemi tamamlanamadı.")
+        updateCountToast("error", message || "Sayim islemi tamamlanamadi.")
       }
     }
 
     try {
       socket = new WebSocket(triggerUrl)
     } catch {
-      complete("error", "Sayım için websocket bağlantısı başlatılamadı.")
+      complete("error", "Sayim icin websocket baglantisi baslatilamadi.")
       return
     }
 
@@ -544,7 +544,7 @@ export default function SalesTab({
         backend: "eldoradosayim",
         reason: "user-cancelled",
       })
-      complete("error", "Sekme degistigi için sayım işlemi iptal edildi.")
+      complete("error", "Sekme degistigi icin sayim islemi iptal edildi.")
     }
     resetRunTimeout(15000)
 
@@ -570,23 +570,23 @@ export default function SalesTab({
           try {
             socket?.send("40")
           } catch {
-            complete("error", "Socket.IO bağlantısı başlatılamadı.")
+            complete("error", "Socket.IO baglantisi baslatilamadi.")
           }
           continue
         }
 
         if (packet.startsWith("40")) {
           hasConnected = true
-          updateCountToast("loading", "eldoradosayim bağlandı.")
+          updateCountToast("loading", "eldoradosayim baglandi.")
           resetRunTimeout(300000)
           continue
         }
 
         if (packet.startsWith("41")) {
           if (hasResult) {
-            complete("success", "Sayım sonucu hazır.")
+            complete("success", "Sayim sonucu hazir.")
           } else {
-            complete("error", "Bağlantı sonuç gelmeden kapandi.")
+            complete("error", "Baglanti sonuc gelmeden kapandi.")
           }
           return
         }
@@ -603,7 +603,7 @@ export default function SalesTab({
         const firstArg = eventPacket.args[0]
 
         if (eventName === "script-triggered" || eventName === "script-started") {
-          updateCountToast("loading", "Sayım script başlatıldı.")
+          updateCountToast("loading", "Sayim script baslatildi.")
           resetRunTimeout(300000)
           continue
         }
@@ -637,7 +637,7 @@ export default function SalesTab({
           const rawResult = firstArg?.value ?? firstArg
           const countValue = readFirstNumericValue(rawResult)
           if (!Number.isFinite(countValue) || countValue <= 0) {
-            complete("error", "Sayım sonucu geçerli bir sayi olarak donmedi.")
+            complete("error", "Sayim sonucu gecerli bir sayi olarak donmedi.")
             return
           }
 
@@ -648,14 +648,14 @@ export default function SalesTab({
             count: countValue,
             collectedAt: getLocalDateInputValue(),
           })
-          complete("success", `Sayım alındı: ${countValue}`)
+          complete("success", `Sayim alindi: ${countValue}`)
           return
         }
 
         if (eventName === "script-exit") {
           const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
           if (Number.isFinite(exitCode) && exitCode !== 0 && !hasResult) {
-            complete("error", `Script çıktı. Kod: ${exitCode}`)
+            complete("error", `Script cikti. Kod: ${exitCode}`)
             return
           }
           resetRunTimeout(5000)
@@ -667,20 +667,20 @@ export default function SalesTab({
     }
 
     socket.onerror = () => {
-      complete("error", hasConnected ? "Bağlantı sirasinda hata oluştu." : "Websocket bağlantısı kurulamadı.")
+      complete("error", hasConnected ? "Baglanti sirasinda hata olustu." : "Websocket baglantisi kurulamadi.")
     }
 
     socket.onclose = () => {
       if (settled) return
       if (hasResult) {
-        complete("success", "Sayım sonucu hazır.")
+        complete("success", "Sayim sonucu hazir.")
         return
       }
       if (hasConnected) {
-        complete("error", "Bağlantı açıldı ancak sonuç gelmedi.")
+        complete("error", "Baglanti acildi ancak sonuc gelmedi.")
         return
       }
-      complete("error", "Websocket bağlantısı kapandi.")
+      complete("error", "Websocket baglantisi kapandi.")
     }
   }, [
     automationWsUrl,
@@ -783,9 +783,9 @@ export default function SalesTab({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-            Sayım al
+            Sayim al
           </p>
-          <p className="text-sm text-slate-400">Websocket üzerinden güncel sayımı çek.</p>
+          <p className="text-sm text-slate-400">Websocket uzerinden guncel sayimi cek.</p>
         </div>
         <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
           backend: eldoradosayim
@@ -812,7 +812,7 @@ export default function SalesTab({
           disabled={isCountRunning}
           className="flex w-full items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isCountRunning ? "Sayım aliniyor..." : "Sayım al"}
+          {isCountRunning ? "Sayim aliniyor..." : "Sayim al"}
         </button>
       </div>
     </div>
@@ -836,11 +836,11 @@ export default function SalesTab({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
-              İşlem Başarılı
+              Islem Basarili
             </p>
-            <p className="mt-1 text-base font-semibold text-white">Sayım sonucu hazır.</p>
+            <p className="mt-1 text-base font-semibold text-white">Sayim sonucu hazir.</p>
             <p className="mt-1 text-xs text-slate-300">
-              Sonuç: <span className="text-emerald-100">eldoradosayim</span>
+              Sonuc: <span className="text-emerald-100">eldoradosayim</span>
             </p>
           </div>
         </div>
@@ -852,7 +852,7 @@ export default function SalesTab({
               <p className="mt-2 text-base font-semibold text-white">{formatDate(countResultModal.date)}</p>
             </div>
             <div className="rounded-xl border border-sky-300/20 bg-sky-500/10 px-3 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayım</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
               <p className="mt-2 text-base font-semibold text-sky-50">{countResultModal.count}</p>
             </div>
           </div>

@@ -1270,7 +1270,7 @@ const normalizeApplicationRunPrompt = (payload, backendFallback = "") => {
   const message =
     String(payload?.message ?? "").trim() ||
     (inputType === "choice"
-      ? "Bir seçim yapın."
+      ? "Bir secim yapin."
       : inputType === "confirm"
         ? "Onay verin."
         : "Metin girin.")
@@ -1550,13 +1550,13 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
 
   applicationRunSessions.set(run.id, run)
 
-  appendApplicationRunLog(run, "running", `Çalıştıran: ${run.createdByUsername}`)
-  appendApplicationRunLog(run, "running", `Çalıştırılıyor: ${run.applicationName}`)
+  appendApplicationRunLog(run, "running", `Calistiran: ${run.createdByUsername}`)
+  appendApplicationRunLog(run, "running", `Calistiriliyor: ${run.applicationName}`)
   appendApplicationRunLog(run, "running", `Backend map: ${run.backendLabel}`)
 
   const socketTarget = buildSocketIoClientTarget(wsUrl, { backend: run.backendKey })
   if (!socketTarget) {
-    completeApplicationRun(run, "error", `${run.applicationName} için Socket.IO adresi olusturulamadi.`)
+    completeApplicationRun(run, "error", `${run.applicationName} icin Socket.IO adresi olusturulamadi.`)
     return run
   }
 
@@ -1571,7 +1571,7 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
       timeout: 15000,
     })
   } catch {
-    completeApplicationRun(run, "error", `${run.applicationName} için websocket bağlantısı başlatılamadı.`)
+    completeApplicationRun(run, "error", `${run.applicationName} icin websocket baglantisi baslatilamadi.`)
     return run
   }
 
@@ -1581,9 +1581,9 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
     if (run.settled) return
     if (run.hasSocketErrorSignal) {
       run.hasSocketErrorSignal = false
-      appendApplicationRunLog(run, "running", `${run.applicationName} websocket bağlantısı toparlandi, işlem devam ediyor.`)
+      appendApplicationRunLog(run, "running", `${run.applicationName} websocket baglantisi toparlandi, islem devam ediyor.`)
     } else if (!run.hasConnected) {
-      appendApplicationRunLog(run, "running", `${run.applicationName} bağlandı.`)
+      appendApplicationRunLog(run, "running", `${run.applicationName} baglandi.`)
     }
     run.hasConnected = true
     run.status = "running"
@@ -1592,12 +1592,12 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
 
   socket.on("script-triggered", () => {
     if (run.settled) return
-    appendApplicationRunLog(run, "running", `${run.backendLabel} script başlatıldı.`)
+    appendApplicationRunLog(run, "running", `${run.backendLabel} script baslatildi.`)
   })
 
   socket.on("script-started", () => {
     if (run.settled) return
-    appendApplicationRunLog(run, "running", `${run.backendLabel} script başlatıldı.`)
+    appendApplicationRunLog(run, "running", `${run.backendLabel} script baslatildi.`)
   })
 
   socket.on("durum", (payload) => {
@@ -1652,7 +1652,7 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
           : String(payload.value).trim()
     appendApplicationRunLog(run, "success", `${run.backendLabel} => ${valueText || "-"}`)
     run.hasResult = true
-    completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasız bitirildi.`)
+    completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
   })
 
   socket.on("script-exit", (payload) => {
@@ -1662,11 +1662,11 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
       appendApplicationRunLog(
         run,
         exitCode === 0 ? "success" : "error",
-        `Script çıktı. Kod: ${exitCode}`,
+        `Script cikti. Kod: ${exitCode}`,
       )
     }
     if (!run.hasResult) {
-      completeApplicationRun(run, "error", `${run.applicationName} çıktı ancak sonuç alınmadı.`)
+      completeApplicationRun(run, "error", `${run.applicationName} cikti ancak sonuc alinmadi.`)
     }
   })
 
@@ -1681,8 +1681,8 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
         run,
         "running",
         reason
-          ? `${run.applicationName} websocket bağlantı hatası algiladi: ${reason}`
-          : `${run.applicationName} websocket bağlantı hatası algiladi, bağlantı takip ediliyor...`,
+          ? `${run.applicationName} websocket baglanti hatasi algiladi: ${reason}`
+          : `${run.applicationName} websocket baglanti hatasi algiladi, baglanti takip ediliyor...`,
       )
       return
     }
@@ -1691,8 +1691,8 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
       run,
       "error",
       reason
-        ? `${run.applicationName} için websocket bağlantısı başlatılamadı: ${reason}`
-        : `${run.applicationName} için websocket bağlantısı başlatılamadı.`,
+        ? `${run.applicationName} icin websocket baglantisi baslatilamadi: ${reason}`
+        : `${run.applicationName} icin websocket baglantisi baslatilamadi.`,
     )
   })
 
@@ -1701,7 +1701,7 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
     run.socket = null
     const normalizedReason = String(reason ?? "").trim()
     if (run.hasResult) {
-      completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasız bitirildi.`)
+      completeApplicationRun(run, "success", `${run.applicationName}: Servis hatasiz bitirildi.`)
       return
     }
     if (run.hasConnected) {
@@ -1709,8 +1709,8 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
         run,
         "error",
         normalizedReason
-          ? `${run.applicationName} bağlantısı sonuç gelmeden kapandi. Sebep: ${normalizedReason}`
-          : `${run.applicationName} bağlantısı açıldı ancak sonuç gelmedi.`,
+          ? `${run.applicationName} baglantisi sonuc gelmeden kapandi. Sebep: ${normalizedReason}`
+          : `${run.applicationName} baglantisi acildi ancak sonuc gelmedi.`,
       )
       return
     }
@@ -1718,8 +1718,8 @@ const createApplicationRunSession = ({ application, wsUrl, username }) => {
       run,
       "error",
       normalizedReason
-        ? `${run.applicationName} için websocket bağlantısı kapandi. Sebep: ${normalizedReason}`
-        : `${run.applicationName} için websocket bağlantısı kapandi.`,
+        ? `${run.applicationName} icin websocket baglantisi kapandi. Sebep: ${normalizedReason}`
+        : `${run.applicationName} icin websocket baglantisi kapandi.`,
     )
   })
 
@@ -2025,10 +2025,10 @@ const resetEldoradoAutomationRunTimeout = (run, ms = 20000) => {
   clearEldoradoAutomationRunTimeout(run)
   run.timeoutId = setTimeout(() => {
     if (run.hasResult) {
-      completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandı.`)
+      completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandi.`)
       return
     }
-    completeEldoradoAutomationRun(run, "error", `${run.label} için sonuç yanıtı alınmadı (zaman aşımı).`)
+    completeEldoradoAutomationRun(run, "error", `${run.label} icin sonuc yaniti alinmadi (zaman asimi).`)
   }, ms)
 }
 
@@ -2037,10 +2037,10 @@ const resetEldoradoPriceCommandRunTimeout = (run, ms = 120000) => {
   clearEldoradoPriceCommandRunTimeout(run)
   run.timeoutId = setTimeout(() => {
     if (run.hasResult) {
-      completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandı.`)
+      completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandi.`)
       return
     }
-    completeEldoradoPriceCommandRun(run, "error", `${run.label} için sonuç yanıtı alınmadı (zaman aşımı).`)
+    completeEldoradoPriceCommandRun(run, "error", `${run.label} icin sonuc yaniti alinmadi (zaman asimi).`)
   }, ms)
 }
 
@@ -2065,7 +2065,7 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
   const normalizedOfferId = String(offerId ?? "").trim()
   const normalizedBackend = String(backend ?? "").trim()
   const normalizedUrl = String(url ?? "").trim()
-  const normalizedLabel = String(label ?? "").trim() || "Stok çek"
+  const normalizedLabel = String(label ?? "").trim() || "Stok cek"
   const existingRun = eldoradoAutomationRunsByOffer.get(normalizedOfferId)
   if (existingRun && isApplicationRunLiveStatus(existingRun.status)) {
     return { run: existingRun, conflict: true }
@@ -2098,7 +2098,7 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
 
   eldoradoAutomationRunsByOffer.set(normalizedOfferId, run)
 
-  appendEldoradoAutomationRunLog(run, "running", `Çalıştıran: ${String(username ?? "").trim() || "bilinmeyen-kullanici"}`)
+  appendEldoradoAutomationRunLog(run, "running", `Calistiran: ${String(username ?? "").trim() || "bilinmeyen-kullanici"}`)
   appendEldoradoAutomationRunLog(
     run,
     "running",
@@ -2121,7 +2121,7 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
   try {
     socket = new WebSocketApi(triggerUrl)
   } catch {
-    completeEldoradoAutomationRun(run, "error", `${normalizedLabel} için websocket bağlantısı başlatılamadı.`)
+    completeEldoradoAutomationRun(run, "error", `${normalizedLabel} icin websocket baglantisi baslatilamadi.`)
     return { run, conflict: false }
   }
 
@@ -2150,14 +2150,14 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
         try {
           socket.send("40")
         } catch {
-          completeEldoradoAutomationRun(run, "error", `${run.label} için Socket.IO connect paketi gönderilemedi.`)
+          completeEldoradoAutomationRun(run, "error", `${run.label} icin Socket.IO connect paketi gonderilemedi.`)
         }
         continue
       }
 
       if (packet.startsWith("40")) {
         if (!run.hasConnected) {
-          appendEldoradoAutomationRunLog(run, "running", "Bağlandı.")
+          appendEldoradoAutomationRunLog(run, "running", "Baglandi.")
         }
         run.hasConnected = true
         run.status = "running"
@@ -2168,9 +2168,9 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
 
       if (packet.startsWith("41")) {
         if (run.hasResult) {
-          completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandı.`)
+          completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandi.`)
         } else {
-          completeEldoradoAutomationRun(run, "error", `${run.label} tamamlanmadan bağlantı kapandi (sonuç yok).`)
+          completeEldoradoAutomationRun(run, "error", `${run.label} tamamlanmadan baglanti kapandi (sonuc yok).`)
         }
         return
       }
@@ -2193,7 +2193,7 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
         appendEldoradoAutomationRunLog(
           run,
           "running",
-          `${buildEldoradoAutomationBackendDisplay(run)} script başlatıldı.`,
+          `${buildEldoradoAutomationBackendDisplay(run)} script baslatildi.`,
         )
         resetEldoradoAutomationRunTimeout(run, 300000)
         continue
@@ -2248,7 +2248,7 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
         const promptMessage =
           (typeof firstArg?.message === "string" ? firstArg.message : normalizeEventMessage(firstArg?.message ?? firstArg))
             .replace(/\s+/g, " ")
-            .trim() || "İki faktör kodu gerekli."
+            .trim() || "Iki faktor kodu gerekli."
         run.pendingTwoFactorPrompt = {
           backend: promptBackend,
           message: promptMessage,
@@ -2292,13 +2292,13 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
           appendEldoradoAutomationRunLog(
             run,
             exitCode === 0 ? "success" : "error",
-            `Script çıktı. Kod: ${exitCode}`,
+            `Script cikti. Kod: ${exitCode}`,
           )
         } else {
-          appendEldoradoAutomationRunLog(run, "running", "Script çıkış olayi alındı.")
+          appendEldoradoAutomationRunLog(run, "running", "Script cikis olayi alindi.")
         }
         if (!run.hasResult) {
-          completeEldoradoAutomationRun(run, "error", `${run.label} çıktı ancak sonuç alınmadı.`)
+          completeEldoradoAutomationRun(run, "error", `${run.label} cikti ancak sonuc alinmadi.`)
           return
         }
         resetEldoradoAutomationRunTimeout(run, 5000)
@@ -2318,7 +2318,7 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
         }
         run.copyValueCaptureActive = false
         run.hasResult = true
-        completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandı.`)
+        completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandi.`)
         return
       }
 
@@ -2328,20 +2328,20 @@ const createEldoradoAutomationRun = ({ offerId, backend, url, starred = false, l
 
   socket.addEventListener("error", () => {
     run.connectionState = "error"
-    completeEldoradoAutomationRun(run, "error", `${run.label} için websocket bağlantı hatası oluştu.`)
+    completeEldoradoAutomationRun(run, "error", `${run.label} icin websocket baglanti hatasi olustu.`)
   })
 
   socket.addEventListener("close", () => {
     if (run.settled) return
     if (run.hasResult) {
-      completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandı.`)
+      completeEldoradoAutomationRun(run, "success", `${run.label} tamamlandi.`)
       return
     }
     if (run.hasConnected) {
-      completeEldoradoAutomationRun(run, "error", `${run.label} bağlantısı açıldı ancak sonuç gelmedi.`)
+      completeEldoradoAutomationRun(run, "error", `${run.label} baglantisi acildi ancak sonuc gelmedi.`)
       return
     }
-    completeEldoradoAutomationRun(run, "error", `${run.label} için websocket bağlantısı kapandi.`)
+    completeEldoradoAutomationRun(run, "error", `${run.label} icin websocket baglantisi kapandi.`)
   })
 
   return { run, conflict: false }
@@ -2368,7 +2368,7 @@ const createEldoradoPriceCommandRun = ({
   const normalizedCategory = String(category ?? "").trim()
   const normalizedResult = roundPriceNumber(result)
   const normalizedResultToken = formatRoundedPriceNumber(normalizedResult)
-  const normalizedLabel = String(label ?? "").trim() || "Sonucu Gönder"
+  const normalizedLabel = String(label ?? "").trim() || "Sonucu Gonder"
   const normalizedBackendKey = String(backendKey ?? "").trim() || "eldorado"
   const normalizedBackendLabel =
     String(backendLabel ?? normalizedBackendKey).trim() || normalizedBackendKey
@@ -2395,11 +2395,11 @@ const createEldoradoPriceCommandRun = ({
 
   eldoradoPriceCommandRunsByOffer.set(normalizedOfferId, run)
 
-  appendEldoradoPriceCommandRunLog(run, "running", `Çalıştıran: ${String(username ?? "").trim() || "bilinmeyen-kullanici"}`)
+  appendEldoradoPriceCommandRunLog(run, "running", `Calistiran: ${String(username ?? "").trim() || "bilinmeyen-kullanici"}`)
   appendEldoradoPriceCommandRunLog(
     run,
     "running",
-    `Gönderiliyor: backend=${normalizedBackendLabel}, kategori=${normalizedCategory || "-"}`,
+    `Gonderiliyor: backend=${normalizedBackendLabel}, kategori=${normalizedCategory || "-"}`,
   )
   appendEldoradoPriceCommandRunLog(
     run,
@@ -2428,7 +2428,7 @@ const createEldoradoPriceCommandRun = ({
   try {
     socket = new WebSocketApi(triggerUrl)
   } catch {
-    completeEldoradoPriceCommandRun(run, "error", `${normalizedLabel} için websocket bağlantısı başlatılamadı.`)
+    completeEldoradoPriceCommandRun(run, "error", `${normalizedLabel} icin websocket baglantisi baslatilamadi.`)
     return { run, conflict: false }
   }
 
@@ -2457,14 +2457,14 @@ const createEldoradoPriceCommandRun = ({
         try {
           socket.send("40")
         } catch {
-          completeEldoradoPriceCommandRun(run, "error", `${run.label} için Socket.IO bağlantısı başlatılamadı.`)
+          completeEldoradoPriceCommandRun(run, "error", `${run.label} icin Socket.IO baglantisi baslatilamadi.`)
         }
         continue
       }
 
       if (packet.startsWith("40")) {
         if (!run.hasConnected) {
-          appendEldoradoPriceCommandRunLog(run, "running", "Bağlandı.")
+          appendEldoradoPriceCommandRunLog(run, "running", "Baglandi.")
         }
         run.hasConnected = true
         run.status = "running"
@@ -2475,9 +2475,9 @@ const createEldoradoPriceCommandRun = ({
 
       if (packet.startsWith("41")) {
         if (run.hasResult) {
-          completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandı.`)
+          completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandi.`)
         } else {
-          completeEldoradoPriceCommandRun(run, "error", `${run.label} tamamlanmadan bağlantı kapandi.`)
+          completeEldoradoPriceCommandRun(run, "error", `${run.label} tamamlanmadan baglanti kapandi.`)
         }
         return
       }
@@ -2493,7 +2493,7 @@ const createEldoradoPriceCommandRun = ({
       const firstArg = eventPacket.args[0]
 
       if (eventName === "script-triggered" || eventName === "script-started") {
-        appendEldoradoPriceCommandRunLog(run, "running", `${run.backendLabel} script başlatıldı.`)
+        appendEldoradoPriceCommandRunLog(run, "running", `${run.backendLabel} script baslatildi.`)
         resetEldoradoPriceCommandRunTimeout(run, 300000)
         continue
       }
@@ -2535,9 +2535,9 @@ const createEldoradoPriceCommandRun = ({
         appendEldoradoPriceCommandRunLog(
           run,
           "error",
-          `${run.backendLabel} => Kullanıcı girdisi istendi. Bu panel bu akisi desteklemiyor.`,
+          `${run.backendLabel} => Kullanici girdisi istendi. Bu panel bu akisi desteklemiyor.`,
         )
-        completeEldoradoPriceCommandRun(run, "error", `${run.label} kullanıcı girdisi bekliyor.`)
+        completeEldoradoPriceCommandRun(run, "error", `${run.label} kullanici girdisi bekliyor.`)
         return
       }
 
@@ -2545,7 +2545,7 @@ const createEldoradoPriceCommandRun = ({
         const valueText = normalizeEventMessage(firstArg?.value ?? firstArg).trim()
         appendEldoradoPriceCommandRunLog(run, "success", `${run.backendLabel} => ${valueText || "-"}`)
         run.hasResult = true
-        completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandı.`)
+        completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandi.`)
         return
       }
 
@@ -2555,11 +2555,11 @@ const createEldoradoPriceCommandRun = ({
           appendEldoradoPriceCommandRunLog(
             run,
             exitCode === 0 ? "success" : "error",
-            `Script çıktı. Kod: ${exitCode}`,
+            `Script cikti. Kod: ${exitCode}`,
           )
         }
         if (!run.hasResult) {
-          completeEldoradoPriceCommandRun(run, "error", `${run.label} çıktı ancak sonuç alınmadı.`)
+          completeEldoradoPriceCommandRun(run, "error", `${run.label} cikti ancak sonuc alinmadi.`)
           return
         }
         resetEldoradoPriceCommandRunTimeout(run, 5000)
@@ -2572,20 +2572,20 @@ const createEldoradoPriceCommandRun = ({
 
   socket.addEventListener("error", () => {
     run.connectionState = "error"
-    completeEldoradoPriceCommandRun(run, "error", `${run.label} için websocket bağlantı hatası oluştu.`)
+    completeEldoradoPriceCommandRun(run, "error", `${run.label} icin websocket baglanti hatasi olustu.`)
   })
 
   socket.addEventListener("close", () => {
     if (run.settled) return
     if (run.hasResult) {
-      completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandı.`)
+      completeEldoradoPriceCommandRun(run, "success", `${run.label} tamamlandi.`)
       return
     }
     if (run.hasConnected) {
-      completeEldoradoPriceCommandRun(run, "error", `${run.label} bağlantısı açıldı ancak sonuç gelmedi.`)
+      completeEldoradoPriceCommandRun(run, "error", `${run.label} baglantisi acildi ancak sonuc gelmedi.`)
       return
     }
-    completeEldoradoPriceCommandRun(run, "error", `${run.label} için websocket bağlantısı kapandi.`)
+    completeEldoradoPriceCommandRun(run, "error", `${run.label} icin websocket baglantisi kapandi.`)
   })
 
   return { run, conflict: false }
@@ -3140,11 +3140,11 @@ app.post("/api/application-runs/:runId/cancel", requireAnyPermission(APPLICATION
           reason: "user-cancelled",
         })
       } else {
-        appendApplicationRunLog(run, "running", `${run.backendLabel} => iptal eventi gönderildi.`)
+        appendApplicationRunLog(run, "running", `${run.backendLabel} => iptal eventi gonderildi.`)
       }
     }
 
-    completeApplicationRun(run, "error", "İşlem kullanıcı tarafından iptal edildi.")
+    completeApplicationRun(run, "error", "Islem kullanici tarafindan iptal edildi.")
   }
 
   res.json({
@@ -5468,7 +5468,7 @@ app.post(
 
     const backend = String(req.body?.backend ?? "").trim()
     const url = String(req.body?.url ?? "").trim()
-    const label = String(req.body?.label ?? "").trim() || "Stok çek"
+    const label = String(req.body?.label ?? "").trim() || "Stok cek"
     const starredRaw = req.body?.starred
     const starred =
       typeof starredRaw === "boolean" ? starredRaw : String(starredRaw ?? "").toLowerCase() === "true"
@@ -5558,7 +5558,7 @@ app.post(
     appendEldoradoAutomationRunLog(
       run,
       "running",
-      `${buildEldoradoAutomationBackendDisplay(run, backend)} => İki faktör kodu gönderildi.`,
+      `${buildEldoradoAutomationBackendDisplay(run, backend)} => Iki faktor kodu gonderildi.`,
     )
     run.pendingTwoFactorPrompt = null
 
@@ -5722,7 +5722,7 @@ app.post(
       offerId,
       category: String(req.body?.category ?? "").trim(),
       result,
-      label: String(req.body?.label ?? "").trim() || "Sonucu Gönder",
+      label: String(req.body?.label ?? "").trim() || "Sonucu Gonder",
       username: req.user?.username,
       backendKey: String(req.body?.backendKey ?? "").trim() || "eldorado",
       backendLabel: String(req.body?.backendLabel ?? "").trim() || "eldorado",

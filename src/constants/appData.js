@@ -1,18 +1,18 @@
 export const fallbackTemplates = [
   {
-    label: "Hoş geldin",
-    value: "Hoş geldin! Burada herkese yer var.",
+    label: "Hos geldin",
+    value: "Hos geldin! Burada herkese yer var.",
     category: "Karsilama",
   },
   {
     label: "Bilgilendirme",
-    value: "Son durum: Görev planlandigi gibi ilerliyor.",
+    value: "Son durum: Gorev planlandigi gibi ilerliyor.",
     category: "Bilgilendirme",
   },
   {
-    label: "Hatırlatma",
-    value: "Unutma: Akşam 18:00 toplantisina hazır ol.",
-    category: "Hatırlatma",
+    label: "Hatirlatma",
+    value: "Unutma: Aksam 18:00 toplantisina hazir ol.",
+    category: "Hatirlatma",
   },
 ]
 
@@ -21,8 +21,8 @@ export const fallbackCategories = Array.from(
 )
 
 export const initialProblems = [
-  { id: 1, username: "@ornek1", issue: "Ödeme ekranda takıldı, 2 kez kart denemiş.", status: "open" },
-  { id: 2, username: "@ornek2", issue: "Teslimat gecikmesi şikayeti.", status: "open" },
+  { id: 1, username: "@ornek1", issue: "Odeme ekranda takildi, 2 kez kart denemis.", status: "open" },
+  { id: 2, username: "@ornek2", issue: "Teslimat gecikmesi sikayeti.", status: "open" },
 ]
 
 export const initialProducts = [
@@ -38,7 +38,7 @@ export const initialProducts = [
   {
     id: "prd-2",
     name: "Galaxy Pass",
-    note: "Deneme sürümü için",
+    note: "Deneme surumu icin",
     stocks: [{ id: "stk-3", code: "XBGP-3M-TRIAL-KEY" }],
   },
   {
@@ -52,8 +52,8 @@ export const initialProducts = [
 export const initialTasks = [
   {
     id: "tsk-1",
-    title: "Haftalik öncelik listesini güncelle",
-    note: "Kritik müşteriler + teslim süreleri",
+    title: "Haftalik oncelik listesini guncelle",
+    note: "Kritik musteriler + teslim sureleri",
     owner: "Burak",
     dueType: "date",
     dueDate: "2025-12-29",
@@ -61,8 +61,8 @@ export const initialTasks = [
   },
   {
     id: "tsk-2",
-    title: "Şablon kategorilerini toparla",
-    note: "Genel, satış, destek",
+    title: "Sablon kategorilerini toparla",
+    note: "Genel, satis, destek",
     owner: "Ece",
     dueType: "repeat",
     repeatDays: ["2"],
@@ -70,7 +70,7 @@ export const initialTasks = [
   },
   {
     id: "tsk-3",
-    title: "Haftalik raporu paylaş",
+    title: "Haftalik raporu paylas",
     note: "Cuma 17:00",
     owner: "Tuna",
     dueType: "today",

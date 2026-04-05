@@ -533,11 +533,11 @@ export default function ListsTab({
             <ul className="mt-3 space-y-2 text-sm text-slate-300">
               <li>- Yeni liste varsayılan bir tabloyla başlar.</li>
               <li>- Satır/sütun ekleyerek tabloyu genişlet.</li>
-              <li>- Bir hucreye çok satır yapistirinca asagiya yayilir.</li>
+              <li>- Bir hucreye cok satir yapistirinca asagiya yayilir.</li>
               <li>- Formül için "=" ile başla (örn: =SUM(A1:A5)).</li>
               <li>- Desteklenenler: SUM, AVERAGE, MIN, MAX, COUNT.</li>
               <li>- Satır/sütun başlığına sağ tıkla: ekle/sil.</li>
-              <li>- Satır/sütun seçmek için başlığa tıkla; Shift aralık, Ctrl tek tek.</li>
+              <li>- Satir/sutun secmek icin basliga tikla; Shift aralik, Ctrl tek tek.</li>
               <li>- Veriler veritabanında saklanır.</li>
             </ul>
           </div>
@@ -586,7 +586,7 @@ export default function ListsTab({
                     }}
                     className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-rose-100 transition hover:bg-rose-500/10"
                   >
-                    Seçili satirlari sil
+                    Secili satirlari sil
                     <span className="text-[10px] text-rose-200/70">{selectedListRows.size}</span>
                   </button>
                 )}
@@ -626,7 +626,7 @@ export default function ListsTab({
                     }}
                     className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-rose-100 transition hover:bg-rose-500/10"
                   >
-                    Seçili sutunlari sil
+                    Secili sutunlari sil
                     <span className="text-[10px] text-rose-200/70">{selectedListCols.size}</span>
                   </button>
                 )}

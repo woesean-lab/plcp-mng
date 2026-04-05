@@ -7,7 +7,7 @@ const MAX_LOG_ENTRIES = 300
 const MASKED_BACKEND_TEXT = "******"
 const HISTORY_CONSOLE_TAB_ID = "__history__"
 const CMD_PROMPT_PATH = "C:\\plcp\\applications>"
-const CMD_WINDOW_TITLE = "Komut İstemi"
+const CMD_WINDOW_TITLE = "Komut Istemi"
 const LOG_URL_REGEX = /((?:https?:\/\/|www\.)[^\s<>"']+)/gi
 const TRANSIENT_NETWORK_ERROR_MESSAGES = new Set([
   "failed to fetch",
@@ -28,7 +28,7 @@ const isTransientNetworkError = (error) => {
 }
 
 const getRequestErrorMessage = (error, fallback) => {
-  const normalizedFallback = String(fallback ?? "").trim() || "İşlem tamamlanamadı."
+  const normalizedFallback = String(fallback ?? "").trim() || "Islem tamamlanamadi."
   const message = String(error?.message ?? "").trim()
   if (!message || isTransientNetworkError(error)) return normalizedFallback
   return message
@@ -276,7 +276,7 @@ export default function ApplicationsTab({
       const message =
         String(payload?.message ?? "").trim() ||
         (inputType === "choice"
-          ? "Bir seçim yapın."
+          ? "Bir secim yapin."
           : inputType === "confirm"
             ? "Onay verin."
             : "Metin girin.")
@@ -399,9 +399,9 @@ export default function ApplicationsTab({
         throw new Error("clipboard-unavailable")
       }
 
-      toast.success("Link kopyalandı.")
+      toast.success("Link kopyalandi.")
     } catch {
-      toast.error("Link kopyalanamadı.")
+      toast.error("Link kopyalanamadi.")
     }
   }, [])
 
@@ -462,7 +462,7 @@ export default function ApplicationsTab({
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Servis listesi alınamadı.")
+          throw new Error(apiError || "Servis listesi alinamadi.")
         }
         const payload = await res.json()
         if (!isMounted) return
@@ -472,7 +472,7 @@ export default function ApplicationsTab({
         setApplications(normalized)
       } catch (error) {
         if (!isMounted || controller.signal.aborted) return
-        toast.error(getRequestErrorMessage(error, "Servis listesi alınamadı."))
+        toast.error(getRequestErrorMessage(error, "Servis listesi alinamadi."))
       } finally {
         if (isMounted) setIsApplicationsLoading(false)
       }
@@ -551,7 +551,7 @@ export default function ApplicationsTab({
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Servis Konsolu logları alınamadı.")
+          throw new Error(apiError || "Servis Konsolu loglari alinamadi.")
         }
         const payload = await res.json()
         if (!isMounted) return
@@ -564,7 +564,7 @@ export default function ApplicationsTab({
       } catch (error) {
         if (!isMounted) return
         if (!hasLoadError) {
-          toast.error(getRequestErrorMessage(error, "Servis Konsolu logları alınamadı."))
+          toast.error(getRequestErrorMessage(error, "Servis Konsolu loglari alinamadi."))
           hasLoadError = true
         }
         hasLoadedOnce = true
@@ -730,13 +730,13 @@ export default function ApplicationsTab({
         const res = await apiFetchApplications("/api/application-runs")
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Servis oturumlari alınamadı.")
+          throw new Error(apiError || "Servis oturumlari alinamadi.")
         }
         const payload = await res.json()
         syncRunSessions(payload)
       } catch (error) {
         if (!silent) {
-          toast.error(getRequestErrorMessage(error, "Servis oturumlari alınamadı."))
+          toast.error(getRequestErrorMessage(error, "Servis oturumlari alinamadi."))
         }
       } finally {
         runSessionsRequestInFlightRef.current = false
@@ -755,12 +755,12 @@ export default function ApplicationsTab({
         const res = await apiFetchApplications(`/api/application-runs/${encodeURIComponent(normalizedRunId)}`)
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Servis oturumu alınamadı.")
+          throw new Error(apiError || "Servis oturumu alinamadi.")
         }
         return applyRunSnapshot(await res.json())
       } catch (error) {
         if (!silent) {
-          toast.error(getRequestErrorMessage(error, "Servis oturumu alınamadı."))
+          toast.error(getRequestErrorMessage(error, "Servis oturumu alinamadi."))
         }
         return null
       } finally {
@@ -885,7 +885,7 @@ export default function ApplicationsTab({
       if (isRunLive(entry.status)) {
         if (!activeRunToastIdsRef.current.has(entry.id)) {
           activeRunToastIdsRef.current.add(entry.id)
-          toast.loading(`${entry.label} çalışıyor...`, {
+          toast.loading(`${entry.label} calisiyor...`, {
             id: `application-run-${entry.id}`,
             position: "top-right",
           })
@@ -902,12 +902,12 @@ export default function ApplicationsTab({
         : undefined
       activeRunToastIdsRef.current.delete(entry.id)
       if (entry.status === "success") {
-        toast.success(`${entry.applicationName}: Servis hatasız bitirildi.`, {
+        toast.success(`${entry.applicationName}: Servis hatasiz bitirildi.`, {
           id: toastId,
           position: "top-right",
         })
       } else if (entry.status === "error") {
-        toast.error(`${entry.applicationName} tamamlanamadı.`, {
+        toast.error(`${entry.applicationName} tamamlanamadi.`, {
           id: toastId,
           position: "top-right",
         })
@@ -917,22 +917,22 @@ export default function ApplicationsTab({
 
   const handleSave = async () => {
     if (!canManageApplications) {
-      toast.error("Servis yönetme yetkiniz yok.")
+      toast.error("Servis yonetme yetkiniz yok.")
       return
     }
     const name = String(appNameDraft ?? "").trim()
     const about = String(appAboutDraft ?? "").trim()
     const backendKey = String(backendDraft ?? "").trim()
     if (!name) {
-      toast.error("Servis adı girin.")
+      toast.error("Servis adi girin.")
       return
     }
     if (!about) {
-      toast.error("Servis hakkında alani bos olamaz.")
+      toast.error("Servis hakkinda alani bos olamaz.")
       return
     }
     if (!backendKey) {
-      toast.error("Backend map seçin.")
+      toast.error("Backend map secin.")
       return
     }
     const backendLabel =
@@ -948,18 +948,18 @@ export default function ApplicationsTab({
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Servis güncellenemedi.")
+          throw new Error(apiError || "Servis guncellenemedi.")
         }
         const saved = normalizeApplicationEntry(await res.json())
-        if (!saved) throw new Error("Güncellenen servis verisi geçersiz.")
+        if (!saved) throw new Error("Guncellenen servis verisi gecersiz.")
         setApplications((prev) => prev.map((entry) => (entry.id === saved.id ? saved : entry)))
         setSelectedApplicationId(saved.id)
         void persistLog(
           saved.id,
           "success",
-          `Servis güncellendi: ${saved.name} (${getBackendLabelForDisplay(saved.backendLabel)})`,
+          `Servis guncellendi: ${saved.name} (${getBackendLabelForDisplay(saved.backendLabel)})`,
         )
-        toast.success("Servis güncellendi.")
+        toast.success("Servis guncellendi.")
       } else {
         const res = await apiFetchApplications("/api/applications", {
           method: "POST",
@@ -971,7 +971,7 @@ export default function ApplicationsTab({
           throw new Error(apiError || "Servis kaydedilemedi.")
         }
         const saved = normalizeApplicationEntry(await res.json())
-        if (!saved) throw new Error("Kaydedilen servis verisi geçersiz.")
+        if (!saved) throw new Error("Kaydedilen servis verisi gecersiz.")
         setApplications((prev) => [saved, ...prev])
         setSelectedApplicationId(saved.id)
         void persistLog(
@@ -1014,7 +1014,7 @@ export default function ApplicationsTab({
 
   const handleToggleActive = async (appId) => {
     if (!canManageApplications) {
-      toast.error("Servis yönetme yetkiniz yok.")
+      toast.error("Servis yonetme yetkiniz yok.")
       return
     }
     const target = applications.find((entry) => entry.id === appId)
@@ -1028,10 +1028,10 @@ export default function ApplicationsTab({
       })
       if (!res.ok) {
         const apiError = await readApiError(res)
-        throw new Error(apiError || "Servis durumu güncellenemedi.")
+        throw new Error(apiError || "Servis durumu guncellenemedi.")
       }
       const saved = normalizeApplicationEntry(await res.json())
-      if (!saved) throw new Error("Güncellenen durum verisi geçersiz.")
+      if (!saved) throw new Error("Guncellenen durum verisi gecersiz.")
       setApplications((prev) => prev.map((entry) => (entry.id === saved.id ? saved : entry)))
       void persistLog(
         saved.id,
@@ -1040,19 +1040,19 @@ export default function ApplicationsTab({
       )
       toast.success(saved.isActive ? "Servis aktif edildi." : "Servis kapatildi.")
     } catch (error) {
-      toast.error(getRequestErrorMessage(error, "Servis durumu güncellenemedi."))
+      toast.error(getRequestErrorMessage(error, "Servis durumu guncellenemedi."))
     }
   }
 
   const handleDelete = async (appId) => {
     if (!canManageApplications) {
-      toast.error("Servis yönetme yetkiniz yok.")
+      toast.error("Servis yonetme yetkiniz yok.")
       return
     }
     if (!appId) return
     if (deleteConfirmId !== appId) {
       setDeleteConfirmId(appId)
-      toast("Silmek için tekrar tıkla.", { position: "top-right" })
+      toast("Silmek icin tekrar tikla.", { position: "top-right" })
       return
     }
     try {
@@ -1086,7 +1086,7 @@ export default function ApplicationsTab({
       if (!normalizedRunId) return
       const runEntry = runSessionsRef.current.find((entry) => entry.id === normalizedRunId) || null
       if (runEntry && isRunLive(runEntry.status)) {
-        toast.error("Çalışan sekme kapatılamaz. Önce işlemi iptal edin.")
+        toast.error("Calisan sekme kapatilamaz. Once islemi iptal edin.")
         return
       }
       dismissedRunIdsRef.current.add(normalizedRunId)
@@ -1113,21 +1113,21 @@ export default function ApplicationsTab({
 
   const handleRun = useCallback(async () => {
     if (!canRunApplications) {
-      toast.error("Servis çalıştırma yetkiniz yok.")
+      toast.error("Servis calistirma yetkiniz yok.")
       return
     }
     if (!selectedApplication) {
-      toast.error("Çalıştırmak için servis seçin.")
+      toast.error("Calistirmak icin servis secin.")
       return
     }
     if (!selectedApplication.isActive) {
-      toast.error("Seçilen servis kapalı. Önce aktif edin.")
+      toast.error("Secilen servis kapali. Once aktif edin.")
       return
     }
 
     const wsBaseUrl = String(automationWsUrl ?? "").trim()
     if (!wsBaseUrl) {
-      toast.error("Websocket adresi bulunamadı. Admin panelinden kaydedin.")
+      toast.error("Websocket adresi bulunamadi. Admin panelinden kaydedin.")
       return
     }
 
@@ -1144,10 +1144,10 @@ export default function ApplicationsTab({
         const apiError = await readApiError(res)
         const message =
           apiError === "automation_ws_url_missing"
-            ? "Websocket adresi bulunamadı. Admin panelinden kaydedin."
+            ? "Websocket adresi bulunamadi. Admin panelinden kaydedin."
             : apiError === "application_inactive"
-              ? "Seçilen servis kapalı. Önce aktif edin."
-              : apiError || "Servis başlatılamadı."
+              ? "Secilen servis kapali. Once aktif edin."
+              : apiError || "Servis baslatilamadi."
         throw new Error(message)
       }
 
@@ -1159,7 +1159,7 @@ export default function ApplicationsTab({
       completedToastRunIdsRef.current.delete(runEntry.id)
       if (isRunLive(runEntry.status)) {
         activeRunToastIdsRef.current.add(runEntry.id)
-        toast.loading(`${runEntry.label} çalışıyor...`, {
+        toast.loading(`${runEntry.label} calisiyor...`, {
           id: `application-run-${runEntry.id}`,
           position: "top-right",
         })
@@ -1177,7 +1177,7 @@ export default function ApplicationsTab({
         }
       }
 
-      toast.error(getRequestErrorMessage(error, "Servis başlatılamadı."))
+      toast.error(getRequestErrorMessage(error, "Servis baslatilamadi."))
     }
   }, [
     apiFetchApplications,
@@ -1205,12 +1205,12 @@ export default function ApplicationsTab({
         )
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "İşlem iptal edilemedi.")
+          throw new Error(apiError || "Islem iptal edilemedi.")
         }
         applyRunSnapshot(await res.json())
-        toast("İşlem iptal edildi.", { position: "top-right" })
+        toast("Islem iptal edildi.", { position: "top-right" })
       } catch (error) {
-        toast.error(getRequestErrorMessage(error, "İşlem iptal edilemedi."))
+        toast.error(getRequestErrorMessage(error, "Islem iptal edilemedi."))
       }
     },
     [activeRunId, apiFetchApplications, applyRunSnapshot, isRunLive, readApiError],
@@ -1254,15 +1254,15 @@ export default function ApplicationsTab({
           const apiError = await readApiError(res)
           const message =
             apiError === "application_run_socket_not_open"
-              ? "Servis bağlantısı hazır değil."
+              ? "Servis baglantisi hazir degil."
               : apiError === "application_run_input_not_requested"
-                ? "Bekleyen bir kullanıcı girdisi yok."
-                : apiError || "Kullanıcı girdisi gönderilemedi."
+                ? "Bekleyen bir kullanici girdisi yok."
+                : apiError || "Kullanici girdisi gonderilemedi."
           throw new Error(message)
         }
         applyRunSnapshot(await res.json())
       } catch (error) {
-        toast.error(getRequestErrorMessage(error, "Kullanıcı girdisi gönderilemedi."))
+        toast.error(getRequestErrorMessage(error, "Kullanici girdisi gonderilemedi."))
       }
     },
     [
@@ -1292,11 +1292,11 @@ export default function ApplicationsTab({
       })
       if (!res.ok) {
         const apiError = await readApiError(res)
-        throw new Error(apiError || "Servis Konsolu logları temizlenemedi.")
+        throw new Error(apiError || "Servis Konsolu loglari temizlenemedi.")
       }
-      toast.success("Servis Konsolu logları temizlendi.")
+      toast.success("Servis Konsolu loglari temizlendi.")
     } catch (error) {
-      toast.error(getRequestErrorMessage(error, "Servis Konsolu logları temizlenemedi."))
+      toast.error(getRequestErrorMessage(error, "Servis Konsolu loglari temizlenemedi."))
     }
   }
 
@@ -1324,20 +1324,20 @@ export default function ApplicationsTab({
   const hasWsUrl = String(automationWsUrl ?? "").trim().length > 0
   const activeConnectionState = String(activeRunSession?.connectionState ?? "").trim().toLowerCase()
   const connectionLabel = !hasWsUrl
-    ? "Bağlantı yok"
+    ? "Baglanti yok"
     : activeRunSession
       ? activeConnectionState === "connecting"
         ? "Baglaniliyor"
         : activeConnectionState === "error"
-          ? "Bağlantı hatası"
+          ? "Baglanti hatasi"
           : activeRunSession.status === "success"
-            ? "Tamamlandı"
+            ? "Tamamlandi"
             : isActiveRunLive
-              ? "Bağlandı"
-              : "Hazır"
+              ? "Baglanildi"
+              : "Hazir"
       : runningRunCount > 0
         ? `${runningRunCount} calisiyor`
-        : "Hazır"
+        : "Hazir"
   const connectionBadgeClass = !hasWsUrl
     ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
     : activeRunSession && activeConnectionState === "error"
@@ -1348,7 +1348,7 @@ export default function ApplicationsTab({
           ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
           : "border-slate-700 bg-slate-900/90 text-slate-200"
   const activeConsoleTitle = activeRunSession ? activeRunSession.label : selectedApplication?.name || "Genel Log"
-  const activeConsoleAbout = activeRunSession?.applicationAbout || selectedApplication?.about || "Çalıştırmak için servis seçin."
+  const activeConsoleAbout = activeRunSession?.applicationAbout || selectedApplication?.about || "Calistirmak icin servis secin."
   const activeConsoleBackend = activeRunSession
     ? getBackendLabelForDisplay(activeRunSession.backendLabel)
     : selectedApplication
@@ -1385,12 +1385,12 @@ export default function ApplicationsTab({
             </span>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Servisler</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Servis ekle, servis seç ve çalıştır.
+              Servis ekle, servis sec ve calistir.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Kayıt: {applications.length}
+              Kayit: {applications.length}
             </span>
             <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
               Map: {applicationBackendOptions.length}
@@ -1425,10 +1425,10 @@ export default function ApplicationsTab({
                   disabled={!hasApplications}
                   className={`${terminalFieldClass} pr-10`}
                 >
-                  <option value="">{hasApplications ? "Servis seç" : "Kayıtlı servis yok"}</option>
+                  <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
                   {runDropdownApplications.map((entry) => (
                     <option key={`run-app-${entry.id}`} value={entry.id}>
-                      {entry.isActive ? entry.name : `${entry.name} (Kapalı)`}
+                      {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
                     </option>
                   ))}
                 </select>
@@ -1453,8 +1453,8 @@ export default function ApplicationsTab({
                   onClick={handleRun}
                   disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
                   className={terminalActionButtonClass}
-                  aria-label="Servisi çalıştır"
-                  title="Çalıştır"
+                  aria-label="Servisi calistir"
+                  title="Calistir"
                 >
                   <RiPlayFill size={16} aria-hidden="true" />
                 </button>
@@ -1463,8 +1463,8 @@ export default function ApplicationsTab({
                   onClick={() => handleCancelRun()}
                   disabled={!canCancelActiveRun}
                   className={terminalActionButtonClass}
-                  aria-label="Aktif çalıştırmayı iptal et"
-                  title="İptal"
+                  aria-label="Aktif calistirmayi iptal et"
+                  title="Iptal"
                 >
                   <RiPauseFill size={16} aria-hidden="true" />
                 </button>
@@ -1473,7 +1473,7 @@ export default function ApplicationsTab({
                   onClick={handleClearLogs}
                   disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
                   className={terminalActionButtonClass}
-                  aria-label="Logları temizle"
+                  aria-label="Loglari temizle"
                   title="Log temizle"
                 >
                   <RiDeleteBin6Line size={16} aria-hidden="true" />
@@ -1494,8 +1494,8 @@ export default function ApplicationsTab({
               <span className="rounded-full border border-slate-700 bg-slate-900/90 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
                 {canViewApplicationLogs
                   ? !activeRunSession && isLogsLoading
-                    ? "yükleniyor..."
-                    : `${consoleLogs.length} satır`
+                    ? "yukleniyor..."
+                    : `${consoleLogs.length} satir`
                   : "log yetkisi yok"}
               </span>
               <span
@@ -1579,10 +1579,10 @@ export default function ApplicationsTab({
           <div className="no-scrollbar h-[52vh] min-h-[280px] max-h-[420px] overflow-y-auto overflow-x-hidden bg-[#010203] px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:px-4 sm:text-[12px] sm:leading-6">
             {!canViewApplicationLogs ? (
               <div className="flex h-full items-center justify-center text-slate-500">
-                Servis Konsolu log görüntüleme yetkiniz yok.
+                Servis Konsolu log goruntuleme yetkiniz yok.
               </div>
             ) : !activeRunSession && isLogsLoading ? (
-              <div className="flex h-full items-center justify-center text-slate-500">Loglar yükleniyor...</div>
+              <div className="flex h-full items-center justify-center text-slate-500">Loglar yukleniyor...</div>
             ) : (
               <div className="space-y-1">
                 {activeRunPrompt && isActiveRunLive && (
@@ -1624,7 +1624,7 @@ export default function ApplicationsTab({
                             onClick={() => handleUserInputSubmit("hayir", activeRunId)}
                             className={terminalPromptButtonClass}
                           >
-                            Hayır
+                            Hayir
                           </button>
                         </div>
                       )}
@@ -1655,7 +1655,7 @@ export default function ApplicationsTab({
                             onClick={() => handleUserInputSubmit("", activeRunId)}
                             className={terminalPromptButtonClass}
                           >
-                            Gönder
+                            Gonder
                           </button>
                         </div>
                       )}
@@ -1710,23 +1710,23 @@ export default function ApplicationsTab({
         <section className={`order-2 min-w-0 self-start ${panelClass} bg-ink-900/60 lg:order-2 lg:col-span-1`}>
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-300/85">Servis Yönet</p>
-              <p className="text-xs text-slate-400">Kısa kayıt ve hızlı yönetim.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-300/85">Servis Yonet</p>
+              <p className="text-xs text-slate-400">Kisa kayit ve hizli yonetim.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200">
-              {applications.length} kayıt
+              {applications.length} kayit
             </span>
           </div>
 
           <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/55 p-3">
             <div className="space-y-2.5">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-300">Servis adı</label>
+                <label className="text-[11px] font-semibold text-slate-300">Servis adi</label>
                 <input
                   type="text"
                   value={appNameDraft}
                   onChange={(event) => setAppNameDraft(event.target.value)}
-                  placeholder="Örn: Telegram bot runner"
+                  placeholder="Orn: Telegram bot runner"
                   disabled={!canManageApplications}
                   className="h-9 w-full rounded-md border border-white/10 bg-ink-900 px-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
                 />
@@ -1741,7 +1741,7 @@ export default function ApplicationsTab({
                   className="h-9 w-full appearance-none rounded-md border border-white/10 bg-ink-900 px-2.5 text-xs text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="">
-                    {applicationBackendOptions.length === 0 ? "Servis backend map yok" : "Backend seç"}
+                    {applicationBackendOptions.length === 0 ? "Servis backend map yok" : "Backend sec"}
                   </option>
                   {applicationBackendOptions.map((entry) => (
                   <option key={`application-backend-${entry.key}`} value={entry.key}>
@@ -1752,12 +1752,12 @@ export default function ApplicationsTab({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-300">Servis hakkında</label>
+                <label className="text-[11px] font-semibold text-slate-300">Servis hakkinda</label>
                 <textarea
                   rows={2}
                   value={appAboutDraft}
                   onChange={(event) => setAppAboutDraft(event.target.value)}
-                  placeholder="Kısa açıklama yaz."
+                  placeholder="Kisa aciklama yaz."
                   disabled={!canManageApplications}
                   className="w-full resize-none rounded-md border border-white/10 bg-ink-900 px-2.5 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
                 />
@@ -1768,7 +1768,7 @@ export default function ApplicationsTab({
                 <span>
                   {applicationBackendOptions.length === 0
                     ? "kind=servis map yok"
-                    : `${applicationBackendOptions.length} map hazır`}
+                    : `${applicationBackendOptions.length} map hazir`}
                 </span>
               </div>
 
@@ -1779,7 +1779,7 @@ export default function ApplicationsTab({
                   disabled={applicationBackendOptions.length === 0 || !canManageApplications}
                   className="flex-1 rounded-md border border-emerald-300/60 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {editingApplicationId ? "Güncelle" : "Kaydet"}
+                  {editingApplicationId ? "Guncelle" : "Kaydet"}
                 </button>
                 {canManageApplications && editingApplicationId && (
                   <button
@@ -1787,7 +1787,7 @@ export default function ApplicationsTab({
                     onClick={handleEditCancel}
                     className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-200 transition hover:border-white/30 hover:bg-white/10"
                   >
-                    İptal
+                    Iptal
                   </button>
                 )}
               </div>
@@ -1795,13 +1795,13 @@ export default function ApplicationsTab({
           </div>
 
           {!canManageApplications && (
-            <p className="mt-2 text-[11px] text-amber-200/80">Servis yönetme yetkiniz yok.</p>
+            <p className="mt-2 text-[11px] text-amber-200/80">Servis yonetme yetkiniz yok.</p>
           )}
 
           <div className="mt-3 rounded-xl border border-white/10 bg-ink-900/55 p-2.5">
             <div className="flex items-center justify-between gap-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                Kayıtlı servisler
+                Kayitli servisler
               </p>
               <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
                 {applications.length}
@@ -1811,7 +1811,7 @@ export default function ApplicationsTab({
             <div className="no-scrollbar mt-2 max-h-[170px] space-y-1.5 overflow-y-auto pr-1">
               {applications.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-white/10 px-2.5 py-5 text-center text-[11px] text-slate-500">
-                  Henüz servis kaydı yok.
+                  Henuz servis kaydi yok.
                 </p>
               ) : (
                 applications.map((entry) => {
@@ -1834,7 +1834,7 @@ export default function ApplicationsTab({
                               : "border-slate-300/40 bg-slate-500/10 text-slate-300"
                           }`}
                         >
-                          {entry.isActive ? "Aktif" : "Kapalı"}
+                          {entry.isActive ? "Aktif" : "Kapali"}
                         </span>
                       </div>
 
@@ -1856,7 +1856,7 @@ export default function ApplicationsTab({
                             onClick={() => handleEditStart(entry)}
                             className="rounded-md border border-sky-300/60 bg-sky-500/15 px-1 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
                           >
-                            Düzenle
+                            Duzenle
                           </button>
                           <button
                             type="button"
