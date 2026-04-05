@@ -21,7 +21,7 @@ const isTransientNetworkError = (error) => {
 }
 
 const getRequestErrorMessage = (error, fallback) => {
-  const normalizedFallback = String(fallback ?? "").trim() || "Islem tamamlanamadi."
+  const normalizedFallback = String(fallback ?? "").trim() || "İşlem tamamlanamadı."
   const message = String(error?.message ?? "").trim()
   if (!message || isTransientNetworkError(error)) return normalizedFallback
   return message
@@ -83,7 +83,7 @@ const normalizeAutomationRunEntry = (entry) => {
   return {
     id,
     offerId,
-    label: String(entry?.label ?? "").trim() || "Stok cek",
+    label: String(entry?.label ?? "").trim() || "Stok çek",
     status: String(entry?.status ?? "").trim() || "error",
     connectionState: String(entry?.connectionState ?? "").trim() || "idle",
     startedAtMs: Number(entry?.startedAtMs ?? 0) || 0,
@@ -205,7 +205,7 @@ export default function useEldoradoAutomationRuntime({
         if (isLiveAutomationRun(run.status)) {
           if (!activeAutomationToastRunIdsRef.current.has(run.id)) {
             activeAutomationToastRunIdsRef.current.add(run.id)
-            toast.loading(`${run.label} calisiyor...`, {
+            toast.loading(`${run.label} çalışıyor...`, {
               id: `automation-run-${run.id}`,
               position: "top-right",
             })
@@ -224,12 +224,12 @@ export default function useEldoradoAutomationRuntime({
             : undefined
           activeAutomationToastRunIdsRef.current.delete(run.id)
           if (run.status === "success") {
-            toast.success(run.lastMessage || `${run.label} tamamlandi.`, {
+            toast.success(run.lastMessage || `${run.label} tamamlandı.`, {
               id: toastId,
               position: "top-right",
             })
           } else if (run.status === "error") {
-            toast.error(run.lastMessage || `${run.label} tamamlanamadi.`, {
+            toast.error(run.lastMessage || `${run.label} tamamlanamadı.`, {
               id: toastId,
               position: "top-right",
             })
@@ -250,7 +250,7 @@ export default function useEldoradoAutomationRuntime({
           setAutomationResultPopup({
             isOpen: true,
             offerId: run.offerId,
-            title: run.resultPopup.title || run.label || "Stok cek",
+            title: run.resultPopup.title || run.label || "Stok çek",
             backend: popupBackend || "-",
             value: run.resultPopup.value || "-",
           })
@@ -372,7 +372,7 @@ export default function useEldoradoAutomationRuntime({
         commitAutomationRunMap(nextMap)
       } catch {
         if (!silent) {
-          toast.error("Stok cek oturumlari alinamadi.")
+          toast.error("Stok çek oturumlari alınamadı.")
         }
       } finally {
         automationRunsRequestInFlightRef.current = false
@@ -412,7 +412,7 @@ export default function useEldoradoAutomationRuntime({
         return true
       } catch {
         if (!silent) {
-          toast.error("CMD loglari alinamadi.")
+          toast.error("CMD logları alınamadı.")
         }
         return false
       } finally {
@@ -444,10 +444,10 @@ export default function useEldoradoAutomationRuntime({
           [normalizedId]: [],
         }))
         setAutomationLogsLoadedByOffer((prev) => ({ ...prev, [normalizedId]: true }))
-        toast.success("CMD loglari temizlendi.")
+        toast.success("CMD logları temizlendi.")
         return true
       } catch {
-        toast.error("CMD loglari temizlenemedi.")
+        toast.error("CMD logları temizlenemedi.")
         return false
       } finally {
         setAutomationLogsClearingByOffer((prev) => {
@@ -471,13 +471,13 @@ export default function useEldoradoAutomationRuntime({
         null
       const backend = String(prompt?.backend ?? "").trim()
       if (!backend) {
-        toast.error("Iki faktor istegi bulunamadi.")
+        toast.error("İki faktör istegi bulunamadı.")
         return
       }
 
       const code = String(automationTwoFactorCodeByOffer?.[normalizedId] ?? "").trim()
       if (!code) {
-        toast.error("Iki faktor kodunu girin.")
+        toast.error("İki faktör kodunu girin.")
         return
       }
 
@@ -495,10 +495,10 @@ export default function useEldoradoAutomationRuntime({
           const apiError = String(errorPayload?.error ?? "").trim()
           const message =
             apiError === "automation_run_socket_not_open"
-              ? "Iki faktor kodu gonderilemedi: baglanti kapali."
+              ? "İki faktör kodu gönderilemedi: bağlantı kapalı."
               : apiError === "automation_two_factor_not_requested"
-                ? "Iki faktor istegi bulunamadi."
-                : "Iki faktor kodu gonderilemedi."
+                ? "İki faktör istegi bulunamadı."
+                : "İki faktör kodu gönderilemedi."
           throw new Error(message)
         }
         applyAutomationRunSnapshot(await res.json())
@@ -508,9 +508,9 @@ export default function useEldoradoAutomationRuntime({
         appendAutomationRunLog(
           normalizedId,
           "error",
-          `${backendDisplay} => ${getRequestErrorMessage(error, "Iki faktor kodu gonderilemedi.")}`,
+          `${backendDisplay} => ${getRequestErrorMessage(error, "İki faktör kodu gönderilemedi.")}`,
         )
-        toast.error(getRequestErrorMessage(error, "Iki faktor kodu gonderilemedi."))
+        toast.error(getRequestErrorMessage(error, "İki faktör kodu gönderilemedi."))
       }
     },
     [
@@ -534,15 +534,15 @@ export default function useEldoradoAutomationRuntime({
       const runUrl = String(target?.url ?? "").trim()
       const starred = Boolean(target?.starred)
       if (!backend) {
-        toast.error("Calistirmak icin backend map secin.")
+        toast.error("Çalıştırmak için backend map seçin.")
         return
       }
       if (!runUrl) {
-        toast.error("Calistirmak icin URL secin.")
+        toast.error("Çalıştırmak için URL seçin.")
         return
       }
       if (!String(automationWsUrl ?? "").trim()) {
-        toast.error("Websocket adresi bulunamadi. Stok cek sekmesinden kaydedin.")
+        toast.error("Websocket adresi bulunamadı. Stok çek sekmesinden kaydedin.")
         return
       }
 
@@ -560,7 +560,7 @@ export default function useEldoradoAutomationRuntime({
             backend,
             url: runUrl,
             starred,
-            label: String(automationName ?? "").trim() || "Stok cek",
+            label: String(automationName ?? "").trim() || "Stok çek",
           }),
         })
         if (!res.ok) {
@@ -568,12 +568,12 @@ export default function useEldoradoAutomationRuntime({
           const apiError = String(errorPayload?.error ?? "").trim()
           if (apiError === "automation_run_in_progress") {
             applyAutomationRunSnapshot(errorPayload)
-            throw new Error("Bu urun icin stok cek zaten calisiyor.")
+            throw new Error("Bu ürün için stok çek zaten çalışıyor.")
           }
           const message =
             apiError === "automation_ws_url_missing"
-              ? "Websocket adresi bulunamadi. Stok cek sekmesinden kaydedin."
-              : apiError || "Stok cek baslatilamadi."
+              ? "Websocket adresi bulunamadı. Stok çek sekmesinden kaydedin."
+              : apiError || "Stok çek başlatılamadı."
           throw new Error(message)
         }
 
@@ -597,7 +597,7 @@ export default function useEldoradoAutomationRuntime({
           }
         }
 
-        toast.error(getRequestErrorMessage(error, "Stok cek baslatilamadi."))
+        toast.error(getRequestErrorMessage(error, "Stok çek başlatılamadı."))
       }
     },
     [

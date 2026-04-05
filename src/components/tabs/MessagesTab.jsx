@@ -300,7 +300,7 @@ export default function MessagesTab({
                     type="text"
                     value={templateQuery}
                     onChange={(e) => setTemplateQuery(e.target.value)}
-                    placeholder="Sablon ara"
+                    placeholder="Şablon ara"
                     className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                   />
                   {templateQuery && (
@@ -403,7 +403,7 @@ export default function MessagesTab({
                                     event.stopPropagation()
                                     handleTemplateStarToggle(tpl.label)
                                   }}
-                                  aria-label={isStarred ? "Yildizi kaldir" : "Yildiz ekle"}
+                                  aria-label={isStarred ? "Yıldızı kaldır" : "Yıldız ekle"}
                                   aria-pressed={isStarred}
                                   className={`absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
                                     isStarred

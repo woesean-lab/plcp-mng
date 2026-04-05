@@ -99,7 +99,7 @@
               className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
             >
               <option value="" disabled>
-                Sorumlu sec
+                Sorumlu seç
               </option>
               {Array.isArray(taskUsers) &&
                 taskUsers.map((user) => (

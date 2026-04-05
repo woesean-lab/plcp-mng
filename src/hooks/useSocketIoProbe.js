@@ -79,14 +79,14 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
 
     if (!normalizedWsUrl) {
       clearDisconnectGraceTimer()
-      updateStatus("idle", "Websocket adresi kayitli degil.")
+      updateStatus("idle", "Websocket adresi kayıtlı değil.")
       return
     }
 
     const socketIoUrl = buildSocketIoWsUrl(normalizedWsUrl)
     if (!socketIoUrl) {
       clearDisconnectGraceTimer()
-      updateStatus("error", "Websocket adresi gecersiz.")
+      updateStatus("error", "Websocket adresi geçersiz.")
       return
     }
 
@@ -96,7 +96,7 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
     let disconnectHandled = false
 
     if (!background || statusRef.current === "idle") {
-      updateStatus("connecting", "Websocket baglantisi deneniyor...")
+      updateStatus("connecting", "Websocket bağlantısı deneniyor...")
     }
 
     const scheduleReconnect = () => {
@@ -109,12 +109,12 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
     }
 
     const startDisconnectGrace = () => {
-      updateStatus("connecting", "Websocket baglantisi yeniden deneniyor...")
+      updateStatus("connecting", "Websocket bağlantısı yeniden deneniyor...")
       if (disconnectGraceTimerRef.current) return
       disconnectGraceTimerRef.current = window.setTimeout(() => {
         disconnectGraceTimerRef.current = null
         if (!isMountedRef.current || statusRef.current === "connected") return
-        updateStatus("error", "Websocket baglantisi kesildi.")
+        updateStatus("error", "Websocket bağlantısı kesildi.")
       }, disconnectGraceMs)
     }
 
@@ -139,7 +139,7 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
     try {
       socket = new WebSocket(socketIoUrl)
     } catch {
-      updateStatus("error", "Websocket baglantisi kurulamadi.")
+      updateStatus("error", "Websocket bağlantısı kurulamadı.")
       scheduleReconnect()
       return
     }
@@ -154,8 +154,8 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
         handleDisconnect({
           nextStatus: useGrace ? "connecting" : "error",
           nextMessage: useGrace
-            ? "Websocket baglantisi yeniden deneniyor..."
-            : "Websocket baglantisi kurulamadi.",
+            ? "Websocket bağlantısı yeniden deneniyor..."
+            : "Websocket bağlantısı kurulamadı.",
           withGrace: useGrace,
         })
       }, handshakeTimeoutMs)
@@ -179,7 +179,7 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
           disconnectHandled = false
           clearHandshakeTimer()
           clearDisconnectGraceTimer()
-          updateStatus("connected", "Websocket sunucusuna baglandi.")
+          updateStatus("connected", "Websocket sunucusuna bağlandı.")
         }
       })
     }
@@ -189,8 +189,8 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
       handleDisconnect({
         nextStatus: useGrace ? "connecting" : "error",
         nextMessage: useGrace
-          ? "Websocket baglantisi yeniden deneniyor..."
-          : "Websocket baglantisi kurulamadi.",
+          ? "Websocket bağlantısı yeniden deneniyor..."
+          : "Websocket bağlantısı kurulamadı.",
         withGrace: useGrace,
       })
     }
@@ -200,8 +200,8 @@ export default function useSocketIoProbe(wsUrl = "", options = {}) {
       handleDisconnect({
         nextStatus: useGrace ? "connecting" : "error",
         nextMessage: useGrace
-          ? "Websocket baglantisi yeniden deneniyor..."
-          : "Websocket baglantisi kurulamadi.",
+          ? "Websocket bağlantısı yeniden deneniyor..."
+          : "Websocket bağlantısı kurulamadı.",
         withGrace: useGrace,
       })
     }

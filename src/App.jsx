@@ -561,10 +561,10 @@ function App() {
   const canViewAdmin = canManageRoles || canManageUsers
   const automationHeaderStatusLabel =
     automationHeaderProbeStatus === "connected"
-      ? "Baglanildi"
+      ? "Bağlandı"
       : automationHeaderProbeStatus === "connecting"
-        ? "Baglaniyor"
-        : "Baglanilmadi"
+        ? "Bağlanıyor"
+        : "Bağlanılmadı"
   const automationHeaderStatusDotClass =
     automationHeaderProbeStatus === "connected"
       ? "bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,0.45)]"
@@ -710,18 +710,18 @@ function App() {
                   </span>
                 </div>
               </div>
-              <h1 className="font-display text-2xl font-semibold text-white">Giris paneli</h1>
+              <h1 className="font-display text-2xl font-semibold text-white">Giriş paneli</h1>
             </div>
             {themeToggleButton}
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-ink-900/70 p-6 shadow-card">
-            <p className="text-sm text-slate-200/80">Paneli acmak icin kullanici adi ve sifre gir.</p>
+            <p className="text-sm text-slate-200/80">Paneli acmak için kullanıcı adı ve şifre gir.</p>
 
             <form className="mt-4 space-y-4" onSubmit={handleAuthSubmit}>
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-200" htmlFor="auth-username">
-                  Kullanici adi
+                  Kullanıcı adı
                 </label>
                 <input
                   id="auth-username"
@@ -738,7 +738,7 @@ function App() {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-200" htmlFor="auth-password">
-                  Sifre
+                  Şifre
                 </label>
                 <input
                   id="auth-password"
@@ -763,11 +763,11 @@ function App() {
                 disabled={isAuthBusy}
                 className="w-full rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Giris yap
+                Giriş yap
               </button>
             </form>
 
-            <p className="mt-4 text-xs text-slate-400">Hesabin yoksa yoneticine sor.</p>
+            <p className="mt-4 text-xs text-slate-400">Hesabın yoksa yöneticine sor.</p>
           </div>
         </div>
         <Toaster
@@ -823,7 +823,7 @@ function App() {
                 className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-200 transition hover:bg-white/10 sm:hidden ${
                   isTabMenuOpen ? "bg-white/10" : ""
                 }`}
-                aria-label="Sekme menusu"
+                aria-label="Sekme menüsü"
                 aria-expanded={isTabMenuOpen}
                 aria-controls="mobile-tab-menu"
               >
@@ -866,8 +866,8 @@ function App() {
                     void probeAutomationHeaderConnection()
                   }}
                   className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-white/5 px-3.5 text-sm font-semibold leading-none text-slate-200 transition hover:bg-white/10"
-                  title="Websocket baglanti durumunu kontrol et"
-                  aria-label="Websocket baglanti durumunu kontrol et"
+                  title="Websocket bağlantı durumunu kontrol et"
+                  aria-label="Websocket bağlantı durumunu kontrol et"
                   aria-busy={automationHeaderProbeStatus === "connecting"}
                 >
                   <span className={`h-2 w-2 rounded-full ${automationHeaderStatusDotClass}`} />

@@ -337,7 +337,7 @@ export default function TaskDetailModal({
           >
             <img
               src={zoomImage}
-              alt="Buyutulmus gorsel"
+              alt="Büyütülmüş görsel"
               className="max-h-[90vh] w-full rounded-2xl border border-white/10 object-contain"
             />
             <button

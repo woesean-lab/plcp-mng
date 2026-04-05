@@ -22,7 +22,7 @@ const isTransientNetworkError = (error) => {
 }
 
 const getRequestErrorMessage = (error, fallback) => {
-  const normalizedFallback = String(fallback ?? "").trim() || "Islem tamamlanamadi."
+  const normalizedFallback = String(fallback ?? "").trim() || "İşlem tamamlanamadı."
   const message = String(error?.message ?? "").trim()
   if (!message || isTransientNetworkError(error)) return normalizedFallback
   return message
@@ -72,7 +72,7 @@ const normalizePriceCommandRunEntry = (entry) => {
   return {
     id,
     offerId,
-    label: String(entry?.label ?? "").trim() || "Sonucu Gonder",
+    label: String(entry?.label ?? "").trim() || "Sonucu Gönder",
     status: String(entry?.status ?? "").trim() || "error",
     connectionState: String(entry?.connectionState ?? "").trim() || "idle",
     startedAtMs: Number(entry?.startedAtMs ?? 0) || 0,
@@ -84,9 +84,9 @@ const normalizePriceCommandRunEntry = (entry) => {
 }
 
 const createPriceCommandError = (message, extra = {}) =>
-  Object.assign(new Error(String(message ?? "").trim() || "Fiyat komutu hatasi"), {
+  Object.assign(new Error(String(message ?? "").trim() || "Fiyat komutu hatası"), {
     ...extra,
-    message: String(message ?? "").trim() || "Fiyat komutu hatasi",
+    message: String(message ?? "").trim() || "Fiyat komutu hatası",
   })
 
 const isLivePriceCommandRun = (status) => {
@@ -195,7 +195,7 @@ export default function useEldoradoPriceCommandRuntime({
 
     const message =
       run.lastMessage ||
-      (run.status === "success" ? `${run.label} tamamlandi.` : `${run.label} tamamlanamadi.`)
+      (run.status === "success" ? `${run.label} tamamlandı.` : `${run.label} tamamlanamadı.`)
     const outcome = {
       offerId: run.offerId,
       category: run.category || pending.category,
@@ -317,7 +317,7 @@ export default function useEldoradoPriceCommandRuntime({
         commitPriceCommandRunMap(nextMap)
       } catch {
         if (!silent) {
-          toast.error("Fiyat komut oturumlari alinamadi.")
+          toast.error("Fiyat komut oturumlari alınamadı.")
         }
       } finally {
         priceCommandRunsRequestInFlightRef.current = false
@@ -357,7 +357,7 @@ export default function useEldoradoPriceCommandRuntime({
         return true
       } catch {
         if (!silent) {
-          toast.error("Fiyat komut loglari alinamadi.")
+          toast.error("Fiyat komut logları alınamadı.")
         }
         return false
       } finally {
@@ -392,10 +392,10 @@ export default function useEldoradoPriceCommandRuntime({
           [normalizedOfferId]: [],
         }))
         setPriceCommandLogsLoadedByOffer((prev) => ({ ...prev, [normalizedOfferId]: true }))
-        toast.success("Fiyat komut loglari temizlendi.")
+        toast.success("Fiyat komut logları temizlendi.")
         return true
       } catch {
-        toast.error("Fiyat komut loglari temizlenemedi.")
+        toast.error("Fiyat komut logları temizlenemedi.")
         return false
       } finally {
         setPriceCommandLogsClearingByOffer((prev) => {
@@ -420,28 +420,28 @@ export default function useEldoradoPriceCommandRuntime({
         }
 
         if (!canRunPriceCommand) {
-          fail("Sonuc gonderme yetkiniz yok.")
+          fail("Sonuç gönderme yetkiniz yok.")
           return
         }
 
         const normalized = normalizePriceCommandPayload(payload)
         if (!normalized.offerId) {
-          fail("Urun ID bulunamadi.")
+          fail("Ürün ID bulunamadı.")
           return
         }
         if (!Number.isFinite(normalized.result)) {
-          fail("Gecerli fiyat verisi girin.")
+          fail("Geçerli fiyat verisi girin.")
           return
         }
         if (priceCommandRunningRef.current?.[normalized.offerId]) {
-          fail("Bu urun icin komut zaten calisiyor.")
+          fail("Bu ürün için komut zaten çalışıyor.")
           return
         }
 
         const backendKey = String(options?.backendKey ?? defaultBackendKey ?? "").trim() || "eldorado"
         const backendLabel = String(options?.backendLabel ?? defaultBackendLabel ?? backendKey).trim() || backendKey
         if (!String(wsUrl ?? "").trim()) {
-          fail("Websocket adresi bulunamadi. Admin panelinden kaydedin.")
+          fail("Websocket adresi bulunamadı. Admin panelinden kaydedin.")
           return
         }
 
@@ -457,7 +457,7 @@ export default function useEldoradoPriceCommandRuntime({
                 body: JSON.stringify({
                   category: normalized.category,
                   result: normalized.result,
-                  label: String(options?.label ?? "").trim() || "Sonucu Gonder",
+                  label: String(options?.label ?? "").trim() || "Sonucu Gönder",
                   backendKey,
                   backendLabel,
                 }),
@@ -469,13 +469,13 @@ export default function useEldoradoPriceCommandRuntime({
               const apiError = String(errorPayload?.error ?? "").trim()
               if (apiError === "price_command_run_in_progress") {
                 applyPriceCommandRunSnapshot(errorPayload)
-                fail("Bu urun icin komut zaten calisiyor.")
+                fail("Bu ürün için komut zaten çalışıyor.")
                 return
               }
               const message =
                 apiError === "automation_ws_url_missing"
-                  ? "Websocket adresi bulunamadi. Admin panelinden kaydedin."
-                  : apiError || "Fiyat komutu baslatilamadi."
+                  ? "Websocket adresi bulunamadı. Admin panelinden kaydedin."
+                  : apiError || "Fiyat komutu başlatılamadı."
               fail(message)
               return
             }
@@ -483,7 +483,7 @@ export default function useEldoradoPriceCommandRuntime({
             const payloadResult = await res.json()
             const run = applyPriceCommandRunSnapshot(payloadResult)
             if (!run) {
-              fail("Fiyat komutu baslatilamadi.")
+              fail("Fiyat komutu başlatılamadı.")
               return
             }
 
@@ -522,7 +522,7 @@ export default function useEldoradoPriceCommandRuntime({
               }
             }
 
-            fail(getRequestErrorMessage(error, "Fiyat komutu baslatilamadi."))
+            fail(getRequestErrorMessage(error, "Fiyat komutu başlatılamadı."))
           }
         })()
       }),

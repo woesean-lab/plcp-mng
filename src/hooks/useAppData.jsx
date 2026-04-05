@@ -514,7 +514,7 @@ export default function useAppData() {
         )
       } catch (error) {
         if (error?.name === "AbortError") return
-        toast.error("Ayarlar alinamadi (API/Server kontrol edin).")
+        toast.error("Ayarlar alınamadı (API/Server kontrol edin).")
       }
     },
     [apiFetch, readApiError],
@@ -1442,7 +1442,7 @@ export default function useAppData() {
     const amount = Number(nextAmount)
     const parsed = new Date(`${date}T00:00:00`)
     if (!saleId) {
-      toast.error("Guncellenecek kayit secin.")
+      toast.error("Guncellenecek kayıt seçin.")
       return false
     }
     if (!date || Number.isNaN(parsed.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1685,7 +1685,7 @@ export default function useAppData() {
     }
     const ownerValue = taskForm.owner.trim()
     if (!ownerValue) {
-      toast.error("Sorumlu secin.")
+      toast.error("Sorumlu seçin.")
       return
     }
     const repeatDays = normalizeRepeatDays(taskForm.repeatDays)
@@ -1694,7 +1694,7 @@ export default function useAppData() {
       return
     }
     if (taskForm.dueType === "date" && !taskForm.dueDate) {
-      toast.error("Ozel tarih secin.")
+      toast.error("Özel tarih seçin.")
       return
     }
     try {
@@ -1734,7 +1734,7 @@ export default function useAppData() {
     }
     const ownerValue = taskEditDraft.owner.trim()
     if (!ownerValue) {
-      toast.error("Sorumlu secin.")
+      toast.error("Sorumlu seçin.")
       return
     }
     const repeatDays = normalizeRepeatDays(taskEditDraft.repeatDays)
@@ -1743,7 +1743,7 @@ export default function useAppData() {
       return
     }
     if (taskEditDraft.dueType === "date" && !taskEditDraft.dueDate) {
-      toast.error("Ozel tarih secin.")
+      toast.error("Özel tarih seçin.")
       return
     }
     const updated = await saveTaskUpdate(taskEditDraft.id, {
@@ -1832,7 +1832,7 @@ export default function useAppData() {
     const username = authUsername.trim()
     const password = authPassword.trim()
     if (!username || !password) {
-      setAuthError("Kullanici adi ve sifre gerekli")
+      setAuthError("Kullanıcı adı ve şifre gerekli")
       return
     }
 
@@ -1870,7 +1870,7 @@ export default function useAppData() {
       setAuthPassword("")
     } catch (error) {
       console.error("Login failed", error)
-      setAuthError("Baglanti hatasi")
+      setAuthError("Bağlantı hatası")
     } finally {
       setIsAuthLoading(false)
     }
@@ -2319,7 +2319,7 @@ export default function useAppData() {
         if (error?.name === "AbortError") return
         if (!silent) {
           setEldoradoCatalog(applyEldoradoKeyCounts(null))
-          toast.error("Urunler alinamadi (API/Server kontrol edin).")
+          toast.error("Ürünler alınamadı (API/Server kontrol edin).")
         }
       } finally {
         if (!silent) {
@@ -2332,11 +2332,11 @@ export default function useAppData() {
 
   const refreshEldoradoCatalog = useCallback(async () => {
     if (isEldoradoRefreshing) {
-      toast.error("Yenileme islemi zaten calisiyor.")
+      toast.error("Yenileme işlemi zaten çalışıyor.")
       return
     }
     setIsEldoradoRefreshing(true)
-    const toastId = toast.loading("Urunler taraniyor...")
+    const toastId = toast.loading("Ürünler taraniyor...")
     try {
       const startRes = await apiFetch("/api/eldorado/refresh", { method: "POST" })
       if (!startRes.ok && startRes.status !== 409) {
@@ -2348,9 +2348,9 @@ export default function useAppData() {
           detail = ""
         }
         if (detail) {
-          throw new Error(`Yenileme hatasi: ${detail}`)
+          throw new Error(`Yenileme hatası: ${detail}`)
         }
-        throw new Error("Urunler yenilenemedi (API/Server kontrol edin).")
+        throw new Error("Ürünler yenilenemedi (API/Server kontrol edin).")
       }
 
       const startedAt = Date.now()
@@ -2358,7 +2358,7 @@ export default function useAppData() {
       while (true) {
         const statusRes = await apiFetch("/api/eldorado/refresh-status")
         if (!statusRes.ok) {
-          throw new Error("Yenileme durumu alinamadi (API/Server kontrol edin).")
+          throw new Error("Yenileme durumu alınamadı (API/Server kontrol edin).")
         }
         const statusPayload = await statusRes.json()
         const inFlight = Boolean(statusPayload?.inFlight)
@@ -2369,25 +2369,25 @@ export default function useAppData() {
           if (status === "error") {
             throw new Error(
               detail
-                ? `Yenileme hatasi: ${detail}`
-                : "Urunler yenilenemedi (API/Server kontrol edin).",
+                ? `Yenileme hatası: ${detail}`
+                : "Ürünler yenilenemedi (API/Server kontrol edin).",
             )
           }
           break
         }
 
         if (Date.now() - startedAt > maxWaitMs) {
-          throw new Error("Yenileme zaman asimina ugradi.")
+          throw new Error("Yenileme zaman aşımına uğradı.")
         }
 
         await new Promise((resolve) => window.setTimeout(resolve, 2500))
       }
 
-      toast.loading("Urunler ekleniyor...", { id: toastId })
+      toast.loading("Ürünler ekleniyor...", { id: toastId })
       await loadEldoradoCatalog(undefined, { silent: true })
-      toast.success("Urunler guncellendi", { id: toastId })
+      toast.success("Ürünler güncellendi", { id: toastId })
     } catch (error) {
-      toast.error(error?.message || "Urunler yenilenemedi (API/Server kontrol edin).", {
+      toast.error(error?.message || "Ürünler yenilenemedi (API/Server kontrol edin).", {
         id: toastId,
       })
     } finally {
@@ -2423,7 +2423,7 @@ export default function useAppData() {
       } catch (error) {
         if (error?.name === "AbortError") return
         setEldoradoLogs([])
-        toast.error("Loglar alinamadi (API/Server kontrol edin).")
+        toast.error("Loglar alınamadı (API/Server kontrol edin).")
       } finally {
         setIsEldoradoLogsLoading(false)
       }
@@ -2499,7 +2499,7 @@ export default function useAppData() {
       } catch (error) {
         console.error(error)
         if (!silent) {
-          toast.error("Urun stoklari alinamadi (API/Server kontrol edin).")
+          toast.error("Ürün stoklari alınamadı (API/Server kontrol edin).")
         }
         return null
       } finally {
@@ -2542,7 +2542,7 @@ export default function useAppData() {
   const handleEldoradoGroupCreate = async (name) => {
     const trimmed = String(name ?? "").trim()
     if (!trimmed) {
-      toast.error("Grup adi gerekli.")
+      toast.error("Grup adı gerekli.")
       return null
     }
     try {
@@ -2597,7 +2597,7 @@ export default function useAppData() {
       })
       loadEldoradoCatalog(undefined, { silent: true })
       toast.success(
-        nextGroupId ? "Stok grubu atandi" : "Stok grubu kaldirildi",
+        nextGroupId ? "Stok grubu atandi" : "Stok grubu kaldırıldı",
         { duration: 1400, position: "top-right" },
       )
       return true
@@ -2611,7 +2611,7 @@ export default function useAppData() {
     if (!normalizedGroupId) return false
 
     if (!eldoradoGroups.some((group) => group.id === normalizedGroupId)) {
-      toast.error("Stok grubu bulunamadi.")
+      toast.error("Stok grubu bulunamadı.")
       return false
     }
 
@@ -2710,7 +2710,7 @@ const handleEldoradoNoteSave = useCallback(
           ...prev,
           [normalizedOfferId]: nextEnabled,
         }))
-        toast.success(nextEnabled ? "Stok acildi" : "Stok kapatildi", {
+        toast.success(nextEnabled ? "Stok açıldı" : "Stok kapatildi", {
           duration: 1400,
           position: "top-right",
         })
@@ -2807,8 +2807,8 @@ const handleEldoradoNoteSave = useCallback(
         const detail = String(error?.message || "").trim()
         toast.error(
           detail
-            ? `Otomasyon ayari kaydedilemedi (${detail}).`
-            : "Otomasyon ayari kaydedilemedi (API/Server kontrol edin).",
+            ? `Otomasyon ayarı kaydedilemedi (${detail}).`
+            : "Otomasyon ayarı kaydedilemedi (API/Server kontrol edin).",
         )
         return null
       }
@@ -2855,7 +2855,7 @@ const handleEldoradoNoteSave = useCallback(
             [normalizedOfferId]: [...withoutDuplicate, target],
           }
         })
-        toast.success("Otomasyon satiri kaydedildi", {
+        toast.success("Otomasyon satıri kaydedildi", {
           duration: 1500,
           position: "top-right",
         })
@@ -2864,8 +2864,8 @@ const handleEldoradoNoteSave = useCallback(
         const detail = String(error?.message ?? "").trim()
         toast.error(
           detail
-            ? `Otomasyon satiri kaydedilemedi (${detail}).`
-            : "Otomasyon satiri kaydedilemedi (API/Server kontrol edin).",
+            ? `Otomasyon satıri kaydedilemedi (${detail}).`
+            : "Otomasyon satıri kaydedilemedi (API/Server kontrol edin).",
         )
         return null
       }
@@ -2919,8 +2919,8 @@ const handleEldoradoNoteSave = useCallback(
         const detail = String(error?.message ?? "").trim()
         toast.error(
           detail
-            ? `Stok çek yildiz ayari kaydedilemedi (${detail}).`
-            : "Stok çek yildiz ayari kaydedilemedi (API/Server kontrol edin).",
+            ? `Stok çek yıldız ayarı kaydedilemedi (${detail}).`
+            : "Stok çek yıldız ayarı kaydedilemedi (API/Server kontrol edin).",
         )
         return null
       }
@@ -2960,8 +2960,8 @@ const handleEldoradoNoteSave = useCallback(
         const detail = String(error?.message ?? "").trim()
         toast.error(
           detail
-            ? `Otomasyon satiri silinemedi (${detail}).`
-            : "Otomasyon satiri silinemedi (API/Server kontrol edin).",
+            ? `Otomasyon satıri silinemedi (${detail}).`
+            : "Otomasyon satıri silinemedi (API/Server kontrol edin).",
         )
         return false
       }
@@ -2979,7 +2979,7 @@ const handleEldoradoNoteSave = useCallback(
         !Number.isFinite(normalizedPayload.percent) ||
         !Number.isFinite(normalizedPayload.result)
       ) {
-        toast.error("Fiyat kaydedilemedi (gecersiz fiyat).")
+        toast.error("Fiyat kaydedilemedi (geçersiz fiyat).")
         return false
       }
       try {
@@ -3086,7 +3086,7 @@ const handleEldoradoNoteSave = useCallback(
           }
           return next
         })
-        toast.success(payload?.starred ? "Urun yildizlandi" : "Yildiz kaldirildi", {
+        toast.success(payload?.starred ? "Ürün yıldızlandı" : "Yıldız kaldırıldı", {
           duration: 1500,
           position: "top-right",
         })
@@ -3104,8 +3104,8 @@ const handleEldoradoNoteSave = useCallback(
         const detail = String(error?.message || "").trim()
         toast.error(
           detail
-            ? `Yildiz islemi basarisiz (${detail}).`
-            : "Yildiz islemi basarisiz (API/Server kontrol edin).",
+            ? `Yıldız işlemi başarısız (${detail}).`
+            : "Yıldız işlemi başarısız (API/Server kontrol edin).",
         )
         return false
       }
@@ -3219,11 +3219,11 @@ const handleEldoradoNoteSave = useCallback(
           return next
         })
 
-        toast.success("Urun silindi", { duration: 1500, position: "top-right" })
+        toast.success("Ürün silindi", { duration: 1500, position: "top-right" })
         return true
       } catch (error) {
         console.error(error)
-        toast.error("Urun silinemedi (API/DB kontrol edin).")
+        toast.error("Ürün silinemedi (API/DB kontrol edin).")
         return false
       }
     },
@@ -3234,7 +3234,7 @@ const handleEldoradoNoteSave = useCallback(
     async (name) => {
       const trimmed = String(name ?? "").trim()
       if (!trimmed) {
-        toast.error("Not grubu adi gerekli.")
+        toast.error("Not grubu adı gerekli.")
         return null
       }
       try {
@@ -3297,7 +3297,7 @@ const handleEldoradoNoteSave = useCallback(
           }
         }
         toast.success(
-          nextGroupId ? "Not grubu atandi" : "Not grubu kaldirildi",
+          nextGroupId ? "Not grubu atandi" : "Not grubu kaldırıldı",
           { duration: 1400, position: "top-right" },
         )
         return true
@@ -3314,7 +3314,7 @@ const handleEldoradoNoteSave = useCallback(
       const normalizedGroupId = String(groupId ?? "").trim()
       if (!normalizedGroupId) return false
       if (!eldoradoNoteGroups.some((group) => group.id === normalizedGroupId)) {
-        toast.error("Not grubu bulunamadi.")
+        toast.error("Not grubu bulunamadı.")
         return false
       }
 
@@ -3338,7 +3338,7 @@ const handleEldoradoNoteSave = useCallback(
     async (name) => {
       const trimmed = String(name ?? "").trim()
       if (!trimmed) {
-        toast.error("Mesaj grubu adi gerekli.")
+        toast.error("Mesaj grubu adı gerekli.")
         return null
       }
       try {
@@ -3395,7 +3395,7 @@ const handleEldoradoNoteSave = useCallback(
           return next
         })
         toast.success(
-          nextGroupId ? "Mesaj grubu atandi" : "Mesaj grubu kaldirildi",
+          nextGroupId ? "Mesaj grubu atandi" : "Mesaj grubu kaldırıldı",
           { duration: 1400, position: "top-right" },
         )
         return true
@@ -3412,7 +3412,7 @@ const handleEldoradoNoteSave = useCallback(
       const normalizedGroupId = String(groupId ?? "").trim()
       if (!normalizedGroupId) return false
       if (!eldoradoMessageGroups.some((group) => group.id === normalizedGroupId)) {
-        toast.error("Mesaj grubu bulunamadi.")
+        toast.error("Mesaj grubu bulunamadı.")
         return false
       }
 
@@ -3438,7 +3438,7 @@ const handleEldoradoNoteSave = useCallback(
       const normalizedLabel = String(label ?? "").trim()
       if (!normalizedGroupId || !normalizedLabel) return false
       if (!eldoradoMessageGroups.some((group) => group.id === normalizedGroupId)) {
-        toast.error("Mesaj grubu bulunamadi.")
+        toast.error("Mesaj grubu bulunamadı.")
         return false
       }
       try {
@@ -3456,10 +3456,10 @@ const handleEldoradoNoteSave = useCallback(
           }
           return next
         })
-        toast.success("Mesaj sablonu eklendi", { duration: 1200, position: "top-right" })
+        toast.success("Mesaj şablonu eklendi", { duration: 1200, position: "top-right" })
         return true
       } catch (error) {
-        toast.error("Mesaj sablonu eklenemedi (API/Server kontrol edin).")
+        toast.error("Mesaj şablonu eklenemedi (API/Server kontrol edin).")
         return false
       }
     },
@@ -3486,10 +3486,10 @@ const handleEldoradoNoteSave = useCallback(
           }
           return next
         })
-        toast.success("Mesaj sablonu eklendi", { duration: 1200, position: "top-right" })
+        toast.success("Mesaj şablonu eklendi", { duration: 1200, position: "top-right" })
         return true
       } catch (error) {
-        toast.error("Mesaj sablonu eklenemedi (API/Server kontrol edin).")
+        toast.error("Mesaj şablonu eklenemedi (API/Server kontrol edin).")
         return false
       }
     },
@@ -3518,10 +3518,10 @@ const handleEldoradoNoteSave = useCallback(
           }
           return next
         })
-        toast.success("Mesaj sablonu kaldirildi", { duration: 1200, position: "top-right" })
+        toast.success("Mesaj şablonu kaldırıldı", { duration: 1200, position: "top-right" })
         return true
       } catch (error) {
-        toast.error("Mesaj sablonu kaldirilamadi (API/Server kontrol edin).")
+        toast.error("Mesaj şablonu kaldırılamadı (API/Server kontrol edin).")
         return false
       }
     },
@@ -3548,10 +3548,10 @@ const handleEldoradoNoteSave = useCallback(
           }
           return next
         })
-        toast.success("Mesaj sablonu kaldirildi", { duration: 1200, position: "top-right" })
+        toast.success("Mesaj şablonu kaldırıldı", { duration: 1200, position: "top-right" })
         return true
       } catch (error) {
-        toast.error("Mesaj sablonu kaldirilamadi (API/Server kontrol edin).")
+        toast.error("Mesaj şablonu kaldırılamadı (API/Server kontrol edin).")
         return false
       }
     },
@@ -3562,7 +3562,7 @@ const handleEldoradoNoteSave = useCallback(
     async (offerId, codesInput) => {
       const normalizedId = String(offerId ?? "").trim()
       if (!normalizedId) {
-        toast.error("Urun bulunamadi.")
+        toast.error("Ürün bulunamadı.")
         return false
       }
       const codes = normalizeEldoradoKeyCodes(codesInput)
@@ -3717,7 +3717,7 @@ const handleEldoradoNoteSave = useCallback(
       const normalizedStatus = String(status ?? "").trim()
       if (!normalizedOfferId || !normalizedKeyId || !normalizedStatus) return false
       if (!["available", "used"].includes(normalizedStatus)) {
-        toast.error("Stok durumu gecersiz.")
+        toast.error("Stok durumu geçersiz.")
         return false
       }
 
@@ -3771,11 +3771,11 @@ const handleEldoradoNoteSave = useCallback(
             setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: nextList }))
           }
         }
-        toast.success(normalizedStatus === "used" ? "Stok kullanildi" : "Stok geri alindi")
+        toast.success(normalizedStatus === "used" ? "Stok kullanıldı" : "Stok geri alındı")
         return true
       } catch (error) {
         console.error(error)
-        toast.error("Stok durumu guncellenemedi (API/Server kontrol edin).")
+        toast.error("Stok durumu güncellenemedi (API/Server kontrol edin).")
         return false
       }
     },
@@ -3798,11 +3798,11 @@ const handleEldoradoNoteSave = useCallback(
         if (!res.ok) throw new Error("api_error")
         await loadEldoradoKeys(normalizedOfferId, { force: true })
         loadEldoradoCatalog(undefined, { silent: true })
-        toast.success("Stok guncellendi", { duration: 1500, position: "top-right" })
+        toast.success("Stok güncellendi", { duration: 1500, position: "top-right" })
         return true
       } catch (error) {
         console.error(error)
-        toast.error("Stok guncellenemedi (API/Server kontrol edin).")
+        toast.error("Stok güncellenemedi (API/Server kontrol edin).")
         return false
       }
     },
@@ -3829,7 +3829,7 @@ const handleEldoradoNoteSave = useCallback(
             setEldoradoKeysByOffer((prev) => ({ ...prev, [normalizedOfferId]: list }))
           }
         } catch (error) {
-          toast.error("Kopyalama icin stok bulunamadi.")
+          toast.error("Kopyalama için stok bulunamadı.")
           return false
         }
       }
@@ -3849,7 +3849,7 @@ const handleEldoradoNoteSave = useCallback(
         await navigator.clipboard.writeText(joined)
       } catch (error) {
         console.error(error)
-        toast.error("Kopyalanamadi")
+        toast.error("Kopyalanamadı")
         return false
       }
 
@@ -3900,14 +3900,14 @@ const handleEldoradoNoteSave = useCallback(
           toast.error("Stoklar isaretlenemedi (API/Server kontrol edin).")
           return false
         }
-        toast.success(`${selected.length} stok kopyalandi ve kullanildi`, {
+        toast.success(`${selected.length} stok kopyalandı ve kullanıldı`, {
           duration: 1700,
           position: "top-right",
         })
         return true
       }
 
-      toast.success(`${selected.length} stok kopyalandi`, {
+      toast.success(`${selected.length} stok kopyalandı`, {
         duration: 1600,
         position: "top-right",
       })
@@ -3926,15 +3926,15 @@ const handleEldoradoNoteSave = useCallback(
   const handleEldoradoKeyCopy = async (code) => {
     const value = String(code ?? "").trim()
     if (!value) {
-      toast.error("Stok bulunamadi.")
+      toast.error("Stok bulunamadı.")
       return
     }
     try {
       await navigator.clipboard.writeText(value)
-      toast.success("Stok kopyalandi", { duration: 1500, position: "top-right" })
+      toast.success("Stok kopyalandı", { duration: 1500, position: "top-right" })
     } catch (error) {
       console.error(error)
-      toast.error("Kopyalanamadi", { duration: 1500, position: "top-right" })
+      toast.error("Kopyalanamadı", { duration: 1500, position: "top-right" })
     }
   }
 
@@ -4251,7 +4251,7 @@ const handleEldoradoNoteSave = useCallback(
       setTemplates((prev) =>
         prev.map((tpl) => (tpl.label === safeLabel ? { ...tpl, starred: !nextStarred } : tpl)),
       )
-      toast.error("Yildiz guncellenemedi (API/DB kontrol edin).")
+      toast.error("Yıldız güncellenemedi (API/DB kontrol edin).")
     }
   }
 

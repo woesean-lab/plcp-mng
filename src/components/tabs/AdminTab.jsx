@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY, PERMISSION_GROUPS } from "../../constants/appConstants"
 
 const WS_CONNECTION_STATE_STORAGE_KEY = "pulcipAutomationWsConnectionState"
-const DEFAULT_WS_MESSAGE = "Henuz baglanti kurulmadI."
+const DEFAULT_WS_MESSAGE = "Henüz bağlantı kurulmadı."
 const DEFAULT_TOAST_STYLE = {
   background: "rgba(15, 23, 42, 0.92)",
   color: "#e2e8f0",
@@ -117,7 +117,7 @@ export default function AdminTab({
   const [isWsTesting, setIsWsTesting] = useState(false)
   const [backendListStatus, setBackendListStatus] = useState("idle")
   const [backendListMessage, setBackendListMessage] = useState(
-    "Baglanti kuruldugunda backend map listesi alinacak.",
+    "Bağlantı kurulduğunda backend map listesi alınacak.",
   )
   const wsSocketRef = useRef(null)
   const hasAutoConnectedRef = useRef(false)
@@ -203,7 +203,7 @@ export default function AdminTab({
         })
         if (!res.ok) {
           const apiError = await readApiError(res)
-          throw new Error(apiError || "Websocket ayarlari alinamadi.")
+          throw new Error(apiError || "Websocket ayarları alınamadı.")
         }
         const payload = await res.json()
         if (!isMounted) return
@@ -220,14 +220,14 @@ export default function AdminTab({
 
         if (backendOptions.length > 0) {
           setBackendListStatus("success")
-          setBackendListMessage(`${backendOptions.length} backend map hazir.`)
+          setBackendListMessage(`${backendOptions.length} backend map hazır.`)
         } else {
           setBackendListStatus("idle")
-          setBackendListMessage("Baglanti kuruldugunda backend map listesi alinacak.")
+          setBackendListMessage("Bağlantı kurulduğunda backend map listesi alınacak.")
         }
       } catch (error) {
         if (!isMounted || controller.signal.aborted) return
-        toast.error(error?.message || "Websocket ayarlari alinamadi.", {
+        toast.error(error?.message || "Websocket ayarları alınamadı.", {
           style: toastStyle,
           position: "top-right",
         })
@@ -485,9 +485,9 @@ export default function AdminTab({
 
     if (!normalized || !isValidWsUrl(normalized)) {
       setBackendListStatus("error")
-      setBackendListMessage("Backend map icin gecerli websocket adresi gerekli.")
+      setBackendListMessage("Backend map için geçerli websocket adresi gerekli.")
       if (!silent) {
-        toast.error("Backend map listesi alinamadi: websocket adresi gecersiz.", {
+        toast.error("Backend map listesi alınamadı: websocket adresi geçersiz.", {
           style: toastStyle,
           position: "top-right",
         })
@@ -498,9 +498,9 @@ export default function AdminTab({
     const socketIoUrl = buildSocketIoWsUrl(normalized)
     if (!socketIoUrl) {
       setBackendListStatus("error")
-      setBackendListMessage("Backend map icin Socket.IO adresi olusturulamadi.")
+      setBackendListMessage("Backend map için Socket.IO adresi olusturulamadi.")
       if (!silent) {
-        toast.error("Backend map listesi alinamadi: Socket.IO adresi gecersiz.", {
+        toast.error("Backend map listesi alınamadı: Socket.IO adresi geçersiz.", {
           style: toastStyle,
           position: "top-right",
         })
@@ -514,9 +514,9 @@ export default function AdminTab({
     const result = await fetchBackendMapsFromSocketIo(socketIoUrl)
     if (!result.ok) {
       setBackendListStatus("error")
-      setBackendListMessage("Backend map listesi alinamadi.")
+      setBackendListMessage("Backend map listesi alınamadı.")
       if (!silent) {
-        toast.error("Backend map listesi alinamadi.", { style: toastStyle, position: "top-right" })
+        toast.error("Backend map listesi alınamadı.", { style: toastStyle, position: "top-right" })
       }
       return false
     }
@@ -533,9 +533,9 @@ export default function AdminTab({
 
     void persistBackendOptions(normalizedItems)
     setBackendListStatus("success")
-    setBackendListMessage(`${normalizedItems.length} backend map alindi.`)
+    setBackendListMessage(`${normalizedItems.length} backend map alındı.`)
     if (!silent) {
-      toast.success("Backend map listesi guncellendi.", { style: toastStyle, position: "top-right" })
+      toast.success("Backend map listesi güncellendi.", { style: toastStyle, position: "top-right" })
     }
     return true
   }, [
@@ -559,7 +559,7 @@ export default function AdminTab({
     }
     if (!isValidWsUrl(normalized)) {
       if (!silent) {
-        toast.error("Gecerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
+        toast.error("Geçerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
       }
       return
     }
@@ -572,17 +572,17 @@ export default function AdminTab({
     let settled = false
     setIsWsTesting(true)
     setWsTestStatus("testing")
-    setWsTestMessage("Socket.IO baglantisi kuruluyor...")
+    setWsTestMessage("Socket.IO bağlantısı kuruluyor...")
     const socketIoUrl = buildSocketIoWsUrl(normalized)
     if (!socketIoUrl) {
       setIsWsTesting(false)
       setWsTestStatus("error")
-      const message = "Socket.IO baglanti adresi olusturulamadi."
+      const message = "Socket.IO bağlantı adresi olusturulamadi."
       setWsTestMessage(message)
       setLastTestedWsUrl(normalized)
       persistWsConnectionState(normalized, "error", message)
       if (!silent) {
-        toast.error("Socket.IO adresi gecersiz.", { style: toastStyle, position: "top-right" })
+        toast.error("Socket.IO adresi geçersiz.", { style: toastStyle, position: "top-right" })
       }
       return
     }
@@ -597,10 +597,10 @@ export default function AdminTab({
       persistWsConnectionState(normalized, status, message)
       if (status === "success") {
         if (!silent) {
-          toast.success("Websocket baglantisi basarili", { style: toastStyle, position: "top-right" })
+          toast.success("Websocket bağlantısı başarılı", { style: toastStyle, position: "top-right" })
         }
       } else if (!silent) {
-        toast.error("Websocket baglantisi basarisiz", { style: toastStyle, position: "top-right" })
+        toast.error("Websocket bağlantısı başarısız", { style: toastStyle, position: "top-right" })
       }
     }
 
@@ -608,13 +608,13 @@ export default function AdminTab({
       const result = await testSocketIoConnection(socketIoUrl)
       if (result.ok) {
         await refreshBackendMaps({ targetUrl: normalized, silent: true })
-        complete("success", "Baglanti basarili (Socket.IO).")
+        complete("success", "Bağlantı başarılı (Socket.IO).")
         return
       }
 
       complete(
         "error",
-        "Socket.IO baglantisi kurulamadi. /socket.io ve CORS ayarlarini kontrol edin.",
+        "Socket.IO bağlantısı kurulamadı. /socket.io ve CORS ayarlarını kontrol edin.",
       )
     })()
   }, [
@@ -645,7 +645,7 @@ export default function AdminTab({
       return
     }
     if (!isValidWsUrl(normalized)) {
-      toast.error("Gecerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
+      toast.error("Geçerli bir ws/wss adresi girin.", { style: toastStyle, position: "top-right" })
       return
     }
 
@@ -668,15 +668,15 @@ export default function AdminTab({
       if (persistedWsUrl !== lastTestedWsUrl) {
         setLastTestedWsUrl("")
         setWsTestStatus("idle")
-        const message = "Kaydedildi. Baglanti kur butonunu kullan."
+        const message = "Kaydedildi. Bağlantı kur butonunu kullan."
         setWsTestMessage(message)
         persistWsConnectionState("", "idle", message)
       } else if (wsTestStatus === "success") {
-        const message = "Kaydedildi. Son baglanti sonucu: baglanti basarili."
+        const message = "Kaydedildi. Son bağlantı sonucu: bağlantı başarılı."
         setWsTestMessage(message)
         persistWsConnectionState(persistedWsUrl, "success", message)
       } else if (wsTestStatus === "error") {
-        const message = "Kaydedildi. Son baglanti sonucu: baglanti basarisiz."
+        const message = "Kaydedildi. Son bağlantı sonucu: bağlantı başarısız."
         setWsTestMessage(message)
         persistWsConnectionState(persistedWsUrl, "error", message)
       } else {
@@ -703,11 +703,11 @@ export default function AdminTab({
     const nextValue = event.target.value
     setWsUrl(nextValue)
     setBackendListStatus("idle")
-    setBackendListMessage("Bu adres icin backend map listesi alinmadi.")
+    setBackendListMessage("Bu adres için backend map listesi alınmadı.")
     if (nextValue.trim() !== lastTestedWsUrl) {
       setLastTestedWsUrl("")
       setWsTestStatus("idle")
-      const message = "Bu adres icin baglanti kurulmadI."
+      const message = "Bu adres için bağlantı kurulmadı."
       setWsTestMessage(message)
       persistWsConnectionState("", "idle", message)
     }
@@ -721,41 +721,41 @@ export default function AdminTab({
       return {
         dot: "bg-slate-400",
         badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
-        label: "Baglanti yok",
+        label: "Bağlantı yok",
       }
     }
     if (wsTestStatus === "success") {
       return {
         dot: "bg-emerald-400",
         badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-100",
-        label: "Baglanildi",
+        label: "Bağlandı",
       }
     }
     if (wsTestStatus === "testing") {
       return {
         dot: "bg-amber-300",
         badge: "border-amber-300/50 bg-amber-500/15 text-amber-100",
-        label: "Baglaniyor",
+        label: "Bağlanıyor",
       }
     }
     if (wsTestStatus === "idle") {
       return {
         dot: "bg-slate-400",
         badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
-        label: "Baglanilmadi",
+        label: "Bağlanılmadı",
       }
     }
     if (!isCurrentUrlTested) {
       return {
         dot: "bg-slate-400",
         badge: "border-slate-300/40 bg-slate-500/10 text-slate-200",
-        label: "Baglanilmadi",
+        label: "Bağlanılmadı",
       }
     }
     return {
       dot: "bg-rose-400",
       badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
-      label: "Baglanti hatasi",
+      label: "Bağlantı hatası",
     }
   })()
 
@@ -763,7 +763,7 @@ export default function AdminTab({
     if (backendListStatus === "success") {
       return {
         badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-100",
-        label: "Map hazir",
+        label: "Map hazır",
       }
     }
     if (backendListStatus === "loading") {
@@ -775,7 +775,7 @@ export default function AdminTab({
     if (backendListStatus === "error") {
       return {
         badge: "border-rose-300/50 bg-rose-500/15 text-rose-100",
-        label: "Map hatasi",
+        label: "Map hatası",
       }
     }
     return {
@@ -805,10 +805,10 @@ export default function AdminTab({
               Admin
             </span>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-              Kullanici ve Rol Yonetimi
+              Kullanıcı ve Rol Yönetimi
             </h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Rolleri tanimla, yetkileri tikla ve kullanicilara ata.
+              Rolleri tanımla, yetkileri tıkla ve kullanıcılara ata.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -819,7 +819,7 @@ export default function AdminTab({
             )}
             {canManageUsers && (
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-                Kullanicilar: {users.length}
+                Kullanıcılar: {users.length}
               </span>
             )}
           </div>
@@ -833,9 +833,9 @@ export default function AdminTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  {isRoleEditing ? "Rol duzenle" : "Yeni rol"}
+                  {isRoleEditing ? "Rol düzenle" : "Yeni rol"}
                 </p>
-                <p className="text-sm text-slate-400">Rol adi ve yetkiler.</p>
+                <p className="text-sm text-slate-400">Rol adı ve yetkiler.</p>
               </div>
               {isRoleEditing && (
                 <button
@@ -843,7 +843,7 @@ export default function AdminTab({
                   onClick={handleRoleEditCancel}
                   className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50"
                 >
-                  Iptal
+                  İptal
                 </button>
               )}
             </div>
@@ -851,14 +851,14 @@ export default function AdminTab({
             <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-200" htmlFor="role-name">
-                  Rol adi
+                  Rol adı
                 </label>
                 <input
                   id="role-name"
                   type="text"
                   value={roleDraft.name}
                   onChange={(e) => setRoleDraft((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="Orn: Destek"
+                  placeholder="Örn: Destek"
                   className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                 />
               </div>
@@ -901,7 +901,7 @@ export default function AdminTab({
                 onClick={handleRoleSave}
                 className="w-full rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
               >
-                {isRoleEditing ? "Rol guncelle" : "Rol ekle"}
+                {isRoleEditing ? "Rol güncelle" : "Rol ekle"}
               </button>
             </div>
           </div>
@@ -911,7 +911,7 @@ export default function AdminTab({
             <div className="mt-4 space-y-3">
               {roles.length === 0 && (
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                  Rol bulunamadi.
+                  Rol bulunamadı.
                 </div>
               )}
               {roles.map((role) => (
@@ -929,7 +929,7 @@ export default function AdminTab({
                       onClick={() => handleRoleEditStart(role)}
                       className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
                     >
-                      Duzenle
+                      Düzenle
                     </button>
                     <button
                       type="button"
@@ -956,9 +956,9 @@ export default function AdminTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                  {isUserEditing ? "Kullanici duzenle" : "Yeni kullanici"}
+                  {isUserEditing ? "Kullanıcı düzenle" : "Yeni kullanıcı"}
                 </p>
-                <p className="text-sm text-slate-400">Kullanici adi, sifre ve rol.</p>
+                <p className="text-sm text-slate-400">Kullanıcı adı, şifre ve rol.</p>
               </div>
               {isUserEditing && (
                 <button
@@ -966,7 +966,7 @@ export default function AdminTab({
                   onClick={handleUserEditCancel}
                   className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50"
                 >
-                  Iptal
+                  İptal
                 </button>
               )}
             </div>
@@ -974,28 +974,28 @@ export default function AdminTab({
             <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-200" htmlFor="user-name">
-                  Kullanici adi
+                  Kullanıcı adı
                 </label>
                 <input
                   id="user-name"
                   type="text"
                   value={userDraft.username}
                   onChange={(e) => setUserDraft((prev) => ({ ...prev, username: e.target.value }))}
-                  placeholder="Orn: ayse"
+                  placeholder="Örn: ayse"
                   className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-200" htmlFor="user-password">
-                  Sifre {isUserEditing ? "(bos birakilirsa degismez)" : ""}
+                  Şifre {isUserEditing ? "(bos birakilirsa degismez)" : ""}
                 </label>
                 <input
                   id="user-password"
                   type="password"
                   value={userDraft.password}
                   onChange={(e) => setUserDraft((prev) => ({ ...prev, password: e.target.value }))}
-                  placeholder={isUserEditing ? "Yeni sifre" : "Sifre"}
+                  placeholder={isUserEditing ? "Yeni şifre" : "Şifre"}
                   className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                 />
               </div>
@@ -1010,7 +1010,7 @@ export default function AdminTab({
                   onChange={(e) => setUserDraft((prev) => ({ ...prev, roleId: e.target.value }))}
                   className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                 >
-                  <option value="">Rol secin</option>
+                  <option value="">Rol seçin</option>
                   {roles.map((role) => (
                     <option key={role.id} value={role.id}>
                       {role.name}
@@ -1024,17 +1024,17 @@ export default function AdminTab({
                 onClick={handleUserSave}
                 className="w-full rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
               >
-                {isUserEditing ? "Kullanici guncelle" : "Kullanici ekle"}
+                {isUserEditing ? "Kullanıcı güncelle" : "Kullanıcı ekle"}
               </button>
             </div>
           </div>
 
           <div className={`${panelClass} bg-ink-900/60`}>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kullanicilar</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kullanıcılar</p>
             <div className="mt-4 space-y-3">
               {users.length === 0 && (
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                  Kullanici bulunamadi.
+                  Kullanıcı bulunamadı.
                 </div>
               )}
               {users.map((user) => {
@@ -1057,7 +1057,7 @@ export default function AdminTab({
                         onClick={() => handleUserEditStart(user)}
                         className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/10 hover:text-accent-50"
                       >
-                        Duzenle
+                        Düzenle
                       </button>
                       <button
                         type="button"
@@ -1085,7 +1085,7 @@ export default function AdminTab({
                   Websocket
                 </p>
                 <p className="mt-1 text-[11px] text-slate-400">
-                  Proxy adresini kaydet, baglan ve backend mapleri cek.
+                  Proxy adresini kaydet, bağlan ve backend mapleri çek.
                 </p>
               </div>
               <span
@@ -1123,7 +1123,7 @@ export default function AdminTab({
                 disabled={isWsTesting}
                 className={wsActionPrimaryButtonClass}
               >
-                {isWsTesting ? "Baglaniyor..." : "Baglan"}
+                {isWsTesting ? "Bağlanıyor..." : "Bağlan"}
               </button>
               <button
                 type="button"
@@ -1133,13 +1133,13 @@ export default function AdminTab({
                 disabled={backendListStatus === "loading" || wsTestStatus !== "success"}
                 className={wsActionSecondaryButtonClass}
               >
-                {backendListStatus === "loading" ? "Map aliniyor..." : "Mapleri cek"}
+                {backendListStatus === "loading" ? "Map aliniyor..." : "Mapleri çek"}
               </button>
             </div>
 
             <div className="mt-2.5 border-t border-white/10 pt-2.5">
               <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                Kayitli adres
+                Kayıtlı adres
               </p>
               <p className="mt-1 break-all font-mono text-[10px] text-slate-200">{savedWsUrl || "-"}</p>
               <p className="mt-2 text-[10px] text-slate-300">{wsTestMessage}</p>

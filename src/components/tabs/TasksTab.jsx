@@ -158,7 +158,7 @@ export default function TasksTab({
               {"G\u00f6revler"}
             </h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Not ve tarih ile gorevlerini takipe al. Hepsi lokal tutulur.
+              Not ve tarih ile görevlerini takibe al. Hepsi lokal tutulur.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:items-end">
@@ -167,7 +167,7 @@ export default function TasksTab({
                 Toplam: {taskCountText}
               </span>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-                Acik: {taskStats.todo + taskStats.doing}
+                Açık: {taskStats.todo + taskStats.doing}
               </span>
             </div>
           </div>
@@ -633,7 +633,7 @@ export default function TasksTab({
                   type="text"
                   value={taskForm.title}
                   onChange={(e) => setTaskForm((prev) => ({ ...prev, title: e.target.value }))}
-                  placeholder="Orn: Stok raporunu gonder"
+                  placeholder="Örn: Stok raporunu gönder"
                   className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                 />
               </div>
@@ -664,7 +664,7 @@ export default function TasksTab({
                   rows={3}
                   value={taskForm.note}
                   onChange={(e) => setTaskForm((prev) => ({ ...prev, note: e.target.value }))}
-                  placeholder="Kisa not veya kontrol listesi"
+                  placeholder="Kısa not veya kontrol listesi"
                   className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                 />
               </div>
@@ -680,7 +680,7 @@ export default function TasksTab({
                   className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                 >
                   <option value="" disabled>
-                    Sorumlu sec
+                    Sorumlu seç
                   </option>
                   {Array.isArray(taskUsers) &&
                     taskUsers.map((user) => (
@@ -795,7 +795,7 @@ export default function TasksTab({
               {"G\u00f6rev \u00f6zeti"}
             </p>
             <div className="mt-3 space-y-2 text-sm text-slate-300">
-              <p>- Acik gorev: {taskStats.todo + taskStats.doing}</p>
+              <p>- Açık görev: {taskStats.todo + taskStats.doing}</p>
               <p>- Tamamlanan: {taskStats.done}</p>
             </div>
             <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 text-sm text-slate-200 shadow-inner">

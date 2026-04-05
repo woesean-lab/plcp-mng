@@ -69,10 +69,10 @@ export default function AccountingTab({ panelClass, isLoading }) {
               Muhasebe
             </span>
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-              Gun Sonu Takibi
+              Gün Sonu Takibi
             </h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Pazaryeri mevcut ve bekleyen bakiyelerini gun sonu girisiyle takip et.
+              Pazaryeri mevcut ve bekleyen bakiyelerini gün sonu girişiyle takip et.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -80,7 +80,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
               Mod: Local
             </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-emerald-200">
-              Durum: Hazirlaniyor
+              Durum: Hazırlanıyor
             </span>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                   </p>
                   <p className="mt-2 text-3xl font-semibold text-white">$ {currency(latest?.available ?? 0)}</p>
                   <p className="mt-1 text-xs text-slate-400">
-                    {latest ? formatDate(latest.date) : "Kayit yok"} ·{" "}
+                    {latest ? formatDate(latest.date) : "Kayıt yok"} ·{" "}
                     {availableDiff >= 0 ? "+" : "-"}$ {currency(Math.abs(availableDiff))}
                   </p>
                 </div>
@@ -162,7 +162,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                   </p>
                   <p className="mt-2 text-3xl font-semibold text-white">$ {currency(latest?.pending ?? 0)}</p>
                   <p className="mt-1 text-xs text-slate-400">
-                    {latest ? "Guncel" : "Kayit yok"} · {pendingDiff >= 0 ? "+" : "-"}$ {currency(Math.abs(pendingDiff))}
+                    {latest ? "Güncel" : "Kayıt yok"} · {pendingDiff >= 0 ? "+" : "-"}$ {currency(Math.abs(pendingDiff))}
                   </p>
                 </div>
               </div>
@@ -174,12 +174,12 @@ export default function AccountingTab({ panelClass, isLoading }) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                        Gun farki grafigi
+                        Gün farki grafiği
                       </p>
-                      <p className="text-sm text-slate-400">Son 10 gunluk mevcut bakiye degisimi.</p>
+                      <p className="text-sm text-slate-400">Son 10 günlük mevcut bakiye değişimi.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      En yuksek: $ {currency(maxAbsDiff)}
+                      En yüksek: $ {currency(maxAbsDiff)}
                     </span>
                   </div>
 
@@ -215,7 +215,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                       </div>
                     ) : (
                       <div className="rounded-xl border border-white/10 bg-ink-900/80 px-4 py-6 text-center text-sm text-slate-400">
-                        Henuz kayit yok. Ilk gun sonu kaydini ekleyin.
+                        Henüz kayıt yok. Ilk gün sonu kaydini ekleyin.
                       </div>
                     )}
                   </div>
@@ -225,12 +225,12 @@ export default function AccountingTab({ panelClass, isLoading }) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                        Gun sonu kayitlari
+                        Gün sonu kayıtları
                       </p>
                       <p className="text-sm text-slate-400">Mevcut ve bekleyen bakiyeler.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      {recent.length} kayit
+                      {recent.length} kayıt
                     </span>
                   </div>
 
@@ -238,10 +238,10 @@ export default function AccountingTab({ panelClass, isLoading }) {
                     <div className="grid grid-cols-[110px_1fr_120px] gap-3 border-b border-white/10 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
                       <span>Tarih</span>
                       <span>Bakiye</span>
-                      <span className="text-right">Gun farki</span>
+                      <span className="text-right">Gün farki</span>
                     </div>
                     {recent.length === 0 ? (
-                      <div className="px-4 py-4 text-sm text-slate-400">Kayit bulunamadi.</div>
+                      <div className="px-4 py-4 text-sm text-slate-400">Kayıt bulunamadı.</div>
                     ) : (
                       <div className="divide-y divide-white/5">
                         {recent.map((item, index) => {
@@ -284,12 +284,12 @@ export default function AccountingTab({ panelClass, isLoading }) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                        Gun sonu girisi
+                        Gün sonu girişi
                       </p>
                       <p className="text-sm text-slate-400">Mevcut ve bekleyen bakiyeleri gir.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      {records.length} kayit
+                      {records.length} kayıt
                     </span>
                   </div>
 
