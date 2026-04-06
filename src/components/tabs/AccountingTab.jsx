@@ -178,6 +178,33 @@ export default function AccountingTab({ panelClass, isLoading }) {
         const availableDiff = latest && previous ? latest.available - previous.available : 0
         const pendingDiff = latest && previous ? latest.pending - previous.pending : 0
         const recent = sorted.slice(0, 10)
+        const balanceRecords = sorted.map((item) => ({
+          ...item,
+          total: item.available + item.pending,
+        }))
+        const latestTotal = balanceRecords[0]?.total ?? 0
+        const bestRecord = balanceRecords.reduce((best, item) => (best && best.total >= item.total ? best : item), null)
+        const worstRecord = balanceRecords.reduce((worst, item) => (worst && worst.total <= item.total ? worst : item), null)
+        const averageTotal =
+          balanceRecords.length > 0
+            ? balanceRecords.reduce((sum, item) => sum + item.total, 0) / balanceRecords.length
+            : 0
+        const latestTotalDiff = balanceRecords[1] ? latestTotal - balanceRecords[1].total : null
+        const findHistoricalDiff = (days) => {
+          if (!latest?.date) return null
+          const latestDateValue = parseDateKey(latest.date)
+          if (!latestDateValue) return null
+          const targetDate = new Date(latestDateValue)
+          targetDate.setDate(targetDate.getDate() - days)
+          const comparison = balanceRecords.find((item) => {
+            const itemDate = parseDateKey(item.date)
+            return itemDate && itemDate <= targetDate
+          })
+          return comparison ? latestTotal - comparison.total : null
+        }
+        const weeklyDiff = findHistoricalDiff(7)
+        const monthlyDiff = findHistoricalDiff(30)
+        const recentList = balanceRecords.slice(0, 6)
         const rangeLimit =
           balanceRange === "yearly" ? 6 : balanceRange === "monthly" ? 12 : balanceRange === "weekly" ? 12 : 10
         const groupedChartEntries = []
@@ -343,67 +370,147 @@ export default function AccountingTab({ panelClass, isLoading }) {
                 <div className={`${panelClass} bg-ink-900/60`}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                        Gun sonu kayitlari
-                      </p>
-                      <p className="text-sm text-slate-400">Mevcut ve bekleyen bakiyeler.</p>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Ozet</p>
+                      <p className="text-xs text-slate-400">Kisa bakiye ozeti.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      {recent.length} kayit
+                      Kayit: {balanceRecords.length}
                     </span>
                   </div>
-
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70">
-                    <div className="grid grid-cols-[110px_1fr_120px] gap-3 border-b border-white/10 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                      <span>Tarih</span>
-                      <span>Toplam bakiye</span>
-                      <span className="text-right">Gun farki</span>
+                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        En yuksek bakiye
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-slate-100">
+                        {bestRecord ? formatDate(bestRecord.date) : "-"}
+                      </p>
+                      <p className="text-xs text-accent-200">$ {currency(bestRecord?.total ?? 0)}</p>
                     </div>
-                    {recent.length === 0 ? (
-                      <div className="px-4 py-4 text-sm text-slate-400">Kayit bulunamadi.</div>
-                    ) : (
-                      <div className="divide-y divide-white/5">
-                        {recent.map((item, index) => {
-                          const prev = recent[index + 1]
-                          const itemTotal = item.available + item.pending
-                          const itemPrevTotal = prev ? prev.available + prev.pending : null
-                          const itemTotalDiff = itemPrevTotal !== null ? itemTotal - itemPrevTotal : null
-                          return (
-                            <div key={item.id} className="grid grid-cols-[110px_1fr_120px] gap-3 px-4 py-3">
-                              <div className="text-sm font-semibold text-slate-100">{formatDate(item.date)}</div>
-                              <div>
-                                <div className="text-sm text-slate-200">
-                                  <span className="font-semibold">$ {currency(itemTotal)}</span>
-                                </div>
-                                {item.note ? (
-                                  <div className="mt-1 text-[11px] text-slate-500">{item.note}</div>
-                                ) : null}
-                              </div>
-                              <div className="text-right">
-                                <div
-                                  className={`text-sm font-semibold ${
-                                    itemTotalDiff === null
-                                      ? "text-slate-400"
-                                      : itemTotalDiff >= 0
-                                        ? "text-emerald-200"
-                                        : "text-rose-200"
-                                  }`}
-                                >
-                                  {itemTotalDiff === null
-                                    ? "-"
-                                    : `${itemTotalDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(itemTotalDiff))}`}
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
+                    <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        En dusuk bakiye
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-slate-100">
+                        {worstRecord ? formatDate(worstRecord.date) : "-"}
+                      </p>
+                      <p className="text-xs text-accent-200">$ {currency(worstRecord?.total ?? 0)}</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        Ortalama bakiye
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-slate-100">$ {currency(Math.round(averageTotal))}</p>
+                      <p className="text-xs text-slate-400">Kayit basina</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        Son degisim
+                      </p>
+                      <p
+                        className={`mt-1 text-sm font-semibold ${
+                          latestTotalDiff === null
+                            ? "text-slate-200"
+                            : latestTotalDiff >= 0
+                              ? "text-emerald-200"
+                              : "text-rose-200"
+                        }`}
+                      >
+                        {latestTotalDiff === null
+                          ? "-"
+                          : `${latestTotalDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(latestTotalDiff))}`}
+                      </p>
+                      <p className="text-xs text-slate-400">Bir onceki kayda gore</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        Haftalik fark
+                      </p>
+                      <p
+                        className={`mt-1 text-sm font-semibold ${
+                          weeklyDiff === null ? "text-slate-200" : weeklyDiff >= 0 ? "text-emerald-200" : "text-rose-200"
+                        }`}
+                      >
+                        {weeklyDiff === null ? "-" : `${weeklyDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(weeklyDiff))}`}
+                      </p>
+                      <p className="text-xs text-slate-400">Son 7 gun ile fark</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        Aylik fark
+                      </p>
+                      <p
+                        className={`mt-1 text-sm font-semibold ${
+                          monthlyDiff === null
+                            ? "text-slate-200"
+                            : monthlyDiff >= 0
+                              ? "text-emerald-200"
+                              : "text-rose-200"
+                        }`}
+                      >
+                        {monthlyDiff === null
+                          ? "-"
+                          : `${monthlyDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(monthlyDiff))}`}
+                      </p>
+                      <p className="text-xs text-slate-400">Son 30 gun ile fark</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-6">
+                <div className={`${panelClass} bg-ink-900/60`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
+                        Gun sonu kayitlari
+                      </p>
+                      <p className="text-sm text-slate-400">Son eklenen toplam bakiyeler.</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                      {recentList.length} kayit
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {recentList.length === 0 ? (
+                      <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-6 text-center text-sm text-slate-400 shadow-inner">
+                        Kayit bulunamadi.
+                      </div>
+                    ) : (
+                      recentList.map((item, index) => {
+                        const prev = balanceRecords[index + 1]
+                        const itemDiff = prev ? item.total - prev.total : null
+                        return (
+                          <div
+                            key={item.id}
+                            className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                                  {formatDate(item.date)}
+                                </p>
+                                <p className="mt-1 text-sm font-semibold text-slate-100">$ {currency(item.total)}</p>
+                                {item.note ? (
+                                  <p className="mt-1 line-clamp-2 text-xs text-slate-400">{item.note}</p>
+                                ) : null}
+                              </div>
+                              <p
+                                className={`shrink-0 text-sm font-semibold ${
+                                  itemDiff === null ? "text-slate-400" : itemDiff >= 0 ? "text-emerald-200" : "text-rose-200"
+                                }`}
+                              >
+                                {itemDiff === null ? "-" : `${itemDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(itemDiff))}`}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+
                 <div className={`${panelClass} bg-ink-800/60`}>
                   <div className="flex items-center justify-between">
                     <div>
