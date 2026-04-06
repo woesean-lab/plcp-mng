@@ -272,35 +272,33 @@ export default function AccountingTab({ panelClass, isLoading }) {
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,0.8fr)]">
               <div className="space-y-6">
                 <div className={`${panelClass} bg-ink-900/60`}>
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                        Gun farki grafigi
+                        Bakiye grafigi
                       </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
-                          {Object.entries(balanceRangeMeta).map(([key, meta]) => (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => setBalanceRange(key)}
-                              className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
-                                balanceRange === key
-                                  ? "bg-accent-400 text-ink-900 shadow-glow"
-                                  : "text-slate-300 hover:bg-white/5 hover:text-white"
-                              }`}
-                            >
-                              {meta.label}
-                            </button>
-                          ))}
-                        </div>
-                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                          En yuksek: $ {currency(maxAbsDiff)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <p className="text-sm text-slate-400">{activeBalanceRange.helper}.</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
+                        {Object.entries(balanceRangeMeta).map(([key, meta]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setBalanceRange(key)}
+                            className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
+                              balanceRange === key
+                                ? "bg-accent-400 text-ink-900 shadow-glow"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }`}
+                          >
+                            {meta.label}
+                          </button>
+                        ))}
+                      </div>
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                        En yuksek: $ {currency(maxAbsDiff)}
+                      </span>
                     </div>
                   </div>
 
