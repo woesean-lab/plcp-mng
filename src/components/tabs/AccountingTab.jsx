@@ -111,7 +111,9 @@ export default function AccountingTab({ panelClass, isLoading }) {
         const chartPoints = sorted.slice().reverse().slice(-10)
         const chartData = chartPoints.map((item, index) => {
           const prev = index > 0 ? chartPoints[index - 1] : null
-          const diff = prev ? item.available - prev.available : 0
+          const total = item.available + item.pending
+          const prevTotal = prev ? prev.available + prev.pending : 0
+          const diff = prev ? total - prevTotal : 0
           return {
             date: item.date,
             diff,
@@ -191,7 +193,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                         Gun farki grafigi
                       </p>
-                      <p className="text-sm text-slate-400">Son 10 gunluk mevcut bakiye degisimi.</p>
+                      <p className="text-sm text-slate-400">Son 10 gunluk toplam bakiye degisimi.</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                       En yuksek: $ {currency(maxAbsDiff)}
@@ -205,23 +207,24 @@ export default function AccountingTab({ panelClass, isLoading }) {
                           {chartBars.map((bar, idx) => (
                             <div
                               key={`diff-bar-${idx}`}
-                              className="flex min-w-[32px] flex-1 flex-col items-center justify-end gap-2"
+                              className="flex min-w-[44px] flex-1 flex-col items-center justify-end gap-2"
                             >
-                              <div className="flex h-32 w-full items-end justify-center">
+                              <div className="flex h-6 items-end justify-center px-1">
+                                <span
+                                  className={`whitespace-nowrap text-[10px] font-semibold ${
+                                    bar.diff >= 0 ? "text-emerald-200" : "text-rose-200"
+                                  }`}
+                                >
+                                  {bar.diff >= 0 ? "+" : "-"}$ {currency(Math.abs(bar.diff))}
+                                </span>
+                              </div>
+                              <div className="flex h-28 w-full items-end justify-center">
                                 <div
-                                  className={`relative w-full rounded-2xl ${
+                                  className={`w-full rounded-2xl ${
                                     bar.diff >= 0 ? "bg-emerald-400" : "bg-rose-400"
                                   }`}
                                   style={{ height: `${bar.heightPercent}%` }}
-                                >
-                                  <span
-                                    className={`absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] font-semibold ${
-                                      bar.diff >= 0 ? "text-emerald-200" : "text-rose-200"
-                                    }`}
-                                  >
-                                    {bar.diff >= 0 ? "+" : "-"}$ {currency(Math.abs(bar.diff))}
-                                  </span>
-                                </div>
+                                />
                               </div>
                               <span className="text-[11px] font-medium text-slate-300">{bar.label}</span>
                             </div>
@@ -252,7 +255,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                   <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70">
                     <div className="grid grid-cols-[110px_1fr_120px] gap-3 border-b border-white/10 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
                       <span>Tarih</span>
-                      <span>Bakiye</span>
+                      <span>Toplam bakiye</span>
                       <span className="text-right">Gun farki</span>
                     </div>
                     {recent.length === 0 ? (
@@ -261,28 +264,33 @@ export default function AccountingTab({ panelClass, isLoading }) {
                       <div className="divide-y divide-white/5">
                         {recent.map((item, index) => {
                           const prev = recent[index + 1]
-                          const itemAvailableDiff = prev ? item.available - prev.available : 0
-                          const itemPendingDiff = prev ? item.pending - prev.pending : 0
+                          const itemTotal = item.available + item.pending
+                          const itemPrevTotal = prev ? prev.available + prev.pending : null
+                          const itemTotalDiff = itemPrevTotal !== null ? itemTotal - itemPrevTotal : null
                           return (
                             <div key={item.id} className="grid grid-cols-[110px_1fr_120px] gap-3 px-4 py-3">
                               <div className="text-sm font-semibold text-slate-100">{formatDate(item.date)}</div>
                               <div>
                                 <div className="text-sm text-slate-200">
-                                  Mevcut: <span className="font-semibold">$ {currency(item.available)}</span>
-                                </div>
-                                <div className="text-xs text-slate-400">
-                                  Bekleyen: $ {currency(item.pending)}
+                                  <span className="font-semibold">$ {currency(itemTotal)}</span>
                                 </div>
                                 {item.note ? (
                                   <div className="mt-1 text-[11px] text-slate-500">{item.note}</div>
                                 ) : null}
                               </div>
                               <div className="text-right">
-                                <div className="text-sm font-semibold text-emerald-200">
-                                  {itemAvailableDiff >= 0 ? "+" : "-"}$ {currency(Math.abs(itemAvailableDiff))}
-                                </div>
-                                <div className="text-[11px] text-rose-200">
-                                  {itemPendingDiff >= 0 ? "+" : "-"}$ {currency(Math.abs(itemPendingDiff))}
+                                <div
+                                  className={`text-sm font-semibold ${
+                                    itemTotalDiff === null
+                                      ? "text-slate-400"
+                                      : itemTotalDiff >= 0
+                                        ? "text-emerald-200"
+                                        : "text-rose-200"
+                                  }`}
+                                >
+                                  {itemTotalDiff === null
+                                    ? "-"
+                                    : `${itemTotalDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(itemTotalDiff))}`}
                                 </div>
                               </div>
                             </div>
