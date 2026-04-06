@@ -60,6 +60,13 @@ export default function AccountingTab({ panelClass, isLoading }) {
     )
   }
 
+  const sorted = [...records].sort((a, b) => String(b.date).localeCompare(a.date))
+  const latest = sorted[0]
+  const previous = sorted[1]
+  const totalBalance = (latest?.available ?? 0) + (latest?.pending ?? 0)
+  const previousTotalBalance = (previous?.available ?? 0) + (previous?.pending ?? 0)
+  const totalBalanceDiff = latest && previous ? totalBalance - previousTotalBalance : 0
+
   return (
     <div className="space-y-6">
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
@@ -70,13 +77,28 @@ export default function AccountingTab({ panelClass, isLoading }) {
               Pazaryeri mevcut ve bekleyen bakiyelerini gun sonu girisiyle takip et.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Mod: Local
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Durum: Hazirlaniyor
-            </span>
+          <div className="w-full md:w-auto md:min-w-[280px]">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-4 shadow-inner sm:px-5">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
+              <div className="relative">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">Toplam bakiye</p>
+                <p className="mt-2 text-3xl font-semibold text-white">$ {currency(totalBalance)}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-300/80">
+                  <span>{latest ? formatDate(latest.date) : "Kayit yok"}</span>
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2 py-1 font-semibold ${
+                      totalBalanceDiff >= 0
+                        ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
+                        : "border-rose-400/30 bg-rose-400/10 text-rose-200"
+                    }`}
+                  >
+                    {latest && previous
+                      ? `${totalBalanceDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(totalBalanceDiff))}`
+                      : "Ilk kayit"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </header>
