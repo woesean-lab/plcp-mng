@@ -209,16 +209,15 @@ export default function AccountingTab({ panelClass, isLoading }) {
                               key={`diff-bar-${idx}`}
                               className="flex min-w-[44px] flex-1 flex-col items-center justify-end gap-2"
                             >
-                              <div className="flex h-6 items-end justify-center px-1">
+                              <div className="relative flex h-36 w-full items-end justify-center">
                                 <span
-                                  className={`whitespace-nowrap text-[10px] font-semibold ${
+                                  className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold ${
                                     bar.diff >= 0 ? "text-emerald-200" : "text-rose-200"
                                   }`}
+                                  style={{ bottom: `calc(${bar.heightPercent}% + 0.35rem)` }}
                                 >
                                   {bar.diff >= 0 ? "+" : "-"}$ {currency(Math.abs(bar.diff))}
                                 </span>
-                              </div>
-                              <div className="flex h-28 w-full items-end justify-center">
                                 <div
                                   className={`w-full rounded-2xl ${
                                     bar.diff >= 0 ? "bg-emerald-400" : "bg-rose-400"
