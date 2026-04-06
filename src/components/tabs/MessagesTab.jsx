@@ -130,9 +130,6 @@ export default function MessagesTab({
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
         <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2 sm:space-y-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
-              Mesajlar
-            </span>
             <div className="space-y-1.5">
               <h1 className="font-display text-2xl font-semibold leading-tight text-white sm:text-3xl md:text-4xl">
                 Mesajlar
