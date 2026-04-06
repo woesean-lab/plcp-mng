@@ -302,7 +302,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                         value={form.available}
                         onChange={(e) => setForm((prev) => ({ ...prev, available: e.target.value }))}
                         placeholder="Mevcut bakiye"
-                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition hover:border-accent-400/40 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
                       />
                       <input
                         type="number"
@@ -311,20 +311,20 @@ export default function AccountingTab({ panelClass, isLoading }) {
                         value={form.pending}
                         onChange={(e) => setForm((prev) => ({ ...prev, pending: e.target.value }))}
                         placeholder="Bekleyen bakiye"
-                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100"
+                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition hover:border-accent-400/40 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
                       />
                     </div>
                     <input
                       type="date"
                       value={form.date}
                       onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
-                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100"
+                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 transition hover:border-accent-400/40 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
                     />
                     <input
                       value={form.note}
                       onChange={(e) => setForm((prev) => ({ ...prev, note: e.target.value }))}
                       placeholder="Not (opsiyonel)"
-                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500"
+                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition hover:border-accent-400/40 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
                     />
                     {formError ? (
                       <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">

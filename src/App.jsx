@@ -588,8 +588,8 @@ function App() {
       { key: "accounting", label: "Bakiye", canView: canViewSales },
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
-      { key: "products", label: "Ürünler", canView: canViewProducts },
-      { key: "applications", label: "Servisler", canView: canViewApplications },
+      { key: "products", label: "Ürün", canView: canViewProducts },
+      { key: "applications", label: "Servis", canView: canViewApplications },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [

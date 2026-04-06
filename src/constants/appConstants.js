@@ -149,7 +149,7 @@ export const PERMISSIONS = {
 
 export const PERMISSION_GROUPS = [
   {
-    title: "Urunler",
+    title: "Urun",
     items: [
       { id: PERMISSIONS.productsView, label: "Goruntule" },
       { id: PERMISSIONS.productsStockAdd, label: "Stok ekle" },
@@ -231,7 +231,7 @@ export const PERMISSION_GROUPS = [
     ],
   },
   {
-    title: "Servisler",
+    title: "Servis",
     items: [
       { id: PERMISSIONS.applicationsView, label: "Paneli goruntule" },
       { id: PERMISSIONS.applicationsManage, label: "Servis yonet" },
