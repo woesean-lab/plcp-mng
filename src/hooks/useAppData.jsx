@@ -261,6 +261,7 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
     if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
     if (canViewSales) tabs.push("sales")
+    if (canViewSales) tabs.push("accounting")
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (canViewProductsTab) tabs.push("products")
@@ -4832,6 +4833,7 @@ const handleEldoradoNoteSave = useCallback(
 
   const showLoading = isLoading || !delayDone || (activeTab === "messages" && isTabLoading)
   const isTasksTabLoading = isTasksLoading || (activeTab === "tasks" && isTabLoading)
+  const isAccountingTabLoading = activeTab === "accounting" && isTabLoading
   const isSalesTabLoading = isSalesLoading || (activeTab === "sales" && isTabLoading)
   const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
   const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
@@ -5665,6 +5667,7 @@ const handleEldoradoNoteSave = useCallback(
     handleTaskAdd,
     resetTaskForm,
     focusTask,
+    isAccountingTabLoading,
     isSalesTabLoading,
     salesSummary,
     salesChartData,

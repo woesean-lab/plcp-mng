@@ -10,6 +10,7 @@ import MessagesTab from "./components/tabs/MessagesTab"
 import ProblemsTab from "./components/tabs/ProblemsTab"
 import TasksTab from "./components/tabs/TasksTab"
 import SalesTab from "./components/tabs/SalesTab"
+import AccountingTab from "./components/tabs/AccountingTab"
 import DashboardTab from "./components/tabs/DashboardTab"
 import AdminTab from "./components/tabs/AdminTab"
 import ProductsTab from "./components/tabs/ProductsTab"
@@ -118,6 +119,7 @@ function App() {
     handleTaskAdd,
     resetTaskForm,
     focusTask,
+    isAccountingTabLoading,
     isSalesTabLoading,
     salesSummary,
     salesChartData,
@@ -307,6 +309,7 @@ function App() {
   const [tabSlideDirection, setTabSlideDirection] = useState("forward")
   const requestedTabRef = useRef(null)
   const hasMountedRef = useRef(false)
+  const [hasVisitedAccountingTab, setHasVisitedAccountingTab] = useState(activeTab === "accounting")
   const [hasVisitedSalesTab, setHasVisitedSalesTab] = useState(activeTab === "sales")
   const userInitial = (activeUser?.username || "?").trim().charAt(0).toUpperCase() || "?"
   const userName = activeUser?.username ?? ""
@@ -336,6 +339,12 @@ function App() {
   useEffect(() => {
     hasMountedRef.current = true
   }, [])
+
+  useEffect(() => {
+    if (activeTab === "accounting") {
+      setHasVisitedAccountingTab(true)
+    }
+  }, [activeTab])
 
   useEffect(() => {
     if (activeTab === "sales") {
@@ -576,6 +585,7 @@ function App() {
       { key: "messages", label: "Mesaj", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
+      { key: "accounting", label: "Bakiye", canView: canViewSales },
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürünler", canView: canViewProducts },
@@ -1090,6 +1100,15 @@ function App() {
               handleTaskAdd={handleTaskAdd}
               resetTaskForm={resetTaskForm}
               focusTask={focusTask}
+            />
+          </div>
+        )}
+
+        {canViewSales && hasVisitedAccountingTab && (
+          <div className={activeTab === "accounting" ? getTabSlideClass("accounting") : "hidden"}>
+            <AccountingTab
+              isLoading={isAccountingTabLoading}
+              panelClass={panelClass}
             />
           </div>
         )}
