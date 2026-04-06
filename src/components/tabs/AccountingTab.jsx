@@ -68,9 +68,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">
               Muhasebe
             </span>
-            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-              Gun Sonu Takibi
-            </h1>
+            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Bakiye</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
               Pazaryeri mevcut ve bekleyen bakiyelerini gun sonu girisiyle takip et.
             </p>
