@@ -204,7 +204,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
         }
         const weeklyDiff = findHistoricalDiff(7)
         const monthlyDiff = findHistoricalDiff(30)
-        const recentList = balanceRecords.slice(0, 6)
+        const recentList = balanceRecords.slice(0, 20)
         const rangeLimit =
           balanceRange === "yearly" ? 6 : balanceRange === "monthly" ? 12 : balanceRange === "weekly" ? 12 : 10
         const groupedChartEntries = []
@@ -472,7 +472,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                     </span>
                   </div>
 
-                  <div className="mt-4 space-y-3">
+                  <div className="no-scrollbar mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
                     {recentList.length === 0 ? (
                       <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-6 text-center text-sm text-slate-400 shadow-inner">
                         Kayit bulunamadi.
@@ -484,7 +484,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                         return (
                           <div
                             key={item.id}
-                            className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner"
+                            className="min-h-[74px] rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
@@ -493,7 +493,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                                 </p>
                                 <p className="mt-1 text-sm font-semibold text-slate-100">$ {currency(item.total)}</p>
                                 {item.note ? (
-                                  <p className="mt-1 line-clamp-2 text-xs text-slate-400">{item.note}</p>
+                                  <p className="mt-1 line-clamp-1 text-xs text-slate-400">{item.note}</p>
                                 ) : null}
                               </div>
                               <p
