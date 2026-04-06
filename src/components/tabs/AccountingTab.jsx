@@ -88,22 +88,16 @@ export default function AccountingTab({ panelClass, isLoading }) {
               Pazaryeri mevcut ve bekleyen bakiyelerini gun sonu girisiyle takip et.
             </p>
           </div>
-          <div className="w-full md:w-auto md:min-w-[320px]">
-            <div className="relative overflow-hidden rounded-[28px] border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(56,189,248,0.22),rgba(14,165,233,0.16)_30%,rgba(16,185,129,0.14)_65%,rgba(244,63,94,0.14))] px-4 py-4 shadow-[0_20px_60px_rgba(14,165,233,0.18)] backdrop-blur sm:px-5">
-              <div className="pointer-events-none absolute -right-12 -top-10 h-28 w-28 rounded-full bg-cyan-300/25 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-12 left-10 h-24 w-24 rounded-full bg-emerald-300/20 blur-3xl" />
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(125,211,252,0.18),transparent)]" />
+          <div className="w-full md:w-auto md:min-w-[280px]">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 px-4 py-4 shadow-inner sm:px-5">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
               <div className="relative">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100">Toplam bakiye</p>
-                  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-50/90">
-                    1 USD = {preciseCurrency(USD_TO_TRY_RATE)} TL
-                  </span>
-                </div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-200">Toplam bakiye</p>
                 <p className="mt-2 text-3xl font-semibold text-white">$ {currency(totalBalance)}</p>
-                <div className="mt-3 rounded-2xl border border-white/10 bg-ink-950/25 px-3 py-3 shadow-inner">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-100/75">TL cevrimi</p>
-                  <p className="mt-1 text-lg font-semibold text-amber-50">TL {preciseCurrency(totalBalanceTry)}</p>
+                <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">TL cevrimi</p>
+                  <p className="mt-1 text-base font-semibold text-slate-100">TL {preciseCurrency(totalBalanceTry)}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">Kur: 1 USD = {preciseCurrency(USD_TO_TRY_RATE)} TL</p>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-300/80">
                   <span>{latest ? formatDate(latest.date) : "Kayit yok"}</span>
