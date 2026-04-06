@@ -22,6 +22,69 @@ const formatPointLabel = (value) => {
   return `${day}.${month}`
 }
 
+const parseDateKey = (value) => {
+  if (!value) return null
+  const [year, month, day] = value.split("-").map(Number)
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null
+  return new Date(year, month - 1, day)
+}
+
+const formatDateKey = (dateValue) => {
+  const year = dateValue.getFullYear()
+  const month = String(dateValue.getMonth() + 1).padStart(2, "0")
+  const day = String(dateValue.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+const formatShortDate = (dateValue) => {
+  const day = String(dateValue.getDate()).padStart(2, "0")
+  const month = String(dateValue.getMonth() + 1).padStart(2, "0")
+  return `${day}.${month}`
+}
+
+const getWeekStartKey = (value) => {
+  const dateValue = parseDateKey(value)
+  if (!dateValue) return value
+  const day = dateValue.getDay()
+  const offset = day === 0 ? -6 : 1 - day
+  const start = new Date(dateValue)
+  start.setDate(dateValue.getDate() + offset)
+  return formatDateKey(start)
+}
+
+const getBalanceRangeKey = (value, range) => {
+  if (!value) return ""
+  if (range === "yearly") {
+    const [year] = value.split("-")
+    return year || value
+  }
+  if (range === "monthly") {
+    const [year, month] = value.split("-")
+    if (!year || !month) return value
+    return `${year}-${month}`
+  }
+  if (range === "weekly") return getWeekStartKey(value)
+  return value
+}
+
+const formatBalancePointLabel = (value, range) => {
+  if (!value) return ""
+  if (range === "yearly") return value
+  if (range === "monthly") {
+    const [year, month] = value.split("-")
+    if (!year || !month) return value
+    return `${month}/${year.slice(-2)}`
+  }
+  if (range === "weekly") {
+    const start = parseDateKey(value)
+    if (!start) return value
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    return `${formatShortDate(start)}-${formatShortDate(end)}`
+  }
+  return formatPointLabel(value)
+}
+
 const currency = (value) => {
   const amount = Number(value ?? 0)
   if (!Number.isFinite(amount)) return "0"
@@ -42,6 +105,7 @@ const USD_TO_TRY_RATE = 44.5984
 
 export default function AccountingTab({ panelClass, isLoading }) {
   const [records, setRecords] = useState(seedRecords)
+  const [balanceRange, setBalanceRange] = useState("daily")
   const [form, setForm] = useState({
     date: todayKey(),
     available: "",
@@ -74,6 +138,13 @@ export default function AccountingTab({ panelClass, isLoading }) {
   const latest = sorted[0]
   const totalBalance = (latest?.available ?? 0) + (latest?.pending ?? 0)
   const totalBalanceTry = totalBalance * USD_TO_TRY_RATE
+  const balanceRangeMeta = {
+    daily: { label: "Gunluk", helper: "Son 10 gunluk toplam bakiye degisimi" },
+    weekly: { label: "Haftalik", helper: "Son 12 haftalik toplam bakiye degisimi" },
+    monthly: { label: "Aylik", helper: "Son 12 aylik toplam bakiye degisimi" },
+    yearly: { label: "Yillik", helper: "Son 6 yillik toplam bakiye degisimi" },
+  }
+  const activeBalanceRange = balanceRangeMeta[balanceRange] || balanceRangeMeta.daily
 
   return (
     <div className="space-y-6">
@@ -102,22 +173,35 @@ export default function AccountingTab({ panelClass, isLoading }) {
       </header>
 
       {(() => {
-        const sorted = [...records].sort((a, b) => String(b.date).localeCompare(a.date))
         const latest = sorted[0]
         const previous = sorted[1]
         const availableDiff = latest && previous ? latest.available - previous.available : 0
         const pendingDiff = latest && previous ? latest.pending - previous.pending : 0
         const recent = sorted.slice(0, 10)
-        const chartPoints = sorted.slice().reverse().slice(-10)
+        const rangeLimit =
+          balanceRange === "yearly" ? 6 : balanceRange === "monthly" ? 12 : balanceRange === "weekly" ? 12 : 10
+        const groupedChartEntries = []
+        const groupedChartEntryMap = new Map()
+
+        sorted.forEach((item) => {
+          const key = getBalanceRangeKey(item.date, balanceRange)
+          if (groupedChartEntryMap.has(key)) return
+          const entry = {
+            key,
+            total: item.available + item.pending,
+          }
+          groupedChartEntryMap.set(key, entry)
+          groupedChartEntries.push(entry)
+        })
+
+        const chartPoints = groupedChartEntries.reverse().slice(-rangeLimit)
         const chartData = chartPoints.map((item, index) => {
           const prev = index > 0 ? chartPoints[index - 1] : null
-          const total = item.available + item.pending
-          const prevTotal = prev ? prev.available + prev.pending : 0
-          const diff = prev ? total - prevTotal : 0
+          const diff = prev ? item.total - prev.total : 0
           return {
-            date: item.date,
+            date: item.key,
             diff,
-            label: formatPointLabel(item.date),
+            label: formatBalancePointLabel(item.key, balanceRange),
           }
         })
         const maxAbsDiff = Math.max(...chartData.map((item) => Math.abs(item.diff)), 0)
@@ -193,11 +277,29 @@ export default function AccountingTab({ panelClass, isLoading }) {
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                         Gun farki grafigi
                       </p>
-                      <p className="text-sm text-slate-400">Son 10 gunluk toplam bakiye degisimi.</p>
+                      <p className="text-sm text-slate-400">{activeBalanceRange.helper}.</p>
                     </div>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                      En yuksek: $ {currency(maxAbsDiff)}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
+                        {Object.entries(balanceRangeMeta).map(([key, meta]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setBalanceRange(key)}
+                            className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
+                              balanceRange === key
+                                ? "bg-accent-400 text-ink-900 shadow-glow"
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            }`}
+                          >
+                            {meta.label}
+                          </button>
+                        ))}
+                      </div>
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                        En yuksek: $ {currency(maxAbsDiff)}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="mt-3 rounded-2xl border border-white/10 bg-ink-900/70 p-4 text-slate-100 shadow-inner">
