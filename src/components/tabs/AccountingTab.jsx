@@ -140,10 +140,10 @@ export default function AccountingTab({ panelClass, isLoading }) {
   const totalBalance = (latest?.available ?? 0) + (latest?.pending ?? 0)
   const totalBalanceTry = totalBalance * USD_TO_TRY_RATE
   const balanceRangeMeta = {
-    daily: { label: "Gunluk", helper: "Son 10 gunluk net bakiye farki" },
-    weekly: { label: "Haftalik", helper: "Son 12 haftalik net bakiye farki" },
-    monthly: { label: "Aylik", helper: "Son 12 aylik net bakiye farki" },
-    yearly: { label: "Yillik", helper: "Son 6 yillik net bakiye farki" },
+    daily: { label: "Gunluk", helper: "Son 10 gunluk net kazanc" },
+    weekly: { label: "Haftalik", helper: "Son 12 haftalik net kazanc" },
+    monthly: { label: "Aylik", helper: "Son 12 aylik net kazanc" },
+    yearly: { label: "Yillik", helper: "Son 6 yillik net kazanc" },
   }
   const activeBalanceRange = balanceRangeMeta[balanceRange] || balanceRangeMeta.daily
 
@@ -325,7 +325,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                        Bakiye grafigi
+                        Kazanc grafigi
                       </p>
                       <p className="text-sm text-slate-400">{activeBalanceRange.helper}.</p>
                     </div>
@@ -428,7 +428,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                     </div>
                     <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                        Son degisim
+                        Gunluk kazanc
                       </p>
                       <p
                         className={`mt-1 text-sm font-semibold ${
@@ -443,11 +443,11 @@ export default function AccountingTab({ panelClass, isLoading }) {
                           ? "-"
                           : `${latestTotalDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(latestTotalDiff))}`}
                       </p>
-                      <p className="text-xs text-slate-400">Bir onceki kayda gore</p>
+                      <p className="text-xs text-slate-400">Bir onceki kayda gore net kazanc</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                        Haftalik fark
+                        Haftalik kazanc
                       </p>
                       <p
                         className={`mt-1 text-sm font-semibold ${
@@ -456,11 +456,11 @@ export default function AccountingTab({ panelClass, isLoading }) {
                       >
                         {weeklyDiff === null ? "-" : `${weeklyDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(weeklyDiff))}`}
                       </p>
-                      <p className="text-xs text-slate-400">Son 7 gun ile fark</p>
+                      <p className="text-xs text-slate-400">Son 7 gunluk net kazanc</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                        Aylik fark
+                        Aylik kazanc
                       </p>
                       <p
                         className={`mt-1 text-sm font-semibold ${
@@ -475,7 +475,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                           ? "-"
                           : `${monthlyDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(monthlyDiff))}`}
                       </p>
-                      <p className="text-xs text-slate-400">Son 30 gun ile fark</p>
+                      <p className="text-xs text-slate-400">Son 30 gunluk net kazanc</p>
                     </div>
                   </div>
                 </div>
