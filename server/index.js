@@ -951,6 +951,60 @@ const AUTOMATION_LOG_LIMIT = 300
 const ELDORADO_AUTOMATION_LOG_LIMIT = 300
 const ELDORADO_PRICE_COMMAND_LOG_LIMIT = 300
 const APPLICATION_LOG_LIMIT = 300
+let accountingStorageReadyPromise = null
+
+const ensureAccountingRecordStorage = async () => {
+  if (accountingStorageReadyPromise) return accountingStorageReadyPromise
+
+  accountingStorageReadyPromise = (async () => {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "AccountingRecord" (
+        "id" TEXT NOT NULL,
+        "date" TEXT NOT NULL,
+        "available" NUMERIC NOT NULL,
+        "pending" NUMERIC NOT NULL,
+        "withdrawal" NUMERIC NOT NULL DEFAULT 0,
+        "note" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "AccountingRecord_pkey" PRIMARY KEY ("id")
+      )
+    `)
+
+    await prisma.$executeRawUnsafe(`ALTER TABLE "AccountingRecord" ADD COLUMN IF NOT EXISTS "date" TEXT`)
+    await prisma.$executeRawUnsafe(`ALTER TABLE "AccountingRecord" ADD COLUMN IF NOT EXISTS "available" NUMERIC`)
+    await prisma.$executeRawUnsafe(`ALTER TABLE "AccountingRecord" ADD COLUMN IF NOT EXISTS "pending" NUMERIC`)
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "AccountingRecord" ADD COLUMN IF NOT EXISTS "withdrawal" NUMERIC NOT NULL DEFAULT 0`,
+    )
+    await prisma.$executeRawUnsafe(`ALTER TABLE "AccountingRecord" ADD COLUMN IF NOT EXISTS "note" TEXT`)
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "AccountingRecord" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    )
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "AccountingRecord" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    )
+
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "AccountingRecord" ALTER COLUMN "available" TYPE NUMERIC USING "available"::numeric`,
+    )
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "AccountingRecord" ALTER COLUMN "pending" TYPE NUMERIC USING "pending"::numeric`,
+    )
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "AccountingRecord" ALTER COLUMN "withdrawal" TYPE NUMERIC USING "withdrawal"::numeric`,
+    )
+    await prisma.$executeRawUnsafe(`ALTER TABLE "AccountingRecord" ALTER COLUMN "date" SET NOT NULL`)
+    await prisma.$executeRawUnsafe(`ALTER TABLE "AccountingRecord" ALTER COLUMN "available" SET NOT NULL`)
+    await prisma.$executeRawUnsafe(`ALTER TABLE "AccountingRecord" ALTER COLUMN "pending" SET NOT NULL`)
+    await prisma.$executeRawUnsafe(`ALTER TABLE "AccountingRecord" ALTER COLUMN "withdrawal" SET NOT NULL`)
+  })().catch((error) => {
+    accountingStorageReadyPromise = null
+    throw error
+  })
+
+  return accountingStorageReadyPromise
+}
 
 async function ensureDefaults() {
   await prisma.category.upsert({
@@ -4224,6 +4278,7 @@ app.get(
   "/api/accounting",
   requireAnyPermission(["accounting.view", "accounting.create", "admin.manage"]),
   async (_req, res) => {
+    await ensureAccountingRecordStorage()
     const records = await prisma.accountingRecord.findMany({ orderBy: { date: "asc" } })
     res.json(records)
   },
@@ -4233,6 +4288,7 @@ app.post(
   "/api/accounting",
   requireAnyPermission(["accounting.create", "admin.manage"]),
   async (req, res) => {
+    await ensureAccountingRecordStorage()
     const date = String(req.body?.date ?? "").trim()
     const available = parseFlexibleNumberInput(req.body?.available)
     const pending = parseFlexibleNumberInput(req.body?.pending)
