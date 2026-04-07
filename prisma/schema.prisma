@@ -306,6 +306,17 @@ model Sale {
   updatedAt DateTime @updatedAt
 }
 
+model AccountingRecord {
+  id         String   @id @default(cuid())
+  date       String   @unique
+  available  Int
+  pending    Int
+  withdrawal Int      @default(0)
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 model Application {
   id           String              @id @default(cuid())
   name         String

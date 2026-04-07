@@ -142,6 +142,9 @@ const DEFAULT_ADMIN_PERMISSIONS = [
   "sales.view",
   "sales.create",
   "sales.analytics.view",
+  "accounting.view",
+  "accounting.create",
+  "accounting.analytics.view",
   "problems.view",
   "problems.create",
   "problems.resolve",
@@ -4215,6 +4218,65 @@ app.post("/api/sales", requireAnyPermission(["sales.create", "admin.manage"]), a
   const created = await prisma.sale.create({ data: { date, amount } })
   res.status(201).json(created)
 })
+
+app.get(
+  "/api/accounting",
+  requireAnyPermission(["accounting.view", "accounting.create", "admin.manage"]),
+  async (_req, res) => {
+    const records = await prisma.accountingRecord.findMany({ orderBy: { date: "asc" } })
+    res.json(records)
+  },
+)
+
+app.post(
+  "/api/accounting",
+  requireAnyPermission(["accounting.create", "admin.manage"]),
+  async (req, res) => {
+    const date = String(req.body?.date ?? "").trim()
+    const available = Number(req.body?.available)
+    const pending = Number(req.body?.pending)
+    const withdrawal = Number(req.body?.withdrawal ?? 0)
+    const noteRaw = req.body?.note
+    const note = noteRaw === undefined ? null : String(noteRaw).trim() || null
+    const parsed = new Date(`${date}T00:00:00`)
+
+    if (!date || Number.isNaN(parsed.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      res.status(400).json({ error: "invalid date" })
+      return
+    }
+    if (!Number.isFinite(available) || !Number.isInteger(available) || available < 0) {
+      res.status(400).json({ error: "invalid available" })
+      return
+    }
+    if (!Number.isFinite(pending) || !Number.isInteger(pending) || pending < 0) {
+      res.status(400).json({ error: "invalid pending" })
+      return
+    }
+    if (!Number.isFinite(withdrawal) || !Number.isInteger(withdrawal) || withdrawal < 0) {
+      res.status(400).json({ error: "invalid withdrawal" })
+      return
+    }
+
+    const existing = await prisma.accountingRecord.findUnique({ where: { date } })
+    if (existing) {
+      res.status(409).json({ error: "duplicate date" })
+      return
+    }
+
+    try {
+      const created = await prisma.accountingRecord.create({
+        data: { date, available, pending, withdrawal, note },
+      })
+      res.status(201).json(created)
+    } catch (error) {
+      if (error?.code === "P2002") {
+        res.status(409).json({ error: "duplicate date" })
+        return
+      }
+      throw error
+    }
+  },
+)
 
 app.get("/api/products", async (_req, res) => {
   const products = await prisma.product.findMany({

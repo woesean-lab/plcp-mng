@@ -120,6 +120,8 @@ function App() {
     resetTaskForm,
     focusTask,
     isAccountingTabLoading,
+    accountingRecords,
+    saveAccountingRecord,
     isSalesTabLoading,
     salesSummary,
     salesChartData,
@@ -376,6 +378,19 @@ function App() {
     PERMISSIONS.salesAnalyticsView,
     PERMISSIONS.adminManage,
   ])
+  const canViewAccounting = isAuthed && hasAnyPermission([
+    PERMISSIONS.accountingView,
+    PERMISSIONS.accountingCreate,
+    PERMISSIONS.adminManage,
+  ])
+  const canCreateAccounting = isAuthed && hasAnyPermission([
+    PERMISSIONS.accountingCreate,
+    PERMISSIONS.adminManage,
+  ])
+  const canViewAccountingAnalytics = isAuthed && hasAnyPermission([
+    PERMISSIONS.accountingAnalyticsView,
+    PERMISSIONS.adminManage,
+  ])
   const canViewProblems = hasPermission(PERMISSIONS.problemsView)
   const canCreateProblems = hasAnyPermission([PERMISSIONS.problemsCreate, PERMISSIONS.problemsManage])
   const canResolveProblems = hasAnyPermission([PERMISSIONS.problemsResolve, PERMISSIONS.problemsManage])
@@ -585,7 +600,7 @@ function App() {
       { key: "messages", label: "Mesaj", canView: canViewMessages },
       { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
-      { key: "accounting", label: "Bakiye", canView: canViewSales },
+      { key: "accounting", label: "Bakiye", canView: canViewAccounting },
       { key: "problems", label: "Problem", canView: canViewProblems },
       { key: "lists", label: "Liste", canView: canViewLists },
       { key: "products", label: "Ürün", canView: canViewProducts },
@@ -595,6 +610,7 @@ function App() {
     [
       canViewApplications,
       canViewAdmin,
+      canViewAccounting,
       canViewDashboard,
       canViewLists,
       canViewMessages,
@@ -1104,11 +1120,15 @@ function App() {
           </div>
         )}
 
-        {canViewSales && hasVisitedAccountingTab && (
+        {canViewAccounting && hasVisitedAccountingTab && (
           <div className={activeTab === "accounting" ? getTabSlideClass("accounting") : "hidden"}>
             <AccountingTab
               isLoading={isAccountingTabLoading}
               panelClass={panelClass}
+              canCreate={canCreateAccounting}
+              canViewAnalytics={canViewAccountingAnalytics}
+              accountingRecords={accountingRecords}
+              saveAccountingRecord={saveAccountingRecord}
             />
           </div>
         )}

@@ -130,6 +130,9 @@ export const PERMISSIONS = {
   salesView: "sales.view",
   salesCreate: "sales.create",
   salesAnalyticsView: "sales.analytics.view",
+  accountingView: "accounting.view",
+  accountingCreate: "accounting.create",
+  accountingAnalyticsView: "accounting.analytics.view",
   problemsView: "problems.view",
   problemsCreate: "problems.create",
   problemsResolve: "problems.resolve",
@@ -206,6 +209,14 @@ export const PERMISSION_GROUPS = [
       { id: PERMISSIONS.salesView, label: "Goruntule" },
       { id: PERMISSIONS.salesCreate, label: "Satis ekle" },
       { id: PERMISSIONS.salesAnalyticsView, label: "Grafik gor" },
+    ],
+  },
+  {
+    title: "Bakiye",
+    items: [
+      { id: PERMISSIONS.accountingView, label: "Goruntule" },
+      { id: PERMISSIONS.accountingCreate, label: "Kayit ekle" },
+      { id: PERMISSIONS.accountingAnalyticsView, label: "Grafik gor" },
     ],
   },
   {

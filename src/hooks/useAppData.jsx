@@ -228,6 +228,8 @@ export default function useAppData() {
   const [isSalesLoading, setIsSalesLoading] = useState(true)
   const [salesForm, setSalesForm] = useState(() => buildSalesForm())
   const [salesRange, setSalesRange] = useState("daily")
+  const [accountingRecords, setAccountingRecords] = useState([])
+  const [isAccountingLoading, setIsAccountingLoading] = useState(true)
 
   const isLight = false
   const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
@@ -247,6 +249,11 @@ export default function useAppData() {
     PERMISSIONS.salesCreate,
     PERMISSIONS.adminManage,
   ])
+  const canViewAccounting = isAuthed && hasAnyPermission([
+    PERMISSIONS.accountingView,
+    PERMISSIONS.accountingCreate,
+    PERMISSIONS.adminManage,
+  ])
   const canViewProductsTab = hasPermission(PERMISSIONS.productsView)
   const canViewApplicationsTab = hasAnyPermission([
     PERMISSIONS.applicationsView,
@@ -261,7 +268,7 @@ export default function useAppData() {
     if (permissions.includes(PERMISSIONS.messagesView)) tabs.push("messages")
     if (permissions.includes(PERMISSIONS.tasksView)) tabs.push("tasks")
     if (canViewSales) tabs.push("sales")
-    if (canViewSales) tabs.push("accounting")
+    if (canViewAccounting) tabs.push("accounting")
     if (permissions.includes(PERMISSIONS.problemsView)) tabs.push("problems")
     if (permissions.includes(PERMISSIONS.listsView)) tabs.push("lists")
     if (canViewProductsTab) tabs.push("products")
@@ -272,6 +279,7 @@ export default function useAppData() {
     permissions,
     canManageAdmin,
     canViewApplicationsTab,
+    canViewAccounting,
     canViewSales,
     canViewProductsTab,
     isAuthed,
@@ -1136,6 +1144,26 @@ export default function useAppData() {
     [apiFetch],
   )
 
+  const loadAccounting = useCallback(
+    async (signal) => {
+      setIsAccountingLoading(true)
+      try {
+        const res = await apiFetch("/api/accounting", { signal })
+        if (!res.ok) throw new Error("accounting_load_failed")
+        const payload = await res.json()
+        setAccountingRecords(Array.isArray(payload) ? payload : [])
+      } catch (error) {
+        if (error?.name === "AbortError") return
+        console.warn("Could not load accounting data", error)
+        toast.error("Bakiye kayitlari alinamadi (API/DB kontrol edin).")
+        setAccountingRecords([])
+      } finally {
+        setIsAccountingLoading(false)
+      }
+    },
+    [apiFetch],
+  )
+
   useEffect(() => {
     if (!isAuthed || !canViewSales) {
       setSales([])
@@ -1153,6 +1181,24 @@ export default function useAppData() {
     loadSales(controller.signal)
     return () => controller.abort()
   }, [activeTab, canViewSales, isAuthed, loadSales])
+
+  useEffect(() => {
+    if (!isAuthed || !canViewAccounting) {
+      setAccountingRecords([])
+      setIsAccountingLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    loadAccounting(controller.signal)
+    return () => controller.abort()
+  }, [isAuthed, canViewAccounting, loadAccounting])
+
+  useEffect(() => {
+    if (!isAuthed || !canViewAccounting || activeTab !== "accounting") return
+    const controller = new AbortController()
+    loadAccounting(controller.signal)
+    return () => controller.abort()
+  }, [activeTab, canViewAccounting, isAuthed, loadAccounting])
 
   useEffect(() => {
     if (!isAuthed) return
@@ -1390,6 +1436,66 @@ export default function useAppData() {
       return normalizeRepeatDays(task.repeatDays).includes(dayValue)
     }
     return false
+  }
+
+  const saveAccountingRecord = async (rawPayload, options = {}) => {
+    const date = String(rawPayload?.date ?? "").trim()
+    const available = Number(rawPayload?.available)
+    const pending = Number(rawPayload?.pending)
+    const withdrawal =
+      rawPayload?.withdrawal === "" || rawPayload?.withdrawal === undefined || rawPayload?.withdrawal === null
+        ? 0
+        : Number(rawPayload.withdrawal)
+    const note = String(rawPayload?.note ?? "").trim()
+    const parsed = new Date(`${date}T00:00:00`)
+
+    if (!date || Number.isNaN(parsed.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      toast.error("Tarih girin.")
+      throw new Error("invalid_accounting_date")
+    }
+    if (!Number.isFinite(available) || !Number.isInteger(available) || available < 0) {
+      toast.error("Mevcut bakiye girin.")
+      throw new Error("invalid_accounting_available")
+    }
+    if (!Number.isFinite(pending) || !Number.isInteger(pending) || pending < 0) {
+      toast.error("Bekleyen bakiye girin.")
+      throw new Error("invalid_accounting_pending")
+    }
+    if (!Number.isFinite(withdrawal) || !Number.isInteger(withdrawal) || withdrawal < 0) {
+      toast.error("Cekim tutari girin.")
+      throw new Error("invalid_accounting_withdrawal")
+    }
+
+    try {
+      const res = await apiFetch("/api/accounting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, available, pending, withdrawal, note }),
+      })
+      if (!res.ok) {
+        const detail = await readApiError(res)
+        throw Object.assign(new Error(detail || "accounting_save_failed"), { status: res.status })
+      }
+      const saved = await res.json()
+      setAccountingRecords((prev) => {
+        const next = prev.filter(
+          (record) => record.id !== saved.id && String(record?.date ?? "").trim() !== saved.date,
+        )
+        return [...next, saved]
+      })
+      toast.success(String(options?.successMessage ?? "").trim() || "Bakiye kaydi eklendi")
+      return saved
+    } catch (error) {
+      console.error(error)
+      if (error?.status === 409 || String(error?.message ?? "").trim().toLowerCase() === "duplicate date") {
+        toast.error("Bu tarih icin zaten kayit var.")
+      } else {
+        toast.error(
+          String(options?.errorMessage ?? "").trim() || "Bakiye kaydi eklenemedi (API/DB kontrol edin).",
+        )
+      }
+      throw error
+    }
   }
 
   const saveSaleRecord = async (rawDate, rawAmount, options = {}) => {
@@ -4833,7 +4939,7 @@ const handleEldoradoNoteSave = useCallback(
 
   const showLoading = isLoading || !delayDone || (activeTab === "messages" && isTabLoading)
   const isTasksTabLoading = isTasksLoading || (activeTab === "tasks" && isTabLoading)
-  const isAccountingTabLoading = activeTab === "accounting" && isTabLoading
+  const isAccountingTabLoading = isAccountingLoading || (activeTab === "accounting" && isTabLoading)
   const isSalesTabLoading = isSalesLoading || (activeTab === "sales" && isTabLoading)
   const isListsTabLoading = isListsLoading || (activeTab === "lists" && isTabLoading)
   const isStockTabLoading = isProductsLoading || (activeTab === "stock" && isTabLoading)
@@ -5668,6 +5774,8 @@ const handleEldoradoNoteSave = useCallback(
     resetTaskForm,
     focusTask,
     isAccountingTabLoading,
+    accountingRecords,
+    saveAccountingRecord,
     isSalesTabLoading,
     salesSummary,
     salesChartData,
