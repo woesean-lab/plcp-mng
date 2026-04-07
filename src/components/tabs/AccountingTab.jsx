@@ -270,6 +270,10 @@ export default function AccountingTab({ panelClass, isLoading }) {
             setFormError("Cekim tutari sayi olmali.")
             return
           }
+          if (sorted.some((item) => item.date === date)) {
+            setFormError("Bu tarih icin zaten kayit var.")
+            return
+          }
           const next = {
             id: `acc-${Date.now()}`,
             date,
