@@ -37,6 +37,7 @@ import {
   parseFormula,
   toColumnLabel,
 } from "../utils/listUtils"
+import { parseFlexibleNumberInput } from "../utils/numberInput"
 import { getStockStatus, splitStocks } from "../utils/stockUtils"
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -1440,12 +1441,12 @@ export default function useAppData() {
 
   const saveAccountingRecord = async (rawPayload, options = {}) => {
     const date = String(rawPayload?.date ?? "").trim()
-    const available = Number(rawPayload?.available)
-    const pending = Number(rawPayload?.pending)
+    const available = parseFlexibleNumberInput(rawPayload?.available)
+    const pending = parseFlexibleNumberInput(rawPayload?.pending)
     const withdrawal =
       rawPayload?.withdrawal === "" || rawPayload?.withdrawal === undefined || rawPayload?.withdrawal === null
         ? 0
-        : Number(rawPayload.withdrawal)
+        : parseFlexibleNumberInput(rawPayload.withdrawal)
     const note = String(rawPayload?.note ?? "").trim()
     const parsed = new Date(`${date}T00:00:00`)
 
@@ -1453,15 +1454,15 @@ export default function useAppData() {
       toast.error("Tarih girin.")
       throw new Error("invalid_accounting_date")
     }
-    if (!Number.isFinite(available) || !Number.isInteger(available) || available < 0) {
+    if (!Number.isFinite(available) || available < 0) {
       toast.error("Mevcut bakiye girin.")
       throw new Error("invalid_accounting_available")
     }
-    if (!Number.isFinite(pending) || !Number.isInteger(pending) || pending < 0) {
+    if (!Number.isFinite(pending) || pending < 0) {
       toast.error("Bekleyen bakiye girin.")
       throw new Error("invalid_accounting_pending")
     }
-    if (!Number.isFinite(withdrawal) || !Number.isInteger(withdrawal) || withdrawal < 0) {
+    if (!Number.isFinite(withdrawal) || withdrawal < 0) {
       toast.error("Cekim tutari girin.")
       throw new Error("invalid_accounting_withdrawal")
     }

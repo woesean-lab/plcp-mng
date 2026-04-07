@@ -18,6 +18,7 @@ import {
   normalizePricePayloadValues,
   roundPriceNumber,
 } from "../src/utils/priceMath.js"
+import { parseFlexibleNumberInput } from "../src/utils/numberInput.js"
 
 const prisma = new PrismaClient()
 
@@ -4233,9 +4234,12 @@ app.post(
   requireAnyPermission(["accounting.create", "admin.manage"]),
   async (req, res) => {
     const date = String(req.body?.date ?? "").trim()
-    const available = Number(req.body?.available)
-    const pending = Number(req.body?.pending)
-    const withdrawal = Number(req.body?.withdrawal ?? 0)
+    const available = parseFlexibleNumberInput(req.body?.available)
+    const pending = parseFlexibleNumberInput(req.body?.pending)
+    const withdrawal =
+      req.body?.withdrawal === undefined || req.body?.withdrawal === null || req.body?.withdrawal === ""
+        ? 0
+        : parseFlexibleNumberInput(req.body?.withdrawal)
     const noteRaw = req.body?.note
     const note = noteRaw === undefined ? null : String(noteRaw).trim() || null
     const parsed = new Date(`${date}T00:00:00`)
@@ -4244,15 +4248,15 @@ app.post(
       res.status(400).json({ error: "invalid date" })
       return
     }
-    if (!Number.isFinite(available) || !Number.isInteger(available) || available < 0) {
+    if (!Number.isFinite(available) || available < 0) {
       res.status(400).json({ error: "invalid available" })
       return
     }
-    if (!Number.isFinite(pending) || !Number.isInteger(pending) || pending < 0) {
+    if (!Number.isFinite(pending) || pending < 0) {
       res.status(400).json({ error: "invalid pending" })
       return
     }
-    if (!Number.isFinite(withdrawal) || !Number.isInteger(withdrawal) || withdrawal < 0) {
+    if (!Number.isFinite(withdrawal) || withdrawal < 0) {
       res.status(400).json({ error: "invalid withdrawal" })
       return
     }

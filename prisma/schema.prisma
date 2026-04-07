@@ -309,9 +309,9 @@ model Sale {
 model AccountingRecord {
   id         String   @id @default(cuid())
   date       String   @unique
-  available  Int
-  pending    Int
-  withdrawal Int      @default(0)
+  available  Decimal
+  pending    Decimal
+  withdrawal Decimal  @default(0)
   note       String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

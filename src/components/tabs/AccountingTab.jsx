@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { parseFlexibleNumberInput } from "../../utils/numberInput"
 
 const USD_TO_TRY_RATE = 44.5984
 const inputClassName =
@@ -92,7 +93,10 @@ const formatBalancePointLabel = (value, range) => {
 const currency = (value) => {
   const amount = Number(value ?? 0)
   if (!Number.isFinite(amount)) return "0"
-  return amount.toLocaleString("tr-TR")
+  return amount.toLocaleString("tr-TR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
 }
 
 const preciseCurrency = (value) => {
@@ -306,23 +310,23 @@ export default function AccountingTab({
 
   const handleAdd = async () => {
     const date = form.date.trim()
-    const available = Number(form.available)
-    const pending = Number(form.pending)
-    const withdrawal = form.withdrawal.trim() === "" ? 0 : Number(form.withdrawal)
+    const available = parseFlexibleNumberInput(form.available)
+    const pending = parseFlexibleNumberInput(form.pending)
+    const withdrawal = form.withdrawal.trim() === "" ? 0 : parseFlexibleNumberInput(form.withdrawal)
 
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(new Date(`${date}T00:00:00`).getTime())) {
       setFormError("Tarih secin.")
       return
     }
-    if (!Number.isFinite(available) || !Number.isInteger(available) || available < 0) {
+    if (!Number.isFinite(available) || available < 0) {
       setFormError("Mevcut bakiye girin.")
       return
     }
-    if (!Number.isFinite(pending) || !Number.isInteger(pending) || pending < 0) {
+    if (!Number.isFinite(pending) || pending < 0) {
       setFormError("Bekleyen bakiye girin.")
       return
     }
-    if (!Number.isFinite(withdrawal) || !Number.isInteger(withdrawal) || withdrawal < 0) {
+    if (!Number.isFinite(withdrawal) || withdrawal < 0) {
       setFormError("Cekim tutari sayi olmali.")
       return
     }
@@ -436,18 +440,16 @@ export default function AccountingTab({
       <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
         <div className="grid gap-3 sm:grid-cols-2">
           <input
-            type="number"
-            min="0"
-            step="1"
+            type="text"
+            inputMode="decimal"
             value={form.available}
             onChange={(event) => updateForm("available", event.target.value)}
             placeholder="Mevcut bakiye"
             className={`${inputClassName} placeholder:text-slate-500`}
           />
           <input
-            type="number"
-            min="0"
-            step="1"
+            type="text"
+            inputMode="decimal"
             value={form.pending}
             onChange={(event) => updateForm("pending", event.target.value)}
             placeholder="Bekleyen bakiye"
@@ -455,9 +457,8 @@ export default function AccountingTab({
           />
         </div>
         <input
-          type="number"
-          min="0"
-          step="1"
+          type="text"
+          inputMode="decimal"
           value={form.withdrawal}
           onChange={(event) => updateForm("withdrawal", event.target.value)}
           placeholder="Cekim (opsiyonel)"
