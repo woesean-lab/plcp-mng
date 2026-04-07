@@ -1484,17 +1484,14 @@ export default function useAppData() {
         )
         return [...next, saved]
       })
-      toast.success(String(options?.successMessage ?? "").trim() || "Bakiye kaydi eklendi")
+      const defaultMessage = res.status === 201 ? "Bakiye kaydi eklendi" : "Bakiye kaydi guncellendi"
+      toast.success(String(options?.successMessage ?? "").trim() || defaultMessage)
       return saved
     } catch (error) {
       console.error(error)
-      if (error?.status === 409 || String(error?.message ?? "").trim().toLowerCase() === "duplicate date") {
-        toast.error("Bu tarih icin zaten kayit var.")
-      } else {
-        toast.error(
-          String(options?.errorMessage ?? "").trim() || "Bakiye kaydi eklenemedi (API/DB kontrol edin).",
-        )
-      }
+      toast.error(
+        String(options?.errorMessage ?? "").trim() || "Bakiye kaydi eklenemedi (API/DB kontrol edin).",
+      )
       throw error
     }
   }

@@ -4261,21 +4261,31 @@ app.post(
       return
     }
 
+    const data = { date, available, pending, withdrawal, note }
     const existing = await prisma.accountingRecord.findUnique({ where: { date } })
     if (existing) {
-      res.status(409).json({ error: "duplicate date" })
+      const updated = await prisma.accountingRecord.update({
+        where: { id: existing.id },
+        data,
+      })
+      res.json(updated)
       return
     }
 
     try {
-      const created = await prisma.accountingRecord.create({
-        data: { date, available, pending, withdrawal, note },
-      })
+      const created = await prisma.accountingRecord.create({ data })
       res.status(201).json(created)
     } catch (error) {
       if (error?.code === "P2002") {
-        res.status(409).json({ error: "duplicate date" })
-        return
+        const retryExisting = await prisma.accountingRecord.findUnique({ where: { date } })
+        if (retryExisting) {
+          const updated = await prisma.accountingRecord.update({
+            where: { id: retryExisting.id },
+            data,
+          })
+          res.json(updated)
+          return
+        }
       }
       throw error
     }

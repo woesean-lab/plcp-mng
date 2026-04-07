@@ -330,10 +330,6 @@ export default function AccountingTab({
       setFormError("Cekim tutari sayi olmali.")
       return
     }
-    if (sorted.some((item) => item.date === date)) {
-      setFormError("Bu tarih icin zaten kayit var.")
-      return
-    }
     if (typeof saveAccountingRecord !== "function") {
       setFormError("Bakiye kaydi hazir degil.")
       return
@@ -356,10 +352,6 @@ export default function AccountingTab({
       }))
       setFormError("")
     } catch (error) {
-      if (error?.status === 409 || String(error?.message ?? "").trim().toLowerCase() === "duplicate date") {
-        setFormError("Bu tarih icin zaten kayit var.")
-        return
-      }
       setFormError("Kayit eklenemedi.")
     }
   }
