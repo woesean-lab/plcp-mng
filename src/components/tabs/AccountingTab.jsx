@@ -110,6 +110,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
     date: todayKey(),
     available: "",
     pending: "",
+    withdrawal: "",
     note: "",
   })
   const [formError, setFormError] = useState("")
@@ -139,10 +140,10 @@ export default function AccountingTab({ panelClass, isLoading }) {
   const totalBalance = (latest?.available ?? 0) + (latest?.pending ?? 0)
   const totalBalanceTry = totalBalance * USD_TO_TRY_RATE
   const balanceRangeMeta = {
-    daily: { label: "Gunluk", helper: "Son 10 gunluk toplam bakiye degisimi" },
-    weekly: { label: "Haftalik", helper: "Son 12 haftalik toplam bakiye degisimi" },
-    monthly: { label: "Aylik", helper: "Son 12 aylik toplam bakiye degisimi" },
-    yearly: { label: "Yillik", helper: "Son 6 yillik toplam bakiye degisimi" },
+    daily: { label: "Gunluk", helper: "Son 10 gunluk net bakiye farki" },
+    weekly: { label: "Haftalik", helper: "Son 12 haftalik net bakiye farki" },
+    monthly: { label: "Aylik", helper: "Son 12 aylik net bakiye farki" },
+    yearly: { label: "Yillik", helper: "Son 6 yillik net bakiye farki" },
   }
   const activeBalanceRange = balanceRangeMeta[balanceRange] || balanceRangeMeta.daily
 
@@ -177,11 +178,18 @@ export default function AccountingTab({ panelClass, isLoading }) {
         const previous = sorted[1]
         const availableDiff = latest && previous ? latest.available - previous.available : 0
         const pendingDiff = latest && previous ? latest.pending - previous.pending : 0
-        const recent = sorted.slice(0, 10)
         const balanceRecords = sorted.map((item) => ({
           ...item,
+          withdrawal: Number.isFinite(Number(item.withdrawal)) ? Number(item.withdrawal) : 0,
           total: item.available + item.pending,
         }))
+        const sumWithdrawalsBetween = (startExclusive, endInclusive) =>
+          balanceRecords.reduce((sum, item) => {
+            if (item.date > startExclusive && item.date <= endInclusive) {
+              return sum + item.withdrawal
+            }
+            return sum
+          }, 0)
         const latestTotal = balanceRecords[0]?.total ?? 0
         const bestRecord = balanceRecords.reduce((best, item) => (best && best.total >= item.total ? best : item), null)
         const worstRecord = balanceRecords.reduce((worst, item) => (worst && worst.total <= item.total ? worst : item), null)
@@ -189,7 +197,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
           balanceRecords.length > 0
             ? balanceRecords.reduce((sum, item) => sum + item.total, 0) / balanceRecords.length
             : 0
-        const latestTotalDiff = balanceRecords[1] ? latestTotal - balanceRecords[1].total : null
+        const latestTotalDiff = balanceRecords[1] ? latestTotal - balanceRecords[1].total + balanceRecords[0].withdrawal : null
         const findHistoricalDiff = (days) => {
           if (!latest?.date) return null
           const latestDateValue = parseDateKey(latest.date)
@@ -200,7 +208,9 @@ export default function AccountingTab({ panelClass, isLoading }) {
             const itemDate = parseDateKey(item.date)
             return itemDate && itemDate <= targetDate
           })
-          return comparison ? latestTotal - comparison.total : null
+          return comparison
+            ? latestTotal - comparison.total + sumWithdrawalsBetween(comparison.date, latest.date)
+            : null
         }
         const weeklyDiff = findHistoricalDiff(7)
         const monthlyDiff = findHistoricalDiff(30)
@@ -212,10 +222,16 @@ export default function AccountingTab({ panelClass, isLoading }) {
 
         sorted.forEach((item) => {
           const key = getBalanceRangeKey(item.date, balanceRange)
-          if (groupedChartEntryMap.has(key)) return
+          if (groupedChartEntryMap.has(key)) {
+            groupedChartEntryMap.get(key).withdrawalTotal += Number.isFinite(Number(item.withdrawal))
+              ? Number(item.withdrawal)
+              : 0
+            return
+          }
           const entry = {
             key,
             total: item.available + item.pending,
+            withdrawalTotal: Number.isFinite(Number(item.withdrawal)) ? Number(item.withdrawal) : 0,
           }
           groupedChartEntryMap.set(key, entry)
           groupedChartEntries.push(entry)
@@ -224,7 +240,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
         const chartPoints = groupedChartEntries.reverse().slice(-rangeLimit)
         const chartData = chartPoints.map((item, index) => {
           const prev = index > 0 ? chartPoints[index - 1] : null
-          const diff = prev ? item.total - prev.total : 0
+          const diff = prev ? item.total - prev.total + item.withdrawalTotal : 0
           return {
             date: item.key,
             diff,
@@ -245,8 +261,13 @@ export default function AccountingTab({ panelClass, isLoading }) {
           const date = form.date.trim()
           const available = Number(form.available)
           const pending = Number(form.pending)
+          const withdrawal = Number(form.withdrawal || 0)
           if (!date || !Number.isFinite(available) || !Number.isFinite(pending)) {
             setFormError("Tarih, mevcut ve bekleyen bakiyeler zorunlu.")
+            return
+          }
+          if (!Number.isFinite(withdrawal)) {
+            setFormError("Cekim tutari sayi olmali.")
             return
           }
           const next = {
@@ -254,6 +275,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
             date,
             available,
             pending,
+            withdrawal,
             note: form.note.trim(),
           }
           setRecords((prev) => [next, ...prev])
@@ -261,6 +283,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
             ...prev,
             available: "",
             pending: "",
+            withdrawal: "",
             note: "",
           }))
           setFormError("")
@@ -480,7 +503,7 @@ export default function AccountingTab({ panelClass, isLoading }) {
                     ) : (
                       recentList.map((item, index) => {
                         const prev = balanceRecords[index + 1]
-                        const itemDiff = prev ? item.total - prev.total : null
+                        const itemDiff = prev ? item.total - prev.total + item.withdrawal : null
                         return (
                           <div
                             key={item.id}
@@ -492,6 +515,9 @@ export default function AccountingTab({ panelClass, isLoading }) {
                                   {formatDate(item.date)}
                                 </p>
                                 <p className="mt-1 text-sm font-semibold text-slate-100">$ {currency(item.total)}</p>
+                                {item.withdrawal > 0 ? (
+                                  <p className="mt-1 text-[11px] text-amber-200">Cekim: $ {currency(item.withdrawal)}</p>
+                                ) : null}
                                 {item.note ? (
                                   <p className="mt-1 line-clamp-1 text-xs text-slate-400">{item.note}</p>
                                 ) : null}
@@ -545,6 +571,15 @@ export default function AccountingTab({ panelClass, isLoading }) {
                         className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition hover:border-accent-400/40 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
                       />
                     </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={form.withdrawal}
+                      onChange={(e) => setForm((prev) => ({ ...prev, withdrawal: e.target.value }))}
+                      placeholder="Cekim (opsiyonel)"
+                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition hover:border-accent-400/40 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
+                    />
                     <input
                       type="date"
                       value={form.date}
