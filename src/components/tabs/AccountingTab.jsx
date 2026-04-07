@@ -400,13 +400,21 @@ export default function AccountingTab({
                       <p className="mt-1 line-clamp-1 text-xs text-slate-400">{item.note}</p>
                     ) : null}
                   </div>
-                  <p
-                    className={`shrink-0 self-start text-sm font-semibold sm:self-auto ${
+                  <div
+                    className={`shrink-0 self-start text-left sm:self-auto sm:text-right ${
                       itemDiff === null ? "text-slate-400" : itemDiff >= 0 ? "text-emerald-200" : "text-rose-200"
                     }`}
                   >
-                    {itemDiff === null ? "-" : `${itemDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(itemDiff))}`}
-                  </p>
+                    <p className="text-sm font-semibold">
+                      {itemDiff === null ? "-" : `${itemDiff >= 0 ? "+" : "-"}$ ${currency(Math.abs(itemDiff))}`}
+                    </p>
+                    {itemDiff === null ? null : (
+                      <p className="mt-1 text-[11px] font-medium text-slate-400">
+                        TL {itemDiff >= 0 ? "+" : "-"}
+                        {preciseCurrency(Math.abs(itemDiff) * USD_TO_TRY_RATE)}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )
