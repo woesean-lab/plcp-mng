@@ -187,6 +187,7 @@ export default function AccountingTab({
     note: "",
   })
   const [formError, setFormError] = useState("")
+  const responsivePanelClass = `${panelClass} px-4 py-4 sm:px-6 sm:py-6`
 
   const updateForm = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -357,20 +358,20 @@ export default function AccountingTab({
   }
 
   const recordsCard = (
-    <div className={`${panelClass} bg-ink-900/60`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className={`${responsivePanelClass} bg-ink-900/60`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
             Gun sonu kayitlari
           </p>
           <p className="text-sm text-slate-400">Son eklenen toplam bakiyeler.</p>
         </div>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+        <span className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
           {recentList.length} kayit
         </span>
       </div>
 
-      <div className="no-scrollbar mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+      <div className="no-scrollbar mt-4 max-h-[360px] space-y-3 overflow-y-auto pr-1 sm:max-h-[420px]">
         {recentList.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-6 text-center text-sm text-slate-400 shadow-inner">
             Kayit bulunamadi.
@@ -382,9 +383,9 @@ export default function AccountingTab({
             return (
               <div
                 key={item.id || item.date}
-                className="min-h-[74px] rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner"
+                className="min-h-[74px] rounded-xl border border-white/10 bg-ink-900/70 px-3 py-3 shadow-inner sm:px-4"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                   <div className="min-w-0">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
                       {formatDate(item.date)}
@@ -400,7 +401,7 @@ export default function AccountingTab({
                     ) : null}
                   </div>
                   <p
-                    className={`shrink-0 text-sm font-semibold ${
+                    className={`shrink-0 self-start text-sm font-semibold sm:self-auto ${
                       itemDiff === null ? "text-slate-400" : itemDiff >= 0 ? "text-emerald-200" : "text-rose-200"
                     }`}
                   >
@@ -416,20 +417,20 @@ export default function AccountingTab({
   )
 
   const entryCard = canCreate ? (
-    <div className={`${panelClass} bg-ink-800/60`}>
-      <div className="flex items-center justify-between">
+    <div className={`${responsivePanelClass} bg-ink-800/60`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
             Gun sonu girisi
           </p>
           <p className="text-sm text-slate-400">Mevcut ve bekleyen bakiyeleri gir.</p>
         </div>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+        <span className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
           {records.length} kayit
         </span>
       </div>
 
-      <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+      <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner sm:p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <input
             type="text"
@@ -512,12 +513,12 @@ export default function AccountingTab({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-200">
                   Toplam bakiye
                 </p>
-                <p className="mt-2 text-2xl font-semibold text-white">$ {currency(totalBalance)}</p>
+                <p className="mt-2 text-xl font-semibold text-white sm:text-2xl">$ {currency(totalBalance)}</p>
                 <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
                     TL cevrimi
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-100 sm:text-base">
+                  <p className="mt-1 text-xs font-semibold text-slate-100 sm:text-base">
                     TL {preciseCurrency(totalBalanceTry)}
                   </p>
                 </div>
@@ -534,7 +535,7 @@ export default function AccountingTab({
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
               Mevcut bakiye
             </p>
-            <p className="mt-2 text-3xl font-semibold text-white">$ {currency(latest?.available ?? 0)}</p>
+            <p className="mt-2 text-2xl font-semibold text-white sm:text-3xl">$ {currency(latest?.available ?? 0)}</p>
             <p className="mt-1 text-xs text-slate-400">
               {latest ? formatDate(latest.date) : "Kayit yok"} · {availableDiff >= 0 ? "+" : "-"}$ {" "}
               {currency(Math.abs(availableDiff))}
@@ -547,7 +548,7 @@ export default function AccountingTab({
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
               Bekleyen bakiye
             </p>
-            <p className="mt-2 text-3xl font-semibold text-white">$ {currency(latest?.pending ?? 0)}</p>
+            <p className="mt-2 text-2xl font-semibold text-white sm:text-3xl">$ {currency(latest?.pending ?? 0)}</p>
             <p className="mt-1 text-xs text-slate-400">
               {latest ? "Guncel" : "Kayit yok"} · {pendingDiff >= 0 ? "+" : "-"}$ {" "}
               {currency(Math.abs(pendingDiff))}
@@ -558,22 +559,22 @@ export default function AccountingTab({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,0.8fr)]">
         <div className="space-y-6">
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className={`${responsivePanelClass} bg-ink-900/60`}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Kazanc grafigi
                 </p>
                 <p className="text-sm text-slate-400">{activeBalanceRange.helper}.</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+                <div className="flex w-full flex-wrap items-center justify-between gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1 sm:w-auto sm:justify-start">
                   {Object.entries(balanceRangeMeta).map(([key, meta]) => (
                     <button
                       key={key}
                       type="button"
                       onClick={() => setBalanceRange(key)}
-                      className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
+                      className={`flex-1 rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition sm:flex-none ${
                         balanceRange === key
                           ? "bg-accent-400 text-ink-900 shadow-glow"
                           : "text-slate-300 hover:bg-white/5 hover:text-white"
@@ -583,24 +584,24 @@ export default function AccountingTab({
                     </button>
                   ))}
                 </div>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                <span className="inline-flex justify-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200 sm:justify-start">
                   En yuksek: $ {currency(maxAbsDiff)}
                 </span>
               </div>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-white/10 bg-ink-900/70 p-4 text-slate-100 shadow-inner">
+            <div className="mt-3 rounded-2xl border border-white/10 bg-ink-900/70 p-3 text-slate-100 shadow-inner sm:p-4">
               {chartBars.length > 0 ? (
-                <div className="-mx-2 overflow-x-auto px-2 pb-2">
-                  <div className="flex min-w-[520px] items-end gap-3">
+                <div className="-mx-1 overflow-x-auto px-1 pb-2 sm:-mx-2 sm:px-2">
+                  <div className="flex min-w-[320px] items-end gap-2 sm:min-w-[520px] sm:gap-3">
                     {chartBars.map((bar, index) => (
                       <div
                         key={`diff-bar-${index}`}
-                        className="flex min-w-[44px] flex-1 flex-col items-center justify-end gap-2"
+                        className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2"
                       >
                         <div className="relative flex h-36 w-full items-end justify-center">
                           <span
-                            className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold ${
+                            className={`absolute left-1/2 hidden -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold sm:block ${
                               bar.diff >= 0 ? "text-emerald-200" : "text-rose-200"
                             }`}
                             style={{ bottom: `calc(${bar.heightPercent}% + 0.35rem)` }}
@@ -614,7 +615,7 @@ export default function AccountingTab({
                             style={{ height: `${bar.heightPercent}%` }}
                           />
                         </div>
-                        <span className="text-[11px] font-medium text-slate-300">{bar.label}</span>
+                        <span className="text-[10px] font-medium text-slate-300 sm:text-[11px]">{bar.label}</span>
                       </div>
                     ))}
                   </div>
@@ -627,7 +628,7 @@ export default function AccountingTab({
             </div>
           </div>
 
-          <div className={`${panelClass} bg-ink-900/60`}>
+          <div className={`${responsivePanelClass} bg-ink-900/60`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
