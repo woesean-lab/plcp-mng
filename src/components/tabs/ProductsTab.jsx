@@ -3164,6 +3164,17 @@ export default function ProductsTab({
               )}
             </div>
           </div>
+          {isRefreshing && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-300/20 bg-sky-500/10 px-3 py-2 text-xs text-sky-100">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-sky-300 animate-pulse" />
+                <span className="min-w-0 truncate font-semibold">
+                  Urun taramasi arka planda devam ediyor.
+                </span>
+              </div>
+              <span className="text-sky-100/80">Liste kullanilabilir, bitince otomatik guncellenecek.</span>
+            </div>
+          )}
           {isBulkPriceModeOpen && canUseBulkPriceActions && filteredList.length > 0 && (
             <div className="mt-3 overflow-hidden rounded-xl border border-sky-400/20 bg-[linear-gradient(135deg,rgba(8,13,24,0.98),rgba(12,18,34,0.96))] shadow-card">
               <div className="px-3 py-3">
@@ -3345,7 +3356,7 @@ export default function ProductsTab({
                 </div>
           )}
           <div key={activeCategoryKey} className="mt-4 space-y-2">
-            {isRefreshing ? (
+            {isRefreshing && list.length === 0 ? (
               <ProductsListSkeleton />
             ) : filteredList.length === 0 ? (
               <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
