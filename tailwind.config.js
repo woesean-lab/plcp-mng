@@ -15,10 +15,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Inter"', 'ui-sans-serif', 'system-ui'],
-        display: ['"Inter"', 'ui-sans-serif', 'system-ui'],
-        body: ['"Inter"', 'ui-sans-serif', 'system-ui'],
-        mono: ['"Inter"', 'ui-sans-serif', 'system-ui'],
+        display: ['"Space Grotesk"', 'ui-sans-serif', 'system-ui'],
+        body: ['"DM Sans"', 'ui-sans-serif', 'system-ui'],
       },
       colors: {
         ink: {
