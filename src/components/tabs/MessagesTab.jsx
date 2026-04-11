@@ -552,14 +552,6 @@ export default function MessagesTab({
           </div>
           )}
 
-          <div className={`${panelClass} bg-ink-800/60`}>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Hızlı ipuçları</p>
-            <ul className="mt-3 space-y-2 text-sm text-slate-300">
-              <li>- Başlık boş kalırsa otomatik bir isimle kaydedilir.</li>
-              <li>- Şablona tıklamak metni panoya kopyalar.</li>
-              <li>- Kategori silince şablonlar "Genel"e taşınır.</li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>
