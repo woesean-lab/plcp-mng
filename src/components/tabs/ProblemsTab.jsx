@@ -131,9 +131,9 @@ export default function ProblemsTab({
                             {pb.username}
                           </span>
                           {formatProblemCreatedAt(pb.createdAt) && (
-                            <p className="text-[11px] text-slate-400">
-                              Eklendi: {formatProblemCreatedAt(pb.createdAt)}
-                            </p>
+                            <span className="inline-flex w-fit rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-slate-300">
+                              {formatProblemCreatedAt(pb.createdAt)}
+                            </span>
                           )}
                         </div>
                         <button
@@ -224,9 +224,9 @@ export default function ProblemsTab({
                             {pb.username}
                           </span>
                           {formatProblemCreatedAt(pb.createdAt) && (
-                            <p className="text-[11px] text-emerald-100/70">
-                              Eklendi: {formatProblemCreatedAt(pb.createdAt)}
-                            </p>
+                            <span className="inline-flex w-fit rounded-full border border-emerald-200/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-emerald-100/80">
+                              {formatProblemCreatedAt(pb.createdAt)}
+                            </span>
                           )}
                         </div>
                         <button
@@ -276,7 +276,7 @@ export default function ProblemsTab({
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="order-first space-y-6 lg:order-none">
           {canCreate && (
           <div className={`${panelClass} bg-ink-900/60`}>
             <div>
