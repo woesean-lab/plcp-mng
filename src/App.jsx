@@ -66,7 +66,6 @@ function App() {
     isTemplateSaving,
     activeTemplateDraft,
     setActiveTemplateDraft,
-    activeTemplateLength,
     handleActiveTemplateEditSave,
     categories,
     groupedTemplates,
@@ -81,7 +80,6 @@ function App() {
     handleCategoryDeleteWithConfirm,
     title,
     setTitle,
-    messageLength,
     message,
     setMessage,
     handleAdd,
@@ -1049,7 +1047,6 @@ function App() {
               isTemplateSaving={isTemplateSaving}
               activeTemplateDraft={activeTemplateDraft}
               setActiveTemplateDraft={setActiveTemplateDraft}
-              activeTemplateLength={activeTemplateLength}
               handleActiveTemplateEditSave={handleActiveTemplateEditSave}
               categories={categories}
               groupedTemplates={groupedTemplates}
@@ -1064,7 +1061,6 @@ function App() {
               handleCategoryDeleteWithConfirm={handleCategoryDeleteWithConfirm}
               title={title}
               setTitle={setTitle}
-              messageLength={messageLength}
               message={message}
               setMessage={setMessage}
               handleAdd={handleAdd}

@@ -69,7 +69,6 @@ export default function MessagesTab({
   isTemplateSaving,
   activeTemplateDraft,
   setActiveTemplateDraft,
-  activeTemplateLength,
   handleActiveTemplateEditSave,
   categories,
   groupedTemplates,
@@ -84,7 +83,6 @@ export default function MessagesTab({
   handleCategoryDeleteWithConfirm,
   title,
   setTitle,
-  messageLength,
   message,
   setMessage,
   handleAdd,
@@ -209,9 +207,8 @@ export default function MessagesTab({
                     (showLoading ? "Veriler yükleniyor..." : "Mesajını düzenleyip kaydetmeye başla.")}
                 </p>
               )}
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300/80">
-                <span>{activeTemplateLength} karakter</span>
-                {showEditMode ? (
+              {showEditMode && (
+                <div className="mt-4 flex flex-wrap items-center justify-end gap-3 text-xs text-slate-300/80">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -230,12 +227,8 @@ export default function MessagesTab({
                       Vazgeç
                     </button>
                   </div>
-                ) : (
-                  <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-accent-100">
-                    {showLoading ? "Bekle" : "Hazır"}
-                  </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -518,10 +511,9 @@ export default function MessagesTab({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
-                  <label htmlFor="message-mini">Mesaj</label>
-                  <span className="text-[11px] text-slate-400">Anlık karakter: {messageLength}</span>
-                </div>
+                <label className="text-xs font-semibold text-slate-200" htmlFor="message-mini">
+                  Mesaj
+                </label>
                 <textarea
                   id="message-mini"
                   value={message}

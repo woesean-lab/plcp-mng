@@ -700,10 +700,6 @@ export default function useAppData() {
     setIsEditingActiveTemplate(false)
   }, [activeTemplate])
 
-  const messageLength = message.trim().length
-  const activeTemplateLength = isEditingActiveTemplate
-    ? activeTemplateDraft.trim().length
-    : (activeTemplate?.value?.trim().length ?? 0)
   const activeListRows = Array.isArray(activeList?.rows) ? activeList.rows : []
   const activeListColumnCount = useMemo(() => {
     if (!activeList) return 0
@@ -5697,7 +5693,6 @@ const handleEldoradoNoteSave = useCallback(
     isTemplateSaving,
     activeTemplateDraft,
     setActiveTemplateDraft,
-    activeTemplateLength,
     handleActiveTemplateEditSave,
     categories,
     groupedTemplates,
@@ -5712,7 +5707,6 @@ const handleEldoradoNoteSave = useCallback(
     handleCategoryDeleteWithConfirm,
     title,
     setTitle,
-    messageLength,
     message,
     setMessage,
     handleAdd,
