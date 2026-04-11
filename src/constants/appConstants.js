@@ -1,5 +1,4 @@
 export const PRODUCT_ORDER_STORAGE_KEY = "pulcipProductOrder"
-export const THEME_STORAGE_KEY = "pulcipTheme"
 export const AUTH_TOKEN_STORAGE_KEY = "pulcipAuthToken"
 export const SALES_STORAGE_KEY = "pulcipSales"
 export const ELDORADO_KEYS_STORAGE_KEY = "pulcipEldoradoKeys"

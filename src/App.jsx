@@ -35,7 +35,6 @@ function App() {
     setAuthError,
     handleAuthSubmit,
     handleLogout,
-    themeToggleButton,
     isProfileOpen,
     isProfileSaving,
     profileDraft,
@@ -738,7 +737,6 @@ function App() {
               </div>
               <h1 className="font-display text-2xl font-semibold text-white">Giris paneli</h1>
             </div>
-            {themeToggleButton}
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-ink-900/70 p-6 shadow-card">
@@ -912,7 +910,6 @@ function App() {
                     Admin
                   </a>
                 )}
-                {themeToggleButton}
                 <div className="relative" ref={userMenuRef}>
                   <button
                     type="button"

@@ -12,7 +12,6 @@ import {
   PERMISSIONS,
   PRODUCT_ORDER_STORAGE_KEY,
   STOCK_STATUS,
-  THEME_STORAGE_KEY,
   categoryPalette,
   panelClass,
   taskDueTypeOptions,
@@ -39,7 +38,6 @@ import {
 } from "../utils/listUtils"
 import { parseFlexibleNumberInput } from "../utils/numberInput"
 import { getStockStatus, splitStocks } from "../utils/stockUtils"
-import { getInitialTheme } from "../utils/theme"
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -47,7 +45,6 @@ export default function useAppData() {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [isTabLoading, setIsTabLoading] = useState(false)
   const tabLoadingTimerRef = useRef(null)
-  const [theme, setTheme] = useState(() => getInitialTheme())
   const [authToken, setAuthToken] = useState(() => {
     if (typeof window === "undefined") return ""
     try {
@@ -233,7 +230,6 @@ export default function useAppData() {
   const [accountingRecords, setAccountingRecords] = useState([])
   const [isAccountingLoading, setIsAccountingLoading] = useState(true)
 
-  const isLight = theme === "light"
   const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
   const hasPermission = useCallback((permission) => permissions.includes(permission), [permissions])
   const hasAnyPermission = useCallback(
@@ -286,17 +282,6 @@ export default function useAppData() {
     canViewProductsTab,
     isAuthed,
   ])
-
-  useLayoutEffect(() => {
-    const root = document.documentElement
-    if (!root) return
-    root.setAttribute("data-theme", theme)
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, theme)
-    } catch (error) {
-      console.warn("Could not persist theme preference", error)
-    }
-  }, [theme])
 
   useEffect(() => {
     let isMounted = true
@@ -4947,13 +4932,9 @@ const handleEldoradoNoteSave = useCallback(
   const isProblemsTabLoading = isProblemsLoading || (activeTab === "problems" && isTabLoading)
   const isAdminTabLoading = isAdminLoading || (activeTab === "admin" && isTabLoading)
 
-  const toastStyle = isLight
-    ? { background: "#ffffff", color: "#0f172a", border: "1px solid #e2e8f0" }
-    : { background: "#0f1625", color: "#e5ecff", border: "1px solid #1d2534" }
+  const toastStyle = { background: "#0f1625", color: "#e5ecff", border: "1px solid #1d2534" }
 
-  const toastIconTheme = isLight
-    ? { primary: "#2563eb", secondary: "#ffffff" }
-    : { primary: "#3ac7ff", secondary: "#0f1625" }
+  const toastIconTheme = { primary: "#3ac7ff", secondary: "#0f1625" }
   const templateCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : templates.length
   const categoryCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : categories.length
   const selectedCategoryText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : selectedCategory.trim() || "Genel"
@@ -4961,44 +4942,6 @@ const handleEldoradoNoteSave = useCallback(
   const taskCountText = isTasksTabLoading ? <LoadingIndicator label="Yükleniyor" /> : taskStats.total
 
   const isAuthBusy = isAuthChecking || isAuthLoading
-
-  const handleThemeToggle = useCallback(() => {
-    setTheme((current) => (current === "light" ? "dark" : "light"))
-  }, [])
-
-  const nextThemeLabel = isLight ? "Karanlik" : "Aydinlik"
-  const themeToggleButton = (
-    <button
-      type="button"
-      onClick={handleThemeToggle}
-      className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
-      aria-label={`${nextThemeLabel} temaya gec`}
-      title={`${nextThemeLabel} temaya gec`}
-    >
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {isLight ? (
-          <>
-            <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" />
-          </>
-        ) : (
-          <>
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2.2M12 19.8V22M4.93 4.93l1.56 1.56M17.5 17.5l1.57 1.57M2 12h2.2M19.8 12H22M4.93 19.07l1.56-1.56M17.5 6.5l1.57-1.57" />
-          </>
-        )}
-      </svg>
-      <span className="hidden sm:inline">{nextThemeLabel}</span>
-    </button>
-  )
 
   const categoryColors = useMemo(() => {
     const map = {}
@@ -5722,7 +5665,6 @@ const handleEldoradoNoteSave = useCallback(
     setAuthError,
     handleAuthSubmit,
     handleLogout,
-    themeToggleButton,
     isProfileOpen,
     isProfileSaving,
     profileDraft,

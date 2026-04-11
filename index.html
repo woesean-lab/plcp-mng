@@ -5,22 +5,6 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pulcip Manage</title>
-    <script>
-      (() => {
-        try {
-          const storedTheme = localStorage.getItem("pulcipTheme")
-          const theme =
-            storedTheme === "light" || storedTheme === "dark"
-              ? storedTheme
-              : window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches
-                ? "light"
-                : "dark"
-          document.documentElement.setAttribute("data-theme", theme)
-        } catch {
-          document.documentElement.setAttribute("data-theme", "dark")
-        }
-      })()
-    </script>
     <style>
       #app-preloader {
         position: fixed;
@@ -32,11 +16,6 @@
         color: #e5ecff;
         font-family: "DM Sans", system-ui, -apple-system, sans-serif;
         z-index: 9999;
-      }
-
-      html[data-theme="light"] #app-preloader {
-        background: #dbeafe;
-        color: #1e3a8a;
       }
     </style>
   </head>
