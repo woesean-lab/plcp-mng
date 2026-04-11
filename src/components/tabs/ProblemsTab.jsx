@@ -9,11 +9,6 @@ function ProblemsSkeleton({ panelClass }) {
         <SkeletonBlock className="h-4 w-32 rounded-full" />
         <SkeletonBlock className="mt-4 h-8 w-56" />
         <SkeletonBlock className="mt-3 h-4 w-2/3" />
-        <div className="mt-4 flex flex-wrap gap-2">
-          <SkeletonBlock className="h-7 w-28 rounded-full" />
-          <SkeletonBlock className="h-7 w-28 rounded-full" />
-          <SkeletonBlock className="h-7 w-24 rounded-full" />
-        </div>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -74,26 +69,13 @@ export default function ProblemsTab({
   return (
     <div className="space-y-6">
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
-        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1.5 sm:space-y-2">
-            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-              Problemli Müşteriler
-            </h1>
-            <p className="max-w-2xl text-sm text-slate-200/80">
-              Müşteri kullanıcı adı ve sorununu kaydet; çözülünce "Problem çözüldü" ile kapat veya sil.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Açık problem: {openProblems.length}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Çözülen: {resolvedProblems.length}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Toplam: {problems.length}
-            </span>
-          </div>
+        <div className="space-y-1.5 sm:space-y-2">
+          <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
+            Problemli Müşteriler
+          </h1>
+          <p className="max-w-2xl text-sm text-slate-200/80">
+            Müşteri kullanıcı adı ve sorununu kaydet; çözülünce "Problem çözüldü" ile kapat veya sil.
+          </p>
         </div>
       </header>
 
@@ -280,14 +262,9 @@ export default function ProblemsTab({
         <div className="space-y-6">
           {canCreate && (
           <div className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Problem ekle</p>
-                <p className="text-sm text-slate-400">Kullanıcı adı ve sorunu yazıp kaydet.</p>
-              </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                Toplam: {problems.length}
-              </span>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Problem ekle</p>
+              <p className="text-sm text-slate-400">Kullanıcı adı ve sorunu yazıp kaydet.</p>
             </div>
 
             <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
