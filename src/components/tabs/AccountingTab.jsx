@@ -426,16 +426,13 @@ export default function AccountingTab({
 
   const entryCard = canCreate ? (
     <div className={`${responsivePanelClass} bg-ink-800/60`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
             Gun sonu girisi
           </p>
           <p className="text-sm text-slate-400">Mevcut ve bekleyen bakiyeleri gir.</p>
         </div>
-        <span className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-          {records.length} kayit
-        </span>
       </div>
 
       <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner sm:p-4">
@@ -637,16 +634,13 @@ export default function AccountingTab({
           </div>
 
           <div className={`${responsivePanelClass} bg-ink-900/60`}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Ozet
                 </p>
                 <p className="text-xs text-slate-400">Kisa bakiye ozeti.</p>
               </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                Kayit: {balanceRecords.length}
-              </span>
             </div>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
