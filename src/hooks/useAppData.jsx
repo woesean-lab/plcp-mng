@@ -39,6 +39,7 @@ import {
 } from "../utils/listUtils"
 import { parseFlexibleNumberInput } from "../utils/numberInput"
 import { getStockStatus, splitStocks } from "../utils/stockUtils"
+import { getInitialTheme } from "../utils/theme"
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -46,7 +47,7 @@ export default function useAppData() {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [isTabLoading, setIsTabLoading] = useState(false)
   const tabLoadingTimerRef = useRef(null)
-  const theme = "dark"
+  const [theme, setTheme] = useState(() => getInitialTheme())
   const [authToken, setAuthToken] = useState(() => {
     if (typeof window === "undefined") return ""
     try {
@@ -232,7 +233,7 @@ export default function useAppData() {
   const [accountingRecords, setAccountingRecords] = useState([])
   const [isAccountingLoading, setIsAccountingLoading] = useState(true)
 
-  const isLight = false
+  const isLight = theme === "light"
   const permissions = useMemo(() => activeUser?.role?.permissions ?? [], [activeUser])
   const hasPermission = useCallback((permission) => permissions.includes(permission), [permissions])
   const hasAnyPermission = useCallback(
@@ -286,7 +287,7 @@ export default function useAppData() {
     isAuthed,
   ])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement
     if (!root) return
     root.setAttribute("data-theme", theme)
@@ -4961,7 +4962,43 @@ const handleEldoradoNoteSave = useCallback(
 
   const isAuthBusy = isAuthChecking || isAuthLoading
 
-  const themeToggleButton = null
+  const handleThemeToggle = useCallback(() => {
+    setTheme((current) => (current === "light" ? "dark" : "light"))
+  }, [])
+
+  const nextThemeLabel = isLight ? "Karanlik" : "Aydinlik"
+  const themeToggleButton = (
+    <button
+      type="button"
+      onClick={handleThemeToggle}
+      className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+      aria-label={`${nextThemeLabel} temaya gec`}
+      title={`${nextThemeLabel} temaya gec`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {isLight ? (
+          <>
+            <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" />
+          </>
+        ) : (
+          <>
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2.2M12 19.8V22M4.93 4.93l1.56 1.56M17.5 17.5l1.57 1.57M2 12h2.2M19.8 12H22M4.93 19.07l1.56-1.56M17.5 6.5l1.57-1.57" />
+          </>
+        )}
+      </svg>
+      <span className="hidden sm:inline">{nextThemeLabel}</span>
+    </button>
+  )
 
   const categoryColors = useMemo(() => {
     const map = {}
