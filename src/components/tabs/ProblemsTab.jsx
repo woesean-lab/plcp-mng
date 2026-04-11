@@ -40,6 +40,13 @@ function ProblemsSkeleton({ panelClass }) {
   )
 }
 
+function formatProblemCreatedAt(value) {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString("tr-TR")
+}
+
 export default function ProblemsTab({
   isLoading,
   panelClass,
@@ -123,6 +130,11 @@ export default function ProblemsTab({
                           <span className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-accent-200 break-all">
                             {pb.username}
                           </span>
+                          {formatProblemCreatedAt(pb.createdAt) && (
+                            <p className="text-[11px] text-slate-400">
+                              Eklendi: {formatProblemCreatedAt(pb.createdAt)}
+                            </p>
+                          )}
                         </div>
                         <button
                           type="button"
@@ -211,6 +223,11 @@ export default function ProblemsTab({
                           <span className="inline-flex max-w-full flex-wrap rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-emerald-50 break-all">
                             {pb.username}
                           </span>
+                          {formatProblemCreatedAt(pb.createdAt) && (
+                            <p className="text-[11px] text-emerald-100/70">
+                              Eklendi: {formatProblemCreatedAt(pb.createdAt)}
+                            </p>
+                          )}
                         </div>
                         <button
                           type="button"
