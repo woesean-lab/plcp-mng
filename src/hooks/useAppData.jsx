@@ -929,16 +929,15 @@ export default function useAppData() {
     Object.keys(grouped).forEach((cat) => {
       const list = grouped[cat]
       if (!list || list.length <= 1) return
-      const starred = []
-      const normal = []
-      list.forEach((tpl) => {
-        if (tpl.starred) {
-          starred.push(tpl)
-        } else {
-          normal.push(tpl)
-        }
+      grouped[cat] = [...list].sort((left, right) => {
+        const clickDiff = Number(right?.clickCount ?? 0) - Number(left?.clickCount ?? 0)
+        if (clickDiff !== 0) return clickDiff
+
+        const starredDiff = Number(Boolean(right?.starred)) - Number(Boolean(left?.starred))
+        if (starredDiff !== 0) return starredDiff
+
+        return String(left?.label ?? "").localeCompare(String(right?.label ?? ""), "tr")
       })
-      grouped[cat] = [...starred, ...normal]
     })
     return grouped
   }, [templates])
