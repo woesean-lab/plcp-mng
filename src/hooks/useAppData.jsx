@@ -4932,7 +4932,6 @@ const handleEldoradoNoteSave = useCallback(
   const toastIconTheme = { primary: "#3ac7ff", secondary: "#0f1625" }
   const templateCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : templates.length
   const categoryCountText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : categories.length
-  const selectedCategoryText = showLoading ? <LoadingIndicator label="Yükleniyor" /> : selectedCategory.trim() || "Genel"
   const listCountText = isListsTabLoading ? <LoadingIndicator label="Yükleniyor" /> : lists.length
   const taskCountText = isTasksTabLoading ? <LoadingIndicator label="Yükleniyor" /> : taskStats.total
 
@@ -5680,7 +5679,6 @@ const handleEldoradoNoteSave = useCallback(
     panelClass,
     templateCountText,
     categoryCountText,
-    selectedCategoryText,
     activeTemplate,
     selectedCategory,
     getCategoryClass,

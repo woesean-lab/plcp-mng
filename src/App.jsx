@@ -53,7 +53,6 @@ function App() {
     panelClass,
     templateCountText,
     categoryCountText,
-    selectedCategoryText,
     activeTemplate,
     selectedCategory,
     getCategoryClass,
@@ -1034,7 +1033,6 @@ function App() {
               canManageCategories={canManageMessageCategories}
               templateCountText={templateCountText}
               categoryCountText={categoryCountText}
-              selectedCategoryText={selectedCategoryText}
               activeTemplate={activeTemplate}
               selectedCategory={selectedCategory}
               getCategoryClass={getCategoryClass}
