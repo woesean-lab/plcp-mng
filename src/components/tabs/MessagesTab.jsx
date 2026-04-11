@@ -11,11 +11,6 @@ function MessagesSkeleton({ panelClass }) {
         <SkeletonBlock className="h-4 w-32 rounded-full" />
         <SkeletonBlock className="mt-4 h-8 w-64" />
         <SkeletonBlock className="mt-3 h-4 w-2/3" />
-        <div className="mt-4 flex flex-wrap gap-2">
-          <SkeletonBlock className="h-7 w-28 rounded-full" />
-          <SkeletonBlock className="h-7 w-36 rounded-full" />
-          <SkeletonBlock className="h-7 w-24 rounded-full" />
-        </div>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
         <div className="space-y-6">
@@ -131,26 +126,12 @@ export default function MessagesTab({
         <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2 sm:space-y-3">
             <div className="space-y-1.5">
-              <h1 className="font-display text-2xl font-semibold leading-tight text-white sm:text-3xl md:text-4xl">
+              <h1 className="font-display text-2xl font-semibold leading-tight text-white sm:text-3xl">
                 Mesajlar
               </h1>
-              <p className="max-w-2xl text-sm text-slate-200/80 md:text-base">
+              <p className="max-w-2xl text-sm text-slate-200/80">
                 Kendi tonunu bul, hazır şablonlarını hızla düzenle ve tek tıkla ekibinle paylaş.
               </p>
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
-                <span className="h-2 w-2 rounded-full bg-accent-400" />
-                Şablon: {templateCountText}
-              </span>
-              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
-                <span className="h-2 w-2 rounded-full bg-amber-300" />
-                Kategori sayısı: {categoryCountText}
-              </span>
-              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-accent-200 md:text-sm">
-                <span className="h-2 w-2 rounded-full bg-amber-300" />
-                Kategori: {selectedCategoryText}
-              </span>
             </div>
           </div>
 
@@ -163,7 +144,7 @@ export default function MessagesTab({
                     Aktif şablon
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display text-xl font-semibold text-white sm:text-2xl">
+                    <h3 className="font-display text-lg font-semibold text-white sm:text-xl">
                       {activeTemplate?.label || (showLoading ? "Yükleniyor..." : "Yeni şablon")}
                     </h3>
                     <span
