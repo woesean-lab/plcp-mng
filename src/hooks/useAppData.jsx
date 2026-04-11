@@ -929,9 +929,6 @@ export default function useAppData() {
         const clickDiff = Number(right?.clickCount ?? 0) - Number(left?.clickCount ?? 0)
         if (clickDiff !== 0) return clickDiff
 
-        const starredDiff = Number(Boolean(right?.starred)) - Number(Boolean(left?.starred))
-        if (starredDiff !== 0) return starredDiff
-
         return String(left?.label ?? "").localeCompare(String(right?.label ?? ""), "tr")
       })
     })
@@ -4178,50 +4175,6 @@ const handleEldoradoNoteSave = useCallback(
   }, [activeTab, isAuthed, loadTemplates])
 
   useEffect(() => {
-    if (!isAuthed || templates.length === 0 || typeof window === "undefined") return
-    const legacyKey = "pulcipTemplateStars"
-    let legacyStars = null
-    try {
-      const stored = localStorage.getItem(legacyKey)
-      if (!stored) return
-      legacyStars = JSON.parse(stored)
-    } catch (error) {
-      console.warn("Could not read legacy template stars", error)
-      return
-    }
-    if (!legacyStars || typeof legacyStars !== "object") return
-    const labelsToStar = Object.keys(legacyStars).filter((label) => legacyStars[label])
-    if (labelsToStar.length === 0) {
-      localStorage.removeItem(legacyKey)
-      return
-    }
-    const targets = templates.filter((tpl) => labelsToStar.includes(tpl.label) && !tpl.starred)
-    if (targets.length === 0) {
-      localStorage.removeItem(legacyKey)
-      return
-    }
-    setTemplates((prev) =>
-      prev.map((tpl) =>
-        labelsToStar.includes(tpl.label) ? { ...tpl, starred: true } : tpl,
-      ),
-    )
-    Promise.all(
-      targets
-        .filter((tpl) => tpl.id)
-        .map((tpl) =>
-          apiFetch(`/api/templates/${tpl.id}/star`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ starred: true }),
-          }),
-        ),
-    ).catch((error) => {
-      console.error(error)
-    })
-    localStorage.removeItem(legacyKey)
-  }, [apiFetch, isAuthed, templates])
-
-  useEffect(() => {
     setOpenProducts((prev) => {
       if (products.length === 0) return {}
       const next = {}
@@ -4303,41 +4256,6 @@ const handleEldoradoNoteSave = useCallback(
         console.error("Copy failed", error)
         toast.error("Kopyalanamad\u0131", { duration: 1600, position: "top-right" })
       }
-    }
-  }
-
-  const handleTemplateStarToggle = async (label) => {
-    const safeLabel = String(label || "").trim()
-    if (!safeLabel) return
-    const target = templates.find((tpl) => tpl.label === safeLabel)
-    if (!target) return
-    const nextStarred = !Boolean(target.starred)
-
-    setTemplates((prev) =>
-      prev.map((tpl) => (tpl.label === safeLabel ? { ...tpl, starred: nextStarred } : tpl)),
-    )
-
-    if (!target.id) return
-
-    try {
-      const res = await apiFetch(`/api/templates/${target.id}/star`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ starred: nextStarred }),
-      })
-      if (!res.ok) throw new Error("template_star_failed")
-      const updated = await res.json()
-      setTemplates((prev) =>
-        prev.map((tpl) =>
-          tpl.id === updated.templateId ? { ...tpl, starred: updated.starred } : tpl,
-        ),
-      )
-    } catch (error) {
-      console.error(error)
-      setTemplates((prev) =>
-        prev.map((tpl) => (tpl.label === safeLabel ? { ...tpl, starred: !nextStarred } : tpl)),
-      )
-      toast.error("Yildiz guncellenemedi (API/DB kontrol edin).")
     }
   }
 
@@ -5694,7 +5612,6 @@ const handleEldoradoNoteSave = useCallback(
     handleActiveTemplateEditSave,
     categories,
     groupedTemplates,
-    handleTemplateStarToggle,
     openCategories,
     setOpenCategories,
     handleTemplateChange,

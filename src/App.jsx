@@ -68,7 +68,6 @@ function App() {
     handleActiveTemplateEditSave,
     categories,
     groupedTemplates,
-    handleTemplateStarToggle,
     openCategories,
     setOpenCategories,
     handleTemplateChange,
@@ -1048,7 +1047,6 @@ function App() {
               handleActiveTemplateEditSave={handleActiveTemplateEditSave}
               categories={categories}
               groupedTemplates={groupedTemplates}
-              handleTemplateStarToggle={handleTemplateStarToggle}
               openCategories={openCategories}
               setOpenCategories={setOpenCategories}
               handleTemplateChange={handleTemplateChange}
