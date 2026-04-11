@@ -593,13 +593,13 @@ function App() {
   const tabItems = useMemo(
     () => [
       { key: "messages", label: "Mesaj", canView: canViewMessages },
-      { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
       { key: "sales", label: "Satış", canView: canViewSales },
       { key: "accounting", label: "Bakiye", canView: canViewAccounting },
       { key: "problems", label: "Problem", canView: canViewProblems },
-      { key: "lists", label: "Liste", canView: canViewLists },
-      { key: "products", label: "Ürün", canView: canViewProducts },
       { key: "applications", label: "Servis", canView: canViewApplications },
+      { key: "products", label: "Ürün", canView: canViewProducts },
+      { key: "tasks", label: "G\u00f6rev", canView: canViewTasks },
+      { key: "lists", label: "Liste", canView: canViewLists },
       { key: "admin", label: "Admin", canView: canViewAdmin },
     ],
     [
