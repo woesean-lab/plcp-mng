@@ -1119,15 +1119,6 @@ export default function SalesTab({
                 <p className="mt-1 text-sm font-semibold text-slate-100">{analytics.peakDaysLast30}</p>
                 <p className="text-xs text-slate-400">Maks: {analytics.maxLast30}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner lg:col-span-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  Son 7 gün
-                </p>
-                <div className="mt-1 flex items-baseline justify-between">
-                  <p className="text-sm font-semibold text-slate-100">{analytics.last7Total}</p>
-                  <p className="text-xs text-slate-400">Toplam: {analytics.totalSales}</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
