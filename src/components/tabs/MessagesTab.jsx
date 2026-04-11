@@ -289,7 +289,7 @@ export default function MessagesTab({
 
             <div className="mt-4 space-y-3">
               {showLoading ? (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, idx) => (
                     <div key={idx} className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner">
                       <div className="mb-3 h-4 w-24 animate-pulse rounded-full bg-white/10" />
@@ -342,9 +342,9 @@ export default function MessagesTab({
                       </button>
 
                       {isOpen && (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-3">
                           {filteredList.length === 0 && (
-                            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                            <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
                               Bu kategoride şablon yok.
                             </div>
                           )}
@@ -361,7 +361,7 @@ export default function MessagesTab({
                                       : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
                                   }`}
                                 >
-                                  <p className="font-display text-lg">{tpl.label}</p>
+                                  <p className="font-display text-base sm:text-lg">{tpl.label}</p>
                                 </button>
                                 <span className="pointer-events-none absolute bottom-2 right-2 text-[10px] text-slate-500">
                                   {clickCount} tiklama
@@ -439,12 +439,11 @@ export default function MessagesTab({
 
           {canCreateTemplates && (
           <div className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex items-center justify-between">
+            <div>
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Şablon ekle</p>
                 <p className="text-sm text-slate-400">Başlık, kategori ve mesajı ekleyip kaydet.</p>
               </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">Hızlı ekle</span>
             </div>
 
             <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
