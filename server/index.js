@@ -3269,17 +3269,7 @@ app.post("/api/application-runs/:runId/input", requireAnyPermission(APPLICATION_
 
 app.get("/api/templates", async (req, res) => {
   const templates = await prisma.template.findMany({ orderBy: { id: "asc" } })
-  const stars = await prisma.templateStar.findMany({
-    where: { userId: req.user.id },
-    select: { templateId: true },
-  })
-  const starredIds = new Set(stars.map((entry) => entry.templateId))
-  res.json(
-    templates.map((tpl) => ({
-      ...tpl,
-      starred: starredIds.has(tpl.id),
-    })),
-  )
+  res.json(templates)
 })
 
 app.post("/api/templates", async (req, res) => {
@@ -3366,44 +3356,6 @@ app.put("/api/templates/:id", async (req, res) => {
     }
     throw error
   }
-})
-
-app.post("/api/templates/:id/star", async (req, res) => {
-  const id = Number(req.params.id)
-  if (!Number.isFinite(id)) {
-    res.status(400).json({ error: "invalid id" })
-    return
-  }
-
-  const starredRaw = req.body?.starred
-  if (starredRaw === undefined) {
-    res.status(400).json({ error: "starred is required" })
-    return
-  }
-  const starred =
-    typeof starredRaw === "boolean"
-      ? starredRaw
-      : String(starredRaw).toLowerCase() === "true"
-
-  const template = await prisma.template.findUnique({ where: { id } })
-  if (!template) {
-    res.status(404).json({ error: "Template not found" })
-    return
-  }
-
-  if (starred) {
-    await prisma.templateStar.upsert({
-      where: { templateId_userId: { templateId: id, userId: req.user.id } },
-      update: {},
-      create: { templateId: id, userId: req.user.id },
-    })
-  } else {
-    await prisma.templateStar.deleteMany({
-      where: { templateId: id, userId: req.user.id },
-    })
-  }
-
-  res.json({ templateId: id, starred })
 })
 
 app.post("/api/templates/:id/click", async (req, res) => {
