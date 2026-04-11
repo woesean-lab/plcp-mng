@@ -87,6 +87,21 @@ const formatBulkPriceLogTime = () =>
     minute: "2-digit",
     second: "2-digit",
   })
+const formatDownloadDateToken = (value = new Date()) => {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, "0")
+  const day = String(value.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+const normalizeDownloadName = (value) =>
+  String(value ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9\s-]/g, " ")
+    .trim()
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase()
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
 const CMD_VISIBLE_ROWS = 15
@@ -2122,6 +2137,32 @@ export default function ProductsTab({
     }
     selected.forEach((item) => triggerKeyFade(item?.id))
     wait(180).then(() => onBulkDelete(normalizedId, selected.map((item) => item.id)))
+  }
+  const handleUsedBulkDownload = (offerId, productName, list) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+
+    const selected = Array.isArray(list)
+      ? list
+          .map((item) => String(item?.code ?? "").trim())
+          .filter(Boolean)
+      : []
+    if (selected.length === 0) {
+      toast.error("Indirilecek kullanilan stok yok.")
+      return
+    }
+
+    const filenameBase =
+      normalizeDownloadName(productName) || normalizeDownloadName(normalizedId) || "kullanilan-stoklar"
+    const downloadUrl = URL.createObjectURL(new Blob([selected.join("\r\n")], { type: "text/plain;charset=utf-8" }))
+    const anchor = document.createElement("a")
+    anchor.href = downloadUrl
+    anchor.download = `${filenameBase}-kullanilan-stoklar-${formatDownloadDateToken()}.txt`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(downloadUrl)
+    toast.success(`${selected.length} kullanilan stok indirildi.`)
   }
   const armBulkUsedDeleteConfirm = () => {
     setConfirmBulkUsedDelete(true)
@@ -5195,6 +5236,15 @@ export default function ProductsTab({
                                       <span className="rounded-full border border-rose-300/60 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-50">
                                         {usedKeys.length} adet
                                       </span>
+                                      {canCopyKeys && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUsedBulkDownload(offerId, name, usedKeys)}
+                                          className="rounded-md border border-sky-300/60 bg-sky-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-500/20"
+                                        >
+                                          Toplu indir
+                                        </button>
+                                      )}
                                       {canDeleteKeys && (
                                         <button
                                           type="button"
