@@ -716,16 +716,13 @@ export default function SalesTab({
   const entryCard = canCreate ? (
     <div className={`${panelClass} relative overflow-hidden bg-ink-800/60`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(34,197,94,0.14),transparent)]" />
-      <div className="flex items-center justify-between">
+      <div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
             Satış girişi
           </p>
           <p className="text-sm text-slate-400">Tarih ve satış adetini ekle.</p>
         </div>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-          Kayıt: {summary.count}
-        </span>
       </div>
 
       <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
@@ -897,23 +894,13 @@ export default function SalesTab({
   return (
     <div className="space-y-6">
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
-        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1.5 sm:space-y-2">
-            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
-              Satış Grafiği
-            </h1>
-            <p className="max-w-2xl text-sm text-slate-200/80">
-              Tarih bazlı satış gir, hareketi grafikte takip et.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Toplam: {summary.total}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Kayıt: {summary.count}
-            </span>
-          </div>
+        <div className="space-y-1.5 sm:space-y-2">
+          <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
+            Satış Grafiği
+          </h1>
+          <p className="max-w-2xl text-sm text-slate-200/80">
+            Tarih bazlı satış gir, hareketi grafikte takip et.
+          </p>
         </div>
       </header>
 
@@ -1021,16 +1008,13 @@ export default function SalesTab({
             </div>
           </div>
           <div className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Satış özetleri
                 </p>
                 <p className="text-xs text-slate-400">Kısa performans özeti.</p>
               </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                Gün: {analytics.totalDays}
-              </span>
             </div>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div className="rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 shadow-inner">
