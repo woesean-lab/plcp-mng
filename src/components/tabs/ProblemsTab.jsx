@@ -133,8 +133,8 @@ export default function ProblemsTab({
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           {formatProblemCreatedAt(pb.createdAt) && (
-                            <span className="inline-flex items-center rounded-md border border-white/10 bg-ink-950/60 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-slate-400">
-                              {formatProblemCreatedAt(pb.createdAt)}
+                            <span className="text-[11px] text-slate-500">
+                              Eklendiği Tarih: {formatProblemCreatedAt(pb.createdAt)}
                             </span>
                           )}
                           <button
@@ -228,8 +228,8 @@ export default function ProblemsTab({
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           {formatProblemCreatedAt(pb.createdAt) && (
-                            <span className="inline-flex items-center rounded-md border border-emerald-200/40 bg-emerald-950/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-emerald-100/70">
-                              {formatProblemCreatedAt(pb.createdAt)}
+                            <span className="text-[11px] text-emerald-100/60">
+                              Eklendiği Tarih: {formatProblemCreatedAt(pb.createdAt)}
                             </span>
                           )}
                           <button
