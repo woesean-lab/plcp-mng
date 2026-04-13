@@ -143,11 +143,6 @@ export default function ProblemsTab({
                       </div>
                       <div className="rounded-lg border border-white/10 bg-ink-800/80 px-3 py-2 shadow-inner">
                         <p className="text-sm text-slate-200">{pb.issue}</p>
-                        {formatProblemCreatedAt(pb.createdAt) && (
-                          <p className="mt-2 text-[10px] text-slate-500/70 text-right">
-                            Eklendiği Tarih: {formatProblemCreatedAt(pb.createdAt)}
-                          </p>
-                        )}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {(canResolve || canDelete) && (
@@ -238,11 +233,6 @@ export default function ProblemsTab({
                       </div>
                       <div className="rounded-lg border border-emerald-200/20 bg-emerald-950/30 px-3 py-2 shadow-inner">
                         <p className="text-sm text-emerald-50/90">{pb.issue}</p>
-                        {formatProblemCreatedAt(pb.createdAt) && (
-                          <p className="mt-2 text-[10px] text-emerald-100/60 text-right">
-                            Eklendiği Tarih: {formatProblemCreatedAt(pb.createdAt)}
-                          </p>
-                        )}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {(canResolve || canDelete) && (
