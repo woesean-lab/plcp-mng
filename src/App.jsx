@@ -1113,8 +1113,6 @@ function App() {
           <div className={activeTab === "accounting" ? getTabSlideClass("accounting") : "hidden"}>
             <AccountingTab
               isLoading={isAccountingTabLoading}
-              isActive={activeTab === "accounting"}
-              automationWsUrl={eldoradoAutomationWsUrl}
               panelClass={panelClass}
               canCreate={canCreateAccounting}
               canViewAnalytics={canViewAccountingAnalytics}
