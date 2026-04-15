@@ -245,7 +245,6 @@ export default function AccountingTab({
     note: "",
   })
   const [formError, setFormError] = useState("")
-  const [countRequestDate, setCountRequestDate] = useState(() => todayKey())
   const [isCountRunning, setIsCountRunning] = useState(false)
   const [countResultModal, setCountResultModal] = useState({
     isOpen: false,
@@ -553,7 +552,7 @@ export default function AccountingTab({
       return
     }
 
-    const targetDate = String(countRequestDate ?? "").trim()
+    const targetDate = String(form.date ?? "").trim()
     const parsedDate = new Date(`${targetDate}T00:00:00`)
     if (!targetDate || Number.isNaN(parsedDate.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
       toast.error("Tarih secin.")
@@ -772,7 +771,7 @@ export default function AccountingTab({
     automationWsUrl,
     canCreate,
     closeCountSocket,
-    countRequestDate,
+    form.date,
     isCountRunning,
     sendSocketIoEvent,
     updateCountToast,
@@ -785,12 +784,6 @@ export default function AccountingTab({
       cancel()
     }
   }, [isActive, isCountRunning])
-
-  useEffect(() => {
-    if (!countRequestDate && form.date) {
-      setCountRequestDate(String(form.date).trim())
-    }
-  }, [countRequestDate, form.date])
 
   useEffect(() => {
     return () => {
@@ -872,13 +865,36 @@ export default function AccountingTab({
 
   const entryCard = canCreate ? (
     <div className={`${responsivePanelClass} bg-ink-800/60`}>
-      <div>
+      <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
             Gun sonu girisi
           </p>
           <p className="text-sm text-slate-400">Mevcut ve bekleyen bakiyeleri gir.</p>
         </div>
+        <button
+          type="button"
+          onClick={handleCountRun}
+          disabled={isCountRunning}
+          title="Sayim al"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className={`h-4 w-4 ${isCountRunning ? "animate-spin" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 2v6h-6" />
+            <path d="M3 22v-6h6" />
+            <path d="M21 8a9 9 0 0 0-15.5-4.5L3 6" />
+            <path d="M3 16a9 9 0 0 0 15.5 4.5L21 18" />
+          </svg>
+        </button>
       </div>
 
       <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner sm:p-4">
@@ -936,49 +952,10 @@ export default function AccountingTab({
     </div>
   ) : null
 
-  const countCard = canCreate ? (
-    <div className={`${responsivePanelClass} relative overflow-hidden bg-ink-800/60`}>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(59,130,246,0.16),transparent)]" />
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Sayim al</p>
-          <p className="text-sm text-slate-400">Websocket uzerinden guncel bakiyeyi cek.</p>
-        </div>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-          backend: {BALANCE_COUNT_BACKEND_KEY}
-        </span>
-      </div>
-
-      <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-slate-200" htmlFor="accounting-count-date">
-            Tarih
-          </label>
-          <input
-            id="accounting-count-date"
-            type="date"
-            value={countRequestDate}
-            onChange={(event) => setCountRequestDate(event.target.value)}
-            className={inputClassName}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={handleCountRun}
-          disabled={isCountRunning}
-          className="flex w-full items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isCountRunning ? "Sayim aliniyor..." : "Sayim al"}
-        </button>
-      </div>
-    </div>
-  ) : null
-
   const sidebarCards = (
     <div className="space-y-6">
       {recordsCard}
       {entryCard}
-      {countCard}
     </div>
   )
 
