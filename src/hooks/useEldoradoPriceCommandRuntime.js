@@ -104,8 +104,8 @@ export default function useEldoradoPriceCommandRuntime({
   wsUrl = "",
   canRunPriceCommand = false,
   canViewPriceCommandLogs = false,
-  defaultBackendKey = "eldorado",
-  defaultBackendLabel = "eldorado",
+  defaultBackendKey = "eldoradofiyatguncelleme",
+  defaultBackendLabel = "eldoradofiyatguncelleme",
   maxLogEntries = 120,
   isActive = false,
   trackedLogOfferIds = [],
@@ -438,7 +438,8 @@ export default function useEldoradoPriceCommandRuntime({
           return
         }
 
-        const backendKey = String(options?.backendKey ?? defaultBackendKey ?? "").trim() || "eldorado"
+        const backendKey =
+          String(options?.backendKey ?? defaultBackendKey ?? "").trim() || "eldoradofiyatguncelleme"
         const backendLabel = String(options?.backendLabel ?? defaultBackendLabel ?? backendKey).trim() || backendKey
         if (!String(wsUrl ?? "").trim()) {
           fail("Websocket adresi bulunamadi. Admin panelinden kaydedin.")

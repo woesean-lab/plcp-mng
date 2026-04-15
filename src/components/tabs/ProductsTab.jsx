@@ -116,6 +116,7 @@ const PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing>"
 const BULK_PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing-bulk>"
 const BULK_PRICE_SESSION_STORAGE_KEY = "plcp:products:bulk-price-session:v1"
 const BULK_PRICE_RESUMABLE_STATUSES = new Set(["pending", "running", "error"])
+const PRICE_COMMAND_BACKEND_KEY = "eldoradofiyatguncelleme"
 const clampPriceMultiplier = (value, fallback = DEFAULT_PRICE_MULTIPLIER) => {
   const multiplier = Number(normalizeDecimalInput(value))
   if (!Number.isFinite(multiplier) || multiplier <= 0) return fallback
@@ -630,7 +631,6 @@ export default function ProductsTab({
   const [isBulkUsedDeleteRunning, setIsBulkUsedDeleteRunning] = useState(false)
   const [isBulkStockRefreshRunning, setIsBulkStockRefreshRunning] = useState(false)
   const [selectedPriceOfferIds, setSelectedPriceOfferIds] = useState({})
-  const [bulkPriceMultiplierDraft, setBulkPriceMultiplierDraft] = useState(DEFAULT_PRICE_MULTIPLIER)
   const [bulkPriceCommandState, setBulkPriceCommandState] = useState(createEmptyBulkPriceCommandState)
   const [bulkPriceCommandLogEntries, setBulkPriceCommandLogEntries] = useState([])
   const [bulkPriceItemStatusByOffer, setBulkPriceItemStatusByOffer] = useState({})
@@ -831,12 +831,12 @@ export default function ProductsTab({
   const priceCommandBackendEntry = useMemo(() => {
     const exactMatch =
       applicationAutomationBackendOptions.find(
-        (entry) => normalizeBackendKind(entry.key) === "eldorado",
+        (entry) => normalizeBackendKind(entry.key) === PRICE_COMMAND_BACKEND_KEY,
       ) ||
       applicationAutomationBackendOptions.find(
-        (entry) => normalizeBackendKind(entry.label) === "eldorado",
+        (entry) => normalizeBackendKind(entry.label) === PRICE_COMMAND_BACKEND_KEY,
       )
-    return exactMatch || { key: "eldorado", label: "eldorado", kind: "uygulama" }
+    return exactMatch || { key: PRICE_COMMAND_BACKEND_KEY, label: PRICE_COMMAND_BACKEND_KEY, kind: "uygulama" }
   }, [applicationAutomationBackendOptions])
   const {
     priceCommandRunLogByOffer,
@@ -852,8 +852,8 @@ export default function ProductsTab({
     wsUrl: automationWsUrl,
     canRunPriceCommand: canManagePrices,
     canViewPriceCommandLogs,
-    defaultBackendKey: priceCommandBackendEntry?.key ?? "eldorado",
-    defaultBackendLabel: priceCommandBackendEntry?.label ?? "eldorado",
+    defaultBackendKey: priceCommandBackendEntry?.key ?? PRICE_COMMAND_BACKEND_KEY,
+    defaultBackendLabel: priceCommandBackendEntry?.label ?? PRICE_COMMAND_BACKEND_KEY,
     maxLogEntries: MAX_PRICE_COMMAND_RUN_LOG_ENTRIES,
     isActive,
     trackedLogOfferIds: trackedPriceLogOfferIds,
@@ -1527,98 +1527,6 @@ export default function ProductsTab({
 
     return savedCount
   }
-  const handleApplyBulkPriceMultiplier = async () => {
-    if (isBulkPriceRunning) return
-    const multiplierNumber = clampPriceMultiplier(bulkPriceMultiplierDraft)
-    const percentNumber = multiplierToPercent(multiplierNumber)
-    const normalizedPercent = formatPercentDraftValue(percentNumber)
-    if (!Number.isFinite(multiplierNumber) || !Number.isFinite(percentNumber) || !normalizedPercent) {
-      toast.error("Toplu katsayi icin gecerli bir deger secin.")
-      return
-    }
-
-    const targetOfferIds = selectedBulkPriceProducts
-      .map((product) => String(product?.id ?? "").trim())
-      .filter((offerId) => Boolean(offerId) && Boolean(priceEnabledByOffer?.[offerId]))
-
-    if (targetOfferIds.length === 0) {
-      toast.error("Katsayi uygulanacak secili fiyat urunu yok.")
-      return
-    }
-
-    const nextDrafts = {}
-    const saveCandidates = targetOfferIds.reduce((acc, offerId) => {
-      const currentDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
-      const baseInputValue = String(currentDraft.base ?? "").trim()
-      const baseNumber = isValidPriceInput(baseInputValue)
-        ? Number(normalizeDecimalInput(baseInputValue))
-        : Number.NaN
-      const result = calculateRoundedPriceResult(baseNumber, multiplierNumber)
-
-      nextDrafts[offerId] = {
-        ...currentDraft,
-        percent: normalizedPercent,
-      }
-
-      if (Number.isFinite(baseNumber) && Number.isFinite(result)) {
-        const normalizedPayload = normalizePricePayloadValues({
-          offerId,
-          base: baseNumber,
-          percent: percentNumber,
-          result,
-        })
-        acc.push({
-          offerId,
-          base: normalizedPayload.base,
-          percent: normalizedPayload.percent,
-          result: normalizedPayload.result,
-        })
-      }
-      return acc
-    }, [])
-
-    setPriceDrafts((prev) => ({
-      ...prev,
-      ...nextDrafts,
-    }))
-
-    const progressToastId =
-      saveCandidates.length > 0
-        ? toast.loading(`Toplu katsayi kaydediliyor... 0/${saveCandidates.length}`, {
-            position: "top-right",
-          })
-        : null
-    const savedCount = await persistSavedPrices(saveCandidates, {
-      onProgress: ({ processed, total, saved }) => {
-        if (!progressToastId || total <= 0) return
-        toast.loading(`Toplu katsayi kaydediliyor... ${processed}/${total} | Kaydedilen=${saved}`, {
-          id: progressToastId,
-          position: "top-right",
-        })
-      },
-    })
-    const unsavedCount = Math.max(0, targetOfferIds.length - savedCount)
-    if (savedCount === 0 && unsavedCount > 0) {
-      if (progressToastId) {
-        toast.error("Katsayi uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.", {
-          id: progressToastId,
-          position: "top-right",
-        })
-      } else {
-        toast.error("Katsayi uygulandi ama kaydedilecek gecerli baz fiyat bulunamadi.")
-      }
-      return
-    }
-    const successMessage =
-      unsavedCount > 0
-        ? `Katsayi uygulandi. Kaydedilen=${savedCount}, taslak kalan=${unsavedCount}`
-        : `Secili ${savedCount} urune katsayi uygulanip kaydedildi.`
-    if (progressToastId) {
-      toast.success(successMessage, { id: progressToastId, position: "top-right" })
-    } else {
-      toast.success(successMessage)
-    }
-  }
   const handleCancelBulkPriceCommand = () => {
     if (!isBulkPriceRunning || bulkPriceCancelRequestedRef.current) return
     bulkPriceCancelRequestedRef.current = true
@@ -1757,8 +1665,8 @@ export default function ProductsTab({
           },
           {
             label: "Toplu Sonucu Gonder",
-            backendKey: priceCommandBackendEntry?.key ?? "eldorado",
-            backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
+            backendKey: priceCommandBackendEntry?.key ?? PRICE_COMMAND_BACKEND_KEY,
+            backendLabel: priceCommandBackendEntry?.label ?? PRICE_COMMAND_BACKEND_KEY,
             showToast: false,
           },
         )
@@ -3250,22 +3158,7 @@ export default function ProductsTab({
                         </div>
                       </div>
                       <div className="flex w-full flex-col gap-2 xl:w-[360px] xl:items-stretch">
-                        <PriceMultiplierControl
-                          compact
-                          label="Toplu katsayi"
-                          value={bulkPriceMultiplierDraft}
-                          onChange={setBulkPriceMultiplierDraft}
-                          disabled={isBulkPriceRunning}
-                        />
                         <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-                          <button
-                            type="button"
-                            onClick={handleApplyBulkPriceMultiplier}
-                            disabled={isBulkPriceRunning || selectedPriceCount === 0}
-                            className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-100 transition hover:border-white/20 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Uygula
-                          </button>
                           <button
                             type="button"
                             onClick={handleResumeBulkPriceCommandRun}
@@ -3363,7 +3256,7 @@ export default function ProductsTab({
                               <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
                               <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                               <span className="min-w-0 break-words text-slate-400">
-                                secili={selectedPriceCount} / hazir={bulkPriceReadyCount} / backend={priceCommandBackendEntry?.label ?? "eldorado"}
+                                secili={selectedPriceCount} / hazir={bulkPriceReadyCount} / backend={priceCommandBackendEntry?.label ?? PRICE_COMMAND_BACKEND_KEY}
                               </span>
                             </div>
                             <div className="space-y-0.5">
@@ -4530,8 +4423,8 @@ export default function ProductsTab({
                     },
                     {
                       label: "Sonucu Gonder",
-                      backendKey: priceCommandBackendEntry?.key ?? "eldorado",
-                      backendLabel: priceCommandBackendEntry?.label ?? "eldorado",
+                      backendKey: priceCommandBackendEntry?.key ?? PRICE_COMMAND_BACKEND_KEY,
+                      backendLabel: priceCommandBackendEntry?.label ?? PRICE_COMMAND_BACKEND_KEY,
                     },
                   )
                 }
@@ -4592,7 +4485,7 @@ export default function ProductsTab({
             <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
             <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
             <span className="min-w-0 break-words text-slate-400">
-              backend={priceCommandBackendEntry?.label ?? "eldorado"} / urun={offerId || "-"} / kategori={productCategory || "-"}
+              backend={priceCommandBackendEntry?.label ?? PRICE_COMMAND_BACKEND_KEY} / urun={offerId || "-"} / kategori={productCategory || "-"}
             </span>
           </div>
           <div className="space-y-0.5">
