@@ -1,7 +1,15 @@
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
+import { toast } from "react-hot-toast"
 import { parseFlexibleNumberInput } from "../../utils/numberInput"
+import {
+  buildSocketIoWsUrl,
+  parseSocketIoEventPacket,
+  splitEnginePackets,
+} from "../../utils/socketIoClient"
 
 const USD_TO_TRY_RATE = 44.5984
+const BALANCE_COUNT_BACKEND_KEY = "eldoradobakiyeguncelleme"
 const inputClassName =
   "w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 transition hover:border-accent-400/40 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30"
 
@@ -108,6 +116,54 @@ const preciseCurrency = (value) => {
   })
 }
 
+const normalizeRuntimeMessage = (value) => {
+  if (typeof value === "string") return value
+  if (value === null || value === undefined) return ""
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+const readFirstNumericValue = (value, depth = 0) => {
+  if (depth > 3 || value === null || value === undefined) return null
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? Math.floor(value) : null
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().replace(",", ".")
+    if (!normalized) return null
+    const direct = Number(normalized)
+    if (Number.isFinite(direct)) return Math.floor(direct)
+    const match = normalized.match(/-?\d+(?:\.\d+)?/)
+    if (!match) return null
+    const parsed = Number(match[0])
+    return Number.isFinite(parsed) ? Math.floor(parsed) : null
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = readFirstNumericValue(item, depth + 1)
+      if (Number.isFinite(found)) return found
+    }
+    return null
+  }
+  if (typeof value === "object") {
+    const priorityKeys = ["count", "result", "value", "amount", "total", "sayim", "balance", "bakiye"]
+    for (const key of priorityKeys) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        const found = readFirstNumericValue(value[key], depth + 1)
+        if (Number.isFinite(found)) return found
+      }
+    }
+    for (const item of Object.values(value)) {
+      const found = readFirstNumericValue(item, depth + 1)
+      if (Number.isFinite(found)) return found
+    }
+  }
+  return null
+}
+
 function AccountingSkeleton({ panelClass, canViewAnalytics }) {
   if (!canViewAnalytics) {
     return (
@@ -173,6 +229,8 @@ function AccountingSkeleton({ panelClass, canViewAnalytics }) {
 export default function AccountingTab({
   panelClass,
   isLoading,
+  isActive = true,
+  automationWsUrl = "",
   accountingRecords = [],
   saveAccountingRecord,
   canCreate = false,
@@ -187,15 +245,23 @@ export default function AccountingTab({
     note: "",
   })
   const [formError, setFormError] = useState("")
+  const [countRequestDate, setCountRequestDate] = useState(() => todayKey())
+  const [isCountRunning, setIsCountRunning] = useState(false)
+  const [countResultModal, setCountResultModal] = useState({
+    isOpen: false,
+    date: "",
+    count: 0,
+    collectedAt: "",
+  })
+  const [isCountSaving, setIsCountSaving] = useState(false)
+  const countSocketRef = useRef(null)
+  const countToastIdRef = useRef("")
+  const countCancelRef = useRef(null)
   const responsivePanelClass = `${panelClass} px-4 py-4 sm:px-6 sm:py-6`
 
   const updateForm = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
     if (formError) setFormError("")
-  }
-
-  if (isLoading) {
-    return <AccountingSkeleton panelClass={panelClass} canViewAnalytics={canViewAnalytics} />
   }
 
   const records = Array.isArray(accountingRecords) ? accountingRecords : []
@@ -352,9 +418,389 @@ export default function AccountingTab({
         note: "",
       }))
       setFormError("")
-    } catch (error) {
+    } catch {
       setFormError("Kayit eklenemedi.")
     }
+  }
+
+  const closeCountSocket = useCallback(() => {
+    const socket = countSocketRef.current
+    countSocketRef.current = null
+    if (!socket) return
+    try {
+      socket.onopen = null
+      socket.onmessage = null
+      socket.onerror = null
+      socket.onclose = null
+      socket.close()
+    } catch {
+      // Ignore close errors.
+    }
+  }, [])
+
+  const updateCountToast = useCallback((type, message) => {
+    const normalizedMessage = String(message ?? "").trim()
+    if (!normalizedMessage) return
+    const toastId = countToastIdRef.current || "accounting-count-runtime"
+    countToastIdRef.current = toastId
+    if (type === "success") {
+      toast.success(normalizedMessage, { id: toastId, position: "top-right" })
+      return
+    }
+    if (type === "error") {
+      toast.error(normalizedMessage, { id: toastId, position: "top-right" })
+      return
+    }
+    const loadingMessage = normalizedMessage.includes("Lutfen sekmeyi kapatmayin.")
+      ? normalizedMessage
+      : `${normalizedMessage} Lutfen sekmeyi kapatmayin.`
+    toast.loading(loadingMessage, { id: toastId, position: "top-right" })
+  }, [])
+
+  const sendSocketIoEvent = useCallback((socket, eventName, payload) => {
+    if (!socket || socket.readyState !== WebSocket.OPEN) return false
+    const normalizedEventName = String(eventName ?? "").trim()
+    if (!normalizedEventName) return false
+    try {
+      socket.send(`42${JSON.stringify([normalizedEventName, payload ?? {}])}`)
+      return true
+    } catch {
+      return false
+    }
+  }, [])
+
+  const handleCountModalClose = useCallback(() => {
+    if (isCountSaving) return
+    setCountResultModal((prev) => ({ ...prev, isOpen: false }))
+  }, [isCountSaving])
+
+  const handleCountResultSave = useCallback(async () => {
+    if (isCountSaving) return
+    const targetDate = String(countResultModal.date ?? "").trim()
+    const targetCount = Number(countResultModal.count)
+    if (!targetDate || !Number.isFinite(targetCount) || targetCount < 0) {
+      toast.error("Gecerli sayim sonucu bulunamadi.")
+      return
+    }
+    if (typeof saveAccountingRecord !== "function") {
+      toast.error("Bakiye kaydi hazir degil.")
+      return
+    }
+
+    const sameDateRecord = balanceRecords.find((item) => String(item?.date ?? "").trim() === targetDate)
+    const formPending = parseFlexibleNumberInput(form.pending)
+    const formWithdrawal = parseFlexibleNumberInput(form.withdrawal)
+    const latestPending = Number(latest?.pending ?? 0)
+    const pendingValue = Number(
+      sameDateRecord?.pending ??
+        (Number.isFinite(formPending) && formPending >= 0 ? formPending : Number.isFinite(latestPending) ? latestPending : 0),
+    )
+    const withdrawalValue = Number(
+      sameDateRecord?.withdrawal ??
+        (Number.isFinite(formWithdrawal) && formWithdrawal >= 0 ? formWithdrawal : 0),
+    )
+    const noteValue = String(sameDateRecord?.note ?? form.note ?? "").trim()
+
+    setIsCountSaving(true)
+    try {
+      await saveAccountingRecord(
+        {
+          date: targetDate,
+          available: targetCount,
+          pending: Number.isFinite(pendingValue) && pendingValue >= 0 ? pendingValue : 0,
+          withdrawal: Number.isFinite(withdrawalValue) && withdrawalValue >= 0 ? withdrawalValue : 0,
+          note: noteValue,
+        },
+        {
+          successMessage: "Sayim kaydi eklendi",
+          errorMessage: "Sayim kaydi eklenemedi.",
+        },
+      )
+      setCountResultModal((prev) => ({ ...prev, isOpen: false }))
+      setForm((prev) => ({
+        ...prev,
+        date: targetDate,
+        available: String(targetCount),
+        pending: String(Number.isFinite(pendingValue) && pendingValue >= 0 ? pendingValue : 0),
+        withdrawal: Number.isFinite(withdrawalValue) && withdrawalValue > 0 ? String(withdrawalValue) : "",
+        note: noteValue,
+      }))
+      setFormError("")
+    } catch {
+      // saveAccountingRecord already shows the error toast.
+    } finally {
+      setIsCountSaving(false)
+    }
+  }, [
+    balanceRecords,
+    countResultModal.count,
+    countResultModal.date,
+    form.note,
+    form.pending,
+    form.withdrawal,
+    isCountSaving,
+    latest?.pending,
+    saveAccountingRecord,
+  ])
+
+  const handleCountRun = useCallback(() => {
+    if (!canCreate) {
+      toast.error("Bakiye girme yetkiniz yok.")
+      return
+    }
+    if (isCountRunning) {
+      toast.error("Sayim islemi zaten calisiyor.")
+      return
+    }
+
+    const targetDate = String(countRequestDate ?? "").trim()
+    const parsedDate = new Date(`${targetDate}T00:00:00`)
+    if (!targetDate || Number.isNaN(parsedDate.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+      toast.error("Tarih secin.")
+      return
+    }
+
+    const wsBaseUrl = String(automationWsUrl ?? "").trim()
+    if (!wsBaseUrl) {
+      toast.error("Websocket adresi bulunamadi. Admin panelinden kaydedin.")
+      return
+    }
+
+    const triggerUrl = buildSocketIoWsUrl(wsBaseUrl, {
+      kind: "uygulama",
+      backend: BALANCE_COUNT_BACKEND_KEY,
+      date: targetDate,
+    })
+    if (!triggerUrl) {
+      toast.error("Socket.IO adresi olusturulamadi.")
+      return
+    }
+
+    closeCountSocket()
+    setIsCountRunning(true)
+    setCountResultModal((prev) => ({ ...prev, isOpen: false }))
+    updateCountToast("loading", "Bakiye sayimi aliniyor...")
+
+    let socket = null
+    let settled = false
+    let hasConnected = false
+    let hasResult = false
+    let timeoutId = null
+
+    const clearRunTimeout = () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+        timeoutId = null
+      }
+    }
+
+    const resetRunTimeout = (ms = 120000) => {
+      clearRunTimeout()
+      timeoutId = window.setTimeout(() => {
+        complete("error", "Sayim sonucu beklenirken zaman asimi olustu.")
+      }, ms)
+    }
+
+    const complete = (status, message) => {
+      if (settled) return
+      settled = true
+      countCancelRef.current = null
+      clearRunTimeout()
+      closeCountSocket()
+      setIsCountRunning(false)
+
+      if (status === "success") {
+        updateCountToast("success", message || "Sayim sonucu alindi.")
+      } else if (status === "error") {
+        updateCountToast("error", message || "Sayim islemi tamamlanamadi.")
+      }
+    }
+
+    try {
+      socket = new WebSocket(triggerUrl)
+    } catch {
+      complete("error", "Sayim icin websocket baglantisi baslatilamadi.")
+      return
+    }
+
+    countSocketRef.current = socket
+    countCancelRef.current = () => {
+      if (settled) return
+      sendSocketIoEvent(socket, "cancel", {
+        backend: BALANCE_COUNT_BACKEND_KEY,
+        reason: "user-cancelled",
+      })
+      complete("error", "Sekme degistigi icin sayim islemi iptal edildi.")
+    }
+    resetRunTimeout(15000)
+
+    socket.onmessage = (event) => {
+      if (settled) return
+      const rawPayload = typeof event.data === "string" ? event.data : ""
+      if (!rawPayload) return
+
+      const packets = splitEnginePackets(rawPayload)
+      for (const packet of packets) {
+        if (settled) return
+
+        if (packet === "2") {
+          try {
+            socket?.send("3")
+          } catch {
+            // Ignore pong send errors.
+          }
+          continue
+        }
+
+        if (packet.startsWith("0{")) {
+          try {
+            socket?.send("40")
+          } catch {
+            complete("error", "Socket.IO baglantisi baslatilamadi.")
+          }
+          continue
+        }
+
+        if (packet.startsWith("40")) {
+          hasConnected = true
+          updateCountToast("loading", `${BALANCE_COUNT_BACKEND_KEY} baglandi.`)
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (packet.startsWith("41")) {
+          if (hasResult) {
+            complete("success", "Sayim sonucu hazir.")
+          } else {
+            complete("error", "Baglanti sonuc gelmeden kapandi.")
+          }
+          return
+        }
+
+        if (packet.startsWith("44")) {
+          complete("error", `${BALANCE_COUNT_BACKEND_KEY} tetiklenemedi.`)
+          return
+        }
+
+        const eventPacket = parseSocketIoEventPacket(packet)
+        if (!eventPacket) continue
+
+        const eventName = String(eventPacket.event ?? "").trim().toLowerCase()
+        const firstArg = eventPacket.args[0]
+
+        if (eventName === "script-triggered" || eventName === "script-started") {
+          updateCountToast("loading", "Sayim script baslatildi.")
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "durum") {
+          const lines = normalizeRuntimeMessage(firstArg?.message ?? firstArg)
+            .replace(/\r/g, "")
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+          if (lines.length > 0) {
+            updateCountToast("loading", lines[lines.length - 1])
+          }
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "script-log") {
+          const lines = String(firstArg?.message ?? "")
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+          if (lines.length > 0) {
+            updateCountToast("loading", lines[lines.length - 1])
+          }
+          resetRunTimeout(300000)
+          continue
+        }
+
+        if (eventName === "sonuc") {
+          const rawResult = firstArg?.value ?? firstArg
+          const countValue = readFirstNumericValue(rawResult)
+          if (!Number.isFinite(countValue) || countValue < 0) {
+            complete("error", "Sayim sonucu gecerli bir sayi olarak donmedi.")
+            return
+          }
+
+          hasResult = true
+          setCountResultModal({
+            isOpen: true,
+            date: targetDate,
+            count: countValue,
+            collectedAt: todayKey(),
+          })
+          complete("success", `Sayim alindi: ${countValue}`)
+          return
+        }
+
+        if (eventName === "script-exit") {
+          const exitCode = Number(firstArg?.code ?? firstArg?.exitCode)
+          if (Number.isFinite(exitCode) && exitCode !== 0 && !hasResult) {
+            complete("error", `Script cikti. Kod: ${exitCode}`)
+            return
+          }
+          resetRunTimeout(5000)
+          continue
+        }
+
+        resetRunTimeout(300000)
+      }
+    }
+
+    socket.onerror = () => {
+      complete("error", hasConnected ? "Baglanti sirasinda hata olustu." : "Websocket baglantisi kurulamadi.")
+    }
+
+    socket.onclose = () => {
+      if (settled) return
+      if (hasResult) {
+        complete("success", "Sayim sonucu hazir.")
+        return
+      }
+      if (hasConnected) {
+        complete("error", "Baglanti acildi ancak sonuc gelmedi.")
+        return
+      }
+      complete("error", "Websocket baglantisi kapandi.")
+    }
+  }, [
+    automationWsUrl,
+    canCreate,
+    closeCountSocket,
+    countRequestDate,
+    isCountRunning,
+    sendSocketIoEvent,
+    updateCountToast,
+  ])
+
+  useEffect(() => {
+    if (isActive || !isCountRunning) return
+    const cancel = countCancelRef.current
+    if (typeof cancel === "function") {
+      cancel()
+    }
+  }, [isActive, isCountRunning])
+
+  useEffect(() => {
+    if (!countRequestDate && form.date) {
+      setCountRequestDate(String(form.date).trim())
+    }
+  }, [countRequestDate, form.date])
+
+  useEffect(() => {
+    return () => {
+      countCancelRef.current = null
+      closeCountSocket()
+    }
+  }, [closeCountSocket])
+
+  if (isLoading) {
+    return <AccountingSkeleton panelClass={panelClass} canViewAnalytics={canViewAnalytics} />
   }
 
   const recordsCard = (
@@ -490,15 +936,121 @@ export default function AccountingTab({
     </div>
   ) : null
 
+  const countCard = canCreate ? (
+    <div className={`${responsivePanelClass} relative overflow-hidden bg-ink-800/60`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(59,130,246,0.16),transparent)]" />
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Sayim al</p>
+          <p className="text-sm text-slate-400">Websocket uzerinden guncel bakiyeyi cek.</p>
+        </div>
+        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+          backend: {BALANCE_COUNT_BACKEND_KEY}
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-slate-200" htmlFor="accounting-count-date">
+            Tarih
+          </label>
+          <input
+            id="accounting-count-date"
+            type="date"
+            value={countRequestDate}
+            onChange={(event) => setCountRequestDate(event.target.value)}
+            className={inputClassName}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleCountRun}
+          disabled={isCountRunning}
+          className="flex w-full items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isCountRunning ? "Sayim aliniyor..." : "Sayim al"}
+        </button>
+      </div>
+    </div>
+  ) : null
+
   const sidebarCards = (
     <div className="space-y-6">
       {recordsCard}
       {entryCard}
+      {countCard}
     </div>
   )
 
+  const countResultModalContent =
+    countResultModal.isOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
+                  <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
+                    <path d="M7.629 13.314 4.486 10.17l-1.172 1.172 4.315 4.315L16.686 6.6l-1.172-1.172z" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
+                    Islem Basarili
+                  </p>
+                  <p className="mt-1 text-base font-semibold text-white">Sayim sonucu hazir.</p>
+                  <p className="mt-1 text-xs text-slate-300">
+                    Sonuc: <span className="text-emerald-100">{BALANCE_COUNT_BACKEND_KEY}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-white/10 bg-ink-950/60 px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tarih</p>
+                    <p className="mt-2 text-base font-semibold text-white">{formatDate(countResultModal.date)}</p>
+                  </div>
+                  <div className="rounded-xl border border-sky-300/20 bg-sky-500/10 px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
+                    <p className="mt-2 text-base font-semibold text-sky-50">$ {currency(countResultModal.count)}</p>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Alinma tarihi: {formatDate(countResultModal.collectedAt)}
+              </p>
+
+              <div className="mt-4 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg border border-sky-300/70 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={handleCountResultSave}
+                  disabled={isCountSaving}
+                >
+                  {isCountSaving ? "EKLENIYOR..." : "Ekle"}
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={handleCountModalClose}
+                  disabled={isCountSaving}
+                >
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null
+
   if (!canViewAnalytics) {
-    return sidebarCards
+    return (
+      <>
+        {sidebarCards}
+        {countResultModalContent}
+      </>
+    )
   }
 
   return (
@@ -723,6 +1275,7 @@ export default function AccountingTab({
 
         {sidebarCards}
       </div>
+      {countResultModalContent}
     </div>
   )
 }
