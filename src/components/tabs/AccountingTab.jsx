@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 import { parseFlexibleNumberInput } from "../../utils/numberInput"
 import {
@@ -246,13 +245,6 @@ export default function AccountingTab({
   })
   const [formError, setFormError] = useState("")
   const [isCountRunning, setIsCountRunning] = useState(false)
-  const [countResultModal, setCountResultModal] = useState({
-    isOpen: false,
-    date: "",
-    count: 0,
-    collectedAt: "",
-  })
-  const [isCountSaving, setIsCountSaving] = useState(false)
   const countSocketRef = useRef(null)
   const countToastIdRef = useRef("")
   const countCancelRef = useRef(null)
@@ -468,80 +460,6 @@ export default function AccountingTab({
     }
   }, [])
 
-  const handleCountModalClose = useCallback(() => {
-    if (isCountSaving) return
-    setCountResultModal((prev) => ({ ...prev, isOpen: false }))
-  }, [isCountSaving])
-
-  const handleCountResultSave = useCallback(async () => {
-    if (isCountSaving) return
-    const targetDate = String(countResultModal.date ?? "").trim()
-    const targetCount = Number(countResultModal.count)
-    if (!targetDate || !Number.isFinite(targetCount) || targetCount < 0) {
-      toast.error("Gecerli sayim sonucu bulunamadi.")
-      return
-    }
-    if (typeof saveAccountingRecord !== "function") {
-      toast.error("Bakiye kaydi hazir degil.")
-      return
-    }
-
-    const sameDateRecord = balanceRecords.find((item) => String(item?.date ?? "").trim() === targetDate)
-    const formPending = parseFlexibleNumberInput(form.pending)
-    const formWithdrawal = parseFlexibleNumberInput(form.withdrawal)
-    const latestPending = Number(latest?.pending ?? 0)
-    const pendingValue = Number(
-      sameDateRecord?.pending ??
-        (Number.isFinite(formPending) && formPending >= 0 ? formPending : Number.isFinite(latestPending) ? latestPending : 0),
-    )
-    const withdrawalValue = Number(
-      sameDateRecord?.withdrawal ??
-        (Number.isFinite(formWithdrawal) && formWithdrawal >= 0 ? formWithdrawal : 0),
-    )
-    const noteValue = String(sameDateRecord?.note ?? form.note ?? "").trim()
-
-    setIsCountSaving(true)
-    try {
-      await saveAccountingRecord(
-        {
-          date: targetDate,
-          available: targetCount,
-          pending: Number.isFinite(pendingValue) && pendingValue >= 0 ? pendingValue : 0,
-          withdrawal: Number.isFinite(withdrawalValue) && withdrawalValue >= 0 ? withdrawalValue : 0,
-          note: noteValue,
-        },
-        {
-          successMessage: "Sayim kaydi eklendi",
-          errorMessage: "Sayim kaydi eklenemedi.",
-        },
-      )
-      setCountResultModal((prev) => ({ ...prev, isOpen: false }))
-      setForm((prev) => ({
-        ...prev,
-        date: targetDate,
-        available: String(targetCount),
-        pending: String(Number.isFinite(pendingValue) && pendingValue >= 0 ? pendingValue : 0),
-        withdrawal: Number.isFinite(withdrawalValue) && withdrawalValue > 0 ? String(withdrawalValue) : "",
-        note: noteValue,
-      }))
-      setFormError("")
-    } catch {
-      // saveAccountingRecord already shows the error toast.
-    } finally {
-      setIsCountSaving(false)
-    }
-  }, [
-    balanceRecords,
-    countResultModal.count,
-    countResultModal.date,
-    form.note,
-    form.pending,
-    form.withdrawal,
-    isCountSaving,
-    latest?.pending,
-    saveAccountingRecord,
-  ])
-
   const handleCountRun = useCallback(() => {
     if (!canCreate) {
       toast.error("Bakiye girme yetkiniz yok.")
@@ -577,7 +495,6 @@ export default function AccountingTab({
 
     closeCountSocket()
     setIsCountRunning(true)
-    setCountResultModal((prev) => ({ ...prev, isOpen: false }))
     updateCountToast("loading", "Bakiye sayimi aliniyor...")
 
     let socket = null
@@ -727,12 +644,6 @@ export default function AccountingTab({
           }
 
           hasResult = true
-          setCountResultModal({
-            isOpen: true,
-            date: targetDate,
-            count: countValue,
-            collectedAt: todayKey(),
-          })
           complete("success", `Sayim alindi: ${countValue}`)
           return
         }
@@ -959,75 +870,8 @@ export default function AccountingTab({
     </div>
   )
 
-  const countResultModalContent =
-    countResultModal.isOpen && typeof document !== "undefined"
-      ? createPortal(
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
-            <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
-                  <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
-                    <path d="M7.629 13.314 4.486 10.17l-1.172 1.172 4.315 4.315L16.686 6.6l-1.172-1.172z" />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
-                    Islem Basarili
-                  </p>
-                  <p className="mt-1 text-base font-semibold text-white">Sayim sonucu hazir.</p>
-                  <p className="mt-1 text-xs text-slate-300">
-                    Sonuc: <span className="text-emerald-100">{BALANCE_COUNT_BACKEND_KEY}</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-white/10 bg-ink-950/60 px-3 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tarih</p>
-                    <p className="mt-2 text-base font-semibold text-white">{formatDate(countResultModal.date)}</p>
-                  </div>
-                  <div className="rounded-xl border border-sky-300/20 bg-sky-500/10 px-3 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
-                    <p className="mt-2 text-base font-semibold text-sky-50">$ {currency(countResultModal.count)}</p>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Alinma tarihi: {formatDate(countResultModal.collectedAt)}
-              </p>
-
-              <div className="mt-4 flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  className="rounded-lg border border-sky-300/70 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={handleCountResultSave}
-                  disabled={isCountSaving}
-                >
-                  {isCountSaving ? "EKLENIYOR..." : "Ekle"}
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={handleCountModalClose}
-                  disabled={isCountSaving}
-                >
-                  Kapat
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null
-
   if (!canViewAnalytics) {
-    return (
-      <>
-        {sidebarCards}
-        {countResultModalContent}
-      </>
-    )
+    return sidebarCards
   }
 
   return (
@@ -1252,7 +1096,6 @@ export default function AccountingTab({
 
         {sidebarCards}
       </div>
-      {countResultModalContent}
     </div>
   )
 }
