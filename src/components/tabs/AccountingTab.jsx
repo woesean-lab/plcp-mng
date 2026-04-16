@@ -125,20 +125,51 @@ const normalizeRuntimeMessage = (value) => {
   }
 }
 
+const parseLooseNumber = (value) => {
+  const raw = String(value ?? "")
+    .trim()
+    .replace(/[^\d,.-]/g, "")
+  if (!raw || raw === "-" || raw === "," || raw === ".") return null
+
+  const hasComma = raw.includes(",")
+  const hasDot = raw.includes(".")
+  let normalized = raw
+
+  if (hasComma && hasDot) {
+    normalized =
+      raw.lastIndexOf(",") > raw.lastIndexOf(".")
+        ? raw.replace(/\./g, "").replace(",", ".")
+        : raw.replace(/,/g, "")
+  } else if (hasComma) {
+    const commaCount = (raw.match(/,/g) || []).length
+    const lastChunk = raw.split(",").at(-1) || ""
+    normalized = commaCount > 1 || lastChunk.length === 3 ? raw.replace(/,/g, "") : raw.replace(",", ".")
+  } else if (hasDot) {
+    const dotCount = (raw.match(/\./g) || []).length
+    const lastChunk = raw.split(".").at(-1) || ""
+    normalized = dotCount > 1 || lastChunk.length === 3 ? raw.replace(/\./g, "") : raw
+  }
+
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 const readFirstNumericValue = (value, depth = 0) => {
   if (depth > 3 || value === null || value === undefined) return null
   if (typeof value === "number") {
-    return Number.isFinite(value) ? Math.floor(value) : null
+    return Number.isFinite(value) ? value : null
   }
   if (typeof value === "string") {
-    const normalized = value.trim().replace(",", ".")
+    const normalized = value.trim()
     if (!normalized) return null
-    const direct = Number(normalized)
-    if (Number.isFinite(direct)) return Math.floor(direct)
-    const match = normalized.match(/-?\d+(?:\.\d+)?/)
-    if (!match) return null
-    const parsed = Number(match[0])
-    return Number.isFinite(parsed) ? Math.floor(parsed) : null
+    const direct = parseLooseNumber(normalized)
+    if (Number.isFinite(direct)) return direct
+    const matches = normalized.match(/-?[\d.,]+/g) || []
+    for (const token of matches) {
+      const parsed = parseLooseNumber(token)
+      if (Number.isFinite(parsed)) return parsed
+    }
+    return null
   }
   if (Array.isArray(value)) {
     for (const item of value) {
@@ -644,7 +675,7 @@ export default function AccountingTab({
           }
 
           hasResult = true
-          complete("success", `Sayim alindi: ${countValue}`)
+          complete("success", `Sayim alindi: $ ${currency(countValue)}`)
           return
         }
 
