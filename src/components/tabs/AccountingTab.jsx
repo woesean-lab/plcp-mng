@@ -877,7 +877,7 @@ export default function AccountingTab({
           onClick={handleCountRun}
           disabled={isCountRunning}
           title="Sayim al"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <svg
             viewBox="0 0 24 24"
