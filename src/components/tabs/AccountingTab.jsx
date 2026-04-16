@@ -154,6 +154,56 @@ const parseLooseNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+const readBalanceLineValue = (value) => {
+  const source = String(value ?? "")
+  if (!source) return null
+  const match = source.match(/(?:^|\n)\s*(?:balance|bakiye)\s*:\s*\$?\s*([0-9][0-9,.\s]*)/i)
+  if (!match?.[1]) return null
+  return parseLooseNumber(match[1])
+}
+
+const readLineMetricValue = (value, labelPattern) => {
+  const source = String(value ?? "")
+  if (!source) return null
+  const match = source.match(new RegExp(`(?:^|\\n)\\s*(?:${labelPattern})\\s*:\\s*\\$?\\s*([0-9][0-9,.\\s]*)`, "i"))
+  if (!match?.[1]) return null
+  return parseLooseNumber(match[1])
+}
+
+const extractResultText = (value, depth = 0) => {
+  if (depth > 3 || value === null || value === undefined) return ""
+  if (typeof value === "string") return value
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = extractResultText(item, depth + 1)
+      if (found) return found
+    }
+    return ""
+  }
+  if (typeof value === "object") {
+    const textKeys = ["deger", "value", "result", "message", "output", "text", "raw", "balance", "bakiye"]
+    for (const key of textKeys) {
+      if (!Object.prototype.hasOwnProperty.call(value, key)) continue
+      const found = extractResultText(value[key], depth + 1)
+      if (found) return found
+    }
+  }
+  return ""
+}
+
+const parseCountResultMetrics = (value) => {
+  const sourceText = extractResultText(value)
+  const available = readLineMetricValue(sourceText, "balance|bakiye")
+  const pending = readLineMetricValue(sourceText, "pending\\s*sales|pending|bekleyen(?:\\s*satis)?")
+  const withdrawal = readLineMetricValue(sourceText, "withdrawal|cekim")
+  return {
+    available,
+    pending,
+    withdrawal,
+    fallback: readFirstNumericValue(value),
+  }
+}
+
 const readFirstNumericValue = (value, depth = 0) => {
   if (depth > 3 || value === null || value === undefined) return null
   if (typeof value === "number") {
@@ -162,6 +212,8 @@ const readFirstNumericValue = (value, depth = 0) => {
   if (typeof value === "string") {
     const normalized = value.trim()
     if (!normalized) return null
+    const balanceValue = readBalanceLineValue(normalized)
+    if (Number.isFinite(balanceValue)) return balanceValue
     const direct = parseLooseNumber(normalized)
     if (Number.isFinite(direct)) return direct
     const matches = normalized.match(/-?[\d.,]+/g) || []
@@ -179,7 +231,16 @@ const readFirstNumericValue = (value, depth = 0) => {
     return null
   }
   if (typeof value === "object") {
-    const priorityKeys = ["count", "result", "value", "amount", "total", "sayim", "balance", "bakiye"]
+    const balanceCandidateKeys = ["deger", "value", "result", "message", "output", "text", "balance", "bakiye"]
+    for (const key of balanceCandidateKeys) {
+      if (!Object.prototype.hasOwnProperty.call(value, key)) continue
+      const candidate = value[key]
+      if (typeof candidate !== "string") continue
+      const found = readBalanceLineValue(candidate)
+      if (Number.isFinite(found)) return found
+    }
+
+    const priorityKeys = ["balance", "bakiye", "count", "result", "value", "amount", "total", "sayim"]
     for (const key of priorityKeys) {
       if (Object.prototype.hasOwnProperty.call(value, key)) {
         const found = readFirstNumericValue(value[key], depth + 1)
@@ -668,14 +729,31 @@ export default function AccountingTab({
 
         if (eventName === "sonuc") {
           const rawResult = firstArg?.value ?? firstArg
-          const countValue = readFirstNumericValue(rawResult)
-          if (!Number.isFinite(countValue) || countValue < 0) {
+          const metrics = parseCountResultMetrics(rawResult)
+          const availableValue =
+            Number.isFinite(metrics.available) && metrics.available >= 0
+              ? metrics.available
+              : Number.isFinite(metrics.fallback) && metrics.fallback >= 0
+                ? metrics.fallback
+                : null
+          if (!Number.isFinite(availableValue) || availableValue < 0) {
             complete("error", "Sayim sonucu gecerli bir sayi olarak donmedi.")
             return
           }
 
           hasResult = true
-          complete("success", `Sayim alindi: $ ${currency(countValue)}`)
+          setForm((prev) => ({
+            ...prev,
+            available: String(availableValue),
+            pending:
+              Number.isFinite(metrics.pending) && metrics.pending >= 0 ? String(metrics.pending) : prev.pending,
+            withdrawal:
+              Number.isFinite(metrics.withdrawal) && metrics.withdrawal >= 0
+                ? String(metrics.withdrawal)
+                : prev.withdrawal,
+          }))
+          setFormError("")
+          complete("success", "Sayim sonucu inputlara dolduruldu.")
           return
         }
 
