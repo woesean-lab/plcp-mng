@@ -145,7 +145,7 @@ const getConsoleStatusMeta = (status) => {
       code: "SUCCESS",
       dotClass: "bg-emerald-300",
       textClass: "text-emerald-300",
-      badgeClass: "border-emerald-300/60 bg-emerald-500/15 text-emerald-100",
+      badgeClass: "border-emerald-300/60 bg-emerald-500/20 text-emerald-50 ring-1 ring-inset ring-emerald-300/30",
     }
   }
   if (normalized === "error") {
@@ -153,7 +153,7 @@ const getConsoleStatusMeta = (status) => {
       code: "ERR",
       dotClass: "bg-rose-300",
       textClass: "text-rose-300",
-      badgeClass: "border-rose-300/60 bg-rose-500/15 text-rose-100",
+      badgeClass: "border-rose-300/60 bg-rose-500/20 text-rose-50 ring-1 ring-inset ring-rose-300/30",
     }
   }
   if (normalized === "connecting") {
@@ -161,14 +161,14 @@ const getConsoleStatusMeta = (status) => {
       code: "RUN",
       dotClass: "bg-sky-300",
       textClass: "text-sky-300",
-      badgeClass: "border-sky-300/60 bg-sky-500/15 text-sky-100",
+      badgeClass: "border-sky-300/60 bg-sky-500/20 text-sky-50 ring-1 ring-inset ring-sky-300/30",
     }
   }
   return {
     code: "RUN",
     dotClass: "bg-sky-300",
     textClass: "text-sky-300",
-    badgeClass: "border-sky-300/60 bg-sky-500/15 text-sky-100",
+    badgeClass: "border-sky-300/60 bg-sky-500/20 text-sky-50 ring-1 ring-inset ring-sky-300/30",
   }
 }
 
@@ -1667,8 +1667,9 @@ export default function ApplicationsTab({
                     <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 sm:flex-nowrap">
                       <span className="flex-none text-slate-500">[{entry.time}]</span>
                       <span
-                        className={`flex-none rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] ${statusMeta.badgeClass}`}
+                        className={`flex-none inline-flex h-5 items-center gap-1 rounded-full border px-2 text-[9px] font-semibold uppercase tracking-[0.12em] ${statusMeta.badgeClass}`}
                       >
+                        <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
                         {statusMeta.code}
                       </span>
                       <span className="min-w-0 break-words text-slate-100">
