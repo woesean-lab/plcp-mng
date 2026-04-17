@@ -277,9 +277,9 @@ export default function ProblemsTab({
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
         <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1.5 sm:space-y-2">
-            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Problem Merkezi</h1>
+            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Problem</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Acik, cozulen ve arsiv kayitlarini filtreleyip hizli yonetin. Kartlardaki tarih bilgisi problemin eklendigi zamani gosterir.
+              Acik, cozulen ve arsiv kayitlarini tek ekrandan yonetin. Tarih alani eklenme zamanini gosterir.
             </p>
           </div>
           <div className="w-full md:max-w-[760px]">
@@ -320,7 +320,7 @@ export default function ProblemsTab({
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-                    Problem kartlari
+                    Problemler
                   </p>
                   <p className="mt-1 text-sm text-slate-400">
                     Duruma gore filtrele.
