@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react"
 import {
   ArrowPathIcon,
-  CalendarDaysIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
-  MagnifyingGlassIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline"
 
@@ -96,15 +94,6 @@ const formatProblemCreatedAt = (value) => {
   })
 }
 
-const normalizeSearch = (value) => String(value ?? "").trim().toLowerCase()
-
-const problemMatchesQuery = (problem, normalizedQuery) => {
-  if (!normalizedQuery) return true
-  const username = String(problem?.username ?? "").toLowerCase()
-  const issue = String(problem?.issue ?? "").toLowerCase()
-  return username.includes(normalizedQuery) || issue.includes(normalizedQuery)
-}
-
 const compareProblemByDateDesc = (a, b) => {
   const left = parseProblemDate(a?.createdAt)
   const right = parseProblemDate(b?.createdAt)
@@ -132,7 +121,6 @@ function ProblemCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${isResolved ? "bg-emerald-300" : "bg-accent-300"}`} aria-hidden="true" />
             <span
               className="inline-flex max-w-full items-center rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-slate-100 break-all"
             >
@@ -230,9 +218,6 @@ export default function ProblemsTab({
   handleProblemAdd,
 }) {
   const [activeView, setActiveView] = useState("open")
-  const [searchQuery, setSearchQuery] = useState("")
-
-  const normalizedQuery = normalizeSearch(searchQuery)
 
   const sortedOpenProblems = useMemo(
     () => [...openProblems].sort(compareProblemByDateDesc),
@@ -245,15 +230,10 @@ export default function ProblemsTab({
   const sortedAllProblems = useMemo(() => [...problems].sort(compareProblemByDateDesc), [problems])
 
   const filteredProblems = useMemo(() => {
-    const source =
-      activeView === "open"
-        ? sortedOpenProblems
-        : activeView === "resolved"
-          ? sortedResolvedProblems
-          : sortedAllProblems
-
-    return source.filter((problem) => problemMatchesQuery(problem, normalizedQuery))
-  }, [activeView, normalizedQuery, sortedAllProblems, sortedOpenProblems, sortedResolvedProblems])
+    if (activeView === "open") return sortedOpenProblems
+    if (activeView === "resolved") return sortedResolvedProblems
+    return sortedAllProblems
+  }, [activeView, sortedAllProblems, sortedOpenProblems, sortedResolvedProblems])
 
   const latestProblems = useMemo(() => sortedAllProblems.slice(0, 5), [sortedAllProblems])
 
@@ -280,10 +260,30 @@ export default function ProblemsTab({
           </p>
 
           <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <MetricCard label="Acik" value={openProblems.length} />
-            <MetricCard label="Cozulen" value={resolvedProblems.length} />
-            <MetricCard label="Toplam" value={problems.length} />
-            <MetricCard label="Bugun Eklenen" value={todaysProblemCount} />
+            <MetricCard
+              label="Acik"
+              value={openProblems.length}
+              helper="Aktif kayit"
+              tone="sky"
+            />
+            <MetricCard
+              label="Cozulen"
+              value={resolvedProblems.length}
+              helper="Kapanan kayit"
+              tone="emerald"
+            />
+            <MetricCard
+              label="Toplam"
+              value={problems.length}
+              helper="Tum kayitlar"
+              tone="indigo"
+            />
+            <MetricCard
+              label="Bugun Eklenen"
+              value={todaysProblemCount}
+              helper="Gunluk acilan"
+              tone="amber"
+            />
           </div>
         </div>
       </header>
@@ -298,47 +298,25 @@ export default function ProblemsTab({
                     Problem kartlari
                   </p>
                   <p className="mt-1 text-sm text-slate-400">
-                    Duruma gore filtrele, kullanici veya sorun metniyle ara.
+                    Duruma gore filtrele.
                   </p>
                 </div>
 
-                <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
-                  <div className="flex items-center rounded-lg border border-white/10 bg-ink-900/90 p-1">
+                <div className="flex items-center rounded-full border border-white/10 bg-ink-900/60 p-1">
                     {VIEW_OPTIONS.map((option) => (
                       <button
                         key={option.key}
                         type="button"
                         onClick={() => setActiveView(option.key)}
-                        className={`rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${
+                        className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition ${
                           activeView === option.key
-                            ? "bg-white/15 text-white"
+                            ? "bg-accent-400 text-ink-900 shadow-glow"
                             : "text-slate-300 hover:bg-white/10 hover:text-white"
                         }`}
                       >
                         {option.label}
                       </button>
                     ))}
-                  </div>
-
-                  <div className="flex h-10 min-w-0 items-center gap-2 rounded-lg border border-white/10 bg-ink-900 px-3 sm:min-w-[250px]">
-                    <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Kullanici veya sorun ara"
-                      className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                    />
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setSearchQuery("")}
-                        className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300 transition hover:border-white/20 hover:text-white"
-                      >
-                        Temizle
-                      </button>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -469,27 +447,29 @@ export default function ProblemsTab({
               </div>
             </section>
           )}
-
-          <section className={`${panelClass} bg-ink-900/60`}>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kayit notu</p>
-            <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/75 px-3.5 py-3 text-xs text-slate-400">
-              <p className="flex items-start gap-2">
-                <CalendarDaysIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-                Kartlardaki tarih alani, problemin eklendigi tarihi gosterir.
-              </p>
-            </div>
-          </section>
         </div>
       </div>
     </div>
   )
 }
 
-function MetricCard({ label, value }) {
+function MetricCard({ label, value, helper, tone = "sky" }) {
+  const toneByKey = {
+    sky: "bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]",
+    emerald: "bg-[radial-gradient(80%_120%_at_20%_0%,rgba(16,185,129,0.18),transparent)]",
+    indigo: "bg-[radial-gradient(80%_120%_at_20%_0%,rgba(99,102,241,0.18),transparent)]",
+    amber: "bg-[radial-gradient(80%_120%_at_20%_0%,rgba(245,158,11,0.18),transparent)]",
+  }
+  const toneClass = toneByKey[tone] || toneByKey.sky
+
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{label}</p>
-      <p className="mt-1 text-xl font-semibold text-white">{value}</p>
+    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
+      <div className={`pointer-events-none absolute inset-0 ${toneClass}`} />
+      <div className="relative">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">{label}</p>
+        <p className="mt-1 text-xl font-semibold text-white">{value}</p>
+        <p className="text-[11px] text-slate-400">{helper}</p>
+      </div>
     </div>
   )
 }
