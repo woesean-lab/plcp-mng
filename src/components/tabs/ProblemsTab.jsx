@@ -4,10 +4,8 @@ import {
   CalendarDaysIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
-  ExclamationTriangleIcon,
   MagnifyingGlassIcon,
   TrashIcon,
-  XCircleIcon,
 } from "@heroicons/react/24/outline"
 
 function SkeletonBlock({ className = "" }) {
@@ -129,36 +127,26 @@ function ProblemCard({
 
   return (
     <article
-      className={`relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border p-4 shadow-inner ${
-        isResolved
-          ? "border-emerald-300/25 bg-gradient-to-br from-emerald-950/55 via-ink-900/80 to-ink-900/80"
-          : "border-sky-300/20 bg-gradient-to-br from-sky-950/40 via-ink-900/85 to-ink-900/85"
-      }`}
+      className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-ink-900/75 p-4 shadow-inner"
     >
-      <div
-        className={`pointer-events-none absolute inset-0 ${
-          isResolved
-            ? "bg-[radial-gradient(120%_120%_at_95%_0%,rgba(16,185,129,0.14),transparent)]"
-            : "bg-[radial-gradient(120%_120%_at_95%_0%,rgba(56,189,248,0.16),transparent)]"
-        }`}
-      />
-
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${isResolved ? "bg-emerald-300" : "bg-accent-300"}`} aria-hidden="true" />
             <span
-              className={`h-2 w-2 rounded-full ${isResolved ? "bg-emerald-300" : "bg-sky-300"}`}
-              aria-hidden="true"
-            />
-            <span
-              className={`inline-flex max-w-full items-center rounded-full px-3 py-1 text-[11px] font-semibold break-all ${
-                isResolved ? "bg-emerald-400/20 text-emerald-100" : "bg-sky-400/20 text-sky-100"
-              }`}
+              className="inline-flex max-w-full items-center rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-slate-100 break-all"
             >
               {problem.username}
             </span>
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                isResolved ? "bg-emerald-500/15 text-emerald-200" : "bg-accent-500/15 text-accent-100"
+              }`}
+            >
+              {isResolved ? "Cozulen" : "Acik"}
+            </span>
           </div>
-          <p className="mt-2 text-[11px] text-slate-500">
+          <p className="mt-2 text-[10px] text-slate-500">
             Eklendigi Tarih: {formatProblemCreatedAt(problem.createdAt)}
           </p>
         </div>
@@ -174,18 +162,18 @@ function ProblemCard({
         </button>
       </div>
 
-      <div className="relative rounded-xl border border-white/10 bg-ink-900/70 px-3.5 py-3">
+      <div className="rounded-xl border border-white/10 bg-ink-800/60 px-3.5 py-3">
         <p className="text-sm leading-relaxed text-slate-100">{problem.issue}</p>
       </div>
 
       {(canResolve || canDelete) && (
-        <div className="relative mt-auto flex flex-wrap gap-2">
+        <div className="mt-auto flex flex-wrap gap-2">
           {canResolve &&
             (isResolved ? (
               <button
                 type="button"
                 onClick={() => handleProblemReopen(problem.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/60 bg-amber-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-100 transition hover:border-amber-200 hover:bg-amber-500/25"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:border-white/35 hover:bg-white/10"
               >
                 <ArrowPathIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 Cozulmedi
@@ -194,7 +182,7 @@ function ProblemCard({
               <button
                 type="button"
                 onClick={() => handleProblemResolve(problem.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-500/25"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-500/20"
               >
                 <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 Cozuldu
@@ -284,43 +272,26 @@ export default function ProblemsTab({
 
   return (
     <div className="space-y-6">
-      <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-[#101826] to-[#172336] p-5 shadow-card sm:p-6">
-        <div className="pointer-events-none absolute -right-24 -top-20 h-64 w-64 rounded-full bg-sky-400/10 blur-3xl" />
-        <div className="pointer-events-none absolute -left-24 bottom-0 h-44 w-44 rounded-full bg-rose-400/10 blur-3xl" />
-
-        <div className="relative">
+      <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
+        <div>
           <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Problem Merkezi</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-200/85">
-            Problem kayitlarini tek ekranda yonet. Kartlar uzerinde kullaniciyi kopyala, durumu guncelle ve
-            silme onayini hizli tamamla. Tarih bilgisi her kayitta problemin eklendigi zamani gosterir.
+          <p className="mt-2 max-w-3xl text-sm text-slate-200/80">
+            Acik ve cozulen kayitlari filtreleyip hizli yonetin. Kartlardaki tarih bilgisi problemin eklendigi zamani gosterir.
           </p>
 
           <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div className="rounded-xl border border-sky-300/20 bg-sky-500/10 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-sky-200/90">Acik</p>
-              <p className="mt-1 text-xl font-semibold text-white">{openProblems.length}</p>
-            </div>
-            <div className="rounded-xl border border-emerald-300/20 bg-emerald-500/10 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200/90">Cozulen</p>
-              <p className="mt-1 text-xl font-semibold text-white">{resolvedProblems.length}</p>
-            </div>
-            <div className="rounded-xl border border-violet-300/20 bg-violet-500/10 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-violet-200/90">Toplam</p>
-              <p className="mt-1 text-xl font-semibold text-white">{problems.length}</p>
-            </div>
-            <div className="rounded-xl border border-amber-300/25 bg-amber-500/10 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-amber-200/90">Bugun Eklenen</p>
-              <p className="mt-1 text-xl font-semibold text-white">{todaysProblemCount}</p>
-            </div>
+            <MetricCard label="Acik" value={openProblems.length} />
+            <MetricCard label="Cozulen" value={resolvedProblems.length} />
+            <MetricCard label="Toplam" value={problems.length} />
+            <MetricCard label="Bugun Eklenen" value={todaysProblemCount} />
           </div>
         </div>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,0.95fr)]">
         <div className="space-y-6">
-          <section className={`${panelClass} relative overflow-hidden bg-ink-900/70`}>
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(56,189,248,0.08),transparent)]" />
-            <div className="relative">
+          <section className={`${panelClass} bg-ink-800/60`}>
+            <div>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
@@ -340,7 +311,7 @@ export default function ProblemsTab({
                         onClick={() => setActiveView(option.key)}
                         className={`rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${
                           activeView === option.key
-                            ? "bg-accent-500/20 text-accent-100"
+                            ? "bg-white/15 text-white"
                             : "text-slate-300 hover:bg-white/10 hover:text-white"
                         }`}
                       >
@@ -425,7 +396,7 @@ export default function ProblemsTab({
                       </div>
                       <div className="shrink-0 text-right">
                         <p className="text-[11px] text-slate-500">{formatProblemCreatedAt(problem.createdAt)}</p>
-                        <p className={`mt-1 text-[11px] font-semibold ${isResolved ? "text-emerald-200" : "text-sky-200"}`}>
+                        <p className="mt-1 text-[11px] font-semibold text-slate-300">
                           {isResolved ? "Cozulen" : "Acik"}
                         </p>
                       </div>
@@ -445,7 +416,6 @@ export default function ProblemsTab({
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Yeni problem</p>
                   <p className="mt-1 text-sm text-slate-400">Kullanici adini ve sorun detayini kaydet.</p>
                 </div>
-                <ExclamationBadge />
               </div>
 
               <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
@@ -507,10 +477,6 @@ export default function ProblemsTab({
                 <CalendarDaysIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
                 Kartlardaki tarih alani, problemin eklendigi tarihi gosterir.
               </p>
-              <p className="mt-3 flex items-start gap-2">
-                <XCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-rose-300/70" aria-hidden="true" />
-                Silme islemi iki adimli onay ile calisir.
-              </p>
             </div>
           </section>
         </div>
@@ -519,10 +485,11 @@ export default function ProblemsTab({
   )
 }
 
-function ExclamationBadge() {
+function MetricCard({ label, value }) {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-300/40 bg-amber-500/15 text-amber-100">
-      <ExclamationTriangleIcon className="h-4 w-4" aria-hidden="true" />
-    </span>
+    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{label}</p>
+      <p className="mt-1 text-xl font-semibold text-white">{value}</p>
+    </div>
   )
 }
