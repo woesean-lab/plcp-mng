@@ -7,7 +7,6 @@ import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 const MAX_LOG_ENTRIES = 300
 const MASKED_BACKEND_TEXT = "******"
 const HISTORY_CONSOLE_TAB_ID = "__history__"
-const CMD_PROMPT_PATH = "C:\\plcp\\applications>"
 const CMD_WINDOW_TITLE = "Komut Istemi"
 const LOG_URL_REGEX = /((?:https?:\/\/|www\.)[^\s<>"']+)/gi
 const TRANSIENT_NETWORK_ERROR_MESSAGES = new Set([
@@ -143,10 +142,10 @@ const getConsoleStatusMeta = (status) => {
   const normalized = String(status ?? "").trim().toLowerCase()
   if (normalized === "success") {
     return {
-      code: "OK",
+      code: "SUCCESS",
       dotClass: "bg-emerald-300",
       textClass: "text-emerald-300",
-      badgeClass: "border-slate-700 bg-slate-900/90 text-emerald-300",
+      badgeClass: "border-emerald-300/60 bg-emerald-500/15 text-emerald-100",
     }
   }
   if (normalized === "error") {
@@ -154,22 +153,22 @@ const getConsoleStatusMeta = (status) => {
       code: "ERR",
       dotClass: "bg-rose-300",
       textClass: "text-rose-300",
-      badgeClass: "border-slate-700 bg-slate-900/90 text-rose-300",
+      badgeClass: "border-rose-300/60 bg-rose-500/15 text-rose-100",
     }
   }
   if (normalized === "connecting") {
     return {
-      code: "CON",
+      code: "RUN",
       dotClass: "bg-sky-300",
       textClass: "text-sky-300",
-      badgeClass: "border-slate-700 bg-slate-900/90 text-sky-300",
+      badgeClass: "border-sky-300/60 bg-sky-500/15 text-sky-100",
     }
   }
   return {
     code: "RUN",
-    dotClass: "bg-slate-300",
-    textClass: "text-slate-300",
-    badgeClass: "border-slate-700 bg-slate-900/90 text-slate-200",
+    dotClass: "bg-sky-300",
+    textClass: "text-sky-300",
+    badgeClass: "border-sky-300/60 bg-sky-500/15 text-sky-100",
   }
 }
 
@@ -1481,7 +1480,6 @@ export default function ApplicationsTab({
 
           <div className="border-b border-white/10 bg-ink-900/35 px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2 font-mono text-[11px]">
-              <span className="flex-none text-slate-500">{CMD_PROMPT_PATH}</span>
               <span className="min-w-0 truncate text-slate-100">{activeConsoleTitle}</span>
               <span className="flex-none text-slate-600">/</span>
               <span className="min-w-0 truncate text-slate-400">{activeConsoleBackend}</span>
@@ -1585,7 +1583,6 @@ export default function ApplicationsTab({
                 {activeRunPrompt && isActiveRunLive && (
                   <div className="mb-3 rounded-md border border-accent-300/30 bg-accent-500/10 px-3 py-3">
                     <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap">
-                      <span className="hidden flex-none text-slate-500 sm:inline">{CMD_PROMPT_PATH}</span>
                       <span className="flex-none rounded-full border border-emerald-300/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-100">
                         INPUT
                       </span>
@@ -1668,10 +1665,12 @@ export default function ApplicationsTab({
 
                   return (
                     <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 sm:flex-nowrap">
-                      <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
-                      <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
-                      <span className="hidden flex-none text-slate-600 sm:inline">{CMD_PROMPT_PATH}</span>
-                      <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                      <span className="flex-none text-slate-500">[{entry.time}]</span>
+                      <span
+                        className={`flex-none rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] ${statusMeta.badgeClass}`}
+                      >
+                        {statusMeta.code}
+                      </span>
                       <span className="min-w-0 break-words text-slate-100">
                         {messageSegments.map((segment, index) =>
                           segment.type === "link" ? (
@@ -1694,8 +1693,6 @@ export default function ApplicationsTab({
                 })}
                 {consoleLogs.length === 0 && (
                   <div className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                    <span className="hidden flex-none text-slate-600 sm:inline">{CMD_PROMPT_PATH}</span>
-                    <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                     <span className="flex-none text-slate-700">[--:--]</span>
                     <span className="flex-none text-slate-700">---</span>
                     <span className="text-slate-500">bekleniyor...</span>
