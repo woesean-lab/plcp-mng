@@ -670,7 +670,7 @@ export default function SalesTab({
         >
           <svg
             viewBox="0 0 24 24"
-            className={`h-4 w-4 ${isCountRunning ? "animate-spin" : ""}`}
+            className={`h-3.5 w-3.5 ${isCountRunning ? "animate-spin" : ""}`}
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -678,10 +678,10 @@ export default function SalesTab({
             strokeLinejoin="round"
             aria-hidden="true"
           >
-            <path d="M21 2v6h-6" />
-            <path d="M3 22v-6h6" />
-            <path d="M21 8a9 9 0 0 0-15.5-4.5L3 6" />
-            <path d="M3 16a9 9 0 0 0 15.5 4.5L21 18" />
+            <path d="M4 7h8" />
+            <path d="M9 12 4 7l5-5" />
+            <path d="M20 17h-8" />
+            <path d="m15 12 5 5-5 5" />
           </svg>
         </button>
       </div>
