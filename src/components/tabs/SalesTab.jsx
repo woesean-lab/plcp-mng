@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { createPortal } from "react-dom"
 import { toast } from "react-hot-toast"
 import {
   buildSocketIoWsUrl,
@@ -65,13 +64,6 @@ const formatDate = (value) => {
   return `${day}.${month}.${year}`
 }
 
-const getLocalDateInputValue = (value = new Date()) => {
-  const year = value.getFullYear()
-  const month = String(value.getMonth() + 1).padStart(2, "0")
-  const day = String(value.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
-
 const normalizeRuntimeMessage = (value) => {
   if (typeof value === "string") return value
   if (value === null || value === undefined) return ""
@@ -133,7 +125,6 @@ export default function SalesTab({
   salesForm,
   setSalesForm,
   automationWsUrl = "",
-  saveSaleRecord,
   handleSaleAdd,
   salesRecords,
 }) {
@@ -364,17 +355,7 @@ export default function SalesTab({
       minDeviation,
     }
   }, [salesList])
-  const [countRequestDate, setCountRequestDate] = useState(
-    () => String(salesForm?.date ?? "").trim() || getLocalDateInputValue(),
-  )
   const [isCountRunning, setIsCountRunning] = useState(false)
-  const [countResultModal, setCountResultModal] = useState({
-    isOpen: false,
-    date: "",
-    count: 0,
-    collectedAt: "",
-  })
-  const [isCountSaving, setIsCountSaving] = useState(false)
   const countSocketRef = useRef(null)
   const countToastIdRef = useRef("")
   const countCancelRef = useRef(null)
@@ -425,38 +406,6 @@ export default function SalesTab({
     }
   }, [])
 
-  const handleCountModalClose = useCallback(() => {
-    if (isCountSaving) return
-    setCountResultModal((prev) => ({ ...prev, isOpen: false }))
-  }, [isCountSaving])
-
-  const handleCountResultSave = useCallback(async () => {
-    if (isCountSaving) return
-    const targetDate = String(countResultModal.date ?? "").trim()
-    const targetCount = Number(countResultModal.count)
-    if (!targetDate || !Number.isFinite(targetCount) || targetCount <= 0) {
-      toast.error("Gecerli sayim sonucu bulunamadi.")
-      return
-    }
-    if (typeof saveSaleRecord !== "function") {
-      toast.error("Satis kaydi hazir degil.")
-      return
-    }
-    setIsCountSaving(true)
-    try {
-      await saveSaleRecord(targetDate, targetCount, {
-        successMessage: "Sayim kaydi eklendi",
-        errorMessage: "Sayim kaydi eklenemedi.",
-      })
-      setCountResultModal((prev) => ({ ...prev, isOpen: false }))
-      setSalesForm((prev) => ({ ...prev, date: targetDate, amount: String(targetCount) }))
-    } catch {
-      // saveSaleRecord already surfaces the error toast.
-    } finally {
-      setIsCountSaving(false)
-    }
-  }, [countResultModal.count, countResultModal.date, isCountSaving, saveSaleRecord, setSalesForm])
-
   const handleCountRun = useCallback(() => {
     if (!canCreate) {
       toast.error("Satis girme yetkiniz yok.")
@@ -467,7 +416,7 @@ export default function SalesTab({
       return
     }
 
-    const targetDate = String(countRequestDate ?? "").trim()
+    const targetDate = String(salesForm?.date ?? "").trim()
     const parsedDate = new Date(`${targetDate}T00:00:00`)
     if (!targetDate || Number.isNaN(parsedDate.getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
       toast.error("Tarih secin.")
@@ -492,7 +441,6 @@ export default function SalesTab({
 
     closeCountSocket()
     setIsCountRunning(true)
-    setCountResultModal((prev) => ({ ...prev, isOpen: false }))
     updateCountToast("loading", "Sayim aliniyor...")
 
     let socket = null
@@ -642,13 +590,8 @@ export default function SalesTab({
           }
 
           hasResult = true
-          setCountResultModal({
-            isOpen: true,
-            date: targetDate,
-            count: countValue,
-            collectedAt: getLocalDateInputValue(),
-          })
-          complete("success", `Sayim alindi: ${countValue}`)
+          setSalesForm((prev) => ({ ...prev, amount: String(countValue) }))
+          complete("success", `Sayim sonucu inputa yazildi: ${countValue}`)
           return
         }
 
@@ -686,9 +629,10 @@ export default function SalesTab({
     automationWsUrl,
     canCreate,
     closeCountSocket,
-    countRequestDate,
+    salesForm?.date,
     isCountRunning,
     sendSocketIoEvent,
+    setSalesForm,
     updateCountToast,
   ])
 
@@ -701,12 +645,6 @@ export default function SalesTab({
   }, [isActive, isCountRunning])
 
   useEffect(() => {
-    if (!countRequestDate && salesForm?.date) {
-      setCountRequestDate(String(salesForm.date).trim())
-    }
-  }, [countRequestDate, salesForm?.date])
-
-  useEffect(() => {
     return () => {
       countCancelRef.current = null
       closeCountSocket()
@@ -716,13 +654,36 @@ export default function SalesTab({
   const entryCard = canCreate ? (
     <div className={`${panelClass} relative overflow-hidden bg-ink-800/60`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(34,197,94,0.14),transparent)]" />
-      <div>
+      <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
             Satış girişi
           </p>
           <p className="text-sm text-slate-400">Tarih ve satış adetini ekle.</p>
         </div>
+        <button
+          type="button"
+          onClick={handleCountRun}
+          disabled={isCountRunning}
+          title="Sayim al"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className={`h-4 w-4 ${isCountRunning ? "animate-spin" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 2v6h-6" />
+            <path d="M3 22v-6h6" />
+            <path d="M21 8a9 9 0 0 0-15.5-4.5L3 6" />
+            <path d="M3 16a9 9 0 0 0 15.5 4.5L21 18" />
+          </svg>
+        </button>
       </div>
 
       <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
@@ -774,121 +735,14 @@ export default function SalesTab({
       </div>
     </div>
   ) : null
-  const countCard = canCreate ? (
-    <div className={`${panelClass} relative overflow-hidden bg-ink-800/60`}>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(59,130,246,0.16),transparent)]" />
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-            Sayim al
-          </p>
-          <p className="text-sm text-slate-400">Websocket uzerinden guncel sayimi cek.</p>
-        </div>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-          backend: eldoradosayim
-        </span>
-      </div>
-
-      <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-slate-200" htmlFor="sales-count-date">
-            Tarih
-          </label>
-          <input
-            id="sales-count-date"
-            type="date"
-            value={countRequestDate}
-            onChange={(event) => setCountRequestDate(event.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleCountRun}
-          disabled={isCountRunning}
-          className="flex w-full items-center justify-center rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isCountRunning ? "Sayim aliniyor..." : "Sayim al"}
-        </button>
-      </div>
-    </div>
-  ) : null
   const sidebarCards = (
     <div className="space-y-6">
       {entryCard}
-      {countCard}
     </div>
   )
-  const countResultModalContent =
-    countResultModal.isOpen && typeof document !== "undefined"
-      ? createPortal(
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
-            <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
-              <path d="M7.629 13.314 4.486 10.17l-1.172 1.172 4.315 4.315L16.686 6.6l-1.172-1.172z" />
-            </svg>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
-              Islem Basarili
-            </p>
-            <p className="mt-1 text-base font-semibold text-white">Sayim sonucu hazir.</p>
-            <p className="mt-1 text-xs text-slate-300">
-              Sonuc: <span className="text-emerald-100">eldoradosayim</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-white/10 bg-ink-950/60 px-3 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tarih</p>
-              <p className="mt-2 text-base font-semibold text-white">{formatDate(countResultModal.date)}</p>
-            </div>
-            <div className="rounded-xl border border-sky-300/20 bg-sky-500/10 px-3 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Sayim</p>
-              <p className="mt-2 text-base font-semibold text-sky-50">{countResultModal.count}</p>
-            </div>
-          </div>
-        </div>
-        <p className="mt-1 text-[11px] text-slate-500">
-          Alinma tarihi: {formatDate(countResultModal.collectedAt)}
-        </p>
-
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            className="rounded-lg border border-sky-300/70 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={handleCountResultSave}
-            disabled={isCountSaving}
-          >
-            {isCountSaving ? "EKLENIYOR..." : "Ekle"}
-          </button>
-          <button
-            type="button"
-            className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={handleCountModalClose}
-            disabled={isCountSaving}
-          >
-            Kapat
-          </button>
-        </div>
-      </div>
-    </div>,
-          document.body,
-        )
-      : null
 
   if (!canViewAnalytics) {
-    return (
-      <>
-        <div className="space-y-6">{sidebarCards}</div>
-        {countResultModalContent}
-      </>
-    )
+    return <div className="space-y-6">{sidebarCards}</div>
   }
 
   return (
@@ -1125,7 +979,6 @@ export default function SalesTab({
 
         {sidebarCards}
       </div>
-      {countResultModalContent}
     </div>
   )
 }
