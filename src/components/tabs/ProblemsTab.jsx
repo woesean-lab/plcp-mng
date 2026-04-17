@@ -17,7 +17,7 @@ function ProblemsSkeleton({ panelClass }) {
         <SkeletonBlock className="h-4 w-32 rounded-full" />
         <SkeletonBlock className="mt-4 h-8 w-56" />
         <SkeletonBlock className="mt-3 h-4 w-2/3" />
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, idx) => (
             <SkeletonBlock key={`problem-metric-${idx}`} className="h-10 w-full rounded-xl" />
           ))}
@@ -42,15 +42,6 @@ function ProblemsSkeleton({ panelClass }) {
                     <SkeletonBlock className="h-7 w-20 rounded-lg" />
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={`${panelClass} bg-ink-900/60`}>
-            <SkeletonBlock className="h-4 w-28 rounded-full" />
-            <div className="mt-4 space-y-2">
-              {Array.from({ length: 4 }).map((_, idx) => (
-                <SkeletonBlock key={`problem-feed-${idx}`} className="h-12 w-full rounded-xl" />
               ))}
             </div>
           </div>
@@ -235,8 +226,6 @@ export default function ProblemsTab({
     return sortedAllProblems
   }, [activeView, sortedAllProblems, sortedOpenProblems, sortedResolvedProblems])
 
-  const latestProblems = useMemo(() => sortedAllProblems.slice(0, 5), [sortedAllProblems])
-
   const todaysProblemCount = useMemo(() => {
     const todayKey = new Date().toLocaleDateString("tr-TR")
     return sortedAllProblems.reduce((count, problem) => {
@@ -253,37 +242,40 @@ export default function ProblemsTab({
   return (
     <div className="space-y-6">
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Problem Merkezi</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-200/80">
-            Acik ve cozulen kayitlari filtreleyip hizli yonetin. Kartlardaki tarih bilgisi problemin eklendigi zamani gosterir.
-          </p>
-
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <MetricCard
-              label="Acik"
-              value={openProblems.length}
-              helper="Aktif kayit"
-              tone="sky"
-            />
-            <MetricCard
-              label="Cozulen"
-              value={resolvedProblems.length}
-              helper="Kapanan kayit"
-              tone="emerald"
-            />
-            <MetricCard
-              label="Toplam"
-              value={problems.length}
-              helper="Tum kayitlar"
-              tone="indigo"
-            />
-            <MetricCard
-              label="Bugun Eklenen"
-              value={todaysProblemCount}
-              helper="Gunluk acilan"
-              tone="amber"
-            />
+        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-1.5 sm:space-y-2">
+            <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Problem Merkezi</h1>
+            <p className="max-w-2xl text-sm text-slate-200/80">
+              Acik ve cozulen kayitlari filtreleyip hizli yonetin. Kartlardaki tarih bilgisi problemin eklendigi zamani gosterir.
+            </p>
+          </div>
+          <div className="w-full md:max-w-[760px]">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard
+                label="Acik"
+                value={openProblems.length}
+                helper="Aktif kayit"
+                tone="sky"
+              />
+              <MetricCard
+                label="Cozulen"
+                value={resolvedProblems.length}
+                helper="Kapanan kayit"
+                tone="emerald"
+              />
+              <MetricCard
+                label="Toplam"
+                value={problems.length}
+                helper="Tum kayitlar"
+                tone="indigo"
+              />
+              <MetricCard
+                label="Bugun Eklenen"
+                value={todaysProblemCount}
+                helper="Gunluk acilan"
+                tone="amber"
+              />
+            </div>
           </div>
         </div>
       </header>
@@ -302,7 +294,7 @@ export default function ProblemsTab({
                   </p>
                 </div>
 
-                <div className="flex items-center rounded-full border border-white/10 bg-ink-900/60 p-1">
+                <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
                     {VIEW_OPTIONS.map((option) => (
                       <button
                         key={option.key}
@@ -341,47 +333,6 @@ export default function ProblemsTab({
                   ))
                 )}
               </div>
-            </div>
-          </section>
-
-          <section className={`${panelClass} bg-ink-900/60`}>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Son eklenenler</p>
-                <p className="mt-1 text-sm text-slate-400">En guncel problem hareketleri.</p>
-              </div>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-300">
-                {latestProblems.length} kayit
-              </span>
-            </div>
-
-            <div className="mt-4 space-y-2">
-              {latestProblems.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                  Henuz problem eklenmedi.
-                </div>
-              ) : (
-                latestProblems.map((problem) => {
-                  const isResolved = String(problem?.status ?? "") === "resolved"
-                  return (
-                    <div
-                      key={`latest-${problem.id}`}
-                      className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-ink-900/75 px-3 py-2.5"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-100">{problem.username}</p>
-                        <p className="mt-0.5 truncate text-xs text-slate-400">{problem.issue}</p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-[11px] text-slate-500">{formatProblemCreatedAt(problem.createdAt)}</p>
-                        <p className="mt-1 text-[11px] font-semibold text-slate-300">
-                          {isResolved ? "Cozulen" : "Acik"}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
             </div>
           </section>
         </div>
