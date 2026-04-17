@@ -263,14 +263,10 @@ export default function ProblemsTab({
     return sortedAllProblems
   }, [activeView, sortedAllProblems, sortedOpenProblems, sortedResolvedProblems, sortedArchivedProblems])
 
-  const todaysProblemCount = useMemo(() => {
-    const todayKey = new Date().toLocaleDateString("tr-TR")
-    return sortedAllProblems.reduce((count, problem) => {
-      const date = parseProblemDate(problem.createdAt)
-      if (!date) return count
-      return date.toLocaleDateString("tr-TR") === todayKey ? count + 1 : count
-    }, 0)
-  }, [sortedAllProblems])
+  const activeViewLabel = useMemo(
+    () => VIEW_OPTIONS.find((option) => option.key === activeView)?.label || "Tum",
+    [activeView],
+  )
 
   if (isLoading) {
     return <ProblemsSkeleton panelClass={panelClass} />
@@ -307,9 +303,9 @@ export default function ProblemsTab({
                 tone="indigo"
               />
               <MetricCard
-                label="Bugun Eklenen"
-                value={todaysProblemCount}
-                helper="Gunluk acilan"
+                label="Arsiv"
+                value={archivedProblems.length}
+                helper="Arsivdeki kayit"
                 tone="amber"
               />
             </div>
@@ -331,7 +327,8 @@ export default function ProblemsTab({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
                     {VIEW_OPTIONS.map((option) => (
                       <button
                         key={option.key}
@@ -346,6 +343,10 @@ export default function ProblemsTab({
                         {option.label}
                       </button>
                     ))}
+                  </div>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                    {activeViewLabel}: {filteredProblems.length}
+                  </span>
                 </div>
               </div>
 
