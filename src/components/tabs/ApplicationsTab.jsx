@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { ChevronDown, Pause, Play, Trash2 } from "lucide-react"
+import { ChevronDownIcon } from "@heroicons/react/24/outline"
+import { PauseIcon, PlayIcon, TrashIcon } from "@heroicons/react/20/solid"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
@@ -1430,7 +1431,7 @@ export default function ApplicationsTab({
                   ))}
                 </select>
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500">
-                  <ChevronDown aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
+                  <ChevronDownIcon aria-hidden="true" className="h-4 w-4" />
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
@@ -1442,7 +1443,7 @@ export default function ApplicationsTab({
                   aria-label="Servisi calistir"
                   title="Calistir"
                 >
-                  <Play size={16} aria-hidden="true" />
+                  <PlayIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -1452,7 +1453,7 @@ export default function ApplicationsTab({
                   aria-label="Aktif calistirmayi iptal et"
                   title="Iptal"
                 >
-                  <Pause size={16} aria-hidden="true" />
+                  <PauseIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -1462,7 +1463,7 @@ export default function ApplicationsTab({
                   aria-label="Loglari temizle"
                   title="Log temizle"
                 >
-                  <Trash2 size={16} aria-hidden="true" />
+                  <TrashIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
             </div>

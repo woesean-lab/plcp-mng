@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  DollarSign,
-  Link2,
-  Package,
-  Play,
-  Plus,
-  Power,
-  RefreshCcw,
-  Search,
-  Star,
-  Trash2,
-} from "lucide-react"
+  ArrowPathIcon,
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  CubeIcon,
+  CurrencyDollarIcon,
+  LinkIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+  PowerIcon,
+  StarIcon as StarOutlineIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline"
+import { PlayIcon, StarIcon as StarSolidIcon } from "@heroicons/react/20/solid"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import useEldoradoAutomationRuntime from "../../hooks/useEldoradoAutomationRuntime"
@@ -2706,7 +2706,7 @@ export default function ProductsTab({
       <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
-            <Check className="h-4 w-4" aria-hidden="true" />
+            <CheckIcon className="h-4 w-4" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
@@ -2897,7 +2897,7 @@ export default function ProductsTab({
               aria-label={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
               aria-expanded={isCategoryMenuOpen}
             >
-              <ChevronUp
+              <ChevronUpIcon
                 aria-hidden="true"
                 className={`h-4 w-4 transition-transform ${isCategoryMenuOpen ? "" : "rotate-180"}`}
               />
@@ -2953,7 +2953,7 @@ export default function ProductsTab({
                   Ara
                 </span>
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <Search aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                  <MagnifyingGlassIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
                   <input
                     type="text"
                     value={query}
@@ -2991,7 +2991,7 @@ export default function ProductsTab({
                       title="Urun katalogunu yenile"
                       aria-label="Urun katalogunu yenile"
                     >
-                      <Package
+                      <CubeIcon
                         aria-hidden="true"
                         className={`h-4 w-4 ${isRefreshing ? "animate-pulse" : ""}`}
                       />
@@ -3010,7 +3010,7 @@ export default function ProductsTab({
                       title="Tum urun stoklarini yenile"
                       aria-label="Tum urun stoklarini yenile"
                     >
-                      <RefreshCcw
+                      <ArrowPathIcon
                         aria-hidden="true"
                         className={`h-4 w-4 ${isBulkStockRefreshRunning ? "animate-spin" : ""}`}
                       />
@@ -3041,7 +3041,7 @@ export default function ProductsTab({
                           : "Kullanilan stoklari temizle"
                       }
                     >
-                      <Trash2
+                      <TrashIcon
                         aria-hidden="true"
                         className={`h-4 w-4 ${isBulkUsedDeleteRunning ? "animate-pulse" : ""}`}
                       />
@@ -3056,7 +3056,7 @@ export default function ProductsTab({
                       aria-label={isBulkPriceModeOpen ? "Toplu fiyat panelini kapat" : "Toplu fiyat panelini ac"}
                       aria-expanded={isBulkPriceModeOpen}
                     >
-                      <DollarSign
+                      <CurrencyDollarIcon
                         aria-hidden="true"
                         className={`h-4 w-4 transition-transform ${isBulkPriceModeOpen ? "scale-110 text-emerald-300" : ""}`}
                       />
@@ -3644,7 +3644,7 @@ export default function ProductsTab({
                                   isStockEnabled ? "bg-emerald-400" : "bg-rose-400"
                                 }`}
                               />
-                              <Power aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              <PowerIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </button>
                             <button
                               type="button"
@@ -3661,7 +3661,7 @@ export default function ProductsTab({
                                   isPriceEnabled ? "bg-sky-400" : "bg-rose-400"
                                 }`}
                               />
-                              <DollarSign aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              <CurrencyDollarIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </button>
                             <button
                               type="button"
@@ -3682,7 +3682,7 @@ export default function ProductsTab({
                                   isAutomationEnabled ? "bg-emerald-400" : "bg-rose-400"
                                 }`}
                               />
-                              <Play aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              <PlayIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </button>
                             <button
                               type="button"
@@ -3694,11 +3694,11 @@ export default function ProductsTab({
                               aria-label="Ürünü yıldızla"
                               title={starredOffers[offerId] ? "Yıldızı kaldır" : "Yıldızla"}
                             >
-                              <Star
-                                aria-hidden="true"
-                                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                                fill={starredOffers[offerId] ? "currentColor" : "none"}
-                              />
+                              {starredOffers[offerId] ? (
+                                <StarSolidIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              ) : (
+                                <StarOutlineIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              )}
                             </button>
                             <button
                               type="button"
@@ -3720,7 +3720,7 @@ export default function ProductsTab({
                                       : "Yenile"
                               }
                             >
-                              <RefreshCcw
+                              <ArrowPathIcon
                                 aria-hidden="true"
                                 className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isKeysLoading || isOfferRefreshing ? "animate-spin" : ""}`}
                               />
@@ -3736,7 +3736,7 @@ export default function ProductsTab({
                                 aria-label="Urun sil"
                                 title={confirmOfferDelete === offerId ? "Onayla" : "Sil"}
                               >
-                                <Trash2 aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                <TrashIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </button>
                             )}
                             {href && canViewLinks && (
@@ -3747,7 +3747,7 @@ export default function ProductsTab({
                                 className="relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7"
                                 aria-label="Ürün linki"
                               >
-                                <Link2 aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                <LinkIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </a>
                             )}
                             {canAddKeys && (
@@ -3762,7 +3762,7 @@ export default function ProductsTab({
                                 }`}
                                 aria-label="Stok ekle"
                               >
-                                <Plus aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                <PlusIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </button>
                             )}
                             <button
@@ -3774,7 +3774,7 @@ export default function ProductsTab({
                               } ${!offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""}`}
                               aria-label="Ürün detaylarını aç/kapat"
                             >
-                              <ChevronRight
+                              <ChevronRightIcon
                                 aria-hidden="true"
                                 className={`h-3.5 w-3.5 transition sm:h-4 sm:w-4 ${isOpen ? "rotate-180" : ""}`}
                               />
@@ -4553,11 +4553,11 @@ export default function ProductsTab({
                                                         {isStarring ? (
                                                           "..."
                                                         ) : (
-                                                          <Star
-                                                            className="h-3.5 w-3.5"
-                                                            fill={isStarred ? "currentColor" : "none"}
-                                                            aria-hidden="true"
-                                                          />
+                                                          isStarred ? (
+                                                            <StarSolidIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                                                          ) : (
+                                                            <StarOutlineIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                                                          )
                                                         )}
                                                       </button>
                                                       <button
@@ -5201,7 +5201,7 @@ export default function ProductsTab({
                   aria-label="Önceki sayfa"
                   title="Önceki sayfa"
                 >
-                  <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+                  <ChevronLeftIcon aria-hidden="true" className="h-4 w-4" />
                 </button>
                 <span className="px-2 text-[11px] uppercase tracking-[0.2em] text-slate-400">
                   {page} / {totalPages}
@@ -5214,7 +5214,7 @@ export default function ProductsTab({
                   aria-label="Sonraki sayfa"
                   title="Sonraki sayfa"
                 >
-                  <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                  <ChevronRightIcon aria-hidden="true" className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -5239,3 +5239,4 @@ export default function ProductsTab({
     </div>
   )
 }
+

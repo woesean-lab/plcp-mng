@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react"
-import { ChevronDown, Menu } from "lucide-react"
+import { Bars3Icon, ChevronDownIcon } from "@heroicons/react/24/outline"
 import { Toaster } from "react-hot-toast"
 import ProfileModal from "./components/modals/ProfileModal"
 import NoteModal from "./components/modals/NoteModal"
@@ -848,7 +848,7 @@ function App() {
                 aria-expanded={isTabMenuOpen}
                 aria-controls="mobile-tab-menu"
               >
-                <Menu aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
+                <Bars3Icon aria-hidden="true" className="h-4 w-4" />
               </button>
 
               <div className="hidden sm:flex sm:flex-1">
@@ -910,10 +910,9 @@ function App() {
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-500/20 text-[11px] font-semibold uppercase text-accent-50 shadow-glow">
                       {userInitial}
                     </span>
-                    <ChevronDown
+                    <ChevronDownIcon
                       aria-hidden="true"
                       className={`h-3.5 w-3.5 transition ${isUserMenuOpen ? "rotate-180" : ""}`}
-                      strokeWidth={1.6}
                     />
                   </button>
                   {isUserMenuOpen && (

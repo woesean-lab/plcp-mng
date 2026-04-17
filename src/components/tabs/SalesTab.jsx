@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { RefreshCcw } from "lucide-react"
+import { ArrowPathIcon } from "@heroicons/react/24/outline"
 import { toast } from "react-hot-toast"
 import {
   buildSocketIoWsUrl,
@@ -669,7 +669,7 @@ export default function SalesTab({
           title="Sayim al"
           className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <RefreshCcw
+          <ArrowPathIcon
             aria-hidden="true"
             className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isCountRunning ? "animate-spin" : ""}`}
           />

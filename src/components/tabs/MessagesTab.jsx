@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Search } from "lucide-react"
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline"
 
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -251,7 +251,7 @@ export default function MessagesTab({
               <div className="flex h-11 w-full items-center gap-3 rounded border border-white/10 bg-ink-900 px-4 shadow-inner">
                 <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
                 <div className="flex flex-1 items-center gap-2">
-                  <Search aria-hidden="true" className="h-4 w-4 text-slate-500" />
+                  <MagnifyingGlassIcon aria-hidden="true" className="h-4 w-4 text-slate-500" />
                   <input
                     type="text"
                     value={templateQuery}
