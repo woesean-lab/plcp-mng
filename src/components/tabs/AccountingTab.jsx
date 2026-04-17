@@ -901,7 +901,7 @@ export default function AccountingTab({
         >
           <svg
             viewBox="0 0 24 24"
-            className={`h-4 w-4 ${isCountRunning ? "animate-spin" : ""}`}
+            className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isCountRunning ? "animate-spin" : ""}`}
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -909,10 +909,8 @@ export default function AccountingTab({
             strokeLinejoin="round"
             aria-hidden="true"
           >
-            <path d="M21 2v6h-6" />
-            <path d="M3 22v-6h6" />
-            <path d="M21 8a9 9 0 0 0-15.5-4.5L3 6" />
-            <path d="M3 16a9 9 0 0 0 15.5 4.5L21 18" />
+            <path d="M4 12a8 8 0 1 0 2.35-5.65" />
+            <path d="M4 4v4h4" />
           </svg>
         </button>
       </div>
