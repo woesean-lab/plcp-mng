@@ -1,5 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  DollarSign,
+  Link2,
+  Package,
+  Play,
+  Plus,
+  Power,
+  RefreshCcw,
+  Search,
+  Star,
+  Trash2,
+} from "lucide-react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import useEldoradoAutomationRuntime from "../../hooks/useEldoradoAutomationRuntime"
@@ -2690,9 +2706,7 @@ export default function ProductsTab({
       <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/50 bg-emerald-500/20 text-emerald-200">
-            <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current" aria-hidden="true">
-              <path d="M7.629 13.314 4.486 10.17l-1.172 1.172 4.315 4.315L16.686 6.6l-1.172-1.172z" />
-            </svg>
+            <Check className="h-4 w-4" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
@@ -2883,18 +2897,10 @@ export default function ProductsTab({
               aria-label={isCategoryMenuOpen ? "Kategori menusu kapat" : "Kategori menusu ac"}
               aria-expanded={isCategoryMenuOpen}
             >
-              <svg
-                viewBox="0 0 24 24"
+              <ChevronUp
                 aria-hidden="true"
                 className={`h-4 w-4 transition-transform ${isCategoryMenuOpen ? "" : "rotate-180"}`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m6 14 6-6 6 6" />
-              </svg>
+              />
             </button>
           </div>
           {isCategoryMenuOpen ? (
@@ -2947,19 +2953,7 @@ export default function ProductsTab({
                   Ara
                 </span>
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4 shrink-0 text-slate-500"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="11" cy="11" r="7" />
-                    <line x1="16.5" y1="16.5" x2="21" y2="21" />
-                  </svg>
+                  <Search aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
                   <input
                     type="text"
                     value={query}
@@ -2997,21 +2991,10 @@ export default function ProductsTab({
                       title="Urun katalogunu yenile"
                       aria-label="Urun katalogunu yenile"
                     >
-                      <svg
-                        viewBox="0 0 24 24"
+                      <Package
                         aria-hidden="true"
                         className={`h-4 w-4 ${isRefreshing ? "animate-pulse" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="m12 3 7 4v10l-7 4-7-4V7l7-4Z" />
-                        <path d="m12 12 7-4" />
-                        <path d="m12 12-7-4" />
-                        <path d="M12 12v9" />
-                      </svg>
+                      />
                     </button>
                   )}
                   {canRefreshAllStocks && (
@@ -3027,19 +3010,10 @@ export default function ProductsTab({
                       title="Tum urun stoklarini yenile"
                       aria-label="Tum urun stoklarini yenile"
                     >
-                      <svg
-                        viewBox="0 0 24 24"
+                      <RefreshCcw
                         aria-hidden="true"
                         className={`h-4 w-4 ${isBulkStockRefreshRunning ? "animate-spin" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M4 12a8 8 0 1 0 2.35-5.65" />
-                        <path d="M4 4v4h4" />
-                      </svg>
+                      />
                     </button>
                   )}
                   {canUseBulkUsedDelete && (
@@ -3067,22 +3041,10 @@ export default function ProductsTab({
                           : "Kullanilan stoklari temizle"
                       }
                     >
-                      <svg
-                        viewBox="0 0 24 24"
+                      <Trash2
                         aria-hidden="true"
                         className={`h-4 w-4 ${isBulkUsedDeleteRunning ? "animate-pulse" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M3 6h18" />
-                        <path d="M8 6V4h8v2" />
-                        <path d="M6 6l1 14h10l1-14" />
-                        <path d="M10 10v6" />
-                        <path d="M14 10v6" />
-                      </svg>
+                      />
                     </button>
                   )}
                   {canUseBulkPriceActions && filteredList.length > 0 && (
@@ -3094,19 +3056,10 @@ export default function ProductsTab({
                       aria-label={isBulkPriceModeOpen ? "Toplu fiyat panelini kapat" : "Toplu fiyat panelini ac"}
                       aria-expanded={isBulkPriceModeOpen}
                     >
-                      <svg
-                        viewBox="0 0 24 24"
+                      <DollarSign
                         aria-hidden="true"
                         className={`h-4 w-4 transition-transform ${isBulkPriceModeOpen ? "scale-110 text-emerald-300" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 3v18" />
-                        <path d="M16.5 7.5h-6a3 3 0 0 0 0 6h3a3 3 0 0 1 0 6H7" />
-                      </svg>
+                      />
                     </button>
                   )}
                 </div>
@@ -3691,19 +3644,7 @@ export default function ProductsTab({
                                   isStockEnabled ? "bg-emerald-400" : "bg-rose-400"
                                 }`}
                               />
-                              <svg
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M12 2v6" />
-                                <path d="M6.4 6.4a8 8 0 1 0 11.2 0" />
-                              </svg>
+                              <Power aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </button>
                             <button
                               type="button"
@@ -3720,19 +3661,7 @@ export default function ProductsTab({
                                   isPriceEnabled ? "bg-sky-400" : "bg-rose-400"
                                 }`}
                               />
-                              <svg
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M12 2v20" />
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />
-                              </svg>
+                              <DollarSign aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </button>
                             <button
                               type="button"
@@ -3753,14 +3682,7 @@ export default function ProductsTab({
                                   isAutomationEnabled ? "bg-emerald-400" : "bg-rose-400"
                                 }`}
                               />
-                              <svg
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                                fill="currentColor"
-                              >
-                                <path d="M8 6v12l10-6z" />
-                              </svg>
+                              <Play aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </button>
                             <button
                               type="button"
@@ -3772,18 +3694,11 @@ export default function ProductsTab({
                               aria-label="Ürünü yıldızla"
                               title={starredOffers[offerId] ? "Yıldızı kaldır" : "Yıldızla"}
                             >
-                              <svg
-                                viewBox="0 0 24 24"
+                              <Star
                                 aria-hidden="true"
                                 className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                 fill={starredOffers[offerId] ? "currentColor" : "none"}
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="m12 2 3.1 6.3 7 .9-5 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7-5-4.9 7-.9z" />
-                              </svg>
+                              />
                             </button>
                             <button
                               type="button"
@@ -3805,19 +3720,10 @@ export default function ProductsTab({
                                       : "Yenile"
                               }
                             >
-                              <svg
-                                viewBox="0 0 24 24"
+                              <RefreshCcw
                                 aria-hidden="true"
                                 className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isKeysLoading || isOfferRefreshing ? "animate-spin" : ""}`}
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M4 12a8 8 0 1 0 2.35-5.65" />
-                                <path d="M4 4v4h4" />
-                              </svg>
+                              />
                             </button>
                             {canDeleteOffers && (
                               <button
@@ -3830,22 +3736,7 @@ export default function ProductsTab({
                                 aria-label="Urun sil"
                                 title={confirmOfferDelete === offerId ? "Onayla" : "Sil"}
                               >
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  aria-hidden="true"
-                                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M3 6h18" />
-                                  <path d="M8 6V4h8v2" />
-                                  <path d="M6 6l1 14h10l1-14" />
-                                  <path d="M10 10v6" />
-                                  <path d="M14 10v6" />
-                                </svg>
+                                <Trash2 aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </button>
                             )}
                             {href && canViewLinks && (
@@ -3856,19 +3747,7 @@ export default function ProductsTab({
                                 className="relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7"
                                 aria-label="Ürün linki"
                               >
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  aria-hidden="true"
-                                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L10.5 5.5" />
-                                  <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13.5 18.5" />
-                                </svg>
+                                <Link2 aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </a>
                             )}
                             {canAddKeys && (
@@ -3883,19 +3762,7 @@ export default function ProductsTab({
                                 }`}
                                 aria-label="Stok ekle"
                               >
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  aria-hidden="true"
-                                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M12 5v14" />
-                                  <path d="M5 12h14" />
-                                </svg>
+                                <Plus aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </button>
                             )}
                             <button
@@ -3907,18 +3774,10 @@ export default function ProductsTab({
                               } ${!offerId || !canToggleCard ? "cursor-not-allowed opacity-60" : ""}`}
                               aria-label="Ürün detaylarını aç/kapat"
                             >
-                              <svg
-                                viewBox="0 0 24 24"
+                              <ChevronRight
                                 aria-hidden="true"
                                 className={`h-3.5 w-3.5 transition sm:h-4 sm:w-4 ${isOpen ? "rotate-180" : ""}`}
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="m9 6 6 6-6 6" />
-                              </svg>
+                              />
                             </button>
                           </div>
                         </div>
@@ -4694,16 +4553,11 @@ export default function ProductsTab({
                                                         {isStarring ? (
                                                           "..."
                                                         ) : (
-                                                          <svg
-                                                            viewBox="0 0 20 20"
+                                                          <Star
                                                             className="h-3.5 w-3.5"
                                                             fill={isStarred ? "currentColor" : "none"}
-                                                            stroke="currentColor"
-                                                            strokeWidth="1.8"
                                                             aria-hidden="true"
-                                                          >
-                                                            <path d="M10 2.8 12.3 7.5l5.2.8-3.8 3.8.9 5.2L10 14.9 5.4 17.3l.9-5.2-3.8-3.8 5.2-.8z" />
-                                                          </svg>
+                                                          />
                                                         )}
                                                       </button>
                                                       <button
@@ -5347,18 +5201,7 @@ export default function ProductsTab({
                   aria-label="Önceki sayfa"
                   title="Önceki sayfa"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
+                  <ChevronLeft aria-hidden="true" className="h-4 w-4" />
                 </button>
                 <span className="px-2 text-[11px] uppercase tracking-[0.2em] text-slate-400">
                   {page} / {totalPages}
@@ -5371,18 +5214,7 @@ export default function ProductsTab({
                   aria-label="Sonraki sayfa"
                   title="Sonraki sayfa"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
+                  <ChevronRight aria-hidden="true" className="h-4 w-4" />
                 </button>
               </div>
             </div>

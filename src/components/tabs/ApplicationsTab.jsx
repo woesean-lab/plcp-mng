@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { RiDeleteBin6Line, RiPauseFill, RiPlayFill } from "@remixicon/react"
+import { ChevronDown, Pause, Play, Trash2 } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
@@ -1430,18 +1430,7 @@ export default function ApplicationsTab({
                   ))}
                 </select>
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500">
-                  <svg
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m5 8 5 5 5-5" />
-                  </svg>
+                  <ChevronDown aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
@@ -1453,7 +1442,7 @@ export default function ApplicationsTab({
                   aria-label="Servisi calistir"
                   title="Calistir"
                 >
-                  <RiPlayFill size={16} aria-hidden="true" />
+                  <Play size={16} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -1463,7 +1452,7 @@ export default function ApplicationsTab({
                   aria-label="Aktif calistirmayi iptal et"
                   title="Iptal"
                 >
-                  <RiPauseFill size={16} aria-hidden="true" />
+                  <Pause size={16} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -1473,7 +1462,7 @@ export default function ApplicationsTab({
                   aria-label="Loglari temizle"
                   title="Log temizle"
                 >
-                  <RiDeleteBin6Line size={16} aria-hidden="true" />
+                  <Trash2 size={16} aria-hidden="true" />
                 </button>
               </div>
             </div>

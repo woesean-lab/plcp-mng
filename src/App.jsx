@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react"
+import { ChevronDown, Menu } from "lucide-react"
 import { Toaster } from "react-hot-toast"
 import ProfileModal from "./components/modals/ProfileModal"
 import NoteModal from "./components/modals/NoteModal"
@@ -847,18 +848,7 @@ function App() {
                 aria-expanded={isTabMenuOpen}
                 aria-controls="mobile-tab-menu"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <Menu aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
               </button>
 
               <div className="hidden sm:flex sm:flex-1">
@@ -920,18 +910,11 @@ function App() {
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-500/20 text-[11px] font-semibold uppercase text-accent-50 shadow-glow">
                       {userInitial}
                     </span>
-                    <svg
-                      viewBox="0 0 24 24"
+                    <ChevronDown
                       aria-hidden="true"
                       className={`h-3.5 w-3.5 transition ${isUserMenuOpen ? "rotate-180" : ""}`}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
+                      strokeWidth={1.6}
+                    />
                   </button>
                   {isUserMenuOpen && (
                     <div

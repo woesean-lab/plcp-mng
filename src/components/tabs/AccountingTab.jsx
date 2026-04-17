@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { RefreshCcw } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { parseFlexibleNumberInput } from "../../utils/numberInput"
 import {
@@ -899,19 +900,10 @@ export default function AccountingTab({
           title="Sayim al"
           className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <svg
-            viewBox="0 0 24 24"
-            className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isCountRunning ? "animate-spin" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <RefreshCcw
             aria-hidden="true"
-          >
-            <path d="M4 12a8 8 0 1 0 2.35-5.65" />
-            <path d="M4 4v4h4" />
-          </svg>
+            className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isCountRunning ? "animate-spin" : ""}`}
+          />
         </button>
       </div>
 
