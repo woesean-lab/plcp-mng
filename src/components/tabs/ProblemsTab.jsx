@@ -26,7 +26,7 @@ function ProblemsSkeleton({ panelClass }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,0.95fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,0.72fr)]">
         <div className="space-y-6">
           <div className={`${panelClass} bg-ink-900/70`}>
             <SkeletonBlock className="h-10 w-full rounded-xl" />
@@ -346,7 +346,7 @@ export default function ProblemsTab({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2 lg:flex-nowrap">
                   <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
                     {VIEW_OPTIONS.map((option) => (
                       <button
@@ -363,10 +363,7 @@ export default function ProblemsTab({
                       </button>
                     ))}
                   </div>
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                    {activeViewLabel}: {filteredProblems.length}
-                  </span>
-                  <div className="flex h-9 min-w-[220px] items-center gap-2 rounded-lg border border-white/10 bg-ink-900 px-3">
+                  <div className="flex h-9 w-full sm:w-[190px] items-center gap-2 rounded-lg border border-white/10 bg-ink-900 px-3">
                     <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
                     <input
                       type="text"
@@ -376,6 +373,9 @@ export default function ProblemsTab({
                       className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                     />
                   </div>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                    {activeViewLabel}: {filteredProblems.length}
+                  </span>
                 </div>
               </div>
 
@@ -405,7 +405,7 @@ export default function ProblemsTab({
           </section>
         </div>
 
-        <div className="order-first space-y-6 lg:order-none">
+        <div className="order-first space-y-6 lg:order-none lg:w-full lg:max-w-[340px] lg:justify-self-end">
           {canCreate && (
             <section className={`${panelClass} bg-ink-900/70`}>
               <div className="flex items-start justify-between gap-3">
