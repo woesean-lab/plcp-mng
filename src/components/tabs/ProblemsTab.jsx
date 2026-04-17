@@ -4,7 +4,6 @@ import {
   ArrowPathIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
-  MagnifyingGlassIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline"
 
@@ -26,7 +25,7 @@ function ProblemsSkeleton({ panelClass }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,0.72fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,0.95fr)]">
         <div className="space-y-6">
           <div className={`${panelClass} bg-ink-900/70`}>
             <SkeletonBlock className="h-10 w-full rounded-xl" />
@@ -242,7 +241,6 @@ export default function ProblemsTab({
   handleProblemAdd,
 }) {
   const [activeView, setActiveView] = useState("open")
-  const [usernameQuery, setUsernameQuery] = useState("")
 
   const sortedOpenProblems = useMemo(
     () => [...openProblems].sort(compareProblemByDateDesc),
@@ -259,28 +257,11 @@ export default function ProblemsTab({
   const sortedAllProblems = useMemo(() => [...problems].sort(compareProblemByDateDesc), [problems])
 
   const filteredProblems = useMemo(() => {
-    const source =
-      activeView === "open"
-        ? sortedOpenProblems
-        : activeView === "resolved"
-          ? sortedResolvedProblems
-          : activeView === "archived"
-            ? sortedArchivedProblems
-            : sortedAllProblems
-
-    const normalizedQuery = usernameQuery.trim().toLowerCase()
-    if (!normalizedQuery) return source
-    return source.filter((problem) =>
-      String(problem?.username ?? "").toLowerCase().includes(normalizedQuery),
-    )
-  }, [
-    activeView,
-    sortedAllProblems,
-    sortedOpenProblems,
-    sortedResolvedProblems,
-    sortedArchivedProblems,
-    usernameQuery,
-  ])
+    if (activeView === "open") return sortedOpenProblems
+    if (activeView === "resolved") return sortedResolvedProblems
+    if (activeView === "archived") return sortedArchivedProblems
+    return sortedAllProblems
+  }, [activeView, sortedAllProblems, sortedOpenProblems, sortedResolvedProblems, sortedArchivedProblems])
 
   const activeViewLabel = useMemo(
     () => VIEW_OPTIONS.find((option) => option.key === activeView)?.label || "Tum",
@@ -346,7 +327,7 @@ export default function ProblemsTab({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-2 lg:flex-nowrap">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="flex flex-wrap items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
                     {VIEW_OPTIONS.map((option) => (
                       <button
@@ -362,16 +343,6 @@ export default function ProblemsTab({
                         {option.label}
                       </button>
                     ))}
-                  </div>
-                  <div className="flex h-9 w-full sm:w-[190px] items-center gap-2 rounded-lg border border-white/10 bg-ink-900 px-3">
-                    <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-                    <input
-                      type="text"
-                      value={usernameQuery}
-                      onChange={(event) => setUsernameQuery(event.target.value)}
-                      placeholder="Kullanici adi ara"
-                      className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                    />
                   </div>
                   <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                     {activeViewLabel}: {filteredProblems.length}
@@ -405,7 +376,7 @@ export default function ProblemsTab({
           </section>
         </div>
 
-        <div className="order-first space-y-6 lg:order-none lg:w-full lg:max-w-[340px] lg:justify-self-end">
+        <div className="order-first space-y-6 lg:order-none">
           {canCreate && (
             <section className={`${panelClass} bg-ink-900/70`}>
               <div className="flex items-start justify-between gap-3">
