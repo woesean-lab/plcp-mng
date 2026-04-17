@@ -1356,21 +1356,25 @@ export default function ApplicationsTab({
       ? getBackendLabelForDisplay(selectedApplication.backendLabel)
       : MASKED_BACKEND_TEXT
   const terminalFieldClass =
-    "h-9 w-full appearance-none rounded-md border border-slate-800 bg-[#0a1019] px-3 text-[11px] text-slate-100 transition focus:border-slate-600 focus:bg-[#0d1420] focus:outline-none focus:ring-2 focus:ring-slate-700/20 disabled:cursor-not-allowed disabled:opacity-60"
+    "h-10 w-full appearance-none rounded-xl border border-slate-700/80 bg-[#070d16] pl-3 pr-10 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(148,163,184,0.2)] transition focus:border-sky-400/70 focus:bg-[#0b1220] focus:outline-none focus:ring-2 focus:ring-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalTextInputClass =
-    "h-9 min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 font-mono text-[11px] text-slate-100 transition placeholder:text-slate-500 focus:border-slate-500 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+    "h-10 min-w-0 flex-1 rounded-xl border border-slate-700/80 bg-[#070d16] px-3 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(148,163,184,0.18)] transition placeholder:text-slate-500 focus:border-sky-400/70 focus:bg-[#0b1220] focus:outline-none focus:ring-2 focus:ring-sky-500/20"
   const terminalButtonBaseClass =
-    "inline-flex h-9 items-center justify-center rounded-md border px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition focus:outline-none focus:ring-2 focus:ring-slate-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+    "inline-flex h-10 items-center justify-center rounded-xl border px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonNeutralClass =
-    `${terminalButtonBaseClass} border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600 hover:bg-slate-800`
+    `${terminalButtonBaseClass} border-slate-700 bg-[#0a1321] text-slate-200 hover:border-slate-500 hover:bg-[#111b2c] focus:ring-slate-500/20`
   const terminalIconButtonBaseClass =
-    "inline-flex h-9 w-full items-center justify-center rounded-md border transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-9"
-  const terminalActionButtonClass =
-    `${terminalIconButtonBaseClass} border-sky-900 bg-[#0b1624] text-sky-200 hover:border-sky-800 hover:bg-[#102033] focus:ring-sky-800/30`
+    "inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border px-2.5 transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+  const terminalRunButtonClass =
+    `${terminalIconButtonBaseClass} border-emerald-400/45 bg-emerald-500/12 text-emerald-100 hover:border-emerald-300/70 hover:bg-emerald-500/20 focus:ring-emerald-500/30`
+  const terminalCancelButtonClass =
+    `${terminalIconButtonBaseClass} border-amber-400/45 bg-amber-500/12 text-amber-100 hover:border-amber-300/70 hover:bg-amber-500/20 focus:ring-amber-500/30`
+  const terminalClearButtonClass =
+    `${terminalIconButtonBaseClass} border-rose-400/45 bg-rose-500/12 text-rose-100 hover:border-rose-300/70 hover:bg-rose-500/20 focus:ring-rose-500/30`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
-    "inline-flex h-9 min-w-[170px] items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 px-3 transition"
+    "inline-flex h-10 min-w-[178px] items-center gap-2 rounded-xl border border-slate-700/80 bg-[#080f1c] px-3 transition"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1401,20 +1405,26 @@ export default function ApplicationsTab({
       </header>
 
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
-        <section className="order-1 min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-[#040506] shadow-card lg:col-span-2">
-          <div className="border-b border-slate-800 bg-[#17191d] px-4 py-2.5">
+        <section className="order-1 min-w-0 overflow-hidden rounded-2xl border border-sky-900/45 bg-[#01040a] shadow-[0_35px_70px_-42px_rgba(14,165,233,0.45)] lg:col-span-2">
+          <div className="border-b border-slate-700/70 bg-gradient-to-r from-[#0f1728] via-[#111a2e] to-[#0c1423] px-4 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-3 w-3 rounded-sm border border-slate-700 bg-slate-900" />
+                <div className="inline-flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-rose-400/90" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-300/90" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/90" />
+                </div>
                 <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200">
                   {CMD_WINDOW_TITLE}
                 </span>
               </div>
-              <span className="hidden font-mono text-[10px] text-slate-400 sm:inline">C:\Windows\System32\cmd.exe</span>
+              <span className="hidden rounded-full border border-slate-700/80 bg-slate-900/80 px-2.5 py-0.5 font-mono text-[10px] text-slate-400 sm:inline">
+                C:\Windows\System32\cmd.exe
+              </span>
             </div>
           </div>
 
-          <div className="border-b border-slate-800 bg-[#0b0d10] px-3 py-3 sm:px-4">
+          <div className="border-b border-slate-700/70 bg-gradient-to-b from-[#080d16] to-[#060a12] px-3 py-3 sm:px-4">
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div className="relative min-w-0">
                 <select
@@ -1439,46 +1449,51 @@ export default function ApplicationsTab({
                   type="button"
                   onClick={handleRun}
                   disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                  className={terminalActionButtonClass}
+                  className={terminalRunButtonClass}
                   aria-label="Servisi calistir"
                   title="Calistir"
                 >
                   <PlayIcon className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Run</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCancelRun()}
                   disabled={!canCancelActiveRun}
-                  className={terminalActionButtonClass}
+                  className={terminalCancelButtonClass}
                   aria-label="Aktif calistirmayi iptal et"
                   title="Iptal"
                 >
                   <PauseIcon className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Stop</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleClearLogs}
                   disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                  className={terminalActionButtonClass}
+                  className={terminalClearButtonClass}
                   aria-label="Loglari temizle"
                   title="Log temizle"
                 >
                   <TrashIcon className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Clear</span>
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="border-b border-slate-800 bg-[#06080b] px-4 py-3">
+          <div className="border-b border-slate-700/70 bg-[#050911] px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2 font-mono text-[11px]">
-              <span className="flex-none text-slate-500">{CMD_PROMPT_PATH}</span>
+              <span className="flex-none rounded-full border border-slate-700/80 bg-slate-900/70 px-2 py-0.5 text-slate-400">
+                {CMD_PROMPT_PATH}
+              </span>
               <span className="min-w-0 truncate text-slate-100">{activeConsoleTitle}</span>
               <span className="flex-none text-slate-600">/</span>
               <span className="min-w-0 truncate text-slate-400">{activeConsoleBackend}</span>
             </div>
-            <p className="mt-2 text-xs text-slate-500">{activeConsoleAbout}</p>
+            <p className="mt-2 text-xs text-slate-400">{activeConsoleAbout}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full border border-slate-700 bg-slate-900/90 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
+              <span className="rounded-full border border-slate-700/80 bg-slate-900/75 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
                 {canViewApplicationLogs
                   ? !activeRunSession && isLogsLoading
                     ? "yukleniyor..."
@@ -1490,30 +1505,30 @@ export default function ApplicationsTab({
               >
                 {connectionLabel}
               </span>
-              <span className="rounded-full border border-slate-700 bg-slate-900/90 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
+              <span className="rounded-full border border-slate-700/80 bg-slate-900/75 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-300">
                 {runSessions.length} oturum
               </span>
             </div>
             {!hasWsUrl && (
-              <p className="mt-3 rounded-md border border-amber-300/25 bg-amber-500/10 px-2.5 py-1.5 font-mono text-[10px] text-amber-100">
+              <p className="mt-3 rounded-lg border border-amber-300/30 bg-amber-500/10 px-2.5 py-1.5 font-mono text-[10px] text-amber-100">
                 Websocket adresi yok. Admin panelinden kaydedin.
               </p>
             )}
           </div>
 
-          <div className="border-b border-slate-800 bg-[#040607] px-4 py-2.5">
+          <div className="border-b border-slate-700/70 bg-[#03070f] px-4 py-2.5">
             <div className="no-scrollbar flex gap-2 overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
                 className={`${terminalTabBaseClass} justify-between ${
                   activeRunSession
-                    ? "text-slate-400 hover:border-slate-700 hover:bg-slate-800/90"
-                    : "border-slate-600 bg-slate-800 text-slate-100"
+                    ? "text-slate-400 hover:border-slate-600 hover:bg-slate-800/90"
+                    : "border-sky-500/50 bg-sky-500/10 text-slate-100"
                 }`}
               >
                 <span className="truncate font-mono text-[11px] font-semibold tracking-[0.04em]">Genel Log</span>
-                <span className="rounded-full border border-slate-700 bg-slate-950 px-1.5 py-0.5 font-mono text-[9px] text-slate-400">
+                <span className="rounded-full border border-slate-700 bg-slate-950/90 px-1.5 py-0.5 font-mono text-[9px] text-slate-400">
                   {historyLogs.length}
                 </span>
               </button>
@@ -1528,8 +1543,8 @@ export default function ApplicationsTab({
                     key={`run-tab-${entry.id}`}
                     className={`${terminalTabBaseClass} min-w-[196px] pl-2.5 pr-1.5 ${
                       entryIsActive
-                        ? "border-slate-600 bg-slate-800 text-slate-100"
-                        : "text-slate-400 hover:border-slate-700 hover:bg-slate-800/90"
+                        ? "border-sky-500/50 bg-sky-500/10 text-slate-100"
+                        : "text-slate-400 hover:border-slate-600 hover:bg-slate-800/90"
                     }`}
                   >
                     <button
@@ -1551,7 +1566,7 @@ export default function ApplicationsTab({
                       <button
                         type="button"
                         onClick={() => handleCloseRunTab(entry.id)}
-                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-md border border-slate-700 bg-slate-950 font-mono text-[10px] text-slate-500 transition hover:border-slate-600 hover:bg-slate-900 hover:text-slate-200"
+                        className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-md border border-slate-700 bg-slate-950/90 font-mono text-[10px] text-slate-500 transition hover:border-slate-500 hover:bg-slate-900 hover:text-slate-200"
                         aria-label={`${entry.label} sekmesini kapat`}
                       >
                         x
@@ -1563,7 +1578,7 @@ export default function ApplicationsTab({
             </div>
           </div>
 
-          <div className="no-scrollbar h-[52vh] min-h-[280px] max-h-[420px] overflow-y-auto overflow-x-hidden bg-[#010203] px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:px-4 sm:text-[12px] sm:leading-6">
+          <div className="no-scrollbar h-[52vh] min-h-[280px] max-h-[420px] overflow-y-auto overflow-x-hidden bg-gradient-to-b from-[#01040b] via-[#030712] to-[#02050d] px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:px-4 sm:text-[12px] sm:leading-6">
             {!canViewApplicationLogs ? (
               <div className="flex h-full items-center justify-center text-slate-500">
                 Servis Konsolu log goruntuleme yetkiniz yok.
@@ -1573,10 +1588,12 @@ export default function ApplicationsTab({
             ) : (
               <div className="space-y-1">
                 {activeRunPrompt && isActiveRunLive && (
-                  <div className="mb-3 rounded-md border border-slate-800 bg-slate-900/70 px-3 py-3">
+                  <div className="mb-3 rounded-xl border border-sky-500/35 bg-sky-500/8 px-3 py-3">
                     <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap">
                       <span className="hidden flex-none text-slate-500 sm:inline">{CMD_PROMPT_PATH}</span>
-                      <span className="flex-none text-emerald-300">INPUT</span>
+                      <span className="flex-none rounded-full border border-emerald-400/45 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-200">
+                        INPUT
+                      </span>
                       <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
                     </div>
                     {activeRunPrompt.step && (
