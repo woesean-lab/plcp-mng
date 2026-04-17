@@ -4,6 +4,7 @@ import {
   ArrowPathIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
+  MagnifyingGlassIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline"
 
@@ -241,6 +242,7 @@ export default function ProblemsTab({
   handleProblemAdd,
 }) {
   const [activeView, setActiveView] = useState("open")
+  const [usernameQuery, setUsernameQuery] = useState("")
 
   const sortedOpenProblems = useMemo(
     () => [...openProblems].sort(compareProblemByDateDesc),
@@ -257,11 +259,28 @@ export default function ProblemsTab({
   const sortedAllProblems = useMemo(() => [...problems].sort(compareProblemByDateDesc), [problems])
 
   const filteredProblems = useMemo(() => {
-    if (activeView === "open") return sortedOpenProblems
-    if (activeView === "resolved") return sortedResolvedProblems
-    if (activeView === "archived") return sortedArchivedProblems
-    return sortedAllProblems
-  }, [activeView, sortedAllProblems, sortedOpenProblems, sortedResolvedProblems, sortedArchivedProblems])
+    const source =
+      activeView === "open"
+        ? sortedOpenProblems
+        : activeView === "resolved"
+          ? sortedResolvedProblems
+          : activeView === "archived"
+            ? sortedArchivedProblems
+            : sortedAllProblems
+
+    const normalizedQuery = usernameQuery.trim().toLowerCase()
+    if (!normalizedQuery) return source
+    return source.filter((problem) =>
+      String(problem?.username ?? "").toLowerCase().includes(normalizedQuery),
+    )
+  }, [
+    activeView,
+    sortedAllProblems,
+    sortedOpenProblems,
+    sortedResolvedProblems,
+    sortedArchivedProblems,
+    usernameQuery,
+  ])
 
   const activeViewLabel = useMemo(
     () => VIEW_OPTIONS.find((option) => option.key === activeView)?.label || "Tum",
@@ -347,6 +366,16 @@ export default function ProblemsTab({
                   <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                     {activeViewLabel}: {filteredProblems.length}
                   </span>
+                  <div className="flex h-9 min-w-[220px] items-center gap-2 rounded-lg border border-white/10 bg-ink-900 px-3">
+                    <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+                    <input
+                      type="text"
+                      value={usernameQuery}
+                      onChange={(event) => setUsernameQuery(event.target.value)}
+                      placeholder="Kullanici adi ara"
+                      className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
