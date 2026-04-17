@@ -5529,6 +5529,23 @@ const handleEldoradoNoteSave = useCallback(
     }
   }
 
+  const handleProblemArchive = async (id) => {
+    try {
+      const res = await apiFetch(`/api/problems/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "archived" }),
+      })
+      if (!res.ok) throw new Error("problem_archive_failed")
+      const updated = await res.json()
+      setProblems((prev) => prev.map((p) => (p.id === id ? updated : p)))
+      toast.success("Problem arsive alindi")
+    } catch (error) {
+      console.error(error)
+      toast.error("G\u00FCncellenemedi (API/DB kontrol edin).")
+    }
+  }
+
   const handleProblemCopy = async (text) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -5559,8 +5576,9 @@ const handleEldoradoNoteSave = useCallback(
     toast("Silmek i\u00E7in tekrar t\u0131kla", { position: "top-right" })
   }
 
-  const openProblems = problems.filter((p) => p.status !== "resolved")
+  const openProblems = problems.filter((p) => p.status === "open")
   const resolvedProblems = problems.filter((p) => p.status === "resolved")
+  const archivedProblems = problems.filter((p) => p.status === "archived")
 
   return {
     isAuthChecking,
@@ -5837,9 +5855,11 @@ const handleEldoradoNoteSave = useCallback(
     isProblemsTabLoading,
     openProblems,
     resolvedProblems,
+    archivedProblems,
     problems,
     handleProblemCopy,
     handleProblemResolve,
+    handleProblemArchive,
     handleProblemDeleteWithConfirm,
     confirmProblemTarget,
     handleProblemReopen,

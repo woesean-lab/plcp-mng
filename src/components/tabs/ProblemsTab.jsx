@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import {
+  ArchiveBoxIcon,
   ArrowPathIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
@@ -63,6 +64,7 @@ function ProblemsSkeleton({ panelClass }) {
 const VIEW_OPTIONS = [
   { key: "open", label: "Acik" },
   { key: "resolved", label: "Cozulen" },
+  { key: "archived", label: "Arsiv" },
   { key: "all", label: "Tum" },
 ]
 
@@ -100,10 +102,13 @@ function ProblemCard({
   confirmProblemTarget,
   handleProblemCopy,
   handleProblemResolve,
+  handleProblemArchive,
   handleProblemReopen,
   handleProblemDeleteWithConfirm,
 }) {
-  const isResolved = String(problem?.status ?? "") === "resolved"
+  const status = String(problem?.status ?? "open")
+  const isResolved = status === "resolved"
+  const isArchived = status === "archived"
 
   return (
     <article
@@ -119,10 +124,14 @@ function ProblemCard({
             </span>
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                isResolved ? "bg-emerald-500/15 text-emerald-200" : "bg-accent-500/15 text-accent-100"
+                isArchived
+                  ? "bg-amber-500/15 text-amber-200"
+                  : isResolved
+                    ? "bg-emerald-500/15 text-emerald-200"
+                    : "bg-accent-500/15 text-accent-100"
               }`}
             >
-              {isResolved ? "Cozulen" : "Acik"}
+              {isArchived ? "Arsiv" : isResolved ? "Cozulen" : "Acik"}
             </span>
           </div>
           <p className="mt-2 text-[10px] text-slate-500">
@@ -148,24 +157,45 @@ function ProblemCard({
       {(canResolve || canDelete) && (
         <div className="mt-auto flex flex-wrap gap-2">
           {canResolve &&
-            (isResolved ? (
+            (isArchived ? (
               <button
                 type="button"
                 onClick={() => handleProblemReopen(problem.id)}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:border-white/35 hover:bg-white/10"
               >
                 <ArrowPathIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                Cozulmedi
+                Arsivden Cikar
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={() => handleProblemResolve(problem.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-500/20"
-              >
-                <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                Cozuldu
-              </button>
+              <>
+                {isResolved ? (
+                  <button
+                    type="button"
+                    onClick={() => handleProblemReopen(problem.id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:border-white/35 hover:bg-white/10"
+                  >
+                    <ArrowPathIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                    Cozulmedi
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleProblemResolve(problem.id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-500/20"
+                  >
+                    <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                    Cozuldu
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleProblemArchive(problem.id)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/60 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-100 transition hover:border-amber-200 hover:bg-amber-500/20"
+                >
+                  <ArchiveBoxIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                  Arsive Al
+                </button>
+              </>
             ))}
 
           {canDelete && (
@@ -196,9 +226,11 @@ export default function ProblemsTab({
   canDelete,
   openProblems,
   resolvedProblems,
+  archivedProblems,
   problems,
   handleProblemCopy,
   handleProblemResolve,
+  handleProblemArchive,
   handleProblemDeleteWithConfirm,
   confirmProblemTarget,
   handleProblemReopen,
@@ -218,13 +250,18 @@ export default function ProblemsTab({
     () => [...resolvedProblems].sort(compareProblemByDateDesc),
     [resolvedProblems],
   )
+  const sortedArchivedProblems = useMemo(
+    () => [...archivedProblems].sort(compareProblemByDateDesc),
+    [archivedProblems],
+  )
   const sortedAllProblems = useMemo(() => [...problems].sort(compareProblemByDateDesc), [problems])
 
   const filteredProblems = useMemo(() => {
     if (activeView === "open") return sortedOpenProblems
     if (activeView === "resolved") return sortedResolvedProblems
+    if (activeView === "archived") return sortedArchivedProblems
     return sortedAllProblems
-  }, [activeView, sortedAllProblems, sortedOpenProblems, sortedResolvedProblems])
+  }, [activeView, sortedAllProblems, sortedOpenProblems, sortedResolvedProblems, sortedArchivedProblems])
 
   const todaysProblemCount = useMemo(() => {
     const todayKey = new Date().toLocaleDateString("tr-TR")
@@ -246,7 +283,7 @@ export default function ProblemsTab({
           <div className="space-y-1.5 sm:space-y-2">
             <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">Problem Merkezi</h1>
             <p className="max-w-2xl text-sm text-slate-200/80">
-              Acik ve cozulen kayitlari filtreleyip hizli yonetin. Kartlardaki tarih bilgisi problemin eklendigi zamani gosterir.
+              Acik, cozulen ve arsiv kayitlarini filtreleyip hizli yonetin. Kartlardaki tarih bilgisi problemin eklendigi zamani gosterir.
             </p>
           </div>
           <div className="w-full md:max-w-[760px]">
@@ -327,6 +364,7 @@ export default function ProblemsTab({
                       confirmProblemTarget={confirmProblemTarget}
                       handleProblemCopy={handleProblemCopy}
                       handleProblemResolve={handleProblemResolve}
+                      handleProblemArchive={handleProblemArchive}
                       handleProblemReopen={handleProblemReopen}
                       handleProblemDeleteWithConfirm={handleProblemDeleteWithConfirm}
                     />

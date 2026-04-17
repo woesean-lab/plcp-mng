@@ -239,9 +239,11 @@ function App() {
     isProblemsTabLoading,
     openProblems,
     resolvedProblems,
+    archivedProblems,
     problems,
     handleProblemCopy,
     handleProblemResolve,
+    handleProblemArchive,
     handleProblemDeleteWithConfirm,
     confirmProblemTarget,
     handleProblemReopen,
@@ -1303,9 +1305,11 @@ function App() {
               canDelete={canDeleteProblems}
               openProblems={openProblems}
               resolvedProblems={resolvedProblems}
+              archivedProblems={archivedProblems}
               problems={problems}
               handleProblemCopy={handleProblemCopy}
               handleProblemResolve={handleProblemResolve}
+              handleProblemArchive={handleProblemArchive}
               handleProblemDeleteWithConfirm={handleProblemDeleteWithConfirm}
               confirmProblemTarget={confirmProblemTarget}
               handleProblemReopen={handleProblemReopen}

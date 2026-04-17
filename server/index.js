@@ -3719,7 +3719,7 @@ app.put("/api/profile", async (req, res) => {
   }
 })
 
-const allowedProblemStatus = new Set(["open", "resolved"])
+const allowedProblemStatus = new Set(["open", "resolved", "archived"])
 const allowedTaskStatus = new Set(["todo", "doing", "done"])
 const allowedTaskDueTypes = new Set(["today", "none", "repeat", "date"])
 const MAX_COMMENT_IMAGES = 10
