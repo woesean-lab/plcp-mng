@@ -1379,11 +1379,11 @@ export default function ApplicationsTab({
       ? getBackendLabelForDisplay(selectedApplication.backendLabel)
       : MASKED_BACKEND_TEXT
   const terminalFieldClass =
-    "w-full rounded-lg border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 transition focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+    "w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-[13px] text-slate-100 transition focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalTextInputClass =
-    "h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 transition placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+    "h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 transition placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
   const terminalButtonBaseClass =
-    "inline-flex h-10 items-center justify-center rounded-lg border px-4 text-xs font-semibold uppercase tracking-[0.12em] transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+    "inline-flex h-9 items-center justify-center rounded-lg border px-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
@@ -1395,7 +1395,7 @@ export default function ApplicationsTab({
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
-    "inline-flex h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold uppercase tracking-[0.14em] transition"
+    "inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1427,16 +1427,16 @@ export default function ApplicationsTab({
 
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
         <section className={`order-1 min-w-0 ${panelClass} bg-ink-800/60 lg:col-span-2`}>
-          <div className="space-y-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">
                   {CMD_WINDOW_TITLE}
                 </span>
-                <h2 className="mt-3 font-display text-xl font-semibold text-white sm:text-2xl">
+                <h2 className="mt-2 font-display text-lg font-semibold text-white sm:text-xl">
                   {activeConsoleTitle}
                 </h2>
-                <p className="mt-1 max-w-2xl text-sm text-slate-400">{activeConsoleAbout}</p>
+                <p className="mt-1 max-w-2xl text-xs text-slate-400 sm:text-sm">{activeConsoleAbout}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${connectionBadgeClass}`}>
@@ -1451,10 +1451,10 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
+              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-end">
                 <div ref={serviceDropdownRef} className="relative min-w-0 flex-1">
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                     Secili servis
                   </label>
                   <button
@@ -1467,14 +1467,14 @@ export default function ApplicationsTab({
                       className={`${terminalFieldClass} flex items-start justify-between gap-4 text-left`}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="mt-1 truncate text-sm font-semibold text-white">
+                        <p className="truncate text-sm font-semibold text-white">
                           {selectedApplication?.name || (hasApplications ? "Servis sec" : "Kayitli servis yok")}
                         </p>
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
+                        <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-slate-400">
                           {selectedApplication?.about || "Servis aciklamasi burada gorunur."}
                         </p>
                         {selectedApplication && (
-                          <div className="mt-3 flex flex-wrap gap-2">
+                          <div className="mt-2 flex flex-wrap gap-1.5">
                             <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                               {selectedApplication.isActive ? "Acik" : "Kapali"}
                             </span>
@@ -1484,7 +1484,7 @@ export default function ApplicationsTab({
                           </div>
                         )}
                       </div>
-                      <span className="mt-1 flex h-8 w-8 flex-none items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400">
+                      <span className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400">
                         <ChevronDownIcon
                           aria-hidden="true"
                           className={`h-4 w-4 transition-transform ${isServiceDropdownOpen ? "rotate-180" : ""}`}
@@ -1493,8 +1493,8 @@ export default function ApplicationsTab({
                     </button>
 
                     {isServiceDropdownOpen && hasApplications && (
-                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 rounded-xl border border-white/10 bg-ink-900/95 p-2 shadow-card backdrop-blur">
-                        <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1">
+                      <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 rounded-xl border border-white/10 bg-ink-900/95 p-1.5 shadow-card backdrop-blur">
+                        <div className="max-h-[280px] space-y-1.5 overflow-y-auto pr-1">
                           {runDropdownApplications.map((entry) => {
                             const isSelected = entry.id === selectedApplicationId
 
@@ -1506,7 +1506,7 @@ export default function ApplicationsTab({
                                   setSelectedApplicationId(entry.id)
                                   setIsServiceDropdownOpen(false)
                                 }}
-                                className={`w-full rounded-lg border px-3 py-3 text-left transition ${
+                                className={`w-full rounded-lg border px-3 py-2.5 text-left transition ${
                                   isSelected
                                     ? "border-accent-400/60 bg-accent-500/10 text-accent-50"
                                     : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
@@ -1515,9 +1515,9 @@ export default function ApplicationsTab({
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                   <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold">{entry.name}</p>
-                                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{entry.about}</p>
+                                    <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-slate-400">{entry.about}</p>
                                   </div>
-                                  <div className="flex flex-wrap gap-2">
+                                  <div className="flex flex-wrap gap-1.5">
                                     <span
                                       className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
                                         entry.isActive
@@ -1539,7 +1539,7 @@ export default function ApplicationsTab({
                       </div>
                     )}
                   </div>
-                <div className="flex flex-wrap gap-2 lg:justify-end">
+                <div className="flex flex-wrap gap-1.5 lg:justify-end">
                     <button
                       type="button"
                       onClick={handleRun}
@@ -1568,12 +1568,12 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Akis</p>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">Akis</p>
+                    <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
                       {activeRunSession ? activeRunSession.label : "Tum servis hareketleri"}
                     </p>
                   </div>
@@ -1589,7 +1589,7 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+                <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
                   <div className="flex min-w-max items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
                     <button
                       type="button"
@@ -1641,7 +1641,7 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar h-[50vh] min-h-[300px] max-h-[560px] overflow-y-auto pr-1">
+                <div className="no-scrollbar h-[42vh] min-h-[240px] max-h-[480px] overflow-y-auto pr-1">
                 {!canViewApplicationLogs ? (
                   <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 text-slate-500">
                     Servis Konsolu log goruntuleme yetkiniz yok.
@@ -1653,7 +1653,7 @@ export default function ApplicationsTab({
                 ) : (
                   <div className="space-y-3">
                     {activeRunPrompt && isActiveRunLive && (
-                      <div className="rounded-xl border border-accent-300/30 bg-accent-500/10 p-4">
+                      <div className="rounded-xl border border-accent-300/30 bg-accent-500/10 p-3">
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
                           <span className="rounded-full border border-accent-300/30 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-100">
                             Girdi bekleniyor
@@ -1663,7 +1663,7 @@ export default function ApplicationsTab({
                         {activeRunPrompt.step && (
                           <p className="mt-2 text-xs text-slate-300/70">Adim: {activeRunPrompt.step}</p>
                         )}
-                        <div className="mt-3">
+                        <div className="mt-2.5">
                           {activeRunPrompt.inputType === "choice" && (
                             <div className="grid gap-2 sm:grid-cols-2">
                               {activeRunPrompt.options.map((option) => (
@@ -1739,7 +1739,7 @@ export default function ApplicationsTab({
                       return (
                         <article
                           key={entry.id}
-                          className="rounded-xl border border-white/10 bg-ink-900/80 px-4 py-3 shadow-inner"
+                          className="rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2.5 shadow-inner"
                         >
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0 flex-1">
@@ -1753,7 +1753,7 @@ export default function ApplicationsTab({
                                   {activeRunSession ? activeRunSession.applicationName : selectedApplication?.name || "Servis"}
                                 </span>
                               </div>
-                              <div className="mt-3 text-sm leading-6 text-slate-100">
+                              <div className="mt-2 text-sm leading-5 text-slate-100">
                                 {messageSegments.map((segment, index) =>
                                   segment.type === "link" ? (
                                     <button
