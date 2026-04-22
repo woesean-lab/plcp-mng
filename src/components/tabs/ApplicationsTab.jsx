@@ -229,6 +229,7 @@ export default function ApplicationsTab({
   const [runLogsByTab, setRunLogsByTab] = useState({})
   const [isApplicationsLoading, setIsApplicationsLoading] = useState(true)
   const [isLogsLoading, setIsLogsLoading] = useState(false)
+  const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false)
   const [pendingUserInputValueByRunId, setPendingUserInputValueByRunId] = useState({})
   const runSessionsRef = useRef([])
   const dismissedRunIdsRef = useRef(new Set())
@@ -237,6 +238,7 @@ export default function ApplicationsTab({
   const activeRunToastIdsRef = useRef(new Set())
   const runSessionsRequestInFlightRef = useRef(false)
   const runSnapshotRequestByIdRef = useRef({})
+  const serviceDropdownRef = useRef(null)
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -508,6 +510,29 @@ export default function ApplicationsTab({
     () => applications.find((entry) => entry.id === selectedApplicationId) || null,
     [applications, selectedApplicationId],
   )
+
+  useEffect(() => {
+    if (!isServiceDropdownOpen) return undefined
+
+    const handlePointerDown = (event) => {
+      if (serviceDropdownRef.current?.contains(event.target)) return
+      setIsServiceDropdownOpen(false)
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsServiceDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown)
+    document.addEventListener("keydown", handleEscape)
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown)
+      document.removeEventListener("keydown", handleEscape)
+    }
+  }, [isServiceDropdownOpen])
 
   const activeRunSession = useMemo(() => {
     if (activeConsoleTabId === HISTORY_CONSOLE_TAB_ID) return null
@@ -1339,13 +1364,13 @@ export default function ApplicationsTab({
         ? `${runningRunCount} calisiyor`
         : "Hazir"
   const connectionBadgeClass = !hasWsUrl
-    ? "border-white/10 bg-white/[0.04] text-amber-100"
+    ? "border-amber-300/20 bg-amber-500/[0.08] text-amber-100"
     : activeRunSession && activeConnectionState === "error"
-      ? "border-white/10 bg-rose-500/10 text-rose-100"
+      ? "border-rose-300/20 bg-rose-500/[0.08] text-rose-100"
       : activeRunSession && activeConnectionState === "connecting"
-        ? "border-white/10 bg-white/[0.04] text-slate-100"
+        ? "border-accent-300/20 bg-accent-500/[0.08] text-accent-100"
         : runningRunCount > 0
-          ? "border-white/10 bg-white/[0.04] text-emerald-100"
+          ? "border-emerald-300/20 bg-emerald-500/[0.08] text-emerald-100"
           : "border-white/10 bg-white/[0.04] text-slate-200"
   const activeConsoleTitle = activeRunSession ? activeRunSession.label : selectedApplication?.name || "Genel Log"
   const activeConsoleAbout = activeRunSession?.applicationAbout || selectedApplication?.about || "Calistirmak icin servis secin."
@@ -1355,25 +1380,25 @@ export default function ApplicationsTab({
       ? getBackendLabelForDisplay(selectedApplication.backendLabel)
       : MASKED_BACKEND_TEXT
   const terminalFieldClass =
-    "h-10 w-full appearance-none rounded-lg border border-white/10 bg-ink-900/75 px-3 text-sm text-slate-100 shadow-inner transition focus:border-accent-400/60 focus:outline-none focus:ring-1 focus:ring-accent-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+    "w-full rounded-[2px] border border-white/10 bg-ink-900/80 px-3 text-sm text-slate-100 transition focus:border-accent-400/45 focus:outline-none focus:ring-1 focus:ring-accent-400/15 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalTextInputClass =
-    "h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-ink-900/75 px-3 text-sm text-slate-100 shadow-inner transition placeholder:text-slate-500 focus:border-accent-400/60 focus:outline-none focus:ring-1 focus:ring-accent-400/20"
+    "h-10 min-w-0 flex-1 rounded-[2px] border border-white/10 bg-ink-900/80 px-3 text-sm text-slate-100 transition placeholder:text-slate-500 focus:border-accent-400/45 focus:outline-none focus:ring-1 focus:ring-accent-400/15"
   const terminalButtonBaseClass =
-    "inline-flex h-10 items-center justify-center rounded-lg border px-3 text-xs font-semibold transition focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60"
+    "inline-flex h-10 items-center justify-center rounded-[2px] border px-3 text-xs font-semibold transition focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonNeutralClass =
-    `${terminalButtonBaseClass} border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08] focus:ring-slate-300/20`
+    `${terminalButtonBaseClass} border-white/10 bg-white/[0.03] text-slate-200 hover:border-white/20 hover:bg-white/[0.06] focus:ring-slate-300/20`
   const terminalIconButtonBaseClass =
-    "inline-flex h-10 w-full items-center justify-center rounded-lg border transition focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 sm:w-10"
+    "inline-flex h-10 w-full items-center justify-center rounded-[2px] border transition focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 sm:w-10"
   const terminalRunButtonClass =
-    `${terminalIconButtonBaseClass} border-accent-300/40 bg-accent-500/12 text-accent-50 hover:border-accent-300/60 hover:bg-accent-500/18 focus:ring-accent-500/30`
+    `${terminalIconButtonBaseClass} border-accent-300/20 bg-accent-500/[0.08] text-accent-50 hover:border-accent-300/35 hover:bg-accent-500/[0.12] focus:ring-accent-500/20`
   const terminalCancelButtonClass =
-    `${terminalIconButtonBaseClass} border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08] focus:ring-slate-300/20`
+    `${terminalIconButtonBaseClass} border-white/10 bg-white/[0.03] text-slate-200 hover:border-white/20 hover:bg-white/[0.06] focus:ring-slate-300/20`
   const terminalClearButtonClass =
-    `${terminalIconButtonBaseClass} border-white/10 bg-white/[0.04] text-slate-300 hover:border-rose-300/30 hover:bg-rose-500/10 hover:text-rose-100 focus:ring-rose-500/20`
+    `${terminalIconButtonBaseClass} border-white/10 bg-white/[0.03] text-slate-300 hover:border-rose-300/25 hover:bg-rose-500/[0.08] hover:text-rose-100 focus:ring-rose-500/20`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
-    "inline-flex h-10 min-w-[156px] items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 transition"
+    "inline-flex h-10 min-w-[156px] items-center gap-2 rounded-[2px] border border-white/10 bg-white/[0.03] px-3 transition"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1404,15 +1429,15 @@ export default function ApplicationsTab({
       </header>
 
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
-        <section className="relative order-1 min-w-0 overflow-hidden rounded-[1.4rem] border border-white/10 bg-white/[0.05] shadow-card backdrop-blur-md lg:col-span-2">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_80%_at_0%_0%,rgba(255,255,255,0.08),transparent_34%),radial-gradient(70%_70%_at_100%_0%,rgba(43,159,255,0.12),transparent_38%)]" />
+        <section className="relative order-1 min-w-0 overflow-hidden rounded-[2px] border border-white/10 bg-[linear-gradient(180deg,rgba(17,25,45,0.88),rgba(11,15,25,0.94))] shadow-card backdrop-blur-md lg:col-span-2">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_0%_0%,rgba(255,255,255,0.06),transparent_34%),radial-gradient(70%_70%_at_100%_0%,rgba(58,199,255,0.08),transparent_36%)]" />
 
           <div className="relative p-4 sm:p-5">
             <div className="border-b border-white/10 pb-4">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.08] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                    <span className="inline-flex items-center rounded-[2px] border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
                       {CMD_WINDOW_TITLE}
                     </span>
                     <h2 className="mt-3 font-display text-xl font-semibold text-white sm:text-2xl">
@@ -1421,36 +1446,102 @@ export default function ApplicationsTab({
                     <p className="mt-1 max-w-2xl text-sm text-slate-300/80">{activeConsoleAbout}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${connectionBadgeClass}`}>
+                    <span className={`inline-flex items-center rounded-[2px] border px-3 py-1 text-xs font-semibold ${connectionBadgeClass}`}>
                       {connectionLabel}
                     </span>
-                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-200">
+                    <span className="inline-flex items-center rounded-[2px] border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-200">
                       {runSessions.length} oturum
                     </span>
-                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-200">
+                    <span className="inline-flex items-center rounded-[2px] border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-200">
                       {activeConsoleBackend}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                  <div className="relative min-w-0 flex-1">
-                    <select
-                      value={selectedApplicationId}
-                      onChange={(event) => setSelectedApplicationId(event.target.value)}
+                  <div ref={serviceDropdownRef} className="relative min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!hasApplications) return
+                        setIsServiceDropdownOpen((prev) => !prev)
+                      }}
                       disabled={!hasApplications}
-                      className={`${terminalFieldClass} pr-10`}
+                      className={`${terminalFieldClass} flex min-h-[74px] items-start justify-between gap-4 py-3 text-left`}
                     >
-                      <option value="">{hasApplications ? "Servis sec" : "Kayitli servis yok"}</option>
-                      {runDropdownApplications.map((entry) => (
-                        <option key={`run-app-${entry.id}`} value={entry.id}>
-                          {entry.isActive ? entry.name : `${entry.name} (Kapali)`}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500">
-                      <ChevronDownIcon aria-hidden="true" className="h-4 w-4" />
-                    </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Secili servis</p>
+                        <p className="mt-1 truncate text-sm font-semibold text-white">
+                          {selectedApplication?.name || (hasApplications ? "Servis sec" : "Kayitli servis yok")}
+                        </p>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
+                          {selectedApplication?.about || "Servis aciklamasi burada gorunur."}
+                        </p>
+                        {selectedApplication && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="inline-flex items-center rounded-[2px] border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                              {selectedApplication.isActive ? "Acik" : "Kapali"}
+                            </span>
+                            <span className="inline-flex items-center rounded-[2px] border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                              {getBackendLabelForDisplay(selectedApplication.backendLabel)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="mt-1 flex h-9 w-9 flex-none items-center justify-center rounded-[2px] border border-white/10 bg-white/[0.04] text-slate-400">
+                        <ChevronDownIcon
+                          aria-hidden="true"
+                          className={`h-4 w-4 transition-transform ${isServiceDropdownOpen ? "rotate-180" : ""}`}
+                        />
+                      </span>
+                    </button>
+
+                    {isServiceDropdownOpen && hasApplications && (
+                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 rounded-[2px] border border-white/10 bg-ink-900/95 p-1 shadow-card backdrop-blur-xl">
+                        <div className="max-h-[300px] space-y-1 overflow-y-auto pr-1">
+                          {runDropdownApplications.map((entry) => {
+                            const isSelected = entry.id === selectedApplicationId
+
+                            return (
+                              <button
+                                key={`run-app-${entry.id}`}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedApplicationId(entry.id)
+                                  setIsServiceDropdownOpen(false)
+                                }}
+                                className={`w-full rounded-[2px] border px-3 py-2.5 text-left transition ${
+                                  isSelected
+                                    ? "border-accent-300/25 bg-accent-500/[0.09]"
+                                    : "border-transparent bg-transparent hover:border-white/10 hover:bg-white/[0.04]"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold text-white">{entry.name}</p>
+                                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{entry.about}</p>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span
+                                      className={`inline-flex items-center rounded-[2px] border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                        entry.isActive
+                                          ? "border-emerald-300/20 bg-emerald-500/[0.08] text-emerald-100"
+                                          : "border-white/10 bg-white/[0.04] text-slate-300"
+                                      }`}
+                                    >
+                                      {entry.isActive ? "Acik" : "Kapali"}
+                                    </span>
+                                    <span className="inline-flex items-center rounded-[2px] border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                      {getBackendLabelForDisplay(entry.backendLabel)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -1494,12 +1585,12 @@ export default function ApplicationsTab({
                 onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
                 className={`${terminalTabBaseClass} justify-between ${
                   activeRunSession
-                    ? "text-slate-400 hover:border-white/20 hover:bg-white/[0.08]"
-                    : "border-accent-300/25 bg-accent-500/10 text-slate-100"
+                    ? "text-slate-400 hover:border-white/20 hover:bg-white/[0.06]"
+                    : "border-accent-300/25 bg-accent-500/[0.08] text-slate-100"
                 }`}
               >
-                <span className="truncate text-sm font-semibold">Genel Akış</span>
-                <span className="rounded-full border border-white/10 bg-ink-900/80 px-1.5 py-0.5 text-[10px] text-slate-400">
+                <span className="truncate text-sm font-semibold">Genel Akis</span>
+                <span className="rounded-[2px] border border-white/10 bg-ink-900/80 px-1.5 py-0.5 text-[10px] text-slate-400">
                   {historyLogs.length}
                 </span>
               </button>
@@ -1514,8 +1605,8 @@ export default function ApplicationsTab({
                     key={`run-tab-${entry.id}`}
                     className={`${terminalTabBaseClass} min-w-[172px] pl-3 pr-1.5 ${
                       entryIsActive
-                        ? "border-accent-300/25 bg-accent-500/10 text-slate-100"
-                        : "text-slate-400 hover:border-white/20 hover:bg-white/[0.08]"
+                        ? "border-accent-300/25 bg-accent-500/[0.08] text-slate-100"
+                        : "text-slate-400 hover:border-white/20 hover:bg-white/[0.06]"
                     }`}
                   >
                     <button
@@ -1532,7 +1623,7 @@ export default function ApplicationsTab({
                       <button
                         type="button"
                         onClick={() => handleCloseRunTab(entry.id)}
-                        className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs text-slate-500 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200"
+                        className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-[2px] border border-white/10 bg-white/[0.04] text-xs text-slate-500 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-slate-200"
                         aria-label={`${entry.label} sekmesini kapat`}
                       >
                         x
@@ -1543,22 +1634,22 @@ export default function ApplicationsTab({
               })}
             </div>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-ink-950/30 p-3 sm:p-4">
+            <div className="mt-4 rounded-[2px] border border-white/10 bg-ink-950/30 p-3 sm:p-4">
               <div className="mb-3 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Akış
+                    Akis
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
-                    {activeRunSession ? activeRunSession.label : "Tüm servis hareketleri"}
+                    {activeRunSession ? activeRunSession.label : "Tum servis hareketleri"}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                    {consoleLogs.length} kayıt
+                  <span className="inline-flex items-center rounded-[2px] border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                    {consoleLogs.length} kayit
                   </span>
                   {!hasWsUrl && (
-                    <span className="inline-flex items-center rounded-full border border-amber-300/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100">
+                    <span className="inline-flex items-center rounded-[2px] border border-amber-300/20 bg-amber-500/[0.08] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100">
                       websocket adresi yok
                     </span>
                   )}
@@ -1567,19 +1658,19 @@ export default function ApplicationsTab({
 
               <div className="no-scrollbar h-[50vh] min-h-[300px] max-h-[560px] overflow-y-auto pr-1">
                 {!canViewApplicationLogs ? (
-                  <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-slate-500">
+                  <div className="flex h-full items-center justify-center rounded-[2px] border border-dashed border-white/10 bg-white/[0.02] text-slate-500">
                     Servis Konsolu log goruntuleme yetkiniz yok.
                   </div>
                 ) : !activeRunSession && isLogsLoading ? (
-                  <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-slate-500">
+                  <div className="flex h-full items-center justify-center rounded-[2px] border border-dashed border-white/10 bg-white/[0.02] text-slate-500">
                     Loglar yukleniyor...
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {activeRunPrompt && isActiveRunLive && (
-                      <div className="rounded-2xl border border-accent-300/20 bg-accent-500/10 p-3.5">
+                      <div className="rounded-[2px] border border-accent-300/20 bg-accent-500/[0.08] p-3.5">
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-accent-300/30 bg-white/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-100">
+                          <span className="rounded-[2px] border border-accent-300/20 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-100">
                             Girdi Bekleniyor
                           </span>
                           <span className="min-w-0 break-words text-sm text-slate-100">{activeRunPrompt.message}</span>
@@ -1655,51 +1746,64 @@ export default function ApplicationsTab({
                       </div>
                     )}
 
-                    {consoleLogs.map((entry) => {
-                      const statusMeta = getConsoleStatusMeta(entry.status)
-                      const sanitizedMessage = sanitizeLogMessage(entry.message)
-                      const messageSegments = splitLogMessageLinks(sanitizedMessage)
+                    {consoleLogs.length > 0 && (
+                      <div className="relative space-y-4 pl-5 before:absolute before:bottom-0 before:left-[6px] before:top-1 before:w-px before:bg-white/10">
+                        {consoleLogs.map((entry) => {
+                          const statusMeta = getConsoleStatusMeta(entry.status)
+                          const sanitizedMessage = sanitizeLogMessage(entry.message)
+                          const messageSegments = splitLogMessageLinks(sanitizedMessage)
 
-                      return (
-                        <div
-                          key={entry.id}
-                          className="flex gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3"
-                        >
-                          <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${statusMeta.dotClass}`} />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span
-                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${statusMeta.badgeClass}`}
-                              >
-                                {statusMeta.code}
+                          return (
+                            <div key={entry.id} className="relative grid gap-2 md:grid-cols-[132px_minmax(0,1fr)] md:gap-4">
+                              <span className="absolute left-[-19px] top-4 flex h-5 w-5 items-center justify-center rounded-[2px] border border-white/10 bg-ink-900/90">
+                                <span className={`h-2 w-2 rounded-full ${statusMeta.dotClass}`} />
                               </span>
-                              <span className="text-xs text-slate-400">{entry.time}</span>
+
+                              <div className="md:pt-3">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                  {entry.time}
+                                </p>
+                                <span
+                                  className={`mt-2 inline-flex items-center rounded-[2px] border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${statusMeta.badgeClass}`}
+                                >
+                                  {statusMeta.code}
+                                </span>
+                              </div>
+
+                              <div className="rounded-[2px] border border-white/10 bg-white/[0.03] p-3.5">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
+                                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                    {activeRunSession ? activeRunSession.applicationName : selectedApplication?.name || "Servis"}
+                                  </span>
+                                  <span className="text-[11px] text-slate-500">Akis kaydi</span>
+                                </div>
+                                <div className="mt-3 text-sm leading-6 text-slate-100">
+                                  {messageSegments.map((segment, index) =>
+                                    segment.type === "link" ? (
+                                      <button
+                                        key={`${entry.id}-segment-${index}`}
+                                        type="button"
+                                        onClick={() => void copyTextToClipboard(segment.value)}
+                                        className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
+                                        title="Tiklayinca kopyalanir"
+                                      >
+                                        {segment.value}
+                                      </button>
+                                    ) : (
+                                      <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
+                                    ),
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="mt-1.5 text-sm leading-6 text-slate-100">
-                              {messageSegments.map((segment, index) =>
-                                segment.type === "link" ? (
-                                  <button
-                                    key={`${entry.id}-segment-${index}`}
-                                    type="button"
-                                    onClick={() => void copyTextToClipboard(segment.value)}
-                                    className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
-                                    title="Tiklayinca kopyalanir"
-                                  >
-                                    {segment.value}
-                                  </button>
-                                ) : (
-                                  <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
-                                ),
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
+                          )
+                        })}
+                      </div>
+                    )}
 
                     {consoleLogs.length === 0 && (
-                      <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-slate-500">
-                        Henüz bir akış kaydı yok. İlk çalıştırma burada görünecek.
+                      <div className="rounded-[2px] border border-dashed border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-slate-500">
+                        Henuz bir akis kaydi yok. Ilk calistirma burada gorunecek.
                       </div>
                     )}
                   </div>
