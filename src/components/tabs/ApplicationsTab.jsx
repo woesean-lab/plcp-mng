@@ -1511,11 +1511,11 @@ export default function ApplicationsTab({
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleCancelRun()}
-                          disabled={!canCancelActiveRun}
-                          className={`${terminalCancelButtonClass} h-8 px-3 text-[10px]`}
+                          onClick={handleClearLogs}
+                          disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
+                          className={`${terminalClearButtonClass} h-8 px-3 text-[10px]`}
                         >
-                          Iptal
+                          Log temizle
                         </button>
                       </div>
                     </div>
@@ -1567,16 +1567,6 @@ export default function ApplicationsTab({
                         </div>
                       </div>
                     )}
-                  </div>
-                <div className="flex flex-wrap gap-1.5 lg:justify-end">
-                    <button
-                      type="button"
-                      onClick={handleClearLogs}
-                      disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                      className={terminalClearButtonClass}
-                    >
-                      Log temizle
-                    </button>
                 </div>
               </div>
             </div>
@@ -1638,7 +1628,16 @@ export default function ApplicationsTab({
                             <span className={`h-2 w-2 rounded-full ${statusMeta.dotClass}`} />
                             <span className="max-w-[180px] truncate">{entry.label}</span>
                           </button>
-                          {!entryIsLive && (
+                          {entryIsLive ? (
+                            <button
+                              type="button"
+                              onClick={() => handleCancelRun(entry.id)}
+                              className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-rose-300/40 hover:bg-rose-500/15 hover:text-rose-100"
+                              aria-label={`${entry.label} islemini iptal et`}
+                            >
+                              Iptal
+                            </button>
+                          ) : (
                             <button
                               type="button"
                               onClick={() => handleCloseRunTab(entry.id)}
