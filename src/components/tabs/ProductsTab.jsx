@@ -2843,7 +2843,7 @@ export default function ProductsTab({
             </p>
           </div>
           <div className="w-full md:max-w-[760px]">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
               <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900/60 p-3 shadow-card">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_20%_0%,rgba(58,199,255,0.18),transparent)]" />
                 <div className="relative">
