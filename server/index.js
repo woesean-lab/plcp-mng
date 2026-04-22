@@ -4812,6 +4812,12 @@ app.post("/api/eldorado/keys/:offerId", async (req, res) => {
     res.status(400).json({ error: "invalid offerId" })
     return
   }
+  const requestedStatus = String(req.body?.status ?? "").trim()
+  const status = requestedStatus || "available"
+  if (!allowedStockStatus.has(status)) {
+    res.status(400).json({ error: "invalid status" })
+    return
+  }
   const codesRaw = req.body?.codes
   const codes = Array.isArray(codesRaw)
     ? codesRaw.map((code) => String(code ?? "").trim()).filter(Boolean)
@@ -4826,7 +4832,7 @@ app.post("/api/eldorado/keys/:offerId", async (req, res) => {
   await prisma.eldoradoKey.createMany({
     data: codes.map((code) => ({
       code,
-      status: "available",
+      status,
       offerId: groupId ? null : offerId,
       groupId: groupId || null,
     })),

@@ -3642,12 +3642,14 @@ const handleEldoradoNoteSave = useCallback(
   )
 
   const handleEldoradoKeysAdd = useCallback(
-    async (offerId, codesInput) => {
+    async (offerId, codesInput, options = {}) => {
       const normalizedId = String(offerId ?? "").trim()
       if (!normalizedId) {
         toast.error("Urun bulunamadi.")
         return false
       }
+      const requestedStatus = String(options?.status ?? "").trim().toLowerCase()
+      const status = requestedStatus === "used" ? "used" : "available"
       const codes = normalizeEldoradoKeyCodes(codesInput)
       if (codes.length === 0) {
         toast.error("Stok girin.")
@@ -3659,7 +3661,7 @@ const handleEldoradoNoteSave = useCallback(
         const res = await apiFetch(`/api/eldorado/keys/${normalizedId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ codes }),
+          body: JSON.stringify({ codes, status }),
         })
         if (!res.ok) throw new Error("api_error")
         const list = await res.json()
@@ -3674,7 +3676,10 @@ const handleEldoradoNoteSave = useCallback(
 
         const addedCount = codes.length
         if (addedCount > 0) {
-          toast.success(`${addedCount} stok eklendi`, { duration: 1600, position: "top-right" })
+          toast.success(
+            `${addedCount} ${status === "used" ? "kullanilan stok" : "stok"} eklendi`,
+            { duration: 1600, position: "top-right" },
+          )
           return true
         }
         toast.error("Yeni stok eklenmedi.")

@@ -635,7 +635,7 @@ export default function ProductsTab({
     backend: "",
     value: "",
   })
-  const [isAddingPopupStock, setIsAddingPopupStock] = useState(false)
+  const [popupStockAddMode, setPopupStockAddMode] = useState("")
   const [isPopupValueEditing, setIsPopupValueEditing] = useState(false)
   const [popupValueDraft, setPopupValueDraft] = useState("")
   const [priceDrafts, setPriceDrafts] = useState({})
@@ -2650,13 +2650,14 @@ export default function ProductsTab({
     }))
     setIsPopupValueEditing(false)
   }
-  const handlePopupAddToStock = async () => {
+  const handlePopupAddToStock = async (status = "available") => {
     if (typeof onAddKeys !== "function") {
       toast.error("Stoga ekleme islemi kullanilamiyor.")
       return
     }
 
     const offerId = String(automationResultPopup.offerId ?? "").trim()
+    const normalizedStatus = String(status ?? "").trim().toLowerCase() === "used" ? "used" : "available"
     const rawValueToAdd = isPopupValueEditing
       ? String(popupValueDraft ?? "")
       : String(automationResultPopup.value ?? "")
@@ -2683,21 +2684,21 @@ export default function ProductsTab({
       setIsPopupValueEditing(false)
     }
 
-    setIsAddingPopupStock(true)
+    setPopupStockAddMode(normalizedStatus)
     try {
-      const ok = await onAddKeys(offerId, valueToAdd)
+      const ok = await onAddKeys(offerId, valueToAdd, { status: normalizedStatus })
       if (!ok) return
       appendAutomationRunLog(
         offerId,
         "success",
-        "Stoga eklendi: 1 satir",
+        normalizedStatus === "used" ? "Kullanilan stoga eklendi: 1 satir" : "Stoga eklendi: 1 satir",
       )
       setAutomationResultPopup((prev) => ({
         ...prev,
         isOpen: false,
       }))
     } finally {
-      setIsAddingPopupStock(false)
+      setPopupStockAddMode("")
     }
   }
   if (isLoading) {
@@ -2790,17 +2791,29 @@ export default function ProductsTab({
         </div>
         <p className="mt-1 text-[11px] text-slate-500">Tek tikla kopyala, cift tikla duzenle</p>
 
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            className="rounded-lg border border-sky-300/70 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => {
-              void handlePopupAddToStock()
-            }}
-            disabled={isAddingPopupStock}
-          >
-            {isAddingPopupStock ? "EKLENIYOR..." : "Stoga Ekle"}
-          </button>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="rounded-lg border border-sky-300/70 bg-sky-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => {
+                void handlePopupAddToStock("available")
+              }}
+              disabled={Boolean(popupStockAddMode)}
+            >
+              {popupStockAddMode === "available" ? "EKLENIYOR..." : "Stoga Ekle"}
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-amber-300/70 bg-amber-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-amber-50 transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => {
+                void handlePopupAddToStock("used")
+              }}
+              disabled={Boolean(popupStockAddMode)}
+            >
+              {popupStockAddMode === "used" ? "EKLENIYOR..." : "Kullanilan Stoga Ekle"}
+            </button>
+          </div>
           <button
             type="button"
             className="rounded-lg border border-emerald-300/70 bg-emerald-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-500/25"
