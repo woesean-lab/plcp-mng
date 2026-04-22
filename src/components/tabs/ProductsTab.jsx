@@ -133,6 +133,8 @@ const BULK_PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing-bulk>"
 const BULK_PRICE_SESSION_STORAGE_KEY = "plcp:products:bulk-price-session:v1"
 const BULK_PRICE_RESUMABLE_STATUSES = new Set(["pending", "running", "error"])
 const PRICE_COMMAND_BACKEND_KEY = "eldoradofiyatguncelleme"
+const isDesktopViewport = () =>
+  typeof window === "undefined" ? true : window.matchMedia("(min-width: 1024px)").matches
 const clampPriceMultiplier = (value, fallback = DEFAULT_PRICE_MULTIPLIER) => {
   const multiplier = Number(normalizeDecimalInput(value))
   if (!Number.isFinite(multiplier) || multiplier <= 0) return fallback
@@ -931,7 +933,7 @@ export default function ProductsTab({
     ]
   }, [allProducts, categoryMap])
   const [activeCategoryKey, setActiveCategoryKey] = useState("all")
-  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(true)
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(() => isDesktopViewport())
   const activeCategory = categories.find((category) => category.key === activeCategoryKey) ?? categories[0]
   const canRefresh = typeof onRefresh === "function"
   const baseList =
