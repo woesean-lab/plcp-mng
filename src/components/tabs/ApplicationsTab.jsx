@@ -1339,14 +1339,14 @@ export default function ApplicationsTab({
         ? `${runningRunCount} calisiyor`
         : "Hazir"
   const connectionBadgeClass = !hasWsUrl
-    ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
+    ? "border-white/10 bg-white/[0.04] text-amber-100"
     : activeRunSession && activeConnectionState === "error"
-      ? "border-rose-300/60 bg-rose-500/15 text-rose-100"
+      ? "border-white/10 bg-rose-500/10 text-rose-100"
       : activeRunSession && activeConnectionState === "connecting"
-        ? "border-sky-300/60 bg-sky-500/15 text-sky-100"
+        ? "border-white/10 bg-white/[0.04] text-slate-100"
         : runningRunCount > 0
-          ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
-          : "border-slate-700 bg-slate-900/90 text-slate-200"
+          ? "border-white/10 bg-white/[0.04] text-emerald-100"
+          : "border-white/10 bg-white/[0.04] text-slate-200"
   const activeConsoleTitle = activeRunSession ? activeRunSession.label : selectedApplication?.name || "Genel Log"
   const activeConsoleAbout = activeRunSession?.applicationAbout || selectedApplication?.about || "Calistirmak icin servis secin."
   const activeConsoleBackend = activeRunSession
@@ -1355,9 +1355,9 @@ export default function ApplicationsTab({
       ? getBackendLabelForDisplay(selectedApplication.backendLabel)
       : MASKED_BACKEND_TEXT
   const terminalFieldClass =
-    "h-11 w-full appearance-none rounded-xl border border-white/10 bg-[#091321] px-3.5 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:border-sky-300/60 focus:outline-none focus:ring-1 focus:ring-sky-400/35 disabled:cursor-not-allowed disabled:opacity-60"
+    "h-11 w-full appearance-none rounded-xl border border-white/10 bg-ink-950/60 px-3.5 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition focus:border-accent-400/60 focus:outline-none focus:ring-1 focus:ring-accent-400/25 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalTextInputClass =
-    "h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-[#091321] px-3.5 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition placeholder:text-slate-500 focus:border-sky-300/60 focus:outline-none focus:ring-1 focus:ring-sky-400/35"
+    "h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-ink-950/60 px-3.5 font-mono text-[11px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition placeholder:text-slate-500 focus:border-accent-400/60 focus:outline-none focus:ring-1 focus:ring-accent-400/25"
   const terminalButtonBaseClass =
     "inline-flex h-11 items-center justify-center rounded-xl border px-3.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonNeutralClass =
@@ -1365,15 +1365,15 @@ export default function ApplicationsTab({
   const terminalIconButtonBaseClass =
     "inline-flex h-11 w-full items-center justify-center rounded-xl border transition focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60 sm:w-11"
   const terminalRunButtonClass =
-    `${terminalIconButtonBaseClass} border-emerald-300/70 bg-emerald-500/20 text-emerald-100 hover:border-emerald-200 hover:bg-emerald-500/30 focus:ring-emerald-500/35`
+    `${terminalIconButtonBaseClass} border-accent-300/40 bg-accent-500/12 text-accent-50 hover:border-accent-300/60 hover:bg-accent-500/18 focus:ring-accent-500/30`
   const terminalCancelButtonClass =
-    `${terminalIconButtonBaseClass} border-amber-300/70 bg-amber-500/20 text-amber-100 hover:border-amber-200 hover:bg-amber-500/30 focus:ring-amber-500/35`
+    `${terminalIconButtonBaseClass} border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08] focus:ring-slate-300/20`
   const terminalClearButtonClass =
-    `${terminalIconButtonBaseClass} border-rose-300/70 bg-rose-500/15 text-rose-100 hover:border-rose-200 hover:bg-rose-500/25 focus:ring-rose-500/35`
+    `${terminalIconButtonBaseClass} border-white/10 bg-white/[0.04] text-slate-300 hover:border-rose-300/30 hover:bg-rose-500/10 hover:text-rose-100 focus:ring-rose-500/20`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3.5 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
-    "inline-flex h-11 min-w-[180px] items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 transition"
+    "inline-flex h-11 min-w-[180px] items-center gap-2 rounded-xl border border-white/10 bg-ink-950/45 px-3.5 transition"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1404,17 +1404,15 @@ export default function ApplicationsTab({
       </header>
 
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
-        <section className="relative order-1 min-w-0 overflow-hidden rounded-[1.65rem] border border-white/10 bg-[#07111d] shadow-[0_24px_64px_rgba(2,6,23,0.55)] lg:col-span-2">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_0%_0%,rgba(34,211,238,0.16),transparent_44%),radial-gradient(85%_85%_at_100%_100%,rgba(59,130,246,0.14),transparent_52%)]" />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.03),transparent_34%,transparent_66%,rgba(255,255,255,0.02))]" />
+        <section className="relative order-1 min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-ink-900/70 shadow-card lg:col-span-2">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_90%_at_0%_0%,rgba(148,163,184,0.08),transparent_38%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.02),transparent_22%,transparent_78%,rgba(255,255,255,0.01))]" />
 
-          <div className="relative border-b border-white/10 bg-slate-950/45 px-4 py-4 sm:px-5">
+          <div className="relative border-b border-white/10 bg-ink-950/35 px-4 py-4 sm:px-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0 space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                  <span className="h-2 w-2 rounded-full bg-rose-400/90" />
-                  <span className="h-2 w-2 rounded-full bg-amber-300/90" />
-                  <span className="h-2 w-2 rounded-full bg-emerald-300/90" />
+                  <span className="h-2 w-2 rounded-full bg-accent-300/90" />
                   <span>{CMD_WINDOW_TITLE}</span>
                 </div>
                 <div className="space-y-2">
@@ -1422,7 +1420,7 @@ export default function ApplicationsTab({
                     <h2 className="min-w-0 truncate font-mono text-lg font-semibold tracking-[0.04em] text-white sm:text-[1.35rem]">
                       {activeConsoleTitle}
                     </h2>
-                    <span className="inline-flex w-fit items-center rounded-full border border-sky-300/20 bg-sky-500/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-sky-100">
+                    <span className="inline-flex w-fit items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-slate-300">
                       {activeConsoleBackend}
                     </span>
                   </div>
@@ -1430,8 +1428,8 @@ export default function ApplicationsTab({
                 </div>
               </div>
               <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[360px]">
-                <div className={`rounded-2xl border px-3 py-2.5 ${connectionBadgeClass}`}>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em]">Durum</p>
+                <div className={`rounded-2xl border bg-white/[0.04] px-3 py-2.5 ${connectionBadgeClass}`}>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-slate-400">Durum</p>
                   <p className="mt-1 text-sm font-semibold normal-case tracking-normal">{connectionLabel}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-slate-200">
@@ -1447,7 +1445,7 @@ export default function ApplicationsTab({
           </div>
 
           <div className="relative border-b border-white/10 px-4 py-4 sm:px-5">
-            <div className="rounded-[1.2rem] border border-white/10 bg-slate-950/45 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:p-4">
+            <div className="rounded-2xl border border-white/10 bg-ink-950/35 p-3.5 shadow-inner sm:p-4">
               <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
                 <div className="space-y-2">
                   <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-slate-400">
@@ -1517,7 +1515,7 @@ export default function ApplicationsTab({
                   <span
                     className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${
                       selectedApplication.isActive
-                        ? "border-emerald-300/30 bg-emerald-500/12 text-emerald-100"
+                        ? "border-white/10 bg-white/[0.04] text-slate-200"
                         : "border-white/10 bg-white/[0.04] text-slate-400"
                     }`}
                   >
@@ -1541,7 +1539,7 @@ export default function ApplicationsTab({
                 className={`${terminalTabBaseClass} justify-between ${
                   activeRunSession
                     ? "text-slate-400 hover:border-white/20 hover:bg-white/[0.08]"
-                    : "border-sky-300/30 bg-sky-500/12 text-slate-100"
+                    : "border-white/15 bg-white/[0.08] text-slate-100"
                 }`}
               >
                 <span className="truncate font-mono text-[11px] font-semibold tracking-[0.04em]">Genel Log</span>
@@ -1560,7 +1558,7 @@ export default function ApplicationsTab({
                     key={`run-tab-${entry.id}`}
                     className={`${terminalTabBaseClass} min-w-[220px] pl-3 pr-1.5 ${
                       entryIsActive
-                        ? "border-sky-300/30 bg-sky-500/12 text-slate-100"
+                        ? "border-white/15 bg-white/[0.08] text-slate-100"
                         : "text-slate-400 hover:border-white/20 hover:bg-white/[0.08]"
                     }`}
                   >
@@ -1596,7 +1594,7 @@ export default function ApplicationsTab({
           </div>
 
           <div className="relative">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(100%_80%_at_50%_0%,rgba(56,189,248,0.08),transparent_58%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.015),transparent_14%)]" />
             <div className="no-scrollbar relative h-[58vh] min-h-[320px] max-h-[520px] overflow-y-auto overflow-x-hidden px-4 py-4 font-mono text-[11px] leading-5 sm:px-5 sm:text-[12px] sm:leading-6">
               {!canViewApplicationLogs ? (
                 <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-slate-500">
@@ -1609,9 +1607,9 @@ export default function ApplicationsTab({
               ) : (
                 <div className="space-y-2">
                   {activeRunPrompt && isActiveRunLive && (
-                    <div className="mb-4 rounded-2xl border border-sky-300/25 bg-sky-500/[0.08] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                    <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 shadow-inner">
                       <div className="flex min-w-0 flex-wrap items-center gap-2 sm:flex-nowrap">
-                        <span className="flex-none rounded-full border border-emerald-300/35 bg-emerald-500/12 px-2 py-0.5 text-[10px] text-emerald-100">
+                        <span className="flex-none rounded-full border border-accent-300/25 bg-accent-500/10 px-2 py-0.5 text-[10px] text-accent-100">
                           INPUT
                         </span>
                         <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
@@ -1696,7 +1694,7 @@ export default function ApplicationsTab({
                     return (
                       <div
                         key={entry.id}
-                        className="grid gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:grid-cols-[84px_70px_minmax(0,1fr)] sm:items-start"
+                        className="grid gap-2 rounded-xl border border-white/10 bg-ink-950/35 px-3 py-2.5 sm:grid-cols-[84px_70px_minmax(0,1fr)] sm:items-start"
                       >
                         <span className="flex-none text-slate-500">[{entry.time}]</span>
                         <span
@@ -1711,7 +1709,7 @@ export default function ApplicationsTab({
                                 key={`${entry.id}-segment-${index}`}
                                 type="button"
                                 onClick={() => void copyTextToClipboard(segment.value)}
-                                className="inline break-all bg-transparent p-0 text-left align-baseline text-sky-300 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-sky-200 hover:decoration-sky-300 focus:outline-none"
+                                className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
                                 title="Tiklayinca kopyalanir"
                               >
                                 {segment.value}
