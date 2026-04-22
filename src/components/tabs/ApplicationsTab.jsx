@@ -1395,7 +1395,7 @@ export default function ApplicationsTab({
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
-    "inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition"
+    "inline-flex h-9 items-center gap-2 rounded-lg border-b-2 border-transparent px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1589,19 +1589,19 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
-                  <div className="flex min-w-max items-center gap-1 rounded-full border border-white/10 bg-ink-900/60 p-1">
+                <div className="no-scrollbar overflow-x-auto border-b border-white/10 pb-1">
+                  <div className="flex min-w-max items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
                       className={`${terminalTabBaseClass} ${
                         activeRunSession
-                          ? "text-slate-300 hover:bg-white/10 hover:text-white"
-                          : "bg-accent-400 text-ink-900 shadow-glow"
+                          ? "border-transparent text-slate-400 hover:border-white/10 hover:text-white"
+                          : "border-accent-400 bg-accent-500/10 text-accent-100"
                       }`}
                     >
                       Genel akis
-                      <span className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[10px]">
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px]">
                         {historyLogs.length}
                       </span>
                     </button>
@@ -1618,8 +1618,8 @@ export default function ApplicationsTab({
                             onClick={() => setActiveConsoleTabId(entry.id)}
                             className={`${terminalTabBaseClass} ${
                               entryIsActive
-                                ? "bg-accent-400 text-ink-900 shadow-glow"
-                                : "text-slate-300 hover:bg-white/10 hover:text-white"
+                                ? "border-accent-400 bg-accent-500/10 text-accent-100"
+                                : "border-transparent text-slate-400 hover:border-white/10 hover:text-white"
                             }`}
                           >
                             <span className={`h-2 w-2 rounded-full ${statusMeta.dotClass}`} />
@@ -1641,27 +1641,41 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar h-[42vh] min-h-[240px] max-h-[480px] overflow-y-auto pr-1">
+                <div className="overflow-hidden rounded-xl border border-white/10 bg-ink-950/80">
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-black/20 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-rose-300/80" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/80" />
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      {activeRunSession ? activeRunSession.label : "Genel akis"}
+                    </span>
+                  </div>
+
+                  <div className="no-scrollbar h-[42vh] min-h-[240px] max-h-[480px] overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.96),rgba(11,15,25,0.92))] px-3 py-3 font-mono text-[11px] leading-5 sm:text-[12px] sm:leading-6">
                 {!canViewApplicationLogs ? (
-                  <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 text-slate-500">
+                  <div className="flex h-full items-center justify-center text-slate-500">
                     Servis Konsolu log goruntuleme yetkiniz yok.
                   </div>
                 ) : !activeRunSession && isLogsLoading ? (
-                  <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 text-slate-500">
+                  <div className="flex h-full items-center justify-center text-slate-500">
                     Loglar yukleniyor...
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-1.5">
                     {activeRunPrompt && isActiveRunLive && (
-                      <div className="rounded-xl border border-accent-300/30 bg-accent-500/10 p-3">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-accent-300/30 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-100">
-                            Girdi bekleniyor
+                      <div className="border-b border-white/10 pb-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2 text-slate-300">
+                          <span className="flex-none text-amber-300">[PROMPT]</span>
+                          <span className="hidden flex-none text-slate-600 sm:inline">servis&gt;</span>
+                          <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                          <span className="min-w-0 break-words text-slate-100">
+                            {activeRunPrompt.message}
                           </span>
-                          <span className="min-w-0 break-words text-sm text-slate-100">{activeRunPrompt.message}</span>
                         </div>
                         {activeRunPrompt.step && (
-                          <p className="mt-2 text-xs text-slate-300/70">Adim: {activeRunPrompt.step}</p>
+                          <p className="mt-1 text-[11px] text-slate-500">Adim: {activeRunPrompt.step}</p>
                         )}
                         <div className="mt-2.5">
                           {activeRunPrompt.inputType === "choice" && (
@@ -1737,55 +1751,40 @@ export default function ApplicationsTab({
                       const messageSegments = splitLogMessageLinks(sanitizedMessage)
 
                       return (
-                        <article
-                          key={entry.id}
-                          className="rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2.5 shadow-inner"
-                        >
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span
-                                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${statusMeta.badgeClass}`}
+                        <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                          <span className="hidden flex-none text-slate-600 sm:inline">servis&gt;</span>
+                          <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                          <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
+                          <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                          <span className="min-w-0 break-words text-slate-100">
+                            {messageSegments.map((segment, index) =>
+                              segment.type === "link" ? (
+                                <button
+                                  key={`${entry.id}-segment-${index}`}
+                                  type="button"
+                                  onClick={() => void copyTextToClipboard(segment.value)}
+                                  className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
+                                  title="Tiklayinca kopyalanir"
                                 >
-                                  {statusMeta.code}
-                                </span>
-                                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                  {activeRunSession ? activeRunSession.applicationName : selectedApplication?.name || "Servis"}
-                                </span>
-                              </div>
-                              <div className="mt-2 text-sm leading-5 text-slate-100">
-                                {messageSegments.map((segment, index) =>
-                                  segment.type === "link" ? (
-                                    <button
-                                      key={`${entry.id}-segment-${index}`}
-                                      type="button"
-                                      onClick={() => void copyTextToClipboard(segment.value)}
-                                      className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
-                                      title="Tiklayinca kopyalanir"
-                                    >
-                                      {segment.value}
-                                    </button>
-                                  ) : (
-                                    <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
-                                  ),
-                                )}
-                              </div>
-                            </div>
-                            <div className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                              {entry.time}
-                            </div>
-                          </div>
-                        </article>
+                                  {segment.value}
+                                </button>
+                              ) : (
+                                <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
+                              ),
+                            )}
+                          </span>
+                        </div>
                       )
                     })}
 
                     {consoleLogs.length === 0 && (
-                      <div className="rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-500">
-                        Henuz bir akis kaydi yok. Ilk calistirma burada gorunecek.
+                      <div className="text-slate-500">
+                        servis&gt; bekleniyor...
                       </div>
                     )}
                   </div>
                 )}
+                  </div>
                 </div>
               </div>
             </div>
