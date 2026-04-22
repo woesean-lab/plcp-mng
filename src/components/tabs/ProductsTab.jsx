@@ -5133,7 +5133,7 @@ export default function ProductsTab({
                               </div>
                             )}
                             </div>
-                          <div className="order-2 self-start rounded-2xl border border-white/10 bg-ink-900/50 p-4 lg:col-start-1 lg:row-start-1 lg:order-none">
+                          <div className="order-1 self-start rounded-2xl border border-white/10 bg-ink-900/50 p-4 lg:col-start-1 lg:row-start-1 lg:order-none">
                               <div>
                                 {messageGroupMessages.length === 0 ? (
                                   <div className="text-xs text-slate-400">
