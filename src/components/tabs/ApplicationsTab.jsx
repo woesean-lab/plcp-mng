@@ -1452,37 +1452,31 @@ export default function ApplicationsTab({
             </div>
 
             <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
-              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-end">
+              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
                 <div ref={serviceDropdownRef} className="relative min-w-0 flex-1">
                   <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                     Secili servis
                   </label>
-                  <button
+                  <div className="rounded-lg border border-white/10 bg-ink-900 px-3 py-3">
+                    <button
                       type="button"
                       onClick={() => {
                         if (!hasApplications) return
                         setIsServiceDropdownOpen((prev) => !prev)
                       }}
                       disabled={!hasApplications}
-                      className={`${terminalFieldClass} flex items-start justify-between gap-4 text-left`}
+                      className="flex w-full items-start justify-between gap-4 bg-transparent text-left transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-white">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          Servis secimi
+                        </p>
+                        <p className="mt-1 truncate text-sm font-semibold text-white">
                           {selectedApplication?.name || (hasApplications ? "Servis sec" : "Kayitli servis yok")}
                         </p>
                         <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-slate-400">
                           {selectedApplication?.about || "Servis aciklamasi burada gorunur."}
                         </p>
-                        {selectedApplication && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                              {selectedApplication.isActive ? "Acik" : "Kapali"}
-                            </span>
-                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                              {getBackendLabelForDisplay(selectedApplication.backendLabel)}
-                            </span>
-                          </div>
-                        )}
                       </div>
                       <span className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400">
                         <ChevronDownIcon
@@ -1491,6 +1485,41 @@ export default function ApplicationsTab({
                         />
                       </span>
                     </button>
+
+                    <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedApplication && (
+                          <>
+                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                              {selectedApplication.isActive ? "Acik" : "Kapali"}
+                            </span>
+                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                              {getBackendLabelForDisplay(selectedApplication.backendLabel)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={handleRun}
+                          disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
+                          className={`${terminalRunButtonClass} h-8 px-3 text-[10px]`}
+                        >
+                          Calistir
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCancelRun()}
+                          disabled={!canCancelActiveRun}
+                          className={`${terminalCancelButtonClass} h-8 px-3 text-[10px]`}
+                        >
+                          Iptal
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
                     {isServiceDropdownOpen && hasApplications && (
                       <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 rounded-xl border border-white/10 bg-ink-900/95 p-1.5 shadow-card backdrop-blur">
@@ -1540,22 +1569,6 @@ export default function ApplicationsTab({
                     )}
                   </div>
                 <div className="flex flex-wrap gap-1.5 lg:justify-end">
-                    <button
-                      type="button"
-                      onClick={handleRun}
-                      disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                      className={terminalRunButtonClass}
-                    >
-                      Calistir
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCancelRun()}
-                      disabled={!canCancelActiveRun}
-                      className={terminalCancelButtonClass}
-                    >
-                      Iptal
-                    </button>
                     <button
                       type="button"
                       onClick={handleClearLogs}
