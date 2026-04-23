@@ -1426,7 +1426,7 @@ export default function ApplicationsTab({
 
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
                 <div ref={serviceDropdownRef} className="relative min-w-0 flex-1">
-                  <div className="rounded-lg border border-white/10 bg-[#0b0f198c] px-3 py-3 backdrop-blur-sm">
+                  <div className="rounded-lg border border-white/10 bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm">
                     <button
                       type="button"
                       onClick={() => {
@@ -1484,7 +1484,7 @@ export default function ApplicationsTab({
                   </div>
 
                     {isServiceDropdownOpen && hasApplications && (
-                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 overflow-hidden rounded-lg border border-white/10 bg-[#0b0f19f2] shadow-card backdrop-blur-md">
+                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 overflow-hidden rounded-lg border border-white/10 bg-ink-900/95 shadow-card backdrop-blur-xl">
                         <div className="border-b border-white/10 px-3 py-2">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                             Servisler
@@ -1504,8 +1504,8 @@ export default function ApplicationsTab({
                                 }}
                                 className={`w-full rounded-md border px-3 py-2.5 text-left transition ${
                                   isSelected
-                                    ? "border-slate-500/60 bg-white/[0.06] text-white"
-                                    : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.04]"
+                                    ? "border-sky-400/50 bg-sky-500/12 text-sky-50 shadow-[0_0_0_1px_rgba(56,189,248,0.08)]"
+                                    : "border-transparent bg-transparent text-slate-200 hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-sky-100"
                                 }`}
                               >
                                 <div className="flex items-start justify-between gap-3">
