@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { ChevronDownIcon } from "@heroicons/react/24/outline"
 import { PauseIcon, PlayIcon } from "@heroicons/react/20/solid"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
@@ -284,7 +283,6 @@ export default function ApplicationsTab({
   const [runLogsByTab, setRunLogsByTab] = useState({})
   const [isApplicationsLoading, setIsApplicationsLoading] = useState(true)
   const [isLogsLoading, setIsLogsLoading] = useState(false)
-  const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false)
   const [pendingUserInputValueByRunId, setPendingUserInputValueByRunId] = useState({})
   const runSessionsRef = useRef([])
   const dismissedRunIdsRef = useRef(new Set())
@@ -293,7 +291,6 @@ export default function ApplicationsTab({
   const activeRunToastIdsRef = useRef(new Set())
   const runSessionsRequestInFlightRef = useRef(false)
   const runSnapshotRequestByIdRef = useRef({})
-  const serviceDropdownRef = useRef(null)
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -565,36 +562,6 @@ export default function ApplicationsTab({
     () => applications.find((entry) => entry.id === selectedApplicationId) || null,
     [applications, selectedApplicationId],
   )
-
-  const handleSelectApplication = useCallback((applicationId) => {
-    const normalizedId = String(applicationId ?? "").trim()
-    if (!normalizedId) return
-    setSelectedApplicationId(normalizedId)
-    setIsServiceDropdownOpen(false)
-  }, [])
-
-  useEffect(() => {
-    if (!isServiceDropdownOpen) return undefined
-
-    const handlePointerDown = (event) => {
-      if (serviceDropdownRef.current?.contains(event.target)) return
-      setIsServiceDropdownOpen(false)
-    }
-
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        setIsServiceDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown)
-    document.addEventListener("keydown", handleEscape)
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown)
-      document.removeEventListener("keydown", handleEscape)
-    }
-  }, [isServiceDropdownOpen])
 
   const activeRunSession = useMemo(() => {
     if (activeConsoleTabId === HISTORY_CONSOLE_TAB_ID) return null
@@ -1472,15 +1439,6 @@ export default function ApplicationsTab({
         </div>
       </header>
 
-      {isServiceDropdownOpen && hasApplications && (
-        <button
-          type="button"
-          aria-label="Servis secimini kapat"
-          onClick={() => setIsServiceDropdownOpen(false)}
-          className="fixed inset-0 z-30 bg-ink-950/40 transition-opacity"
-        />
-      )}
-
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
         <section className={`order-1 min-w-0 ${panelClass} bg-ink-800/60 lg:col-span-2`}>
           <div className="space-y-3">
@@ -1496,144 +1454,60 @@ export default function ApplicationsTab({
             </div>
 
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
-                <div
-                  ref={serviceDropdownRef}
-                  className={`relative min-w-0 flex-1 ${isServiceDropdownOpen ? "z-[60]" : ""}`}
-                >
-                  <div
-                    className={`border bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm transition ${
-                      isServiceDropdownOpen
-                        ? "rounded-t-2xl rounded-b-none border-accent-400/45 border-b-transparent shadow-card"
-                        : "rounded-2xl border-white/10"
-                    }`}
+              <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm">
+                <label className="block">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Servis secimi
+                  </span>
+                  <select
+                    value={selectedApplicationId}
+                    onChange={(event) => setSelectedApplicationId(event.target.value)}
+                    disabled={!hasApplications}
+                    className={`${terminalFieldClass} mt-2 h-11 appearance-none pr-10`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!hasApplications) return
-                        setIsServiceDropdownOpen((prev) => !prev)
-                      }}
-                      disabled={!hasApplications}
-                      className="flex w-full items-start justify-between gap-4 rounded-md bg-transparent text-left transition disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Servis secimi
-                        </p>
-                        <p className="mt-1 truncate text-sm font-semibold text-white">
-                          {selectedApplication?.name || (hasApplications ? "Servis sec" : "Kayitli servis yok")}
-                        </p>
-                        <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-slate-400">
-                          {selectedApplication?.about || "Servis aciklamasi burada gorunur."}
-                        </p>
-                      </div>
-                      <span
-                        className={`mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full border text-slate-400 transition ${
-                          isServiceDropdownOpen
-                            ? "border-accent-400/50 bg-accent-500/10 text-accent-100"
-                            : "border-white/10 bg-white/5"
-                        }`}
-                      >
-                        <ChevronDownIcon
-                          aria-hidden="true"
-                          className={`h-4 w-4 transition-transform ${isServiceDropdownOpen ? "rotate-180" : ""}`}
-                        />
-                      </span>
-                    </button>
+                    {!hasApplications ? (
+                      <option value="">Kayitli servis yok</option>
+                    ) : (
+                      runDropdownApplications.map((entry) => (
+                        <option key={`run-app-${entry.id}`} value={entry.id}>
+                          {entry.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </label>
 
-                    <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex flex-wrap gap-1.5">
-                        {selectedApplication && (
-                          <>
-                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                              {selectedApplication.isActive ? "Acik" : "Kapali"}
-                            </span>
-                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                              {getBackendLabelForDisplay(selectedApplication.backendLabel)}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                <p className="mt-2 min-h-8 text-xs leading-4 text-slate-400">
+                  {selectedApplication?.about || "Servis aciklamasi burada gorunur."}
+                </p>
 
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          type="button"
-                          onClick={handleRun}
-                          disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                          className={`${terminalRunButtonClass} h-8 gap-1.5 px-3 text-[10px]`}
-                        >
-                          <PlayIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                          Calistir
-                        </button>
-                      </div>
-                    </div>
+                <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedApplication && (
+                      <>
+                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                          {selectedApplication.isActive ? "Acik" : "Kapali"}
+                        </span>
+                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                          {getBackendLabelForDisplay(selectedApplication.backendLabel)}
+                        </span>
+                      </>
+                    )}
                   </div>
 
-                    {isServiceDropdownOpen && hasApplications && (
-                      <div className="absolute left-0 right-0 top-full z-[60] -mt-px overflow-hidden rounded-b-2xl border border-accent-400/45 border-t-white/10 bg-[#141826] shadow-card animate-panelFade">
-                        <div className="border-b border-white/10 bg-white/[0.03] px-4 py-3">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                            Servisler
-                          </p>
-                          <p className="mt-1 text-xs text-slate-400">
-                            Calistirmak istedigin servisi sec.
-                          </p>
-                        </div>
-                        <div className="max-h-[340px] space-y-2 overflow-y-auto p-3">
-                          {runDropdownApplications.map((entry) => {
-                            const isSelected = entry.id === selectedApplicationId
-
-                            return (
-                              <button
-                                key={`run-app-${entry.id}`}
-                                type="button"
-                                onPointerDown={(event) => {
-                                  event.preventDefault()
-                                  handleSelectApplication(entry.id)
-                                }}
-                                onClick={() => handleSelectApplication(entry.id)}
-                                className={`group w-full rounded-xl border px-3.5 py-3 text-left transition duration-150 ${
-                                  isSelected
-                                    ? "border-accent-400/60 bg-accent-500/10 text-white shadow-card"
-                                    : "border-white/10 bg-ink-900/60 text-slate-200 hover:border-accent-400/35 hover:bg-ink-900/80 hover:text-white"
-                                }`}
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2.5">
-                                      <p className="truncate text-sm font-semibold">{entry.name}</p>
-                                      {isSelected && (
-                                        <span className="inline-flex items-center rounded-full border border-accent-400/40 bg-accent-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-accent-100">
-                                          Secili
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="mt-1.5 line-clamp-2 text-xs leading-4 text-slate-400">
-                                      {entry.about || "Aciklama bulunmuyor."}
-                                    </p>
-                                  </div>
-                                  <div className="flex flex-none flex-col items-end gap-1.5 pl-2">
-                                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 transition group-hover:text-slate-300">
-                                      {getBackendLabelForDisplay(entry.backendLabel)}
-                                    </span>
-                                    <span
-                                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
-                                        entry.isActive
-                                          ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
-                                          : "border-white/10 bg-white/[0.04] text-slate-400"
-                                      }`}
-                                    >
-                                      {entry.isActive ? "Acik" : "Kapali"}
-                                    </span>
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleRun}
+                      disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
+                      className={`${terminalRunButtonClass} h-8 gap-1.5 px-3 text-[10px]`}
+                    >
+                      <PlayIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                      Calistir
+                    </button>
+                  </div>
                 </div>
+              </div>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
