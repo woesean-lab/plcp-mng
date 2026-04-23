@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDownIcon } from "@heroicons/react/24/outline"
-import { PauseIcon, PlayIcon, TrashIcon } from "@heroicons/react/20/solid"
+import { PauseIcon, PlayIcon } from "@heroicons/react/20/solid"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
 const MAX_LOG_ENTRIES = 300
+const CMD_VISIBLE_ROWS = 15
 const MASKED_BACKEND_TEXT = "******"
 const HISTORY_CONSOLE_TAB_ID = "__history__"
 const CMD_WINDOW_TITLE = "Canli Operasyon"
@@ -1339,6 +1340,11 @@ export default function ApplicationsTab({
     return Array.isArray(logs) ? logs : []
   }, [activeRunSession, runLogsByTab])
   const consoleLogs = activeRunSession ? activeRunLogs : historyLogs
+  const visibleConsoleLogs = useMemo(() => consoleLogs.slice(0, CMD_VISIBLE_ROWS), [consoleLogs])
+  const emptyConsoleLogRows = useMemo(
+    () => Math.max(0, CMD_VISIBLE_ROWS - visibleConsoleLogs.length),
+    [visibleConsoleLogs],
+  )
   const activeRunPrompt = activeRunSession?.pendingPrompt || null
   const activeRunPromptValue = activeRunSession
     ? String(pendingUserInputValueByRunId[activeRunSession.id] ?? "")
@@ -1373,8 +1379,6 @@ export default function ApplicationsTab({
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
     `${terminalButtonBaseClass} border-emerald-300/40 bg-emerald-500/15 text-emerald-50 hover:border-emerald-300/60 hover:bg-emerald-500/25 focus:ring-emerald-500/30`
-  const terminalClearButtonClass =
-    `${terminalButtonBaseClass} border-rose-300/35 bg-rose-500/12 text-rose-50 hover:border-rose-300/55 hover:bg-rose-500/20 focus:ring-rose-500/20`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
@@ -1478,15 +1482,6 @@ export default function ApplicationsTab({
                           <PlayIcon className="h-3.5 w-3.5" aria-hidden="true" />
                           Calistir
                         </button>
-                        <button
-                          type="button"
-                          onClick={handleClearLogs}
-                          disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                          className={`${terminalClearButtonClass} h-8 gap-1.5 px-3 text-[10px]`}
-                        >
-                          <TrashIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                          Log temizle
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -1542,22 +1537,19 @@ export default function ApplicationsTab({
             </div>
 
             <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">Akis</p>
-                    <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
-                      {activeRunSession ? activeRunSession.label : "Tum servis hareketleri"}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200">
-                      {consoleLogs.length} kayit
-                    </span>
-                    {!hasWsUrl && (
-                      <span className="inline-flex items-center rounded-full border border-amber-300/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-100">
-                        websocket adresi yok
-                      </span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">Akis</p>
+                      <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
+                        {activeRunSession ? activeRunSession.label : "Tum servis hareketleri"}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {!hasWsUrl && (
+                        <span className="inline-flex items-center rounded-full border border-amber-300/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-100">
+                          websocket adresi yok
+                        </span>
                     )}
                   </div>
                 </div>
@@ -1623,151 +1615,173 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-white/10 bg-ink-950/80">
-                  <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-black/20 px-3 py-2">
+                <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full bg-rose-300/80" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/80" />
+                      <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                      <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                      <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                      <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                        Komut ciktilari
+                      </span>
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      {activeRunSession ? activeRunSession.label : "Genel akis"}
-                    </span>
+                    <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                      <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                        {consoleLogs.length} satir
+                      </span>
+                      {canClearApplicationLogs && (
+                        <button
+                          type="button"
+                          onClick={handleClearLogs}
+                          disabled={!canViewApplicationLogs || consoleLogs.length === 0}
+                          className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Log temizle
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="no-scrollbar h-[42vh] min-h-[240px] max-h-[480px] overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.96),rgba(11,15,25,0.92))] px-3 py-3 font-mono text-[11px] leading-5 sm:text-[12px] sm:leading-6">
-                {!canViewApplicationLogs ? (
-                  <div className="flex h-full items-center justify-center text-slate-500">
-                    Servis Konsolu log goruntuleme yetkiniz yok.
-                  </div>
-                ) : !activeRunSession && isLogsLoading ? (
-                  <div className="flex h-full items-center justify-center text-slate-500">
-                    Loglar yukleniyor...
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    {activeRunPrompt && isActiveRunLive && (
-                      <div className="border-b border-white/10 pb-2">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2 text-slate-300">
-                          <span className="flex-none text-amber-300">[PROMPT]</span>
-                          <span className="hidden flex-none text-slate-600 sm:inline">servis&gt;</span>
-                          <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                          <span className="min-w-0 break-words text-slate-100">
-                            {activeRunPrompt.message}
-                          </span>
-                        </div>
-                        {activeRunPrompt.step && (
-                          <p className="mt-1 text-[11px] text-slate-500">Adim: {activeRunPrompt.step}</p>
-                        )}
-                        <div className="mt-2.5">
-                          {activeRunPrompt.inputType === "choice" && (
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              {activeRunPrompt.options.map((option) => (
+                  <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                    {!canViewApplicationLogs ? (
+                      <div className="flex h-full items-center justify-center text-slate-500">
+                        Servis Konsolu log goruntuleme yetkiniz yok.
+                      </div>
+                    ) : !activeRunSession && isLogsLoading ? (
+                      <div className="flex h-full items-center justify-center text-slate-500">
+                        Loglar yukleniyor...
+                      </div>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {activeRunPrompt && isActiveRunLive && (
+                          <div className="mb-2 border-b border-white/10 pb-1.5">
+                            <div className="flex min-w-0 flex-col items-start gap-2 text-slate-300 sm:flex-row sm:flex-wrap sm:items-center">
+                              <span className="flex-none text-amber-300">[PROMPT]</span>
+                              <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
+                              <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                              <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
+                              {activeRunPrompt.inputType === "text" && (
+                                <input
+                                  type="text"
+                                  value={activeRunPromptValue}
+                                  onChange={(event) => {
+                                    const targetRunId = String(activeRunId ?? "").trim()
+                                    if (!targetRunId) return
+                                    setPendingUserInputValueByRunId((prev) => ({
+                                      ...prev,
+                                      [targetRunId]: event.target.value,
+                                    }))
+                                  }}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                      event.preventDefault()
+                                      handleUserInputSubmit("", activeRunId)
+                                    }
+                                  }}
+                                  placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
+                                  className="h-7 w-full min-w-0 flex-1 border-0 border-b border-white/20 bg-transparent px-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-0 sm:min-w-[140px]"
+                                />
+                              )}
+                            </div>
+                            {activeRunPrompt.step && (
+                              <p className="mt-1 text-[11px] text-slate-500">Adim: {activeRunPrompt.step}</p>
+                            )}
+                            {activeRunPrompt.inputType === "choice" && (
+                              <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                                {activeRunPrompt.options.map((option) => (
+                                  <button
+                                    key={`choice-${option.value}`}
+                                    type="button"
+                                    onClick={() => handleUserInputSubmit(option.value, activeRunId)}
+                                    className={terminalPromptButtonClass}
+                                  >
+                                    {option.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            {activeRunPrompt.inputType === "confirm" && (
+                              <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
                                 <button
-                                  key={`choice-${option.value}`}
                                   type="button"
-                                  onClick={() => handleUserInputSubmit(option.value, activeRunId)}
+                                  onClick={() => handleUserInputSubmit("evet", activeRunId)}
                                   className={terminalPromptButtonClass}
                                 >
-                                  {option.label}
+                                  Evet
                                 </button>
-                              ))}
-                            </div>
-                          )}
-                          {activeRunPrompt.inputType === "confirm" && (
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              <button
-                                type="button"
-                                onClick={() => handleUserInputSubmit("evet", activeRunId)}
-                                className={terminalPromptButtonClass}
-                              >
-                                Evet
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleUserInputSubmit("hayir", activeRunId)}
-                                className={terminalPromptButtonClass}
-                              >
-                                Hayir
-                              </button>
-                            </div>
-                          )}
-                          {activeRunPrompt.inputType === "text" && (
-                            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                              <input
-                                type="text"
-                                value={activeRunPromptValue}
-                                onChange={(event) => {
-                                  const targetRunId = String(activeRunId ?? "").trim()
-                                  if (!targetRunId) return
-                                  setPendingUserInputValueByRunId((prev) => ({
-                                    ...prev,
-                                    [targetRunId]: event.target.value,
-                                  }))
-                                }}
-                                onKeyDown={(event) => {
-                                  if (event.key === "Enter") {
-                                    event.preventDefault()
-                                    handleUserInputSubmit("", activeRunId)
-                                  }
-                                }}
-                                placeholder={activeRunPrompt.placeholder || "Cevap girin ve Enter"}
-                                className={terminalTextInputClass}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleUserInputSubmit("", activeRunId)}
-                                className={terminalPromptButtonClass}
-                              >
-                                Gonder
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {consoleLogs.map((entry) => {
-                      const statusMeta = getConsoleStatusMeta(entry.status)
-                      const sanitizedMessage = sanitizeLogMessage(entry.message)
-                      const messageSegments = splitLogMessageLinks(sanitizedMessage)
-
-                      return (
-                        <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                          <span className="hidden flex-none text-slate-600 sm:inline">servis&gt;</span>
-                          <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                          <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
-                          <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
-                          <span className="min-w-0 break-words text-slate-100">
-                            {messageSegments.map((segment, index) =>
-                              segment.type === "link" ? (
                                 <button
-                                  key={`${entry.id}-segment-${index}`}
                                   type="button"
-                                  onClick={() => void copyTextToClipboard(segment.value)}
-                                  className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
-                                  title="Tiklayinca kopyalanir"
+                                  onClick={() => handleUserInputSubmit("hayir", activeRunId)}
+                                  className={terminalPromptButtonClass}
                                 >
-                                  {segment.value}
+                                  Hayir
                                 </button>
-                              ) : (
-                                <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
-                              ),
+                              </div>
                             )}
-                          </span>
-                        </div>
-                      )
-                    })}
+                            {activeRunPrompt.inputType === "text" && (
+                              <div className="mt-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUserInputSubmit("", activeRunId)}
+                                  className={terminalPromptButtonClass}
+                                >
+                                  Gonder
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
 
-                    {consoleLogs.length === 0 && (
-                      <div className="text-slate-500">
-                        servis&gt; bekleniyor...
+                        {visibleConsoleLogs.map((entry) => {
+                          const statusMeta = getConsoleStatusMeta(entry.status)
+                          const sanitizedMessage = sanitizeLogMessage(entry.message)
+                          const messageSegments = splitLogMessageLinks(sanitizedMessage)
+
+                          return (
+                            <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                              <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
+                              <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                              <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
+                              <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                              <span className="min-w-0 break-words text-slate-100">
+                                {messageSegments.map((segment, index) =>
+                                  segment.type === "link" ? (
+                                    <button
+                                      key={`${entry.id}-segment-${index}`}
+                                      type="button"
+                                      onClick={() => void copyTextToClipboard(segment.value)}
+                                      className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
+                                      title="Tiklayinca kopyalanir"
+                                    >
+                                      {segment.value}
+                                    </button>
+                                  ) : (
+                                    <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
+                                  ),
+                                )}
+                              </span>
+                            </div>
+                          )
+                        })}
+
+                        {Array.from({ length: emptyConsoleLogRows }).map((_, index) => (
+                          <div key={`console-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                            <span className="hidden flex-none text-slate-600 sm:inline">C:\plcp\applications&gt;</span>
+                            <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                            <span className="flex-none text-slate-700">[--:--]</span>
+                            <span className="flex-none text-slate-700">--</span>
+                            <span
+                              className={`truncate text-slate-700 ${
+                                consoleLogs.length === 0 && index === 0 ? "text-slate-500" : "opacity-0"
+                              }`}
+                            >
+                              {consoleLogs.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
-                )}
-                  </div>
-                </div>
+                </section>
               </div>
             </div>
           </div>
