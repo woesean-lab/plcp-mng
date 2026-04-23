@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDownIcon } from "@heroicons/react/24/outline"
+import { PauseIcon, PlayIcon, TrashIcon } from "@heroicons/react/20/solid"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 
@@ -1371,11 +1372,9 @@ export default function ApplicationsTab({
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
-    `${terminalButtonBaseClass} border-accent-400/70 bg-accent-500/15 text-accent-50 hover:border-accent-300 hover:bg-accent-500/25 focus:ring-accent-500/30`
-  const terminalCancelButtonClass =
-    `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
+    `${terminalButtonBaseClass} border-emerald-300/40 bg-emerald-500/15 text-emerald-50 hover:border-emerald-300/60 hover:bg-emerald-500/25 focus:ring-emerald-500/30`
   const terminalClearButtonClass =
-    `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-300 hover:border-rose-300/40 hover:bg-rose-500/15 hover:text-rose-100 focus:ring-rose-500/20`
+    `${terminalButtonBaseClass} border-rose-300/35 bg-rose-500/12 text-rose-50 hover:border-rose-300/55 hover:bg-rose-500/20 focus:ring-rose-500/20`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const terminalTabBaseClass =
@@ -1414,9 +1413,9 @@ export default function ApplicationsTab({
           <div className="space-y-3">
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
-                <h2 className="mt-2 font-display text-lg font-semibold text-white sm:text-xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
                   Servis calistir
-                </h2>
+                </p>
                 <p className="mt-1 max-w-2xl text-xs text-slate-400 sm:text-sm">
                   Servis sec, islemi baslat ve akisi bu alandan takip et.
                 </p>
@@ -1474,16 +1473,18 @@ export default function ApplicationsTab({
                           type="button"
                           onClick={handleRun}
                           disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                          className={`${terminalRunButtonClass} h-8 px-3 text-[10px]`}
+                          className={`${terminalRunButtonClass} h-8 gap-1.5 px-3 text-[10px]`}
                         >
+                          <PlayIcon className="h-3.5 w-3.5" aria-hidden="true" />
                           Calistir
                         </button>
                         <button
                           type="button"
                           onClick={handleClearLogs}
                           disabled={!canClearApplicationLogs || !canViewApplicationLogs || historyLogs.length === 0}
-                          className={`${terminalClearButtonClass} h-8 px-3 text-[10px]`}
+                          className={`${terminalClearButtonClass} h-8 gap-1.5 px-3 text-[10px]`}
                         >
+                          <TrashIcon className="h-3.5 w-3.5" aria-hidden="true" />
                           Log temizle
                         </button>
                       </div>
@@ -1601,10 +1602,10 @@ export default function ApplicationsTab({
                             <button
                               type="button"
                               onClick={() => handleCancelRun(entry.id)}
-                              className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300 transition hover:border-rose-300/40 hover:bg-rose-500/15 hover:text-rose-100"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-amber-300/40 hover:bg-amber-500/15 hover:text-amber-100"
                               aria-label={`${entry.label} islemini iptal et`}
                             >
-                              Iptal
+                              <PauseIcon className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>
                           ) : (
                             <button
