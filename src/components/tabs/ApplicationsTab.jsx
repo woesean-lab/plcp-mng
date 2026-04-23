@@ -1362,22 +1362,6 @@ export default function ApplicationsTab({
       : runningRunCount > 0
         ? `${runningRunCount} calisiyor`
         : "Hazir"
-  const connectionBadgeClass = !hasWsUrl
-    ? "border-amber-300/20 bg-amber-500/[0.08] text-amber-100"
-    : activeRunSession && activeConnectionState === "error"
-      ? "border-rose-300/20 bg-rose-500/[0.08] text-rose-100"
-      : activeRunSession && activeConnectionState === "connecting"
-        ? "border-accent-300/20 bg-accent-500/[0.08] text-accent-100"
-        : runningRunCount > 0
-          ? "border-emerald-300/20 bg-emerald-500/[0.08] text-emerald-100"
-          : "border-white/10 bg-white/[0.04] text-slate-200"
-  const activeConsoleTitle = activeRunSession ? activeRunSession.label : selectedApplication?.name || "Genel Log"
-  const activeConsoleAbout = activeRunSession?.applicationAbout || selectedApplication?.about || "Calistirmak icin servis secin."
-  const activeConsoleBackend = activeRunSession
-    ? getBackendLabelForDisplay(activeRunSession.backendLabel)
-    : selectedApplication
-      ? getBackendLabelForDisplay(selectedApplication.backendLabel)
-      : MASKED_BACKEND_TEXT
   const terminalFieldClass =
     "w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-[13px] text-slate-100 transition focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalTextInputClass =
@@ -1430,33 +1414,18 @@ export default function ApplicationsTab({
           <div className="space-y-3">
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                  {CMD_WINDOW_TITLE}
-                </span>
                 <h2 className="mt-2 font-display text-lg font-semibold text-white sm:text-xl">
-                  {activeConsoleTitle}
+                  Servis calistir
                 </h2>
-                <p className="mt-1 max-w-2xl text-xs text-slate-400 sm:text-sm">{activeConsoleAbout}</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${connectionBadgeClass}`}>
-                  {connectionLabel}
-                </span>
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200">
-                  {runSessions.length} oturum
-                </span>
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200">
-                  {activeConsoleBackend}
-                </span>
+                <p className="mt-1 max-w-2xl text-xs text-slate-400 sm:text-sm">
+                  Servis sec, islemi baslat ve akisi bu alandan takip et.
+                </p>
               </div>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
               <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
                 <div ref={serviceDropdownRef} className="relative min-w-0 flex-1">
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Secili servis
-                  </label>
                   <div className="rounded-lg border border-white/10 bg-ink-900 px-3 py-3">
                     <button
                       type="button"
