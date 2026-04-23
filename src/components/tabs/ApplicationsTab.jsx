@@ -143,10 +143,9 @@ const getConsoleStatusMeta = (status) => {
   const normalized = String(status ?? "").trim().toLowerCase()
   if (normalized === "success") {
     return {
-      code: "SUCCESS",
+      code: "OK",
       dotClass: "bg-emerald-300",
       textClass: "text-emerald-300",
-      badgeClass: "border-emerald-300/55 bg-emerald-500/14 text-emerald-100",
     }
   }
   if (normalized === "error") {
@@ -154,22 +153,19 @@ const getConsoleStatusMeta = (status) => {
       code: "ERR",
       dotClass: "bg-rose-300",
       textClass: "text-rose-300",
-      badgeClass: "border-rose-300/55 bg-rose-500/14 text-rose-100",
     }
   }
   if (normalized === "connecting") {
     return {
-      code: "RUN",
+      code: "CON",
       dotClass: "bg-sky-300",
       textClass: "text-sky-300",
-      badgeClass: "border-sky-300/55 bg-sky-500/14 text-sky-100",
     }
   }
   return {
     code: "RUN",
-    dotClass: "bg-sky-300",
-    textClass: "text-sky-300",
-    badgeClass: "border-sky-300/55 bg-sky-500/14 text-sky-100",
+    dotClass: "bg-amber-300",
+    textClass: "text-amber-300",
   }
 }
 
@@ -1428,8 +1424,7 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
-              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
+            <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
                 <div ref={serviceDropdownRef} className="relative min-w-0 flex-1">
                   <div className="rounded-lg border border-white/10 bg-ink-900 px-3 py-3">
                     <button
@@ -1535,7 +1530,6 @@ export default function ApplicationsTab({
                       </div>
                     )}
                 </div>
-              </div>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
