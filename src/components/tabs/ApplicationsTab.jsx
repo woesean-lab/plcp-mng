@@ -1470,7 +1470,7 @@ export default function ApplicationsTab({
           type="button"
           aria-label="Servis secimini kapat"
           onClick={() => setIsServiceDropdownOpen(false)}
-          className="fixed inset-0 z-20 bg-ink-950/45"
+          className="fixed inset-0 z-30 bg-ink-950/35 transition-opacity"
         />
       )}
 
@@ -1496,7 +1496,7 @@ export default function ApplicationsTab({
                   <div
                     className={`rounded-lg border bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm transition ${
                       isServiceDropdownOpen
-                        ? "border-sky-400/35 shadow-[0_18px_50px_rgba(2,6,23,0.45),0_0_0_1px_rgba(56,189,248,0.08)]"
+                        ? "border-accent-400/45 shadow-card"
                         : "border-white/10"
                     }`}
                   >
@@ -1523,7 +1523,7 @@ export default function ApplicationsTab({
                       <span
                         className={`mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full border text-slate-400 transition ${
                           isServiceDropdownOpen
-                            ? "border-sky-400/35 bg-sky-500/12 text-sky-100"
+                            ? "border-accent-400/50 bg-accent-500/10 text-accent-100"
                             : "border-white/10 bg-white/5"
                         }`}
                       >
@@ -1563,9 +1563,9 @@ export default function ApplicationsTab({
                   </div>
 
                     {isServiceDropdownOpen && hasApplications && (
-                      <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-40 overflow-hidden rounded-xl border border-sky-400/20 bg-[#0b0f19f6] shadow-[0_28px_90px_rgba(2,6,23,0.58)] backdrop-blur-xl">
-                        <div className="border-b border-white/10 bg-gradient-to-r from-sky-500/16 via-sky-400/10 to-transparent px-4 py-3.5">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300/80">
+                      <div className="absolute left-0 right-0 top-[calc(100%-1px)] z-40 overflow-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] shadow-card animate-panelFade">
+                        <div className="border-b border-white/10 bg-white/[0.03] px-4 py-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                             Servisler
                           </p>
                           <p className="mt-1 text-xs text-slate-400">
@@ -1584,10 +1584,10 @@ export default function ApplicationsTab({
                                   setSelectedApplicationId(entry.id)
                                   setIsServiceDropdownOpen(false)
                                 }}
-                                className={`group w-full rounded-xl border px-3.5 py-3.5 text-left transition duration-150 ${
+                                className={`group w-full rounded-xl border px-3.5 py-3 text-left transition duration-150 ${
                                   isSelected
-                                    ? "border-sky-400/45 bg-gradient-to-r from-sky-500/14 to-sky-400/8 text-sky-50 shadow-[0_0_0_1px_rgba(56,189,248,0.08),0_16px_34px_rgba(14,165,233,0.10)]"
-                                    : "border-white/8 bg-white/[0.03] text-slate-200 hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-sky-100"
+                                    ? "border-accent-400/60 bg-accent-500/10 text-white shadow-card"
+                                    : "border-white/10 bg-ink-900/60 text-slate-200 hover:border-accent-400/35 hover:bg-ink-900/80 hover:text-white"
                                 }`}
                               >
                                 <div className="flex items-start justify-between gap-3">
@@ -1600,7 +1600,7 @@ export default function ApplicationsTab({
                                       />
                                       <p className="truncate text-sm font-semibold">{entry.name}</p>
                                       {isSelected && (
-                                        <span className="inline-flex items-center rounded-full border border-sky-400/30 bg-sky-500/12 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-sky-100">
+                                        <span className="inline-flex items-center rounded-full border border-accent-400/40 bg-accent-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-accent-100">
                                           Secili
                                         </span>
                                       )}
