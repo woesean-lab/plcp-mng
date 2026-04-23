@@ -1426,7 +1426,7 @@ export default function ApplicationsTab({
 
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
                 <div ref={serviceDropdownRef} className="relative min-w-0 flex-1">
-                  <div className="rounded-lg border border-white/10 bg-ink-900 px-3 py-3">
+                  <div className="rounded-lg border border-white/10 bg-[#0b0f198c] px-3 py-3 backdrop-blur-sm">
                     <button
                       type="button"
                       onClick={() => {
@@ -1484,8 +1484,13 @@ export default function ApplicationsTab({
                   </div>
 
                     {isServiceDropdownOpen && hasApplications && (
-                      <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 rounded-xl border border-white/10 bg-ink-900/95 p-1.5 shadow-card backdrop-blur">
-                        <div className="max-h-[280px] space-y-1.5 overflow-y-auto pr-1">
+                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 overflow-hidden rounded-lg border border-white/10 bg-[#0b0f19f2] shadow-card backdrop-blur-md">
+                        <div className="border-b border-white/10 px-3 py-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            Servisler
+                          </p>
+                        </div>
+                        <div className="max-h-[300px] overflow-y-auto p-2">
                           {runDropdownApplications.map((entry) => {
                             const isSelected = entry.id === selectedApplicationId
 
@@ -1497,29 +1502,38 @@ export default function ApplicationsTab({
                                   setSelectedApplicationId(entry.id)
                                   setIsServiceDropdownOpen(false)
                                 }}
-                                className={`w-full rounded-lg border px-3 py-2.5 text-left transition ${
+                                className={`w-full rounded-md border px-3 py-2.5 text-left transition ${
                                   isSelected
-                                    ? "border-accent-400/60 bg-accent-500/10 text-accent-50"
-                                    : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                                    ? "border-slate-500/60 bg-white/[0.06] text-white"
+                                    : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.04]"
                                 }`}
                               >
-                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-semibold">{entry.name}</p>
-                                    <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-slate-400">{entry.about}</p>
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className={`h-2 w-2 rounded-full ${
+                                          entry.isActive ? "bg-emerald-400" : "bg-slate-500"
+                                        }`}
+                                      />
+                                      <p className="truncate text-sm font-semibold">{entry.name}</p>
+                                    </div>
+                                    <p className="mt-1 line-clamp-2 text-xs leading-4 text-slate-400">
+                                      {entry.about || "Aciklama bulunmuyor."}
+                                    </p>
                                   </div>
-                                  <div className="flex flex-wrap gap-1.5">
+                                  <div className="flex flex-none items-center gap-2 pl-2">
+                                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                      {getBackendLabelForDisplay(entry.backendLabel)}
+                                    </span>
                                     <span
-                                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
                                         entry.isActive
-                                          ? "border-emerald-300/40 bg-emerald-500/10 text-emerald-100"
-                                          : "border-white/10 bg-white/5 text-slate-300"
+                                          ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                                          : "border-white/10 bg-white/[0.04] text-slate-400"
                                       }`}
                                     >
                                       {entry.isActive ? "Acik" : "Kapali"}
-                                    </span>
-                                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                      {getBackendLabelForDisplay(entry.backendLabel)}
                                     </span>
                                   </div>
                                 </div>
