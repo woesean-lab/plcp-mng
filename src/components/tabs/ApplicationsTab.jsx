@@ -566,6 +566,13 @@ export default function ApplicationsTab({
     [applications, selectedApplicationId],
   )
 
+  const handleSelectApplication = useCallback((applicationId) => {
+    const normalizedId = String(applicationId ?? "").trim()
+    if (!normalizedId) return
+    setSelectedApplicationId(normalizedId)
+    setIsServiceDropdownOpen(false)
+  }, [])
+
   useEffect(() => {
     if (!isServiceDropdownOpen) return undefined
 
@@ -580,11 +587,11 @@ export default function ApplicationsTab({
       }
     }
 
-    document.addEventListener("click", handlePointerDown)
+    document.addEventListener("pointerdown", handlePointerDown)
     document.addEventListener("keydown", handleEscape)
 
     return () => {
-      document.removeEventListener("click", handlePointerDown)
+      document.removeEventListener("pointerdown", handlePointerDown)
       document.removeEventListener("keydown", handleEscape)
     }
   }, [isServiceDropdownOpen])
@@ -1580,13 +1587,11 @@ export default function ApplicationsTab({
                               <button
                                 key={`run-app-${entry.id}`}
                                 type="button"
-                                onMouseDown={(event) => {
+                                onPointerDown={(event) => {
                                   event.preventDefault()
+                                  handleSelectApplication(entry.id)
                                 }}
-                                onClick={() => {
-                                  setSelectedApplicationId(entry.id)
-                                  setIsServiceDropdownOpen(false)
-                                }}
+                                onClick={() => handleSelectApplication(entry.id)}
                                 className={`group w-full rounded-xl border px-3.5 py-3 text-left transition duration-150 ${
                                   isSelected
                                     ? "border-accent-400/60 bg-accent-500/10 text-white shadow-card"
@@ -1596,11 +1601,6 @@ export default function ApplicationsTab({
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2.5">
-                                      <span
-                                        className={`h-2.5 w-2.5 rounded-full shadow-[0_0_12px_currentColor] ${
-                                          entry.isActive ? "bg-emerald-400 text-emerald-400" : "bg-slate-500 text-slate-500"
-                                        }`}
-                                      />
                                       <p className="truncate text-sm font-semibold">{entry.name}</p>
                                       {isSelected && (
                                         <span className="inline-flex items-center rounded-full border border-accent-400/40 bg-accent-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-accent-100">
