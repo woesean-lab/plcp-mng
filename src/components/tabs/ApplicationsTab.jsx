@@ -1465,15 +1465,6 @@ export default function ApplicationsTab({
         </div>
       </header>
 
-      {isServiceDropdownOpen && hasApplications && (
-        <button
-          type="button"
-          aria-label="Servis secimini kapat"
-          onClick={() => setIsServiceDropdownOpen(false)}
-          className="fixed inset-0 z-20 bg-ink-950/25 backdrop-blur-[8px]"
-        />
-      )}
-
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
         <section className={`order-1 min-w-0 ${panelClass} bg-ink-800/60 lg:col-span-2`}>
           <div className="space-y-3">
