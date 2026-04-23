@@ -580,11 +580,11 @@ export default function ApplicationsTab({
       }
     }
 
-    document.addEventListener("mousedown", handlePointerDown)
+    document.addEventListener("click", handlePointerDown)
     document.addEventListener("keydown", handleEscape)
 
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown)
+      document.removeEventListener("click", handlePointerDown)
       document.removeEventListener("keydown", handleEscape)
     }
   }, [isServiceDropdownOpen])
@@ -1470,7 +1470,7 @@ export default function ApplicationsTab({
           type="button"
           aria-label="Servis secimini kapat"
           onClick={() => setIsServiceDropdownOpen(false)}
-          className="fixed inset-0 z-30 bg-ink-950/35 transition-opacity"
+          className="fixed inset-0 z-30 bg-ink-950/40 transition-opacity"
         />
       )}
 
@@ -1491,13 +1491,13 @@ export default function ApplicationsTab({
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
                 <div
                   ref={serviceDropdownRef}
-                  className={`relative min-w-0 flex-1 ${isServiceDropdownOpen ? "z-40" : ""}`}
+                  className={`relative min-w-0 flex-1 ${isServiceDropdownOpen ? "z-[60]" : ""}`}
                 >
                   <div
-                    className={`rounded-lg border bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm transition ${
+                    className={`border bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm transition ${
                       isServiceDropdownOpen
-                        ? "border-accent-400/45 shadow-card"
-                        : "border-white/10"
+                        ? "rounded-t-2xl rounded-b-none border-accent-400/45 border-b-transparent shadow-card"
+                        : "rounded-2xl border-white/10"
                     }`}
                   >
                     <button
@@ -1563,7 +1563,7 @@ export default function ApplicationsTab({
                   </div>
 
                     {isServiceDropdownOpen && hasApplications && (
-                      <div className="absolute left-0 right-0 top-[calc(100%-1px)] z-40 overflow-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] shadow-card animate-panelFade">
+                      <div className="absolute left-0 right-0 top-full z-[60] -mt-px overflow-hidden rounded-b-2xl border border-accent-400/45 border-t-white/10 bg-[#141826] shadow-card animate-panelFade">
                         <div className="border-b border-white/10 bg-white/[0.03] px-4 py-3">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                             Servisler
@@ -1580,6 +1580,9 @@ export default function ApplicationsTab({
                               <button
                                 key={`run-app-${entry.id}`}
                                 type="button"
+                                onMouseDown={(event) => {
+                                  event.preventDefault()
+                                }}
                                 onClick={() => {
                                   setSelectedApplicationId(entry.id)
                                   setIsServiceDropdownOpen(false)
