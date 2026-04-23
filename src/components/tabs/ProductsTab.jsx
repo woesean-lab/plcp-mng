@@ -128,8 +128,6 @@ const PRICE_MULTIPLIER_MIN = 0.25
 const PRICE_MULTIPLIER_MAX = 20
 const PRICE_MULTIPLIER_PRESETS = [1.25, 1.5, 2, 2.5, 3, 4]
 const PRICE_MULTIPLIER_ADJUSTMENTS = [-0.25, -0.05, 0.05, 0.25]
-const PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing>"
-const BULK_PRICE_COMMAND_PROMPT_PATH = "C:\\plcp\\pricing-bulk>"
 const BULK_PRICE_SESSION_STORAGE_KEY = "plcp:products:bulk-price-session:v1"
 const BULK_PRICE_RESUMABLE_STATUSES = new Set(["pending", "running", "error"])
 const PRICE_COMMAND_BACKEND_KEY = "eldoradofiyatguncelleme"
@@ -657,6 +655,7 @@ export default function ProductsTab({
   const [bulkPriceLogsClearing, setBulkPriceLogsClearing] = useState(false)
   const [keyFadeById, setKeyFadeById] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
+  const commandPromptLabel = `${String(activeUsername ?? "").trim() || "kullanici"}>`
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
   const popupValueEditorRef = useRef(null)
@@ -3221,7 +3220,7 @@ export default function ProductsTab({
                           </div>
                           <div className="no-scrollbar h-[220px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:text-[12px] sm:leading-6">
                             <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
-                              <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                              <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
                               <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                               <span className="min-w-0 break-words text-slate-400">
                                 secili={selectedPriceCount} / hazir={bulkPriceReadyCount} / backend={priceCommandBackendEntry?.label ?? PRICE_COMMAND_BACKEND_KEY}
@@ -3232,7 +3231,7 @@ export default function ProductsTab({
                                 const statusMeta = getCommandLogStatusMeta(entry.status)
                                 return (
                                   <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                                    <span className="hidden flex-none text-slate-500 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                                    <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
                                     <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                                     <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
                                     <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
@@ -3242,7 +3241,7 @@ export default function ProductsTab({
                               })}
                               {bulkPriceCommandLogEntries.length === 0 && (
                                 <div className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                                  <span className="hidden flex-none text-slate-600 sm:inline">{BULK_PRICE_COMMAND_PROMPT_PATH}</span>
+                                  <span className="hidden flex-none text-slate-600 sm:inline">{commandPromptLabel}</span>
                                   <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                                   <span className="flex-none text-slate-700">[--:--]</span>
                                   <span className="flex-none text-slate-700">--</span>
@@ -4356,7 +4355,7 @@ export default function ProductsTab({
             </p>
           )}
           <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2 text-slate-300 sm:flex-nowrap">
-            <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+            <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
             <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
             <span className="min-w-0 break-words text-slate-400">
               backend={priceCommandBackendEntry?.label ?? PRICE_COMMAND_BACKEND_KEY} / urun={offerId || "-"} / kategori={productCategory || "-"}
@@ -4367,7 +4366,7 @@ export default function ProductsTab({
               const statusMeta = getCommandLogStatusMeta(entry.status)
               return (
                 <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                  <span className="hidden flex-none text-slate-500 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                  <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
                   <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                   <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
                   <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
@@ -4377,7 +4376,7 @@ export default function ProductsTab({
             })}
             {Array.from({ length: emptyPriceCommandLogRows }).map((_, index) => (
               <div key={`price-command-placeholder-${offerId}-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                <span className="hidden flex-none text-slate-600 sm:inline">{PRICE_COMMAND_PROMPT_PATH}</span>
+                <span className="hidden flex-none text-slate-600 sm:inline">{commandPromptLabel}</span>
                 <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                 <span className="flex-none text-slate-700">[--:--]</span>
                 <span className="flex-none text-slate-700">--</span>
@@ -4743,7 +4742,7 @@ export default function ProductsTab({
                                           )}
                                           {visibleAutomationRunLogEntries.map((entry) => (
                                             <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                                              <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\automation&gt;</span>
+                                              <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
                                               <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                                               <span
                                                 className={`flex-none ${
@@ -4778,7 +4777,7 @@ export default function ProductsTab({
                                           ))}
                                           {Array.from({ length: emptyAutomationRunLogRows }).map((_, index) => (
                                             <div key={`automation-placeholder-${offerId}-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                                              <span className="hidden flex-none text-slate-600 sm:inline">C:\plcp\automation&gt;</span>
+                                              <span className="hidden flex-none text-slate-600 sm:inline">{commandPromptLabel}</span>
                                               <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                                               <span className="flex-none text-slate-700">[--:--]</span>
                                               <span className="flex-none text-slate-700">--</span>

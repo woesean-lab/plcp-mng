@@ -211,6 +211,7 @@ export default function ApplicationsTab({
   isActive = false,
   backendOptions = [],
   automationWsUrl = "",
+  activeUsername = "",
   canManageApplications = false,
   canRunApplications = false,
   canViewApplicationLogs = false,
@@ -1353,6 +1354,7 @@ export default function ApplicationsTab({
   const canCancelActiveRun = Boolean(activeRunSession && isActiveRunLive)
   const isTabLoading = isLoading || isApplicationsLoading
   const hasWsUrl = String(automationWsUrl ?? "").trim().length > 0
+  const commandPromptLabel = `${String(activeUsername ?? "").trim() || "kullanici"}>`
   const activeConnectionState = String(activeRunSession?.connectionState ?? "").trim().toLowerCase()
   const connectionLabel = !hasWsUrl
     ? "Baglanti yok"
@@ -1656,7 +1658,7 @@ export default function ApplicationsTab({
                           <div className="mb-2 border-b border-white/10 pb-1.5">
                             <div className="flex min-w-0 flex-col items-start gap-2 text-slate-300 sm:flex-row sm:flex-wrap sm:items-center">
                               <span className="flex-none text-amber-300">[PROMPT]</span>
-                              <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
+                              <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
                               <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                               <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
                               {activeRunPrompt.inputType === "text" && (
@@ -1738,7 +1740,7 @@ export default function ApplicationsTab({
 
                           return (
                             <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                              <span className="hidden flex-none text-slate-500 sm:inline">C:\plcp\applications&gt;</span>
+                              <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
                               <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                               <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
                               <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
@@ -1765,7 +1767,7 @@ export default function ApplicationsTab({
 
                         {Array.from({ length: emptyConsoleLogRows }).map((_, index) => (
                           <div key={`console-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                            <span className="hidden flex-none text-slate-600 sm:inline">C:\plcp\applications&gt;</span>
+                            <span className="hidden flex-none text-slate-600 sm:inline">{commandPromptLabel}</span>
                             <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
                             <span className="flex-none text-slate-700">[--:--]</span>
                             <span className="flex-none text-slate-700">--</span>
