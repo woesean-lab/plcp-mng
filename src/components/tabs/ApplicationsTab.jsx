@@ -1527,22 +1527,22 @@ export default function ApplicationsTab({
                   </div>
 
                   <div className="no-scrollbar overflow-x-auto border-b border-white/10 pb-1">
-                    <div className="grid min-w-max grid-flow-col auto-cols-[minmax(220px,240px)] gap-2.5">
+                    <div className="grid min-w-max grid-flow-col auto-cols-[minmax(180px,200px)] gap-2">
                       <button
                         type="button"
                         onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                        className={`rounded-xl border p-3 text-left transition ${
+                        className={`rounded-xl border p-2.5 text-left transition ${
                           activeRunSession
                             ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
                             : "border-accent-400/40 bg-accent-500/10 text-accent-50 shadow-[0_12px_30px_rgba(71,85,105,0.14)]"
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                               Servis loglari
                             </p>
-                            <p className="mt-1 truncate text-sm font-semibold text-white">
+                            <p className="mt-1 truncate text-[13px] font-semibold text-white">
                               {selectedApplication?.name || "Secili servis yok"}
                             </p>
                           </div>
@@ -1550,14 +1550,14 @@ export default function ApplicationsTab({
                             {historyLogs.length}
                           </span>
                         </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2">
+                        <div className="mt-2 grid grid-cols-2 gap-1.5">
+                          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5">
                             <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Kayit</p>
-                            <p className="mt-1 text-sm font-semibold text-white">{historyLogs.length}</p>
+                            <p className="mt-0.5 text-[13px] font-semibold text-white">{historyLogs.length}</p>
                           </div>
-                          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2">
+                          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5">
                             <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Canli</p>
-                            <p className="mt-1 text-sm font-semibold text-white">{runningRunCount}</p>
+                            <p className="mt-0.5 text-[13px] font-semibold text-white">{runningRunCount}</p>
                           </div>
                         </div>
                       </button>
@@ -1582,55 +1582,55 @@ export default function ApplicationsTab({
                             <button
                               type="button"
                               onClick={() => setActiveConsoleTabId(entry.id)}
-                              className="w-full p-3 pr-11 text-left"
+                              className="w-full p-2.5 pr-10 text-left"
                             >
-                              <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
                                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                                     Oturum {entry.serial > 0 ? `#${entry.serial}` : ""}
                                   </p>
-                                  <p className="mt-1 line-clamp-2 text-sm font-semibold text-white">{entry.label}</p>
-                                  <p className="mt-1 truncate text-xs text-slate-400">{entry.applicationName}</p>
+                                  <p className="mt-1 line-clamp-2 text-[13px] font-semibold text-white">{entry.label}</p>
+                                  <p className="mt-0.5 truncate text-[11px] text-slate-400">{entry.applicationName}</p>
                                 </div>
                               </div>
 
-                              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                              <div className="mt-2 flex flex-wrap items-center gap-1">
                                 <span
-                                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${entryStateMeta.badgeClass}`}
+                                  className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${entryStateMeta.badgeClass}`}
                                 >
                                   {entryStateMeta.label}
                                 </span>
-                                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                                   {getBackendLabelForDisplay(entry.backendLabel)}
                                 </span>
                               </div>
 
-                              <div className="mt-3 grid grid-cols-2 gap-2">
-                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2.5 py-2">
+                              <div className="mt-2 grid grid-cols-2 gap-1.5">
+                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2 py-1.5">
                                   <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                     Islem durumu
                                   </p>
-                                  <p className={`mt-1 text-xs font-semibold ${entryStateMeta.metaClass}`}>
+                                  <p className={`mt-0.5 text-[11px] font-semibold ${entryStateMeta.metaClass}`}>
                                     {entryStateMeta.label}
                                   </p>
                                 </div>
-                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2.5 py-2">
+                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2 py-1.5">
                                   <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                     Basladi
                                   </p>
-                                  <p className="mt-1 text-xs font-semibold text-slate-200">{startedLabel}</p>
+                                  <p className="mt-0.5 text-[11px] font-semibold text-slate-200">{startedLabel}</p>
                                 </div>
-                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2.5 py-2">
+                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2 py-1.5">
                                   <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                     Sure
                                   </p>
-                                  <p className="mt-1 text-xs font-semibold text-slate-200">{durationLabel}</p>
+                                  <p className="mt-0.5 text-[11px] font-semibold text-slate-200">{durationLabel}</p>
                                 </div>
-                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2.5 py-2">
+                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2 py-1.5">
                                   <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                     Calistiran
                                   </p>
-                                  <p className="mt-1 truncate text-xs font-semibold text-slate-200">{createdByLabel}</p>
+                                  <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-200">{createdByLabel}</p>
                                 </div>
                               </div>
                             </button>
@@ -1639,7 +1639,7 @@ export default function ApplicationsTab({
                               <button
                                 type="button"
                                 onClick={() => handleCancelRun(entry.id)}
-                                className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-amber-300/40 hover:bg-amber-500/15 hover:text-amber-100"
+                                className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-amber-300/40 hover:bg-amber-500/15 hover:text-amber-100"
                                 aria-label={`${entry.label} islemini iptal et`}
                               >
                                 <PauseIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1648,7 +1648,7 @@ export default function ApplicationsTab({
                               <button
                                 type="button"
                                 onClick={() => handleCloseRunTab(entry.id)}
-                                className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                                className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
                                 aria-label={`${entry.label} sekmesini kapat`}
                               >
                                 x
