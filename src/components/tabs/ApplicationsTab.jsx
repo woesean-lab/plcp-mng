@@ -1550,15 +1550,10 @@ export default function ApplicationsTab({
                             {historyLogs.length}
                           </span>
                         </div>
-                        <div className="mt-2 grid grid-cols-2 gap-1.5">
-                          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5">
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Kayit</p>
-                            <p className="mt-0.5 text-[13px] font-semibold text-white">{historyLogs.length}</p>
-                          </div>
-                          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5">
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Canli</p>
-                            <p className="mt-0.5 text-[13px] font-semibold text-white">{runningRunCount}</p>
-                          </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+                          <span>{historyLogs.length} kayit</span>
+                          <span className="text-slate-600">/</span>
+                          <span>{runningRunCount} canli</span>
                         </div>
                       </button>
 
@@ -1605,33 +1600,14 @@ export default function ApplicationsTab({
                                 </span>
                               </div>
 
-                              <div className="mt-2 grid grid-cols-2 gap-1.5">
-                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2 py-1.5">
-                                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                    Islem durumu
-                                  </p>
-                                  <p className={`mt-0.5 text-[11px] font-semibold ${entryStateMeta.metaClass}`}>
-                                    {entryStateMeta.label}
-                                  </p>
-                                </div>
-                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2 py-1.5">
-                                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                    Basladi
-                                  </p>
-                                  <p className="mt-0.5 text-[11px] font-semibold text-slate-200">{startedLabel}</p>
-                                </div>
-                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2 py-1.5">
-                                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                    Sure
-                                  </p>
-                                  <p className="mt-0.5 text-[11px] font-semibold text-slate-200">{durationLabel}</p>
-                                </div>
-                                <div className="rounded-lg border border-white/10 bg-ink-950/20 px-2 py-1.5">
-                                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                    Calistiran
-                                  </p>
-                                  <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-200">{createdByLabel}</p>
-                                </div>
+                              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400">
+                                <span className={entryStateMeta.metaClass}>{entryStateMeta.label}</span>
+                                <span className="text-slate-600">/</span>
+                                <span>{startedLabel}</span>
+                                <span className="text-slate-600">/</span>
+                                <span>{durationLabel}</span>
+                                <span className="text-slate-600">/</span>
+                                <span className="truncate">{createdByLabel}</span>
                               </div>
                             </button>
 
