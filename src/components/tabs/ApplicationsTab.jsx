@@ -1460,36 +1460,38 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start">
-              <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm">
-                <label className="block">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Servis secimi
-                  </span>
-                  <select
-                    value={selectedApplicationId}
-                    onChange={(event) => setSelectedApplicationId(event.target.value)}
-                    disabled={!hasApplications}
-                    className={`${terminalFieldClass} mt-2 h-11 appearance-none pr-10`}
-                  >
-                    {!hasApplications ? (
-                      <option value="">Kayitli servis yok</option>
-                    ) : (
-                      runDropdownApplications.map((entry) => (
-                        <option key={`run-app-${entry.id}`} value={entry.id}>
-                          {entry.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </label>
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 shadow-inner">
+              <div className="border-b border-white/10 bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm sm:px-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <label className="block">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        Servis secimi
+                      </span>
+                      <select
+                        value={selectedApplicationId}
+                        onChange={(event) => setSelectedApplicationId(event.target.value)}
+                        disabled={!hasApplications}
+                        className={`${terminalFieldClass} mt-2 h-11 appearance-none pr-10`}
+                      >
+                        {!hasApplications ? (
+                          <option value="">Kayitli servis yok</option>
+                        ) : (
+                          runDropdownApplications.map((entry) => (
+                            <option key={`run-app-${entry.id}`} value={entry.id}>
+                              {entry.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </label>
 
-                <p className="mt-2 min-h-8 text-xs leading-4 text-slate-400">
-                  {selectedApplication?.about || "Servis aciklamasi burada gorunur."}
-                </p>
+                    <p className="mt-2 min-h-8 text-xs leading-4 text-slate-400">
+                      {selectedApplication?.about || "Servis aciklamasi burada gorunur."}
+                    </p>
+                  </div>
 
-                <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 lg:max-w-[40%] lg:justify-end">
                     {selectedApplication && (
                       <>
                         <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
@@ -1500,9 +1502,6 @@ export default function ApplicationsTab({
                         </span>
                       </>
                     )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
                     <button
                       type="button"
                       onClick={handleRun}
@@ -1515,9 +1514,8 @@ export default function ApplicationsTab({
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="rounded-xl border border-white/10 bg-ink-900/70 p-3 shadow-inner">
+              <div className="p-3 sm:p-4">
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
                   <div>
@@ -1822,6 +1820,7 @@ export default function ApplicationsTab({
                   </div>
                   </section>
                 </div>
+              </div>
               </div>
             </div>
           </div>
