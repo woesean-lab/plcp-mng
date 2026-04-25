@@ -363,6 +363,7 @@ export default function AccountingTab({
         (Number.isFinite(available) ? available : 0) + (Number.isFinite(pending) ? pending : 0),
     }
   })
+  const chronologicalBalanceRecords = [...balanceRecords].reverse()
 
   const latest = balanceRecords[0] ?? null
   const previous = balanceRecords[1] ?? null
@@ -418,39 +419,24 @@ export default function AccountingTab({
   const recentList = balanceRecords.slice(0, 20)
   const rangeLimit =
     balanceRange === "yearly" ? 6 : balanceRange === "monthly" ? 12 : balanceRange === "weekly" ? 12 : 10
-  const groupedChartEntries = []
-  const groupedChartEntryMap = new Map()
+  const groupedChartMap = new Map()
 
-  sorted.forEach((item) => {
-    const available = Number(item?.available ?? 0)
-    const pending = Number(item?.pending ?? 0)
-    const withdrawal = Number(item?.withdrawal ?? 0)
+  chronologicalBalanceRecords.forEach((item, index) => {
+    const prev = index > 0 ? chronologicalBalanceRecords[index - 1] : null
+    const netGain = prev ? item.total - prev.total + item.withdrawal : 0
     const key = getBalanceRangeKey(item?.date ?? "", balanceRange)
-    if (groupedChartEntryMap.has(key)) {
-      groupedChartEntryMap.get(key).withdrawalTotal += Number.isFinite(withdrawal) ? withdrawal : 0
-      return
+    if (!key) return
+    if (!groupedChartMap.has(key)) {
+      groupedChartMap.set(key, {
+        date: key,
+        diff: 0,
+        label: formatBalancePointLabel(key, balanceRange),
+      })
     }
-    const entry = {
-      key,
-      total: (Number.isFinite(available) ? available : 0) + (Number.isFinite(pending) ? pending : 0),
-      withdrawalTotal: Number.isFinite(withdrawal) ? withdrawal : 0,
-    }
-    groupedChartEntryMap.set(key, entry)
-    groupedChartEntries.push(entry)
+    groupedChartMap.get(key).diff += netGain
   })
 
-  const allChartPoints = [...groupedChartEntries].reverse()
-  const chartStartIndex = Math.max(0, allChartPoints.length - rangeLimit)
-  const chartPoints = allChartPoints.slice(chartStartIndex)
-  const chartData = chartPoints.map((item, index) => {
-    const prev = chartStartIndex + index > 0 ? allChartPoints[chartStartIndex + index - 1] : null
-    const diff = prev ? item.total - prev.total + item.withdrawalTotal : 0
-    return {
-      date: item.key,
-      diff,
-      label: formatBalancePointLabel(item.key, balanceRange),
-    }
-  })
+  const chartData = Array.from(groupedChartMap.values()).slice(-rangeLimit)
   const maxAbsDiff = Math.max(...chartData.map((item) => Math.abs(item.diff)), 0)
   const chartBars = chartData.map((item) => {
     const ratio = maxAbsDiff > 0 ? Math.abs(item.diff) / maxAbsDiff : 0
