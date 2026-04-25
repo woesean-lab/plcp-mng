@@ -604,6 +604,10 @@ export default function ProductsTab({
   const [confirmMessageTemplateDelete, setConfirmMessageTemplateDelete] = useState(null)
   const [confirmOfferDelete, setConfirmOfferDelete] = useState(null)
   const allProductsRef = useRef([])
+  const starredOffersRef = useRef(starredOffers)
+  const stockEnabledByOfferRef = useRef(stockEnabledByOffer)
+  const onLoadKeysRef = useRef(onLoadKeys)
+  const onNavigateToTabRef = useRef(onNavigateToTab)
   const [priceEnabledByOffer, setPriceEnabledByOffer] = useState(
     priceEnabledByOfferProp && typeof priceEnabledByOfferProp === "object"
       ? priceEnabledByOfferProp
@@ -810,8 +814,8 @@ export default function ProductsTab({
       const sortedAllProducts = [...allProductsRef.current].sort((a, b) => {
         const aId = String(a?.id ?? "").trim()
         const bId = String(b?.id ?? "").trim()
-        const aStar = Boolean(starredOffers?.[aId])
-        const bStar = Boolean(starredOffers?.[bId])
+        const aStar = Boolean(starredOffersRef.current?.[aId])
+        const bStar = Boolean(starredOffersRef.current?.[bId])
         if (aStar === bStar) return 0
         return aStar ? -1 : 1
       })
@@ -820,8 +824,8 @@ export default function ProductsTab({
       )
       const targetPage = targetIndex >= 0 ? Math.floor(targetIndex / PRODUCT_PAGE_SIZE) + 1 : 1
 
-      if (typeof onNavigateToTab === "function") {
-        onNavigateToTab("products")
+      if (typeof onNavigateToTabRef.current === "function") {
+        onNavigateToTabRef.current("products")
       }
 
       setActiveCategoryKey("all")
@@ -829,9 +833,9 @@ export default function ProductsTab({
       setPage(targetPage)
       setConfirmKeyTarget(null)
       setOpenOffers((prev) => {
-        const isStockEnabled = Boolean(stockEnabledByOffer?.[normalizedId])
-        if (!prev?.[normalizedId] && isStockEnabled && typeof onLoadKeys === "function") {
-          onLoadKeys(normalizedId)
+        const isStockEnabled = Boolean(stockEnabledByOfferRef.current?.[normalizedId])
+        if (!prev?.[normalizedId] && isStockEnabled && typeof onLoadKeysRef.current === "function") {
+          onLoadKeysRef.current(normalizedId)
         }
         return { ...prev, [normalizedId]: true }
       })
@@ -851,7 +855,7 @@ export default function ProductsTab({
         scrollToOfferCard()
       }, 180)
     },
-    [onLoadKeys, onNavigateToTab, starredOffers, stockEnabledByOffer],
+    [],
   )
   const renderAutomationToastContent = useCallback(
     (message, offerId, toastId) =>
@@ -972,6 +976,18 @@ export default function ProductsTab({
   useEffect(() => {
     allProductsRef.current = allProducts
   }, [allProducts])
+  useEffect(() => {
+    starredOffersRef.current = starredOffers
+  }, [starredOffers])
+  useEffect(() => {
+    stockEnabledByOfferRef.current = stockEnabledByOffer
+  }, [stockEnabledByOffer])
+  useEffect(() => {
+    onLoadKeysRef.current = onLoadKeys
+  }, [onLoadKeys])
+  useEffect(() => {
+    onNavigateToTabRef.current = onNavigateToTab
+  }, [onNavigateToTab])
   const missingTotal = useMemo(
     () => allProducts.filter((product) => Boolean(product?.missing)).length,
     [allProducts],
