@@ -121,6 +121,7 @@ const normalizeDownloadName = (value) =>
     .toLowerCase()
 const MAX_AUTOMATION_RUN_LOG_ENTRIES = 300
 const MAX_PRICE_COMMAND_RUN_LOG_ENTRIES = 120
+const PRODUCT_PAGE_SIZE = 12
 const CMD_VISIBLE_ROWS = 15
 const PRICE_COMMAND_VISIBLE_ROWS = 12
 const DEFAULT_PRICE_MULTIPLIER = 2
@@ -805,10 +806,26 @@ export default function ProductsTab({
       const normalizedId = String(offerId ?? "").trim()
       if (!normalizedId) return
 
+      const sortedAllProducts = [...allProducts].sort((a, b) => {
+        const aId = String(a?.id ?? "").trim()
+        const bId = String(b?.id ?? "").trim()
+        const aStar = Boolean(starredOffers?.[aId])
+        const bStar = Boolean(starredOffers?.[bId])
+        if (aStar === bStar) return 0
+        return aStar ? -1 : 1
+      })
+      const targetIndex = sortedAllProducts.findIndex(
+        (product) => String(product?.id ?? "").trim() === normalizedId,
+      )
+      const targetPage = targetIndex >= 0 ? Math.floor(targetIndex / PRODUCT_PAGE_SIZE) + 1 : 1
+
       if (typeof onNavigateToTab === "function") {
         onNavigateToTab("products")
       }
 
+      setActiveCategoryKey("all")
+      setQuery("")
+      setPage(targetPage)
       setConfirmKeyTarget(null)
       setOpenOffers((prev) => {
         const isStockEnabled = Boolean(stockEnabledByOffer?.[normalizedId])
@@ -818,13 +835,22 @@ export default function ProductsTab({
         return { ...prev, [normalizedId]: true }
       })
       setActivePanelByOffer((prev) => ({ ...prev, [normalizedId]: "automation" }))
-
-      window.setTimeout(() => {
+      const scrollToOfferCard = (attempt = 0) => {
         const element = document.getElementById(getOfferCardDomId(normalizedId))
-        element?.scrollIntoView({ behavior: "smooth", block: "center" })
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" })
+          return
+        }
+        if (attempt >= 10) return
+        window.setTimeout(() => {
+          scrollToOfferCard(attempt + 1)
+        }, 120)
+      }
+      window.setTimeout(() => {
+        scrollToOfferCard()
       }, 180)
     },
-    [onLoadKeys, onNavigateToTab, stockEnabledByOffer],
+    [allProducts, onLoadKeys, onNavigateToTab, starredOffers, stockEnabledByOffer],
   )
   const renderAutomationToastContent = useCallback(
     (message, offerId, toastId) =>
@@ -982,7 +1008,6 @@ export default function ProductsTab({
       : baseList
   const normalizedQuery = query.trim().toLowerCase()
   const [page, setPage] = useState(1)
-  const pageSize = 12
   const filteredList = useMemo(() => {
     if (!normalizedQuery) return list
     return list.filter((product) => {
@@ -1022,14 +1047,14 @@ export default function ProductsTab({
       return aStar ? -1 : 1
     })
   }, [filteredList, starredOffers])
-  const totalPages = Math.max(1, Math.ceil(filteredList.length / pageSize))
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / PRODUCT_PAGE_SIZE))
   const totalItems = filteredList.length
   const paginatedList = useMemo(() => {
-    const start = (page - 1) * pageSize
-    return sortedList.slice(start, start + pageSize)
-  }, [sortedList, page, pageSize])
-  const pageStart = totalItems === 0 ? 0 : (page - 1) * pageSize + 1
-  const pageEnd = totalItems === 0 ? 0 : Math.min(totalItems, page * pageSize)
+    const start = (page - 1) * PRODUCT_PAGE_SIZE
+    return sortedList.slice(start, start + PRODUCT_PAGE_SIZE)
+  }, [sortedList, page])
+  const pageStart = totalItems === 0 ? 0 : (page - 1) * PRODUCT_PAGE_SIZE + 1
+  const pageEnd = totalItems === 0 ? 0 : Math.min(totalItems, page * PRODUCT_PAGE_SIZE)
   const stockModalLineCount = useMemo(() => {
     const count = stockModalDraft.split("\n").length
     return Math.max(1, count)
