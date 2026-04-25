@@ -622,7 +622,10 @@ function App() {
   )
   const visibleTabs = useMemo(() => tabItems.filter((item) => item.canView), [tabItems])
   const nonAdminTabs = useMemo(() => visibleTabs.filter((item) => item.key !== "admin"), [visibleTabs])
-  const tabOrder = useMemo(() => visibleTabs.map((item) => item.key), [visibleTabs])
+  const tabOrder = useMemo(
+    () => (canViewDashboard ? ["dashboard", ...visibleTabs.map((item) => item.key)] : visibleTabs.map((item) => item.key)),
+    [canViewDashboard, visibleTabs],
+  )
 
   useEffect(() => {
     activeTabRef.current = activeTab
