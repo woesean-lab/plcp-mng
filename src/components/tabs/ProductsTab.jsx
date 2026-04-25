@@ -830,9 +830,6 @@ export default function ProductsTab({
     (message, offerId, toastId) =>
       renderActionToast(message, "Isleme git", () => {
         focusAutomationOffer(offerId)
-        if (toastId) {
-          toast.dismiss(toastId)
-        }
       }),
     [focusAutomationOffer],
   )

@@ -316,9 +316,6 @@ export default function ApplicationsTab({
     (message, runEntry) =>
       renderActionToast(message, "Isleme git", () => {
         focusApplicationRun(runEntry)
-        const normalizedRunId = String(runEntry?.id ?? "").trim()
-        if (!normalizedRunId) return
-        toast.dismiss(`application-run-${normalizedRunId}`)
       }),
     [focusApplicationRun],
   )
