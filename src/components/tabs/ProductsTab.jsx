@@ -20,6 +20,7 @@ import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import useEldoradoAutomationRuntime from "../../hooks/useEldoradoAutomationRuntime"
 import useEldoradoPriceCommandRuntime from "../../hooks/useEldoradoPriceCommandRuntime"
+import { renderActionToast } from "../../utils/actionToast"
 import {
   calculateRoundedPriceResult,
   normalizePricePayloadValues,
@@ -180,6 +181,7 @@ const isApplicationBackendKind = (value) => {
   const normalized = normalizeBackendKind(value)
   return normalized === "uygulama" || normalized === "servis"
 }
+const getOfferCardDomId = (offerId) => `product-offer-${encodeURIComponent(String(offerId ?? "").trim())}`
 
 const getCommandLogStatusMeta = (status) => {
   const normalized = String(status ?? "").trim().toLowerCase()
@@ -579,6 +581,7 @@ export default function ProductsTab({
   canViewLinks = false,
   canStarOffers: canStarOffersProp,
   canDeleteOffers = false,
+  onNavigateToTab,
 }) {
   const [query, setQuery] = useState("")
   const [openOffers, setOpenOffers] = useState({})
@@ -797,6 +800,42 @@ export default function ProductsTab({
     typeof canViewAutomationTargetDetailsProp === "boolean"
       ? canViewAutomationTargetDetailsProp
       : true
+  const focusAutomationOffer = useCallback(
+    (offerId) => {
+      const normalizedId = String(offerId ?? "").trim()
+      if (!normalizedId) return
+
+      if (typeof onNavigateToTab === "function") {
+        onNavigateToTab("products")
+      }
+
+      setConfirmKeyTarget(null)
+      setOpenOffers((prev) => {
+        const isStockEnabled = Boolean(stockEnabledByOffer?.[normalizedId])
+        if (!prev?.[normalizedId] && isStockEnabled && typeof onLoadKeys === "function") {
+          onLoadKeys(normalizedId)
+        }
+        return { ...prev, [normalizedId]: true }
+      })
+      setActivePanelByOffer((prev) => ({ ...prev, [normalizedId]: "automation" }))
+
+      window.setTimeout(() => {
+        const element = document.getElementById(getOfferCardDomId(normalizedId))
+        element?.scrollIntoView({ behavior: "smooth", block: "center" })
+      }, 180)
+    },
+    [onLoadKeys, onNavigateToTab, stockEnabledByOffer],
+  )
+  const renderAutomationToastContent = useCallback(
+    (message, offerId, toastId) =>
+      renderActionToast(message, "Isleme git", () => {
+        focusAutomationOffer(offerId)
+        if (toastId) {
+          toast.dismiss(toastId)
+        }
+      }),
+    [focusAutomationOffer],
+  )
   const {
     automationRunLogByOffer,
     automationIsRunningByOffer,
@@ -822,6 +861,7 @@ export default function ProductsTab({
     maskSensitiveText,
     setAutomationResultPopup,
     maxAutomationRunLogEntries: MAX_AUTOMATION_RUN_LOG_ENTRIES,
+    renderToastContent: renderAutomationToastContent,
   })
   const normalizedAutomationBackendOptions = useMemo(() => {
     const rawList = Array.isArray(automationBackendOptions) ? automationBackendOptions : []
@@ -3517,6 +3557,7 @@ export default function ProductsTab({
                   return (
                     <div
                       key={key}
+                      id={offerId ? getOfferCardDomId(offerId) : undefined}
                       className={`rounded-2xl border border-white/10 p-4 shadow-inner transition hover:border-accent-400/60 ${
                         isMissing
                           ? "border-rose-400/40 bg-rose-500/10"

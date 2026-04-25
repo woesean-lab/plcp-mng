@@ -116,6 +116,7 @@ export default function useEldoradoAutomationRuntime({
   maskSensitiveText,
   setAutomationResultPopup,
   maxAutomationRunLogEntries = 300,
+  renderToastContent,
 }) {
   const maskSensitive = normalizeMaskFunction(maskSensitiveText)
   const canAccessAutomationRuns = canRunAutomation || canViewAutomationLogs
@@ -134,6 +135,16 @@ export default function useEldoradoAutomationRuntime({
   const completedAutomationToastRunIdsRef = useRef(new Set())
   const shownAutomationResultRunIdsRef = useRef(new Set())
   const activeAutomationToastRunIdsRef = useRef(new Set())
+
+  const getAutomationToastContent = useCallback(
+    (message, run, toastId) => {
+      if (typeof renderToastContent === "function") {
+        return renderToastContent(message, run?.offerId, toastId)
+      }
+      return message
+    },
+    [renderToastContent],
+  )
 
   const apiFetchAutomation = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
@@ -202,11 +213,12 @@ export default function useEldoradoAutomationRuntime({
       const runs = Object.values(normalizedMap).sort(sortAutomationRunsDesc)
 
       runs.forEach((run) => {
+        const toastId = `automation-run-${run.id}`
         if (isLiveAutomationRun(run.status)) {
           if (!activeAutomationToastRunIdsRef.current.has(run.id)) {
             activeAutomationToastRunIdsRef.current.add(run.id)
-            toast.loading(`${run.label} calisiyor...`, {
-              id: `automation-run-${run.id}`,
+            toast.loading(getAutomationToastContent(`${run.label} calisiyor...`, run, toastId), {
+              id: toastId,
               position: "top-right",
             })
           }
@@ -219,20 +231,23 @@ export default function useEldoradoAutomationRuntime({
           !completedAutomationToastRunIdsRef.current.has(run.id)
         ) {
           completedAutomationToastRunIdsRef.current.add(run.id)
-          const toastId = activeAutomationToastRunIdsRef.current.has(run.id)
-            ? `automation-run-${run.id}`
+          const completedToastId = activeAutomationToastRunIdsRef.current.has(run.id)
+            ? toastId
             : undefined
           activeAutomationToastRunIdsRef.current.delete(run.id)
           if (run.status === "success") {
-            toast.success(run.lastMessage || `${run.label} tamamlandi.`, {
-              id: toastId,
+            toast.success(getAutomationToastContent(run.lastMessage || `${run.label} tamamlandi.`, run, toastId), {
+              id: completedToastId,
               position: "top-right",
             })
           } else if (run.status === "error") {
-            toast.error(run.lastMessage || `${run.label} tamamlanamadi.`, {
-              id: toastId,
-              position: "top-right",
-            })
+            toast.error(
+              getAutomationToastContent(run.lastMessage || `${run.label} tamamlanamadi.`, run, toastId),
+              {
+                id: completedToastId,
+                position: "top-right",
+              },
+            )
           }
         }
 
@@ -296,7 +311,7 @@ export default function useEldoradoAutomationRuntime({
         return next
       })
     },
-    [canViewAutomationTargetDetails, maskSensitive, setAutomationResultPopup],
+    [canViewAutomationTargetDetails, getAutomationToastContent, maskSensitive, setAutomationResultPopup],
   )
 
   const applyAutomationRunSnapshot = useCallback(

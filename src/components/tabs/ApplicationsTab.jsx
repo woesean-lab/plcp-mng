@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { PauseIcon, PlayIcon } from "@heroicons/react/20/solid"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
+import { renderActionToast } from "../../utils/actionToast"
 
 const MAX_LOG_ENTRIES = 300
 const CMD_VISIBLE_ROWS = 15
@@ -269,6 +270,7 @@ export default function ApplicationsTab({
   canViewApplicationLogs = false,
   canClearApplicationLogs = false,
   canViewApplicationBackendMap = false,
+  onNavigateToTab,
 }) {
   const [appNameDraft, setAppNameDraft] = useState("")
   const [appAboutDraft, setAppAboutDraft] = useState("")
@@ -293,6 +295,33 @@ export default function ApplicationsTab({
   const runSnapshotRequestByIdRef = useRef({})
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
+
+  const focusApplicationRun = useCallback(
+    (runEntry) => {
+      const normalizedRunId = String(runEntry?.id ?? "").trim()
+      if (!normalizedRunId) return
+      const normalizedApplicationId = String(runEntry?.applicationId ?? "").trim()
+      if (typeof onNavigateToTab === "function") {
+        onNavigateToTab("applications")
+      }
+      if (normalizedApplicationId) {
+        setSelectedApplicationId(normalizedApplicationId)
+      }
+      setActiveConsoleTabId(normalizedRunId)
+    },
+    [onNavigateToTab],
+  )
+
+  const buildRunToastContent = useCallback(
+    (message, runEntry) =>
+      renderActionToast(message, "Isleme git", () => {
+        focusApplicationRun(runEntry)
+        const normalizedRunId = String(runEntry?.id ?? "").trim()
+        if (!normalizedRunId) return
+        toast.dismiss(`application-run-${normalizedRunId}`)
+      }),
+    [focusApplicationRun],
+  )
 
   const getBackendLabelForDisplay = useCallback(
     (value) => {
@@ -939,7 +968,7 @@ export default function ApplicationsTab({
       if (isRunLive(entry.status)) {
         if (!activeRunToastIdsRef.current.has(entry.id)) {
           activeRunToastIdsRef.current.add(entry.id)
-          toast.loading(`${entry.label} calisiyor...`, {
+          toast.loading(buildRunToastContent(`${entry.label} calisiyor...`, entry), {
             id: `application-run-${entry.id}`,
             position: "top-right",
           })
@@ -956,18 +985,18 @@ export default function ApplicationsTab({
         : undefined
       activeRunToastIdsRef.current.delete(entry.id)
       if (entry.status === "success") {
-        toast.success(`${entry.applicationName}: Servis hatasiz bitirildi.`, {
+        toast.success(buildRunToastContent(`${entry.applicationName}: Servis hatasiz bitirildi.`, entry), {
           id: toastId,
           position: "top-right",
         })
       } else if (entry.status === "error") {
-        toast.error(`${entry.applicationName} tamamlanamadi.`, {
+        toast.error(buildRunToastContent(`${entry.applicationName} tamamlanamadi.`, entry), {
           id: toastId,
           position: "top-right",
         })
       }
     })
-  }, [isRunLive, runSessions])
+  }, [buildRunToastContent, isRunLive, runSessions])
 
   const handleSave = async () => {
     if (!canManageApplications) {
@@ -1213,7 +1242,7 @@ export default function ApplicationsTab({
       completedToastRunIdsRef.current.delete(runEntry.id)
       if (isRunLive(runEntry.status)) {
         activeRunToastIdsRef.current.add(runEntry.id)
-        toast.loading(`${runEntry.label} calisiyor...`, {
+        toast.loading(buildRunToastContent(`${runEntry.label} calisiyor...`, runEntry), {
           id: `application-run-${runEntry.id}`,
           position: "top-right",
         })
@@ -1238,6 +1267,7 @@ export default function ApplicationsTab({
     applyRunSnapshot,
     automationWsUrl,
     canRunApplications,
+    buildRunToastContent,
     isRunLive,
     readApiError,
     recoverApplicationRunAfterTransientStartError,
