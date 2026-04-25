@@ -305,6 +305,8 @@ function App() {
   const [isTabMenuOpen, setIsTabMenuOpen] = useState(false)
   const userMenuRef = useRef(null)
   const prevTabRef = useRef(activeTab)
+  const activeTabRef = useRef(activeTab)
+  const tabOrderRef = useRef([])
   const manualDirectionRef = useRef(false)
   const [tabSlideDirection, setTabSlideDirection] = useState("forward")
   const requestedTabRef = useRef(null)
@@ -623,6 +625,14 @@ function App() {
   const tabOrder = useMemo(() => visibleTabs.map((item) => item.key), [visibleTabs])
 
   useEffect(() => {
+    activeTabRef.current = activeTab
+  }, [activeTab])
+
+  useEffect(() => {
+    tabOrderRef.current = tabOrder
+  }, [tabOrder])
+
+  useEffect(() => {
     if (typeof window === "undefined") return
     if (!requestedTabRef.current) {
       const params = new URLSearchParams(window.location.search)
@@ -636,13 +646,17 @@ function App() {
   }, [setActiveTab, tabOrder])
 
   const handleTabSwitch = (nextTab) => {
-    if (nextTab === activeTab) return
-    const prevIndex = tabOrder.indexOf(activeTab)
-    const nextIndex = tabOrder.indexOf(nextTab)
+    const currentActiveTab = activeTabRef.current
+    const currentTabOrder = Array.isArray(tabOrderRef.current) ? tabOrderRef.current : []
+    if (!nextTab || nextTab === currentActiveTab) return
+    if (!currentTabOrder.includes(nextTab)) return
+    const prevIndex = currentTabOrder.indexOf(currentActiveTab)
+    const nextIndex = currentTabOrder.indexOf(nextTab)
     const direction =
       prevIndex === -1 || nextIndex === -1 || nextIndex >= prevIndex ? "forward" : "backward"
     manualDirectionRef.current = true
     setTabSlideDirection(direction)
+    activeTabRef.current = nextTab
     setActiveTab(nextTab)
     setIsTabMenuOpen(false)
     if (typeof window !== "undefined") {

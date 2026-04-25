@@ -23,8 +23,9 @@ export const renderActionToast = (message, actionLabel, onAction) => {
         style={{
           alignSelf: "flex-start",
           cursor: "pointer",
-          fontSize: 12,
-          lineHeight: 1.2,
+          fontSize: 13,
+          fontWeight: 600,
+          lineHeight: 1.3,
           opacity: 0.95,
           textDecoration: "underline dotted",
           textUnderlineOffset: 3,
