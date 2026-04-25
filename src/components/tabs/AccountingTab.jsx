@@ -439,9 +439,11 @@ export default function AccountingTab({
     groupedChartEntries.push(entry)
   })
 
-  const chartPoints = groupedChartEntries.reverse().slice(-rangeLimit)
+  const allChartPoints = [...groupedChartEntries].reverse()
+  const chartStartIndex = Math.max(0, allChartPoints.length - rangeLimit)
+  const chartPoints = allChartPoints.slice(chartStartIndex)
   const chartData = chartPoints.map((item, index) => {
-    const prev = index > 0 ? chartPoints[index - 1] : null
+    const prev = chartStartIndex + index > 0 ? allChartPoints[chartStartIndex + index - 1] : null
     const diff = prev ? item.total - prev.total + item.withdrawalTotal : 0
     return {
       date: item.key,
