@@ -603,6 +603,7 @@ export default function ProductsTab({
   const [confirmMessageGroupDelete, setConfirmMessageGroupDelete] = useState(null)
   const [confirmMessageTemplateDelete, setConfirmMessageTemplateDelete] = useState(null)
   const [confirmOfferDelete, setConfirmOfferDelete] = useState(null)
+  const allProductsRef = useRef([])
   const [priceEnabledByOffer, setPriceEnabledByOffer] = useState(
     priceEnabledByOfferProp && typeof priceEnabledByOfferProp === "object"
       ? priceEnabledByOfferProp
@@ -806,7 +807,7 @@ export default function ProductsTab({
       const normalizedId = String(offerId ?? "").trim()
       if (!normalizedId) return
 
-      const sortedAllProducts = [...allProducts].sort((a, b) => {
+      const sortedAllProducts = [...allProductsRef.current].sort((a, b) => {
         const aId = String(a?.id ?? "").trim()
         const bId = String(b?.id ?? "").trim()
         const aStar = Boolean(starredOffers?.[aId])
@@ -850,7 +851,7 @@ export default function ProductsTab({
         scrollToOfferCard()
       }, 180)
     },
-    [allProducts, onLoadKeys, onNavigateToTab, starredOffers, stockEnabledByOffer],
+    [onLoadKeys, onNavigateToTab, starredOffers, stockEnabledByOffer],
   )
   const renderAutomationToastContent = useCallback(
     (message, offerId, toastId) =>
@@ -968,6 +969,9 @@ export default function ProductsTab({
   const items = Array.isArray(catalog?.items) ? catalog.items : []
   const topups = Array.isArray(catalog?.topups) ? catalog.topups : []
   const allProducts = useMemo(() => [...items, ...topups], [items, topups])
+  useEffect(() => {
+    allProductsRef.current = allProducts
+  }, [allProducts])
   const missingTotal = useMemo(
     () => allProducts.filter((product) => Boolean(product?.missing)).length,
     [allProducts],
