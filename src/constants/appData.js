@@ -21,8 +21,8 @@ export const fallbackCategories = Array.from(
 )
 
 export const initialProblems = [
-  { id: 1, username: "@ornek1", issue: "Odeme ekranda takildi, 2 kez kart denemis.", status: "open" },
-  { id: 2, username: "@ornek2", issue: "Teslimat gecikmesi sikayeti.", status: "open" },
+  { id: 1, orderNumber: "1254389", issue: "Odeme ekranda takildi, 2 kez kart denemis.", status: "open" },
+  { id: 2, orderNumber: "1254397", issue: "Teslimat gecikmesi sikayeti.", status: "open" },
 ]
 
 export const initialProducts = [

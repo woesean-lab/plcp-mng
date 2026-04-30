@@ -247,8 +247,8 @@ function App() {
     handleProblemDeleteWithConfirm,
     confirmProblemTarget,
     handleProblemReopen,
-    problemUsername,
-    setProblemUsername,
+    problemOrderNumber,
+    setProblemOrderNumber,
     problemIssue,
     setProblemIssue,
     handleProblemAdd,
@@ -1332,8 +1332,8 @@ function App() {
               handleProblemDeleteWithConfirm={handleProblemDeleteWithConfirm}
               confirmProblemTarget={confirmProblemTarget}
               handleProblemReopen={handleProblemReopen}
-              problemUsername={problemUsername}
-              setProblemUsername={setProblemUsername}
+              problemOrderNumber={problemOrderNumber}
+              setProblemOrderNumber={setProblemOrderNumber}
               problemIssue={problemIssue}
               setProblemIssue={setProblemIssue}
               handleProblemAdd={handleProblemAdd}

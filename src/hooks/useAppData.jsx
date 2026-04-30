@@ -113,7 +113,7 @@ export default function useAppData() {
 
   const [problems, setProblems] = useState([])
   const [isProblemsLoading, setIsProblemsLoading] = useState(true)
-  const [problemUsername, setProblemUsername] = useState("")
+  const [problemOrderNumber, setProblemOrderNumber] = useState("")
   const [problemIssue, setProblemIssue] = useState("")
   const [confirmProblemTarget, setConfirmProblemTarget] = useState(null)
 
@@ -178,6 +178,14 @@ export default function useAppData() {
   const [eldoradoAutomationBackendOptions, setEldoradoAutomationBackendOptions] = useState([])
   const [eldoradoOfferPrices, setEldoradoOfferPrices] = useState({})
   const [eldoradoOfferPriceEnabledByOffer, setEldoradoOfferPriceEnabledByOffer] = useState({})
+
+  const normalizeProblemRecord = useCallback((problem) => {
+    const orderNumber = String(problem?.orderNumber ?? problem?.username ?? "").trim()
+    return {
+      ...problem,
+      orderNumber,
+    }
+  }, [])
   const [eldoradoStarredOffers, setEldoradoStarredOffers] = useState({})
   const [eldoradoLogs, setEldoradoLogs] = useState([])
   const [isEldoradoLogsLoading, setIsEldoradoLogsLoading] = useState(false)
@@ -2293,16 +2301,16 @@ export default function useAppData() {
         const res = await apiFetch("/api/problems", { signal })
         if (!res.ok) throw new Error("api_error")
         const data = await res.json()
-        setProblems(data ?? [])
+        setProblems(Array.isArray(data) ? data.map(normalizeProblemRecord) : [])
       } catch (error) {
         if (error?.name === "AbortError") return
-        setProblems(initialProblems)
+        setProblems(initialProblems.map(normalizeProblemRecord))
         toast.error("Problem listesi al\u0131namad\u0131 (API/DB kontrol edin)")
       } finally {
         setIsProblemsLoading(false)
       }
     },
-    [apiFetch],
+    [apiFetch, normalizeProblemRecord],
   )
 
   useEffect(() => {
@@ -5476,22 +5484,22 @@ const handleEldoradoNoteSave = useCallback(
   }
 
   const handleProblemAdd = async () => {
-    const user = problemUsername.trim()
+    const orderNumber = problemOrderNumber.trim()
     const issue = problemIssue.trim()
-    if (!user || !issue) {
-      toast.error("Kullan\u0131c\u0131 ad\u0131 ve sorun girin.")
+    if (!orderNumber || !issue) {
+      toast.error("Siparis numarasi ve sorun girin.")
       return
     }
     try {
       const res = await apiFetch("/api/problems", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: user, issue }),
+        body: JSON.stringify({ orderNumber, issue }),
       })
       if (!res.ok) throw new Error("problem_create_failed")
       const created = await res.json()
-      setProblems((prev) => [...prev, created])
-      setProblemUsername("")
+      setProblems((prev) => [...prev, normalizeProblemRecord(created)])
+      setProblemOrderNumber("")
       setProblemIssue("")
       toast.success("Problem eklendi")
     } catch (error) {
@@ -5509,7 +5517,7 @@ const handleEldoradoNoteSave = useCallback(
       })
       if (!res.ok) throw new Error("problem_update_failed")
       const updated = await res.json()
-      setProblems((prev) => prev.map((p) => (p.id === id ? updated : p)))
+      setProblems((prev) => prev.map((p) => (p.id === id ? normalizeProblemRecord(updated) : p)))
       toast.success("Problem \u00E7\u00F6z\u00FCld\u00FC")
     } catch (error) {
       console.error(error)
@@ -5526,7 +5534,7 @@ const handleEldoradoNoteSave = useCallback(
       })
       if (!res.ok) throw new Error("problem_reopen_failed")
       const updated = await res.json()
-      setProblems((prev) => prev.map((p) => (p.id === id ? updated : p)))
+      setProblems((prev) => prev.map((p) => (p.id === id ? normalizeProblemRecord(updated) : p)))
       toast.success("Aktif probleme ta\u015F\u0131nd\u0131")
     } catch (error) {
       console.error(error)
@@ -5543,7 +5551,7 @@ const handleEldoradoNoteSave = useCallback(
       })
       if (!res.ok) throw new Error("problem_archive_failed")
       const updated = await res.json()
-      setProblems((prev) => prev.map((p) => (p.id === id ? updated : p)))
+      setProblems((prev) => prev.map((p) => (p.id === id ? normalizeProblemRecord(updated) : p)))
       toast.success("Problem arsive alindi")
     } catch (error) {
       console.error(error)
@@ -5554,7 +5562,7 @@ const handleEldoradoNoteSave = useCallback(
   const handleProblemCopy = async (text) => {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success("Kullan\u0131c\u0131 ad\u0131 kopyaland\u0131", { duration: 1400, position: "top-right" })
+      toast.success("Siparis numarasi kopyalandi", { duration: 1400, position: "top-right" })
     } catch (error) {
       console.error(error)
       toast.error("Kopyalanamad\u0131", { duration: 1600, position: "top-right" })
@@ -5868,8 +5876,8 @@ const handleEldoradoNoteSave = useCallback(
     handleProblemDeleteWithConfirm,
     confirmProblemTarget,
     handleProblemReopen,
-    problemUsername,
-    setProblemUsername,
+    problemOrderNumber,
+    setProblemOrderNumber,
     problemIssue,
     setProblemIssue,
     handleProblemAdd,

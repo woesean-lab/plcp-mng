@@ -109,6 +109,7 @@ function ProblemCard({
   const status = String(problem?.status ?? "open")
   const isResolved = status === "resolved"
   const isArchived = status === "archived"
+  const orderNumber = String(problem?.orderNumber ?? problem?.username ?? "").trim() || "-"
 
   return (
     <article
@@ -120,7 +121,7 @@ function ProblemCard({
             <span
               className="inline-flex max-w-full items-center rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-slate-100 break-all"
             >
-              {problem.username}
+              {orderNumber}
             </span>
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -141,10 +142,10 @@ function ProblemCard({
 
         <button
           type="button"
-          onClick={() => handleProblemCopy(problem.username)}
+          onClick={() => handleProblemCopy(orderNumber)}
           className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-300 transition hover:border-white/30 hover:bg-white/10 hover:text-white"
-          title="Kullanici adini kopyala"
-          aria-label="Kullanici adini kopyala"
+          title="Siparis numarasini kopyala"
+          aria-label="Siparis numarasini kopyala"
         >
           <ClipboardDocumentIcon className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -234,8 +235,8 @@ export default function ProblemsTab({
   handleProblemDeleteWithConfirm,
   confirmProblemTarget,
   handleProblemReopen,
-  problemUsername,
-  setProblemUsername,
+  problemOrderNumber,
+  setProblemOrderNumber,
   problemIssue,
   setProblemIssue,
   handleProblemAdd,
@@ -382,21 +383,21 @@ export default function ProblemsTab({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Yeni problem</p>
-                  <p className="mt-1 text-sm text-slate-400">Kullanici adini ve sorun detayini kaydet.</p>
+                  <p className="mt-1 text-sm text-slate-400">Siparis numarasini ve sorun detayini kaydet.</p>
                 </div>
               </div>
 
               <div className="mt-4 space-y-4 rounded-xl border border-white/10 bg-ink-900/70 p-4 shadow-inner">
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-200" htmlFor="pb-username">
-                    Kullanici adi
+                  <label className="text-xs font-semibold text-slate-200" htmlFor="pb-order-number">
+                    Siparis numarasi
                   </label>
                   <input
-                    id="pb-username"
+                    id="pb-order-number"
                     type="text"
-                    value={problemUsername}
-                    onChange={(event) => setProblemUsername(event.target.value)}
-                    placeholder="@kullanici"
+                    value={problemOrderNumber}
+                    onChange={(event) => setProblemOrderNumber(event.target.value)}
+                    placeholder="Orn: 1254389"
                     className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
                   />
                 </div>
@@ -426,7 +427,7 @@ export default function ProblemsTab({
                   <button
                     type="button"
                     onClick={() => {
-                      setProblemUsername("")
+                      setProblemOrderNumber("")
                       setProblemIssue("")
                     }}
                     className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"

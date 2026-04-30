@@ -3763,20 +3763,25 @@ const parseRepeatDays = (value) => {
   return rawList.map((day) => String(day).trim()).filter((day) => day)
 }
 
+const normalizeProblemResponse = (problem) => ({
+  ...problem,
+  orderNumber: String(problem?.orderNumber ?? problem?.username ?? "").trim(),
+})
+
 app.get("/api/problems", async (_req, res) => {
   const problems = await prisma.problem.findMany({ orderBy: { createdAt: "desc" } })
-  res.json(problems)
+  res.json(problems.map(normalizeProblemResponse))
 })
 
 app.post("/api/problems", async (req, res) => {
-  const username = String(req.body?.username ?? "").trim()
+  const orderNumber = String(req.body?.orderNumber ?? req.body?.username ?? "").trim()
   const issue = String(req.body?.issue ?? "").trim()
-  if (!username || !issue) {
-    res.status(400).json({ error: "username and issue are required" })
+  if (!orderNumber || !issue) {
+    res.status(400).json({ error: "orderNumber and issue are required" })
     return
   }
-  const created = await prisma.problem.create({ data: { username, issue, status: "open" } })
-  res.status(201).json(created)
+  const created = await prisma.problem.create({ data: { username: orderNumber, issue, status: "open" } })
+  res.status(201).json(normalizeProblemResponse(created))
 })
 
 app.put("/api/problems/:id", async (req, res) => {
@@ -3786,7 +3791,9 @@ app.put("/api/problems/:id", async (req, res) => {
     return
   }
 
-  const username = req.body?.username === undefined ? undefined : String(req.body.username).trim()
+  const orderNumberRaw =
+    req.body?.orderNumber !== undefined ? req.body.orderNumber : req.body?.username
+  const orderNumber = orderNumberRaw === undefined ? undefined : String(orderNumberRaw).trim()
   const issue = req.body?.issue === undefined ? undefined : String(req.body.issue).trim()
   const statusRaw = req.body?.status === undefined ? undefined : String(req.body.status).trim()
   const status = statusRaw === undefined ? undefined : statusRaw || "open"
@@ -3795,8 +3802,8 @@ app.put("/api/problems/:id", async (req, res) => {
     res.status(400).json({ error: "invalid status" })
     return
   }
-  if (username !== undefined && !username) {
-    res.status(400).json({ error: "username cannot be empty" })
+  if (orderNumber !== undefined && !orderNumber) {
+    res.status(400).json({ error: "orderNumber cannot be empty" })
     return
   }
   if (issue !== undefined && !issue) {
@@ -3808,12 +3815,12 @@ app.put("/api/problems/:id", async (req, res) => {
     const updated = await prisma.problem.update({
       where: { id },
       data: {
-        ...(username === undefined ? {} : { username }),
+        ...(orderNumber === undefined ? {} : { username: orderNumber }),
         ...(issue === undefined ? {} : { issue }),
         ...(status === undefined ? {} : { status }),
       },
     })
-    res.json(updated)
+    res.json(normalizeProblemResponse(updated))
   } catch (error) {
     if (error?.code === "P2025") {
       res.status(404).json({ error: "Problem not found" })
