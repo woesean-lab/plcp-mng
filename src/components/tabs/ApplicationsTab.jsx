@@ -1425,10 +1425,21 @@ export default function ApplicationsTab({
       : runningRunCount > 0
         ? `${runningRunCount} calisiyor`
         : "Hazir"
+  const selectedBackendLabel = selectedApplication
+    ? getBackendLabelForDisplay(selectedApplication.backendLabel)
+    : "Backend secilmedi"
+  const runActionDisabled =
+    !canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl
+  const consoleTitle = activeRunSession
+    ? activeRunSession.label
+    : selectedApplication?.name
+      ? `${selectedApplication.name} gecmisi`
+      : "Servis loglari"
+  const consoleSubtitle = activeRunSession
+    ? "Canli oturum akisi ve kullanici girdileri"
+    : "Secili servisin kayitli log akisi"
   const terminalFieldClass =
     "w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-[13px] text-slate-100 transition focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-  const terminalTextInputClass =
-    "h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 text-sm text-slate-100 transition placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
   const terminalButtonBaseClass =
     "inline-flex h-9 items-center justify-center rounded-lg border px-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonNeutralClass =
@@ -1481,12 +1492,37 @@ export default function ApplicationsTab({
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 shadow-inner">
-              <div className="border-b border-white/10 bg-[#0b0f19c9] px-3 py-3 backdrop-blur-sm sm:px-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <label className="block">
+              <div className="border-b border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(10,14,24,0.92))] px-3 py-3 sm:px-4 sm:py-4">
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)]">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Servis secimi
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-white">
+                          {selectedApplication?.name || "Calistirilacak servis sec"}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                            selectedApplication?.isActive
+                              ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
+                              : "border-rose-300/30 bg-rose-500/10 text-rose-100"
+                          }`}
+                        >
+                          {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
+                        </span>
+                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                          {selectedBackendLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    <label className="mt-4 block">
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Servis secimi
+                        Hedef servis
                       </span>
                       <select
                         value={selectedApplicationId}
@@ -1506,54 +1542,99 @@ export default function ApplicationsTab({
                       </select>
                     </label>
 
-                    <p className="mt-2 min-h-8 text-xs leading-4 text-slate-400">
-                      {selectedApplication?.about || "Servis aciklamasi burada gorunur."}
-                    </p>
+                    <div className="mt-3 rounded-xl border border-white/10 bg-ink-950/35 px-3 py-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        Aciklama
+                      </p>
+                      <p className="mt-2 min-h-10 text-sm leading-6 text-slate-300">
+                        {selectedApplication?.about || "Servis secildiginde kisa aciklama burada gorunur."}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5 lg:max-w-[40%] lg:justify-end">
-                    {selectedApplication && (
-                      <>
-                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                          {selectedApplication.isActive ? "Acik" : "Kapali"}
-                        </span>
-                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                          {getBackendLabelForDisplay(selectedApplication.backendLabel)}
-                        </span>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleRun}
-                      disabled={!canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl}
-                      className={`${terminalRunButtonClass} h-8 gap-1.5 px-3 text-[10px]`}
-                    >
-                      <PlayIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                      Calistir
-                    </button>
+                  <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(20,27,45,0.94),rgba(9,13,22,0.96))] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Operasyon durumu
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-white">{connectionLabel}</p>
+                      </div>
+                      <span className="inline-flex items-center rounded-full border border-sky-300/20 bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100">
+                        {runningRunCount} canli
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+                        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Secili backend</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-100">{selectedBackendLabel}</p>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+                        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Log kaydi</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-100">{historyLogs.length}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleRun}
+                        disabled={runActionDisabled}
+                        className={`${terminalRunButtonClass} h-10 w-full gap-2 text-[11px]`}
+                      >
+                        <PlayIcon className="h-4 w-4" aria-hidden="true" />
+                        Servisi calistir
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCancelRun(activeRunId)}
+                        disabled={!canCancelActiveRun}
+                        className={`${terminalButtonNeutralClass} h-10 w-full gap-2 text-[11px]`}
+                      >
+                        <PauseIcon className="h-4 w-4" aria-hidden="true" />
+                        Aktif islemi durdur
+                      </button>
+                    </div>
+
+                    <div className="mt-4 space-y-2 text-xs text-slate-400">
+                      {!hasWsUrl && (
+                        <div className="rounded-xl border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-amber-100">
+                          websocket adresi kayitli degil
+                        </div>
+                      )}
+                      {selectedApplication && !selectedApplication.isActive && (
+                        <div className="rounded-xl border border-rose-300/25 bg-rose-500/10 px-3 py-2 text-rose-100">
+                          secili servis kapali, once aktif edilmesi gerekir
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="p-3 sm:p-4">
                 <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">Akis</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">Oturum akisi</p>
                       <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
-                        {activeRunSession ? activeRunSession.label : "Servis loglari"}
+                        {consoleTitle}
                       </p>
+                      <p className="mt-1 text-[11px] text-slate-500">{consoleSubtitle}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {!hasWsUrl && (
-                        <span className="inline-flex items-center rounded-full border border-amber-300/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-100">
-                          websocket adresi yok
-                        </span>
-                      )}
+                      <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-slate-200">
+                        Oturum: {runSessions.length}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-slate-200">
+                        Konsol: {consoleLogs.length}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="no-scrollbar overflow-x-auto border-b border-white/10 pb-1">
+                  <div className="rounded-2xl border border-white/10 bg-ink-950/25 p-2">
+                    <div className="no-scrollbar overflow-x-auto">
                     <div className="grid min-w-max grid-flow-col auto-cols-[minmax(180px,200px)] gap-2">
                       <button
                         type="button"
@@ -1662,6 +1743,7 @@ export default function ApplicationsTab({
                       })}
                     </div>
                   </div>
+                  </div>
 
                   <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
@@ -1674,6 +1756,9 @@ export default function ApplicationsTab({
                         </span>
                       </div>
                       <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                        <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300 sm:inline-flex">
+                          {activeRunSession ? "canli oturum" : "gecmis akis"}
+                        </span>
                         <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                           {consoleLogs.length} satir
                         </span>
