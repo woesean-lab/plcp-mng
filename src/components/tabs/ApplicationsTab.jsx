@@ -1635,11 +1635,11 @@ export default function ApplicationsTab({
 
                   <div className="rounded-2xl border border-white/10 bg-ink-950/25 p-2">
                     <div className="no-scrollbar overflow-x-auto">
-                    <div className="grid min-w-max grid-flow-col auto-cols-[minmax(180px,200px)] gap-2">
+                    <div className="grid min-w-max grid-flow-col auto-cols-[minmax(150px,172px)] gap-2">
                       <button
                         type="button"
                         onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                        className={`rounded-xl border p-2.5 text-left transition ${
+                        className={`rounded-xl border px-3 py-2 text-left transition ${
                           activeRunSession
                             ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
                             : "border-accent-400/40 bg-accent-500/10 text-accent-50 shadow-[0_12px_30px_rgba(71,85,105,0.14)]"
@@ -1650,7 +1650,7 @@ export default function ApplicationsTab({
                             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                               Servis loglari
                             </p>
-                            <p className="mt-1 truncate text-[13px] font-semibold text-white">
+                            <p className="mt-1 truncate text-[12px] font-semibold text-white">
                               {selectedApplication?.name || "Secili servis yok"}
                             </p>
                           </div>
@@ -1658,7 +1658,7 @@ export default function ApplicationsTab({
                             {historyLogs.length}
                           </span>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400">
                           <span>{historyLogs.length} kayit</span>
                           <span className="text-slate-600">/</span>
                           <span>{runningRunCount} canli</span>
@@ -1671,7 +1671,6 @@ export default function ApplicationsTab({
                         const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
                         const startedLabel = formatRunCardTimestamp(entry.startedAtMs)
                         const durationLabel = formatRunCardDuration(entry.startedAtMs, entry.endedAtMs)
-                        const createdByLabel = entry.createdByUsername || "-"
 
                         return (
                           <div
@@ -1685,19 +1684,18 @@ export default function ApplicationsTab({
                             <button
                               type="button"
                               onClick={() => setActiveConsoleTabId(entry.id)}
-                              className="w-full p-2.5 pr-10 text-left"
+                              className="w-full px-3 py-2 pr-9 text-left"
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
                                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                                     Oturum {entry.serial > 0 ? `#${entry.serial}` : ""}
                                   </p>
-                                  <p className="mt-1 line-clamp-2 text-[13px] font-semibold text-white">{entry.label}</p>
-                                  <p className="mt-0.5 truncate text-[11px] text-slate-400">{entry.applicationName}</p>
+                                  <p className="mt-1 truncate text-[12px] font-semibold text-white">{entry.label}</p>
                                 </div>
                               </div>
 
-                              <div className="mt-2 flex flex-wrap items-center gap-1">
+                              <div className="mt-1.5 flex flex-wrap items-center gap-1">
                                 <span
                                   className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${entryStateMeta.badgeClass}`}
                                 >
@@ -1708,14 +1706,10 @@ export default function ApplicationsTab({
                                 </span>
                               </div>
 
-                              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400">
-                                <span className={entryStateMeta.metaClass}>{entryStateMeta.label}</span>
-                                <span className="text-slate-600">/</span>
+                              <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] text-slate-400">
                                 <span>{startedLabel}</span>
                                 <span className="text-slate-600">/</span>
                                 <span>{durationLabel}</span>
-                                <span className="text-slate-600">/</span>
-                                <span className="truncate">{createdByLabel}</span>
                               </div>
                             </button>
 
@@ -1723,16 +1717,16 @@ export default function ApplicationsTab({
                               <button
                                 type="button"
                                 onClick={() => handleCancelRun(entry.id)}
-                                className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-amber-300/40 hover:bg-amber-500/15 hover:text-amber-100"
+                                className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-amber-300/40 hover:bg-amber-500/15 hover:text-amber-100"
                                 aria-label={`${entry.label} islemini iptal et`}
                               >
-                                <PauseIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                                <PauseIcon className="h-3 w-3" aria-hidden="true" />
                               </button>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => handleCloseRunTab(entry.id)}
-                                className="absolute right-2.5 top-2.5 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                                className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[10px] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
                                 aria-label={`${entry.label} sekmesini kapat`}
                               >
                                 x
