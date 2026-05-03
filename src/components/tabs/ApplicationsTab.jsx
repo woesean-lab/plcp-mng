@@ -1494,29 +1494,9 @@ export default function ApplicationsTab({
             <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 sm:p-5">
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Servis secimi
-                      </p>
-                      <p className="mt-1 truncate text-sm font-semibold text-white">
-                        {selectedApplication?.name || "Calistirilacak servis sec"}
-                      </p>
-                    </div>
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                        selectedApplication?.isActive
-                          ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
-                          : "border-rose-300/30 bg-rose-500/10 text-rose-100"
-                      }`}
-                    >
-                      {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
-                    </span>
-                  </div>
-
-                  <label className="mt-4 block">
+                  <label className="block">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Hedef servis
+                      Servis
                     </span>
                     <select
                       value={selectedApplicationId}
@@ -1536,39 +1516,38 @@ export default function ApplicationsTab({
                     </select>
                   </label>
 
-                  <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
-                    <div className="rounded-xl border border-white/10 bg-ink-950/30 px-3 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Aciklama
-                      </p>
-                      <p className="mt-2 min-h-10 text-sm leading-6 text-slate-300">
-                        {selectedApplication?.about || "Servis secildiginde kisa aciklama burada gorunur."}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-ink-950/30 px-3 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Backend
-                      </p>
-                      <p className="mt-2 truncate text-sm font-semibold text-slate-100">
-                        {selectedBackendLabel}
-                      </p>
-                      <p className="mt-3 text-[11px] text-slate-400">{historyLogs.length} kayit</p>
-                    </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                        selectedApplication?.isActive
+                          ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
+                          : "border-rose-300/30 bg-rose-500/10 text-rose-100"
+                      }`}
+                    >
+                      {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
+                    </span>
+                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-slate-300">
+                      {selectedBackendLabel}
+                    </span>
+                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-slate-400">
+                      {connectionLabel}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-white/10 bg-ink-950/25 px-3 py-3">
+                    <p className="line-clamp-2 text-sm leading-6 text-slate-300">
+                      {selectedApplication?.about || "Servis secildiginde kisa aciklama burada gorunur."}
+                    </p>
                   </div>
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-ink-950/30 px-3 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Durum
-                      </p>
-                      <p className="mt-1 text-base font-semibold text-white">{connectionLabel}</p>
-                    </div>
-                    <span className="text-[11px] font-medium text-slate-400">{runningRunCount} canli</span>
+                  <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400">
+                    <span>{runningRunCount} canli</span>
+                    <span>{historyLogs.length} kayit</span>
                   </div>
 
-                  <div className="mt-4 space-y-2">
+                  <div className="mt-3 space-y-2">
                     <button
                       type="button"
                       onClick={handleRun}
@@ -1589,7 +1568,7 @@ export default function ApplicationsTab({
                     </button>
                   </div>
 
-                  <div className="mt-4 space-y-2 text-[11px] text-slate-400">
+                  <div className="mt-3 space-y-2 text-[11px] text-slate-400">
                     {!hasWsUrl && (
                       <div className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-amber-100">
                         websocket adresi kayitli degil
