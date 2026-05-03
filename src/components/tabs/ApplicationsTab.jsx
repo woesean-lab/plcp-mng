@@ -1491,58 +1491,53 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 shadow-inner">
-              <div className="border-b border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(10,14,24,0.92))] px-3 py-3 sm:px-4 sm:py-4">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)]">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Servis secimi
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-white">
-                          {selectedApplication?.name || "Calistirilacak servis sec"}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                            selectedApplication?.isActive
-                              ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
-                              : "border-rose-300/30 bg-rose-500/10 text-rose-100"
-                          }`}
-                        >
-                          {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
-                        </span>
-                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                          {selectedBackendLabel}
-                        </span>
-                      </div>
+            <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 sm:p-5">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Servis secimi
+                      </p>
+                      <p className="mt-1 truncate text-sm font-semibold text-white">
+                        {selectedApplication?.name || "Calistirilacak servis sec"}
+                      </p>
                     </div>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                        selectedApplication?.isActive
+                          ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
+                          : "border-rose-300/30 bg-rose-500/10 text-rose-100"
+                      }`}
+                    >
+                      {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
+                    </span>
+                  </div>
 
-                    <label className="mt-4 block">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Hedef servis
-                      </span>
-                      <select
-                        value={selectedApplicationId}
-                        onChange={(event) => setSelectedApplicationId(event.target.value)}
-                        disabled={!hasApplications}
-                        className={`${terminalFieldClass} mt-2 h-11 appearance-none pr-10`}
-                      >
-                        {!hasApplications ? (
-                          <option value="">Kayitli servis yok</option>
-                        ) : (
-                          runDropdownApplications.map((entry) => (
-                            <option key={`run-app-${entry.id}`} value={entry.id}>
-                              {entry.name}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                    </label>
+                  <label className="mt-4 block">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Hedef servis
+                    </span>
+                    <select
+                      value={selectedApplicationId}
+                      onChange={(event) => setSelectedApplicationId(event.target.value)}
+                      disabled={!hasApplications}
+                      className={`${terminalFieldClass} mt-2 h-11 appearance-none pr-10`}
+                    >
+                      {!hasApplications ? (
+                        <option value="">Kayitli servis yok</option>
+                      ) : (
+                        runDropdownApplications.map((entry) => (
+                          <option key={`run-app-${entry.id}`} value={entry.id}>
+                            {entry.name}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </label>
 
-                    <div className="mt-3 rounded-xl border border-white/10 bg-ink-950/35 px-3 py-3">
+                  <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+                    <div className="rounded-xl border border-white/10 bg-ink-950/30 px-3 py-3">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                         Aciklama
                       </p>
@@ -1550,65 +1545,61 @@ export default function ApplicationsTab({
                         {selectedApplication?.about || "Servis secildiginde kisa aciklama burada gorunur."}
                       </p>
                     </div>
+                    <div className="rounded-xl border border-white/10 bg-ink-950/30 px-3 py-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        Backend
+                      </p>
+                      <p className="mt-2 truncate text-sm font-semibold text-slate-100">
+                        {selectedBackendLabel}
+                      </p>
+                      <p className="mt-3 text-[11px] text-slate-400">{historyLogs.length} kayit</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-ink-950/30 px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Durum
+                      </p>
+                      <p className="mt-1 text-base font-semibold text-white">{connectionLabel}</p>
+                    </div>
+                    <span className="text-[11px] font-medium text-slate-400">{runningRunCount} canli</span>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(20,27,45,0.94),rgba(9,13,22,0.96))] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Operasyon durumu
-                        </p>
-                        <p className="mt-1 text-lg font-semibold text-white">{connectionLabel}</p>
-                      </div>
-                      <span className="inline-flex items-center rounded-full border border-sky-300/20 bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100">
-                        {runningRunCount} canli
-                      </span>
-                    </div>
+                  <div className="mt-4 space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleRun}
+                      disabled={runActionDisabled}
+                      className={`${terminalRunButtonClass} h-10 w-full gap-2 text-[11px]`}
+                    >
+                      <PlayIcon className="h-4 w-4" aria-hidden="true" />
+                      Servisi calistir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCancelRun(activeRunId)}
+                      disabled={!canCancelActiveRun}
+                      className={`${terminalButtonNeutralClass} h-10 w-full gap-2 text-[11px]`}
+                    >
+                      <PauseIcon className="h-4 w-4" aria-hidden="true" />
+                      Aktif islemi durdur
+                    </button>
+                  </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
-                        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Secili backend</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-100">{selectedBackendLabel}</p>
+                  <div className="mt-4 space-y-2 text-[11px] text-slate-400">
+                    {!hasWsUrl && (
+                      <div className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-amber-100">
+                        websocket adresi kayitli degil
                       </div>
-                      <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
-                        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Log kaydi</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-100">{historyLogs.length}</p>
+                    )}
+                    {selectedApplication && !selectedApplication.isActive && (
+                      <div className="rounded-lg border border-rose-300/20 bg-rose-500/10 px-3 py-2 text-rose-100">
+                        secili servis kapali, once aktif edilmesi gerekir
                       </div>
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      <button
-                        type="button"
-                        onClick={handleRun}
-                        disabled={runActionDisabled}
-                        className={`${terminalRunButtonClass} h-10 w-full gap-2 text-[11px]`}
-                      >
-                        <PlayIcon className="h-4 w-4" aria-hidden="true" />
-                        Servisi calistir
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleCancelRun(activeRunId)}
-                        disabled={!canCancelActiveRun}
-                        className={`${terminalButtonNeutralClass} h-10 w-full gap-2 text-[11px]`}
-                      >
-                        <PauseIcon className="h-4 w-4" aria-hidden="true" />
-                        Aktif islemi durdur
-                      </button>
-                    </div>
-
-                    <div className="mt-4 space-y-2 text-xs text-slate-400">
-                      {!hasWsUrl && (
-                        <div className="rounded-xl border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-amber-100">
-                          websocket adresi kayitli degil
-                        </div>
-                      )}
-                      {selectedApplication && !selectedApplication.isActive && (
-                        <div className="rounded-xl border border-rose-300/25 bg-rose-500/10 px-3 py-2 text-rose-100">
-                          secili servis kapali, once aktif edilmesi gerekir
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
