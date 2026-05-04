@@ -1401,6 +1401,14 @@ export default function ApplicationsTab({
         : "Hazir"
   const runActionDisabled =
     !canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl
+  const consoleTitle = activeRunSession
+    ? activeRunSession.label
+    : selectedApplication?.name
+      ? `${selectedApplication.name} gecmisi`
+      : "Servis loglari"
+  const consoleSubtitle = activeRunSession
+    ? "Canli oturum akisi ve kullanici girdileri"
+    : "Secili servisin kayitli log akisi"
   const terminalFieldClass =
     "w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-[13px] text-slate-100 transition focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonBaseClass =
@@ -1545,15 +1553,22 @@ export default function ApplicationsTab({
                         const entryIsActive = activeConsoleTabId === entry.id
                         const entryIsLive = isRunLive(entry.status)
                         const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
+                        const entryToneClass = entry.status === "success"
+                          ? entryIsActive
+                            ? "border-emerald-300/40 bg-emerald-500/12 shadow-[0_10px_24px_rgba(16,185,129,0.14)]"
+                            : "border-emerald-300/20 bg-emerald-500/[0.08] hover:border-emerald-300/35 hover:bg-emerald-500/[0.12]"
+                          : entry.status === "error" || entry.connectionState === "error"
+                            ? entryIsActive
+                              ? "border-rose-300/40 bg-rose-500/12 shadow-[0_10px_24px_rgba(244,63,94,0.14)]"
+                              : "border-rose-300/20 bg-rose-500/[0.08] hover:border-rose-300/35 hover:bg-rose-500/[0.12]"
+                            : entryIsActive
+                              ? "border-amber-300/40 bg-amber-500/12 shadow-[0_10px_24px_rgba(245,158,11,0.14)]"
+                              : "border-amber-300/20 bg-amber-500/[0.08] hover:border-amber-300/35 hover:bg-amber-500/[0.12]"
 
                         return (
                           <div
                             key={`run-tab-${entry.id}`}
-                            className={`relative rounded-xl border transition ${
-                              entryIsActive
-                                ? "border-accent-400/40 bg-accent-500/10 shadow-[0_10px_24px_rgba(56,189,248,0.10)]"
-                                : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
-                            }`}
+                            className={`relative rounded-xl border transition ${entryToneClass}`}
                           >
                             <button
                               type="button"
@@ -1599,11 +1614,25 @@ export default function ApplicationsTab({
                   <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                          Konsol
-                        </span>
+                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                        <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                        <div className="ml-1">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                            Komut ciktilari
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            {consoleTitle}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                        <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300 sm:inline-flex">
+                          {activeRunSession ? "canli oturum" : "gecmis akis"}
+                        </span>
+                        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                          {consoleLogs.length} satir
+                        </span>
                         {canClearApplicationLogs && (
                           <button
                             type="button"
@@ -1617,18 +1646,21 @@ export default function ApplicationsTab({
                       </div>
                     </div>
 
-                    <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
-                      {!canViewApplicationLogs ? (
-                        <div className="flex h-full items-center justify-center text-slate-500">
-                          Servis Konsolu log goruntuleme yetkiniz yok.
-                        </div>
-                      ) : !activeRunSession && isLogsLoading ? (
-                        <div className="flex h-full items-center justify-center text-slate-500">
-                          Loglar yukleniyor...
-                        </div>
-                      ) : (
-                        <div className="space-y-0.5">
-                          {activeRunPrompt && isActiveRunLive && (
+                      <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                        {!canViewApplicationLogs ? (
+                          <div className="flex h-full items-center justify-center text-slate-500">
+                            Servis Konsolu log goruntuleme yetkiniz yok.
+                          </div>
+                        ) : !activeRunSession && isLogsLoading ? (
+                          <div className="flex h-full items-center justify-center text-slate-500">
+                            Loglar yukleniyor...
+                          </div>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {!activeRunPrompt && (
+                              <p className="mb-2 text-[11px] text-slate-500">{consoleSubtitle}</p>
+                            )}
+                            {activeRunPrompt && isActiveRunLive && (
                             <div className="mb-2 border-b border-white/10 pb-1.5">
                               <div className="flex min-w-0 flex-col items-start gap-2 text-slate-300 sm:flex-row sm:flex-wrap sm:items-center">
                                 <span className="flex-none text-amber-300">[PROMPT]</span>
