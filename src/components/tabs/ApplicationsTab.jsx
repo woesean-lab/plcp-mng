@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { PauseIcon, PlayIcon } from "@heroicons/react/20/solid"
+import { ChevronUpDownIcon, PauseIcon, PlayIcon } from "@heroicons/react/20/solid"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import { renderActionToast } from "../../utils/actionToast"
@@ -264,6 +264,7 @@ export default function ApplicationsTab({
   const [isApplicationsLoading, setIsApplicationsLoading] = useState(true)
   const [isLogsLoading, setIsLogsLoading] = useState(false)
   const [pendingUserInputValueByRunId, setPendingUserInputValueByRunId] = useState({})
+  const [isRunApplicationMenuOpen, setIsRunApplicationMenuOpen] = useState(false)
   const runSessionsRef = useRef([])
   const dismissedRunIdsRef = useRef(new Set())
   const seenLiveRunIdsRef = useRef(new Set())
@@ -271,6 +272,7 @@ export default function ApplicationsTab({
   const activeRunToastIdsRef = useRef(new Set())
   const runSessionsRequestInFlightRef = useRef(false)
   const runSnapshotRequestByIdRef = useRef({})
+  const runApplicationMenuRef = useRef(null)
   const canAccessApplications =
     canManageApplications || canRunApplications || canViewApplicationLogs || canClearApplicationLogs
 
@@ -555,12 +557,37 @@ export default function ApplicationsTab({
   useEffect(() => {
     if (runDropdownApplications.length === 0) {
       setSelectedApplicationId("")
+      setIsRunApplicationMenuOpen(false)
       return
     }
     if (!selectedApplicationId || !runDropdownApplications.some((entry) => entry.id === selectedApplicationId)) {
       setSelectedApplicationId(runDropdownApplications[0].id)
     }
   }, [runDropdownApplications, selectedApplicationId])
+
+  useEffect(() => {
+    if (!isRunApplicationMenuOpen) return undefined
+
+    const handlePointerDown = (event) => {
+      const menuNode = runApplicationMenuRef.current
+      if (menuNode && !menuNode.contains(event.target)) {
+        setIsRunApplicationMenuOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsRunApplicationMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown)
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isRunApplicationMenuOpen])
 
   const selectedApplication = useMemo(
     () => applications.find((entry) => entry.id === selectedApplicationId) || null,
@@ -1373,17 +1400,19 @@ export default function ApplicationsTab({
     return Array.isArray(logs) ? logs : []
   }, [activeRunSession, runLogsByTab])
   const consoleLogs = activeRunSession ? activeRunLogs : historyLogs
-  const visibleConsoleLogs = useMemo(() => consoleLogs.slice(0, CMD_VISIBLE_ROWS), [consoleLogs])
+  const visibleConsoleLogs = useMemo(
+    () => (activeRunSession ? consoleLogs.slice(0, CMD_VISIBLE_ROWS) : consoleLogs),
+    [activeRunSession, consoleLogs],
+  )
   const emptyConsoleLogRows = useMemo(
-    () => Math.max(0, CMD_VISIBLE_ROWS - visibleConsoleLogs.length),
-    [visibleConsoleLogs],
+    () => (activeRunSession ? Math.max(0, CMD_VISIBLE_ROWS - visibleConsoleLogs.length) : 0),
+    [activeRunSession, visibleConsoleLogs],
   )
   const activeRunPrompt = activeRunSession?.pendingPrompt || null
   const activeRunPromptValue = activeRunSession
     ? String(pendingUserInputValueByRunId[activeRunSession.id] ?? "")
     : ""
   const isActiveRunLive = activeRunSession ? isRunLive(activeRunSession.status) : false
-  const canCancelActiveRun = Boolean(activeRunSession && isActiveRunLive)
   const isTabLoading = isLoading || isApplicationsLoading
   const hasWsUrl = String(automationWsUrl ?? "").trim().length > 0
   const commandPromptLabel = `${String(activeUsername ?? "").trim() || "kullanici"}>`
@@ -1466,7 +1495,7 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 shadow-card">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-950/60 shadow-card">
               <div className="border-b border-white/10 px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
@@ -1495,26 +1524,59 @@ export default function ApplicationsTab({
                 </div>
 
                 <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-                  <div className="min-w-0 flex-1">
-                    <select
-                      value={selectedApplicationId}
-                      onChange={(event) => setSelectedApplicationId(event.target.value)}
+                  <div ref={runApplicationMenuRef} className="relative min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!hasApplications) return
+                        setIsRunApplicationMenuOpen((prev) => !prev)
+                      }}
                       disabled={!hasApplications}
-                      className={`${terminalFieldClass} h-11 appearance-none pr-10`}
+                      className={`${terminalFieldClass} flex h-auto min-h-11 items-start justify-between gap-3 py-3 text-left`}
                     >
-                      {!hasApplications ? (
-                        <option value="">Kayitli servis yok</option>
-                      ) : (
-                        runDropdownApplications.map((entry) => (
-                          <option key={`run-app-${entry.id}`} value={entry.id}>
-                            {entry.name}
-                          </option>
-                        ))
-                      )}
-                    </select>
+                      <div className="min-w-0">
+                        <p className="truncate text-[13px] font-semibold text-slate-100">
+                          {selectedApplication?.name || "Kayitli servis yok"}
+                        </p>
+                        <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-slate-400">
+                          {selectedApplication?.about || "Calistirmak icin bir servis sec."}
+                        </p>
+                      </div>
+                      <ChevronUpDownIcon className="mt-0.5 h-5 w-5 flex-none text-slate-500" aria-hidden="true" />
+                    </button>
+
+                    {isRunApplicationMenuOpen && hasApplications && (
+                      <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-ink-950 shadow-[0_18px_36px_rgba(2,6,23,0.42)]">
+                        <div className="max-h-72 overflow-y-auto p-2">
+                          {runDropdownApplications.map((entry) => {
+                            const isSelected = entry.id === selectedApplicationId
+                            return (
+                              <button
+                                key={`run-app-${entry.id}`}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedApplicationId(entry.id)
+                                  setIsRunApplicationMenuOpen(false)
+                                }}
+                                className={`flex w-full flex-col rounded-lg px-3 py-2.5 text-left transition ${
+                                  isSelected
+                                    ? "bg-accent-500/12 text-accent-50"
+                                    : "text-slate-200 hover:bg-white/[0.05] hover:text-white"
+                                }`}
+                              >
+                                <span className="truncate text-[13px] font-semibold">{entry.name}</span>
+                                <span className="mt-1 line-clamp-2 text-[11px] leading-5 text-slate-400">
+                                  {entry.about}
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 lg:w-[264px]">
+                  <div className="lg:w-[164px]">
                     <button
                       type="button"
                       onClick={handleRun}
@@ -1523,15 +1585,6 @@ export default function ApplicationsTab({
                     >
                       <PlayIcon className="h-4 w-4" aria-hidden="true" />
                       Calistir
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCancelRun(activeRunId)}
-                      disabled={!canCancelActiveRun}
-                      className={`${terminalButtonNeutralClass} h-11 w-full gap-2 text-[11px]`}
-                    >
-                      <PauseIcon className="h-4 w-4" aria-hidden="true" />
-                      Durdur
                     </button>
                   </div>
                 </div>
@@ -1550,7 +1603,7 @@ export default function ApplicationsTab({
                 </div>
               </div>
 
-              <div className="border-b border-white/10 bg-white/[0.02] px-4 py-3 sm:px-5">
+              <div className="border-b border-white/10 bg-black/10 px-4 py-3 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">
                     Oturumlar
@@ -1568,7 +1621,7 @@ export default function ApplicationsTab({
                       className={`inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
                         activeRunSession
                           ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
-                          : "border-accent-400/40 bg-accent-500/10 text-accent-50 shadow-[0_10px_24px_rgba(71,85,105,0.14)]"
+                          : "border-accent-400/45 bg-accent-500/18 text-accent-50 shadow-[0_10px_24px_rgba(71,85,105,0.16)]"
                       }`}
                     >
                       <span className="h-2 w-2 rounded-full bg-slate-500" />
@@ -1581,15 +1634,15 @@ export default function ApplicationsTab({
                       const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
                       const entryToneClass = entry.status === "success"
                         ? entryIsActive
-                          ? "border-sky-300/40 bg-sky-500/12 shadow-[0_10px_24px_rgba(56,189,248,0.14)]"
-                          : "border-sky-300/20 bg-sky-500/[0.08] hover:border-sky-300/35 hover:bg-sky-500/[0.12]"
+                          ? "border-sky-300/45 bg-sky-500/20 shadow-[0_10px_24px_rgba(56,189,248,0.16)]"
+                          : "border-sky-300/20 bg-sky-500/[0.10] hover:border-sky-300/35 hover:bg-sky-500/[0.14]"
                         : entry.status === "error" || entry.connectionState === "error"
                           ? entryIsActive
-                            ? "border-rose-300/40 bg-rose-500/12 shadow-[0_10px_24px_rgba(244,63,94,0.14)]"
-                            : "border-rose-300/20 bg-rose-500/[0.08] hover:border-rose-300/35 hover:bg-rose-500/[0.12]"
+                            ? "border-rose-300/45 bg-rose-500/20 shadow-[0_10px_24px_rgba(244,63,94,0.16)]"
+                            : "border-rose-300/20 bg-rose-500/[0.10] hover:border-rose-300/35 hover:bg-rose-500/[0.14]"
                           : entryIsActive
-                            ? "border-emerald-300/40 bg-emerald-500/12 shadow-[0_10px_24px_rgba(16,185,129,0.14)]"
-                            : "border-emerald-300/20 bg-emerald-500/[0.08] hover:border-emerald-300/35 hover:bg-emerald-500/[0.12]"
+                            ? "border-emerald-300/45 bg-emerald-500/20 shadow-[0_10px_24px_rgba(16,185,129,0.16)]"
+                            : "border-emerald-300/20 bg-emerald-500/[0.10] hover:border-emerald-300/35 hover:bg-emerald-500/[0.14]"
 
                       return (
                         <div
@@ -1602,7 +1655,11 @@ export default function ApplicationsTab({
                             className="flex h-11 items-center gap-2 px-3.5 pr-9 text-left"
                           >
                             <span className={`h-2 w-2 rounded-full ${entryStateMeta.dotClass}`} />
-                            <span className="max-w-[150px] truncate text-[12px] font-semibold text-white">
+                            <span
+                              className={`max-w-[150px] truncate text-[12px] font-semibold ${
+                                entryIsActive ? entryStateMeta.metaClass : "text-white"
+                              }`}
+                            >
                               {entry.label}
                             </span>
                           </button>
@@ -1633,7 +1690,7 @@ export default function ApplicationsTab({
                 </div>
               </div>
 
-              <section className="overflow-hidden bg-white/[0.03]">
+              <section className="overflow-hidden bg-black/10">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-rose-300/80" />
@@ -1668,7 +1725,7 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/25 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                   {!canViewApplicationLogs ? (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Servis Konsolu log goruntuleme yetkiniz yok.
