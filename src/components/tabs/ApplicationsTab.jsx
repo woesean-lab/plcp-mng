@@ -1425,9 +1425,6 @@ export default function ApplicationsTab({
       : runningRunCount > 0
         ? `${runningRunCount} calisiyor`
         : "Hazir"
-  const selectedBackendLabel = selectedApplication
-    ? getBackendLabelForDisplay(selectedApplication.backendLabel)
-    : "Backend secilmedi"
   const runActionDisabled =
     !canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl
   const consoleTitle = activeRunSession
@@ -1492,95 +1489,65 @@ export default function ApplicationsTab({
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 sm:p-5">
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
-                <div className="min-w-0">
-                  <label className="block">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Servis
-                    </span>
-                    <select
-                      value={selectedApplicationId}
-                      onChange={(event) => setSelectedApplicationId(event.target.value)}
-                      disabled={!hasApplications}
-                      className={`${terminalFieldClass} mt-2 h-11 appearance-none pr-10`}
-                    >
-                      {!hasApplications ? (
-                        <option value="">Kayitli servis yok</option>
-                      ) : (
-                        runDropdownApplications.map((entry) => (
-                          <option key={`run-app-${entry.id}`} value={entry.id}>
-                            {entry.name}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  </label>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                        selectedApplication?.isActive
-                          ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
-                          : "border-rose-300/30 bg-rose-500/10 text-rose-100"
-                      }`}
-                    >
-                      {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
-                    </span>
-                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-slate-300">
-                      {selectedBackendLabel}
-                    </span>
-                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-slate-400">
-                      {connectionLabel}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 rounded-xl border border-white/10 bg-ink-950/25 px-3 py-3">
-                    <p className="line-clamp-2 text-sm leading-6 text-slate-300">
-                      {selectedApplication?.about || "Servis secildiginde kisa aciklama burada gorunur."}
-                    </p>
-                  </div>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <div className="min-w-0 flex-1">
+                  <select
+                    value={selectedApplicationId}
+                    onChange={(event) => setSelectedApplicationId(event.target.value)}
+                    disabled={!hasApplications}
+                    className={`${terminalFieldClass} h-11 appearance-none pr-10`}
+                  >
+                    {!hasApplications ? (
+                      <option value="">Kayitli servis yok</option>
+                    ) : (
+                      runDropdownApplications.map((entry) => (
+                        <option key={`run-app-${entry.id}`} value={entry.id}>
+                          {entry.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-ink-950/30 px-3 py-3">
-                  <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400">
-                    <span>{runningRunCount} canli</span>
-                    <span>{historyLogs.length} kayit</span>
-                  </div>
-
-                  <div className="mt-3 space-y-2">
-                    <button
-                      type="button"
-                      onClick={handleRun}
-                      disabled={runActionDisabled}
-                      className={`${terminalRunButtonClass} h-10 w-full gap-2 text-[11px]`}
-                    >
-                      <PlayIcon className="h-4 w-4" aria-hidden="true" />
-                      Servisi calistir
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCancelRun(activeRunId)}
-                      disabled={!canCancelActiveRun}
-                      className={`${terminalButtonNeutralClass} h-10 w-full gap-2 text-[11px]`}
-                    >
-                      <PauseIcon className="h-4 w-4" aria-hidden="true" />
-                      Aktif islemi durdur
-                    </button>
-                  </div>
-
-                  <div className="mt-3 space-y-2 text-[11px] text-slate-400">
-                    {!hasWsUrl && (
-                      <div className="rounded-lg border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-amber-100">
-                        websocket adresi kayitli degil
-                      </div>
-                    )}
-                    {selectedApplication && !selectedApplication.isActive && (
-                      <div className="rounded-lg border border-rose-300/20 bg-rose-500/10 px-3 py-2 text-rose-100">
-                        secili servis kapali, once aktif edilmesi gerekir
-                      </div>
-                    )}
-                  </div>
+                <div className="grid grid-cols-2 gap-2 lg:w-[264px]">
+                  <button
+                    type="button"
+                    onClick={handleRun}
+                    disabled={runActionDisabled}
+                    className={`${terminalRunButtonClass} h-11 w-full gap-2 text-[11px]`}
+                  >
+                    <PlayIcon className="h-4 w-4" aria-hidden="true" />
+                    Calistir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCancelRun(activeRunId)}
+                    disabled={!canCancelActiveRun}
+                    className={`${terminalButtonNeutralClass} h-11 w-full gap-2 text-[11px]`}
+                  >
+                    <PauseIcon className="h-4 w-4" aria-hidden="true" />
+                    Durdur
+                  </button>
                 </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                    selectedApplication?.isActive
+                      ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
+                      : "border-rose-300/30 bg-rose-500/10 text-rose-100"
+                  }`}
+                >
+                  {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
+                </span>
+                <span className="text-[11px] text-slate-400">{connectionLabel}</span>
+                {!hasWsUrl && (
+                  <span className="text-[11px] text-amber-200">websocket adresi kayitli degil</span>
+                )}
+                {selectedApplication && !selectedApplication.isActive && (
+                  <span className="text-[11px] text-rose-200">secili servis kapali</span>
+                )}
               </div>
 
               <div className="p-3 sm:p-4">
