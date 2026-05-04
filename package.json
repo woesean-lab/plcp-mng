@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:api": "node --watch server/index.js",
     "build": "vite build",
-    "start": "node scripts/playwright-install.mjs && node server/index.js",
+    "start": "node server/index.js",
     "products:sync": "node scripts/eldorado-scrape.mjs",
     "eldorado:dedupe": "node scripts/eldorado-dedupe.mjs",
     "db:generate": "prisma generate",
