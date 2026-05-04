@@ -1495,7 +1495,7 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-950/60 shadow-card">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 shadow-card">
               <div className="border-b border-white/10 px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
@@ -1511,13 +1511,13 @@ export default function ApplicationsTab({
                     <span
                       className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
                         selectedApplication?.isActive
-                          ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
-                          : "border-rose-300/30 bg-rose-500/10 text-rose-100"
+                          ? "border-emerald-300/20 bg-emerald-500/8 text-emerald-200"
+                          : "border-rose-300/20 bg-rose-500/8 text-rose-200"
                       }`}
                     >
                       {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
                     </span>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                    <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                       {connectionLabel}
                     </span>
                   </div>
@@ -1560,7 +1560,7 @@ export default function ApplicationsTab({
                                 }}
                                 className={`flex w-full flex-col rounded-lg px-3 py-2.5 text-left transition ${
                                   isSelected
-                                    ? "bg-accent-500/12 text-accent-50"
+                                    ? "border border-white/10 bg-white/[0.06] text-white"
                                     : "text-slate-200 hover:bg-white/[0.05] hover:text-white"
                                 }`}
                               >
@@ -1591,19 +1591,19 @@ export default function ApplicationsTab({
 
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
                   {!hasWsUrl && (
-                    <span className="rounded-full border border-amber-300/20 bg-amber-500/10 px-2.5 py-1 text-amber-100">
+                    <span className="rounded-full border border-amber-300/20 bg-amber-500/8 px-2.5 py-1 text-amber-200">
                       websocket adresi kayitli degil
                     </span>
                   )}
                   {selectedApplication && !selectedApplication.isActive && (
-                    <span className="rounded-full border border-rose-300/20 bg-rose-500/10 px-2.5 py-1 text-rose-100">
+                    <span className="rounded-full border border-rose-300/20 bg-rose-500/8 px-2.5 py-1 text-rose-200">
                       secili servis kapali
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="border-b border-white/10 bg-black/10 px-4 py-3 sm:px-5">
+              <div className="border-b border-white/10 bg-black/15 px-4 py-3 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">
                     Oturumlar
@@ -1621,7 +1621,7 @@ export default function ApplicationsTab({
                       className={`inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
                         activeRunSession
                           ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
-                          : "border-accent-400/45 bg-accent-500/18 text-accent-50 shadow-[0_10px_24px_rgba(71,85,105,0.16)]"
+                          : "border-accent-400/25 bg-accent-500/8 text-slate-100 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
                       }`}
                     >
                       <span className="h-2 w-2 rounded-full bg-slate-500" />
@@ -1634,15 +1634,15 @@ export default function ApplicationsTab({
                       const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
                       const entryToneClass = entry.status === "success"
                         ? entryIsActive
-                          ? "border-sky-300/45 bg-sky-500/20 shadow-[0_10px_24px_rgba(56,189,248,0.16)]"
-                          : "border-sky-300/20 bg-sky-500/[0.10] hover:border-sky-300/35 hover:bg-sky-500/[0.14]"
+                          ? "border-sky-300/25 bg-sky-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+                          : "border-sky-300/15 bg-sky-500/[0.06] hover:border-sky-300/25 hover:bg-sky-500/[0.10]"
                         : entry.status === "error" || entry.connectionState === "error"
                           ? entryIsActive
-                            ? "border-rose-300/45 bg-rose-500/20 shadow-[0_10px_24px_rgba(244,63,94,0.16)]"
-                            : "border-rose-300/20 bg-rose-500/[0.10] hover:border-rose-300/35 hover:bg-rose-500/[0.14]"
+                            ? "border-rose-300/25 bg-rose-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+                            : "border-rose-300/15 bg-rose-500/[0.06] hover:border-rose-300/25 hover:bg-rose-500/[0.10]"
                           : entryIsActive
-                            ? "border-emerald-300/45 bg-emerald-500/20 shadow-[0_10px_24px_rgba(16,185,129,0.16)]"
-                            : "border-emerald-300/20 bg-emerald-500/[0.10] hover:border-emerald-300/35 hover:bg-emerald-500/[0.14]"
+                            ? "border-emerald-300/25 bg-emerald-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+                            : "border-emerald-300/15 bg-emerald-500/[0.06] hover:border-emerald-300/25 hover:bg-emerald-500/[0.10]"
 
                       return (
                         <div
@@ -1657,7 +1657,7 @@ export default function ApplicationsTab({
                             <span className={`h-2 w-2 rounded-full ${entryStateMeta.dotClass}`} />
                             <span
                               className={`max-w-[150px] truncate text-[12px] font-semibold ${
-                                entryIsActive ? entryStateMeta.metaClass : "text-white"
+                                entryIsActive ? "text-slate-100" : "text-white"
                               }`}
                             >
                               {entry.label}
@@ -1690,7 +1690,7 @@ export default function ApplicationsTab({
                 </div>
               </div>
 
-              <section className="overflow-hidden bg-black/10">
+              <section className="overflow-hidden bg-black/15">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-rose-300/80" />
@@ -1725,7 +1725,7 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/45 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                   {!canViewApplicationLogs ? (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Servis Konsolu log goruntuleme yetkiniz yok.
