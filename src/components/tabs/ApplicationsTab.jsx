@@ -1437,7 +1437,7 @@ export default function ApplicationsTab({
   const consoleTitle = activeRunSession
     ? activeRunSession.label
     : selectedApplication?.name
-      ? `${selectedApplication.name} gecmisi`
+      ? `${selectedApplication.name} loglari`
       : "Servis loglari"
   const consoleSubtitle = activeRunSession
     ? "Canli oturum akisi ve kullanici girdileri"
@@ -1625,7 +1625,7 @@ export default function ApplicationsTab({
                       }`}
                     >
                       <span className="h-2 w-2 rounded-full bg-slate-500" />
-                      <span className="text-[12px] font-semibold">Gecmis</span>
+                      <span className="text-[12px] font-semibold">Log</span>
                     </button>
 
                     {runSessions.map((entry) => {
@@ -1707,7 +1707,7 @@ export default function ApplicationsTab({
                   </div>
                   <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                     <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300 sm:inline-flex">
-                      {activeRunSession ? "canli oturum" : "gecmis akis"}
+                      {activeRunSession ? "canli oturum" : "log akis"}
                     </span>
                     <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                       {consoleLogs.length} satir
