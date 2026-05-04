@@ -169,32 +169,6 @@ const getConsoleStatusMeta = (status) => {
   }
 }
 
-const formatRunCardTimestamp = (value) => {
-  const normalized = Number(value ?? 0)
-  if (!Number.isFinite(normalized) || normalized <= 0) return "--"
-  return new Date(normalized).toLocaleString("tr-TR", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
-const formatRunCardDuration = (startedAtMs, endedAtMs) => {
-  const started = Number(startedAtMs ?? 0)
-  if (!Number.isFinite(started) || started <= 0) return "--"
-  const end = Number(endedAtMs ?? 0)
-  const safeEnd = Number.isFinite(end) && end > started ? end : Date.now()
-  const totalSeconds = Math.max(0, Math.floor((safeEnd - started) / 1000))
-  if (totalSeconds < 60) return `${totalSeconds} sn`
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  if (minutes < 60) return `${minutes} dk ${seconds} sn`
-  const hours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
-  return `${hours} sa ${remainingMinutes} dk`
-}
-
 const getRunSessionStateMeta = (status, connectionState) => {
   const normalizedStatus = String(status ?? "").trim().toLowerCase()
   const normalizedConnection = String(connectionState ?? "").trim().toLowerCase()
@@ -1427,14 +1401,6 @@ export default function ApplicationsTab({
         : "Hazir"
   const runActionDisabled =
     !canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl
-  const consoleTitle = activeRunSession
-    ? activeRunSession.label
-    : selectedApplication?.name
-      ? `${selectedApplication.name} gecmisi`
-      : "Servis loglari"
-  const consoleSubtitle = activeRunSession
-    ? "Canli oturum akisi ve kullanici girdileri"
-    : "Secili servisin kayitli log akisi"
   const terminalFieldClass =
     "w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-[13px] text-slate-100 transition focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonBaseClass =
@@ -1552,102 +1518,56 @@ export default function ApplicationsTab({
 
               <div className="p-3 sm:p-4">
                 <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">Oturum akisi</p>
-                      <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
-                        {consoleTitle}
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-500">{consoleSubtitle}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-slate-200">
-                        Oturum: {runSessions.length}
-                      </span>
-                      <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-slate-200">
-                        Konsol: {consoleLogs.length}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">
+                      Oturumlar
+                    </p>
+                    <span className="text-[11px] text-slate-500">{runSessions.length} acik</span>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-ink-950/25 p-2">
+                  <div className="rounded-2xl border border-white/10 bg-ink-950/20 p-2">
                     <div className="no-scrollbar overflow-x-auto">
-                    <div className="grid min-w-max grid-flow-col auto-cols-[minmax(150px,172px)] gap-2">
+                    <div className="flex min-w-max items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                        className={`rounded-xl border px-3 py-2 text-left transition ${
+                        className={`inline-flex h-11 items-center gap-2 rounded-xl border px-3 text-left transition ${
                           activeRunSession
                             ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
-                            : "border-accent-400/40 bg-accent-500/10 text-accent-50 shadow-[0_12px_30px_rgba(71,85,105,0.14)]"
+                            : "border-accent-400/40 bg-accent-500/10 text-accent-50 shadow-[0_10px_24px_rgba(71,85,105,0.14)]"
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                              Servis loglari
-                            </p>
-                            <p className="mt-1 truncate text-[12px] font-semibold text-white">
-                              {selectedApplication?.name || "Secili servis yok"}
-                            </p>
-                          </div>
-                          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
-                            {historyLogs.length}
-                          </span>
-                        </div>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400">
-                          <span>{historyLogs.length} kayit</span>
-                          <span className="text-slate-600">/</span>
-                          <span>{runningRunCount} canli</span>
-                        </div>
+                        <span className="h-2 w-2 rounded-full bg-slate-500" />
+                        <span className="text-[12px] font-semibold">Gecmis</span>
                       </button>
 
                       {runSessions.map((entry) => {
                         const entryIsActive = activeConsoleTabId === entry.id
                         const entryIsLive = isRunLive(entry.status)
                         const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
-                        const startedLabel = formatRunCardTimestamp(entry.startedAtMs)
-                        const durationLabel = formatRunCardDuration(entry.startedAtMs, entry.endedAtMs)
 
                         return (
                           <div
                             key={`run-tab-${entry.id}`}
-                            className={`relative overflow-hidden rounded-xl border transition ${
+                            className={`relative rounded-xl border transition ${
                               entryIsActive
-                                ? "border-accent-400/40 bg-accent-500/10 shadow-[0_14px_30px_rgba(56,189,248,0.10)]"
+                                ? "border-accent-400/40 bg-accent-500/10 shadow-[0_10px_24px_rgba(56,189,248,0.10)]"
                                 : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
                             }`}
                           >
                             <button
                               type="button"
                               onClick={() => setActiveConsoleTabId(entry.id)}
-                              className="w-full px-3 py-2 pr-9 text-left"
+                              className="flex h-11 items-center gap-2 px-3 pr-9 text-left"
                             >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                    Oturum {entry.serial > 0 ? `#${entry.serial}` : ""}
-                                  </p>
-                                  <p className="mt-1 truncate text-[12px] font-semibold text-white">{entry.label}</p>
-                                </div>
-                              </div>
-
-                              <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                                <span
-                                  className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${entryStateMeta.badgeClass}`}
-                                >
-                                  {entryStateMeta.label}
-                                </span>
-                                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                  {getBackendLabelForDisplay(entry.backendLabel)}
-                                </span>
-                              </div>
-
-                              <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] text-slate-400">
-                                <span>{startedLabel}</span>
-                                <span className="text-slate-600">/</span>
-                                <span>{durationLabel}</span>
-                              </div>
+                              <span
+                                className={`h-2 w-2 rounded-full ${
+                                  entryStateMeta.dotClass
+                                }`}
+                              />
+                              <span className="max-w-[150px] truncate text-[12px] font-semibold text-white">
+                                {entry.label}
+                              </span>
                             </button>
 
                             {entryIsLive ? (
@@ -1679,20 +1599,11 @@ export default function ApplicationsTab({
                   <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-                        <span className="h-2 w-2 rounded-full bg-amber-300/80" />
-                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-                        <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                          Komut ciktilari
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                          Konsol
                         </span>
                       </div>
-                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-                        <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300 sm:inline-flex">
-                          {activeRunSession ? "canli oturum" : "gecmis akis"}
-                        </span>
-                        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                          {consoleLogs.length} satir
-                        </span>
+                      <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
                         {canClearApplicationLogs && (
                           <button
                             type="button"
