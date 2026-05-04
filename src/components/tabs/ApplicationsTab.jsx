@@ -1442,25 +1442,23 @@ export default function ApplicationsTab({
   const consoleSubtitle = activeRunSession
     ? "Canli oturum akisi ve kullanici girdileri"
     : "Secili servisin kayitli log akisi"
-  const terminalFieldClass =
-    "w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-[13px] text-slate-100 transition focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonBaseClass =
     "inline-flex h-9 items-center justify-center rounded-lg border px-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
-    `${terminalButtonBaseClass} border-emerald-300/40 bg-emerald-500/15 text-emerald-50 shadow-[0_16px_36px_rgba(16,185,129,0.14)] hover:border-emerald-300/60 hover:bg-emerald-500/25 hover:shadow-[0_20px_44px_rgba(16,185,129,0.2)] focus:ring-emerald-500/30`
+    `${terminalButtonBaseClass} border-emerald-300/55 bg-emerald-500/12 text-emerald-50 shadow-[0_10px_24px_rgba(16,185,129,0.14)] hover:border-emerald-300/70 hover:bg-emerald-500/18 focus:ring-emerald-500/25`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
-  const runSelectorButtonClass = `flex w-full min-h-11 items-start justify-between gap-3 rounded-lg border px-3 py-3 text-left text-[13px] text-slate-100 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 ${
+  const runSelectorButtonClass = `flex h-11 w-full items-center justify-between gap-3 rounded-xl border px-3.5 text-left text-[13px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:outline-none focus:ring-2 focus:ring-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 ${
     isRunApplicationMenuOpen
-      ? "border-emerald-300/40 bg-ink-950 shadow-[0_18px_38px_rgba(2,6,23,0.34)]"
-      : "border-white/12 bg-ink-950 shadow-[0_12px_28px_rgba(2,6,23,0.22)] hover:border-emerald-300/20 hover:bg-ink-950"
+      ? "border-sky-300/35 bg-sky-500/[0.08] text-white"
+      : "border-white/10 bg-white/[0.04] hover:border-white/15 hover:bg-white/[0.06]"
   }`
   const historyConsoleTabClass = `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
     activeRunSession
-      ? "border-sky-300/20 bg-sky-500/[0.09] text-sky-100 hover:border-sky-300/35 hover:bg-sky-500/[0.14]"
-      : "border-sky-300/30 bg-sky-500/15 text-white shadow-[0_10px_24px_rgba(56,189,248,0.18)]"
+      ? "border-sky-300/25 bg-sky-500/[0.12] text-sky-100 hover:border-sky-300/40 hover:bg-sky-500/[0.16]"
+      : "border-sky-300/40 bg-sky-500/20 text-white shadow-[0_10px_24px_rgba(56,189,248,0.18)]"
   }`
 
   if (isTabLoading) {
@@ -1492,7 +1490,7 @@ export default function ApplicationsTab({
       </header>
 
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
-        <section className={`order-1 min-w-0 ${panelClass} bg-ink-800/60 lg:col-span-2`}>
+        <section className={`order-1 min-w-0 ${panelClass} bg-[#0b0f19]/60 lg:col-span-2`}>
           <div className="space-y-3">
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
@@ -1505,8 +1503,8 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/70 shadow-card">
-              <div className="border-b border-white/10 px-4 py-4 sm:px-5">
+            <div className="rounded-2xl border border-white/10 bg-ink-900/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <div className="rounded-t-2xl border-b border-white/10 bg-white/[0.02] px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300/80">
@@ -1533,7 +1531,7 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+                <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_152px] lg:items-center">
                   <div ref={runApplicationMenuRef} className="relative min-w-0 flex-1">
                     <button
                       type="button"
@@ -1544,24 +1542,19 @@ export default function ApplicationsTab({
                       disabled={!hasApplications}
                       className={runSelectorButtonClass}
                     >
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px] font-semibold text-slate-100">
-                          {selectedApplication?.name || "Kayitli servis yok"}
-                        </p>
-                        <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-slate-400">
-                          {selectedApplication?.about || "Calistirmak icin bir servis sec."}
-                        </p>
-                      </div>
+                      <span className="truncate text-[13px] font-semibold text-slate-100">
+                        {selectedApplication?.name || "Kayitli servis yok"}
+                      </span>
                       <ChevronUpDownIcon
-                        className={`mt-0.5 h-5 w-5 flex-none transition ${
-                          isRunApplicationMenuOpen ? "text-emerald-200" : "text-slate-500"
+                        className={`h-5 w-5 flex-none transition ${
+                          isRunApplicationMenuOpen ? "text-sky-200" : "text-slate-500"
                         }`}
                         aria-hidden="true"
                       />
                     </button>
 
                     {isRunApplicationMenuOpen && hasApplications && (
-                      <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-white/12 bg-ink-950/95 shadow-[0_24px_52px_rgba(2,6,23,0.54)] backdrop-blur-xl">
+                      <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/12 bg-[#101827] shadow-[0_24px_52px_rgba(2,6,23,0.58)]">
                         <div className="max-h-72 overflow-y-auto p-2">
                           {runDropdownApplications.map((entry) => {
                             const isSelected = entry.id === selectedApplicationId
@@ -1575,14 +1568,14 @@ export default function ApplicationsTab({
                                 }}
                                 className={`group flex w-full flex-col rounded-lg border px-3 py-2.5 text-left transition ${
                                   isSelected
-                                    ? "border-emerald-300/25 bg-emerald-500/[0.14] text-white shadow-[0_12px_28px_rgba(16,185,129,0.12)]"
-                                    : "border-transparent bg-ink-900/90 text-slate-200 hover:border-white/10 hover:bg-ink-800 hover:text-white"
+                                    ? "border-sky-300/20 bg-sky-500/[0.14] text-white shadow-[0_10px_22px_rgba(56,189,248,0.12)]"
+                                    : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
                                 }`}
                               >
                                 <span className="truncate text-[13px] font-semibold">{entry.name}</span>
                                 <span
                                   className={`mt-1 line-clamp-2 text-[11px] leading-5 ${
-                                    isSelected ? "text-emerald-50/75" : "text-slate-400 group-hover:text-slate-300"
+                                    isSelected ? "text-sky-50/75" : "text-slate-400 group-hover:text-slate-300"
                                   }`}
                                 >
                                   {entry.about}
@@ -1595,7 +1588,7 @@ export default function ApplicationsTab({
                     )}
                   </div>
 
-                  <div className="lg:w-[164px]">
+                  <div className="w-full">
                     <button
                       type="button"
                       onClick={handleRun}
@@ -1607,6 +1600,10 @@ export default function ApplicationsTab({
                     </button>
                   </div>
                 </div>
+
+                <p className="mt-2 text-[11px] text-slate-400">
+                  {selectedApplication?.about || "Calistirmak icin bir servis sec."}
+                </p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
                   {!hasWsUrl && (
@@ -1622,7 +1619,7 @@ export default function ApplicationsTab({
                 </div>
               </div>
 
-              <div className="border-b border-white/10 bg-black/15 px-4 py-3 sm:px-5">
+              <div className="border-b border-white/10 bg-white/[0.02] px-4 py-3 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">
                     Oturumlar
@@ -1705,7 +1702,7 @@ export default function ApplicationsTab({
                 </div>
               </div>
 
-              <section className="overflow-hidden bg-black/15">
+              <section className="overflow-hidden rounded-b-2xl bg-white/[0.02]">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-rose-300/80" />
@@ -1740,7 +1737,7 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/45 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/30 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                   {!canViewApplicationLogs ? (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Servis Konsolu log goruntuleme yetkiniz yok.
