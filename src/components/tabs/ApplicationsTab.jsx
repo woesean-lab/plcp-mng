@@ -144,8 +144,8 @@ const getConsoleStatusMeta = (status) => {
   if (normalized === "success") {
     return {
       code: "OK",
-      dotClass: "bg-sky-300",
-      textClass: "text-sky-300",
+      dotClass: "bg-emerald-300",
+      textClass: "text-emerald-300",
     }
   }
   if (normalized === "error") {
@@ -164,8 +164,8 @@ const getConsoleStatusMeta = (status) => {
   }
   return {
     code: "RUN",
-    dotClass: "bg-emerald-300",
-    textClass: "text-emerald-300",
+    dotClass: "bg-amber-300",
+    textClass: "text-amber-300",
   }
 }
 
@@ -175,9 +175,8 @@ const getRunSessionStateMeta = (status, connectionState) => {
   if (normalizedStatus === "success") {
     return {
       label: "Tamamlandi",
-      badgeClass: "border-sky-400/30 bg-sky-500/12 text-sky-100",
-      metaClass: "text-sky-200",
-      dotClass: "bg-sky-300",
+      badgeClass: "border-emerald-400/30 bg-emerald-500/12 text-emerald-100",
+      metaClass: "text-emerald-200",
     }
   }
   if (normalizedStatus === "error" || normalizedConnection === "error") {
@@ -185,7 +184,6 @@ const getRunSessionStateMeta = (status, connectionState) => {
       label: normalizedConnection === "error" ? "Baglanti hatasi" : "Hata",
       badgeClass: "border-rose-400/30 bg-rose-500/12 text-rose-100",
       metaClass: "text-rose-200",
-      dotClass: "bg-rose-300",
     }
   }
   if (normalizedStatus === "connecting" || normalizedConnection === "connecting") {
@@ -193,14 +191,12 @@ const getRunSessionStateMeta = (status, connectionState) => {
       label: "Baglaniyor",
       badgeClass: "border-sky-400/30 bg-sky-500/12 text-sky-100",
       metaClass: "text-sky-200",
-      dotClass: "bg-sky-300",
     }
   }
   return {
     label: "Calisiyor",
-    badgeClass: "border-emerald-400/30 bg-emerald-500/12 text-emerald-100",
-    metaClass: "text-emerald-200",
-    dotClass: "bg-emerald-300",
+    badgeClass: "border-amber-400/30 bg-amber-500/12 text-amber-100",
+    metaClass: "text-amber-200",
   }
 }
 
@@ -1454,7 +1450,7 @@ export default function ApplicationsTab({
 
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-3">
         <section className={`order-1 min-w-0 ${panelClass} bg-ink-800/60 lg:col-span-2`}>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
@@ -1466,356 +1462,337 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(2,6,23,0.76))] shadow-[0_24px_80px_rgba(2,6,23,0.22)]">
-              <div className="border-b border-white/10 px-4 py-3 sm:px-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300/80">
-                      Secili servis
-                    </p>
-                    <p className="mt-1 truncate text-sm font-semibold text-white">
-                      {selectedApplication?.name || "Servis bekleniyor"}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                        selectedApplication?.isActive
-                          ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
-                          : "border-rose-300/30 bg-rose-500/10 text-rose-100"
-                      }`}
-                    >
-                      {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
-                    </span>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                      {connectionLabel}
-                    </span>
-                  </div>
+            <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-4 sm:p-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <div className="min-w-0 flex-1">
+                  <select
+                    value={selectedApplicationId}
+                    onChange={(event) => setSelectedApplicationId(event.target.value)}
+                    disabled={!hasApplications}
+                    className={`${terminalFieldClass} h-11 appearance-none pr-10`}
+                  >
+                    {!hasApplications ? (
+                      <option value="">Kayitli servis yok</option>
+                    ) : (
+                      runDropdownApplications.map((entry) => (
+                        <option key={`run-app-${entry.id}`} value={entry.id}>
+                          {entry.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 lg:w-[264px]">
+                  <button
+                    type="button"
+                    onClick={handleRun}
+                    disabled={runActionDisabled}
+                    className={`${terminalRunButtonClass} h-11 w-full gap-2 text-[11px]`}
+                  >
+                    <PlayIcon className="h-4 w-4" aria-hidden="true" />
+                    Calistir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCancelRun(activeRunId)}
+                    disabled={!canCancelActiveRun}
+                    className={`${terminalButtonNeutralClass} h-11 w-full gap-2 text-[11px]`}
+                  >
+                    <PauseIcon className="h-4 w-4" aria-hidden="true" />
+                    Durdur
+                  </button>
                 </div>
               </div>
 
-              <div className="p-4 sm:p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                  <div className="min-w-0 flex-1">
-                    <select
-                      value={selectedApplicationId}
-                      onChange={(event) => setSelectedApplicationId(event.target.value)}
-                      disabled={!hasApplications}
-                      className={`${terminalFieldClass} h-11 appearance-none pr-10`}
-                    >
-                      {!hasApplications ? (
-                        <option value="">Kayitli servis yok</option>
-                      ) : (
-                        runDropdownApplications.map((entry) => (
-                          <option key={`run-app-${entry.id}`} value={entry.id}>
-                            {entry.name}
-                          </option>
-                        ))
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                    selectedApplication?.isActive
+                      ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
+                      : "border-rose-300/30 bg-rose-500/10 text-rose-100"
+                  }`}
+                >
+                  {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
+                </span>
+                <span className="text-[11px] text-slate-400">{connectionLabel}</span>
+                {!hasWsUrl && (
+                  <span className="text-[11px] text-amber-200">websocket adresi kayitli degil</span>
+                )}
+                {selectedApplication && !selectedApplication.isActive && (
+                  <span className="text-[11px] text-rose-200">secili servis kapali</span>
+                )}
+              </div>
+
+              <div className="p-3 sm:p-4">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">
+                      Oturumlar
+                    </p>
+                    <span className="text-[11px] text-slate-500">{runSessions.length} acik</span>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-ink-950/20 p-2">
+                    <div className="no-scrollbar overflow-x-auto">
+                    <div className="flex min-w-max items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
+                        className={`inline-flex h-11 items-center gap-2 rounded-xl border px-3 text-left transition ${
+                          activeRunSession
+                            ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
+                            : "border-accent-400/40 bg-accent-500/10 text-accent-50 shadow-[0_10px_24px_rgba(71,85,105,0.14)]"
+                        }`}
+                      >
+                        <span className="h-2 w-2 rounded-full bg-slate-500" />
+                        <span className="text-[12px] font-semibold">Gecmis</span>
+                      </button>
+
+                      {runSessions.map((entry) => {
+                        const entryIsActive = activeConsoleTabId === entry.id
+                        const entryIsLive = isRunLive(entry.status)
+                        const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
+                        const entryToneClass = entry.status === "success"
+                          ? entryIsActive
+                            ? "border-emerald-300/40 bg-emerald-500/12 shadow-[0_10px_24px_rgba(16,185,129,0.14)]"
+                            : "border-emerald-300/20 bg-emerald-500/[0.08] hover:border-emerald-300/35 hover:bg-emerald-500/[0.12]"
+                          : entry.status === "error" || entry.connectionState === "error"
+                            ? entryIsActive
+                              ? "border-rose-300/40 bg-rose-500/12 shadow-[0_10px_24px_rgba(244,63,94,0.14)]"
+                              : "border-rose-300/20 bg-rose-500/[0.08] hover:border-rose-300/35 hover:bg-rose-500/[0.12]"
+                            : entryIsActive
+                              ? "border-amber-300/40 bg-amber-500/12 shadow-[0_10px_24px_rgba(245,158,11,0.14)]"
+                              : "border-amber-300/20 bg-amber-500/[0.08] hover:border-amber-300/35 hover:bg-amber-500/[0.12]"
+
+                        return (
+                          <div
+                            key={`run-tab-${entry.id}`}
+                            className={`relative rounded-xl border transition ${entryToneClass}`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setActiveConsoleTabId(entry.id)}
+                              className="flex h-11 items-center gap-2 px-3 pr-9 text-left"
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full ${
+                                  entryStateMeta.dotClass
+                                }`}
+                              />
+                              <span className="max-w-[150px] truncate text-[12px] font-semibold text-white">
+                                {entry.label}
+                              </span>
+                            </button>
+
+                            {entryIsLive ? (
+                              <button
+                                type="button"
+                                onClick={() => handleCancelRun(entry.id)}
+                                className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-amber-300/40 hover:bg-amber-500/15 hover:text-amber-100"
+                                aria-label={`${entry.label} islemini iptal et`}
+                              >
+                                <PauseIcon className="h-3 w-3" aria-hidden="true" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleCloseRunTab(entry.id)}
+                                className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[10px] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                                aria-label={`${entry.label} sekmesini kapat`}
+                              >
+                                x
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  </div>
+
+                  <section className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/65">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                        <span className="h-2 w-2 rounded-full bg-amber-300/80" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                        <div className="ml-1">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                            Komut ciktilari
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            {consoleTitle}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                        <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300 sm:inline-flex">
+                          {activeRunSession ? "canli oturum" : "gecmis akis"}
+                        </span>
+                        <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+                          {consoleLogs.length} satir
+                        </span>
+                        {canClearApplicationLogs && (
+                          <button
+                            type="button"
+                            onClick={handleClearLogs}
+                            disabled={!canViewApplicationLogs || consoleLogs.length === 0}
+                            className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Log temizle
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                      <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                        {!canViewApplicationLogs ? (
+                          <div className="flex h-full items-center justify-center text-slate-500">
+                            Servis Konsolu log goruntuleme yetkiniz yok.
+                          </div>
+                        ) : !activeRunSession && isLogsLoading ? (
+                          <div className="flex h-full items-center justify-center text-slate-500">
+                            Loglar yukleniyor...
+                          </div>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {!activeRunPrompt && (
+                              <p className="mb-2 text-[11px] text-slate-500">{consoleSubtitle}</p>
+                            )}
+                            {activeRunPrompt && isActiveRunLive && (
+                            <div className="mb-2 border-b border-white/10 pb-1.5">
+                              <div className="flex min-w-0 flex-col items-start gap-2 text-slate-300 sm:flex-row sm:flex-wrap sm:items-center">
+                                <span className="flex-none text-amber-300">[PROMPT]</span>
+                                <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
+                                <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                                <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
+                                {activeRunPrompt.inputType === "text" && (
+                                  <input
+                                    type="text"
+                                    value={activeRunPromptValue}
+                                    onChange={(event) => {
+                                      const targetRunId = String(activeRunId ?? "").trim()
+                                      if (!targetRunId) return
+                                      setPendingUserInputValueByRunId((prev) => ({
+                                        ...prev,
+                                        [targetRunId]: event.target.value,
+                                      }))
+                                    }}
+                                    onKeyDown={(event) => {
+                                      if (event.key === "Enter") {
+                                        event.preventDefault()
+                                        handleUserInputSubmit("", activeRunId)
+                                      }
+                                    }}
+                                    placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
+                                    className="h-7 w-full min-w-0 flex-1 border-0 border-b border-white/20 bg-transparent px-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-0 sm:min-w-[140px]"
+                                  />
+                                )}
+                              </div>
+                              {activeRunPrompt.step && (
+                                <p className="mt-1 text-[11px] text-slate-500">Adim: {activeRunPrompt.step}</p>
+                              )}
+                              {activeRunPrompt.inputType === "choice" && (
+                                <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                                  {activeRunPrompt.options.map((option) => (
+                                    <button
+                                      key={`choice-${option.value}`}
+                                      type="button"
+                                      onClick={() => handleUserInputSubmit(option.value, activeRunId)}
+                                      className={terminalPromptButtonClass}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              {activeRunPrompt.inputType === "confirm" && (
+                                <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUserInputSubmit("evet", activeRunId)}
+                                    className={terminalPromptButtonClass}
+                                  >
+                                    Evet
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUserInputSubmit("hayir", activeRunId)}
+                                    className={terminalPromptButtonClass}
+                                  >
+                                    Hayir
+                                  </button>
+                                </div>
+                              )}
+                              {activeRunPrompt.inputType === "text" && (
+                                <div className="mt-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUserInputSubmit("", activeRunId)}
+                                    className={terminalPromptButtonClass}
+                                  >
+                                    Gonder
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {visibleConsoleLogs.map((entry) => {
+                            const statusMeta = getConsoleStatusMeta(entry.status)
+                            const sanitizedMessage = sanitizeLogMessage(entry.message)
+                            const messageSegments = splitLogMessageLinks(sanitizedMessage)
+
+                            return (
+                              <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
+                                <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
+                                <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                                <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
+                                <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
+                                <span className="min-w-0 break-words text-slate-100">
+                                  {messageSegments.map((segment, index) =>
+                                    segment.type === "link" ? (
+                                      <button
+                                        key={`${entry.id}-segment-${index}`}
+                                        type="button"
+                                        onClick={() => void copyTextToClipboard(segment.value)}
+                                        className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
+                                        title="Tiklayinca kopyalanir"
+                                      >
+                                        {segment.value}
+                                      </button>
+                                    ) : (
+                                      <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
+                                    ),
+                                  )}
+                                </span>
+                              </div>
+                            )
+                          })}
+
+                          {Array.from({ length: emptyConsoleLogRows }).map((_, index) => (
+                            <div key={`console-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
+                              <span className="hidden flex-none text-slate-600 sm:inline">{commandPromptLabel}</span>
+                              <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
+                              <span className="flex-none text-slate-700">[--:--]</span>
+                              <span className="flex-none text-slate-700">--</span>
+                              <span
+                                className={`truncate text-slate-700 ${
+                                  consoleLogs.length === 0 && index === 0 ? "text-slate-500" : "opacity-0"
+                                }`}
+                              >
+                                {consoleLogs.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       )}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 lg:w-[264px]">
-                    <button
-                      type="button"
-                      onClick={handleRun}
-                      disabled={runActionDisabled}
-                      className={`${terminalRunButtonClass} h-11 w-full gap-2 text-[11px]`}
-                    >
-                      <PlayIcon className="h-4 w-4" aria-hidden="true" />
-                      Calistir
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCancelRun(activeRunId)}
-                      disabled={!canCancelActiveRun}
-                      className={`${terminalButtonNeutralClass} h-11 w-full gap-2 text-[11px]`}
-                    >
-                      <PauseIcon className="h-4 w-4" aria-hidden="true" />
-                      Durdur
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                  {!hasWsUrl && (
-                    <span className="rounded-full border border-amber-300/20 bg-amber-500/10 px-2.5 py-1 text-amber-100">
-                      websocket adresi kayitli degil
-                    </span>
-                  )}
-                  {selectedApplication && !selectedApplication.isActive && (
-                    <span className="rounded-full border border-rose-300/20 bg-rose-500/10 px-2.5 py-1 text-rose-100">
-                      secili servis kapali
-                    </span>
-                  )}
+                    </div>
+                  </section>
                 </div>
               </div>
             </div>
-
-            <section className="overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035] shadow-[0_18px_50px_rgba(2,6,23,0.18)]">
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">
-                  Oturumlar
-                </p>
-                <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  {runSessions.length} acik
-                </span>
-              </div>
-
-              <div className="px-3 py-3 sm:px-4">
-                <div className="no-scrollbar overflow-x-auto">
-                  <div className="flex min-w-max items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                      className={`inline-flex h-11 items-center gap-2 rounded-2xl border px-3.5 text-left transition ${
-                        activeRunSession
-                          ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
-                          : "border-accent-400/40 bg-accent-500/10 text-accent-50 shadow-[0_10px_24px_rgba(71,85,105,0.14)]"
-                      }`}
-                    >
-                      <span className="h-2 w-2 rounded-full bg-slate-500" />
-                      <span className="text-[12px] font-semibold">Gecmis</span>
-                    </button>
-
-                    {runSessions.map((entry) => {
-                      const entryIsActive = activeConsoleTabId === entry.id
-                      const entryIsLive = isRunLive(entry.status)
-                      const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
-                      const entryToneClass = entry.status === "success"
-                        ? entryIsActive
-                          ? "border-sky-300/40 bg-sky-500/12 shadow-[0_10px_24px_rgba(56,189,248,0.14)]"
-                          : "border-sky-300/20 bg-sky-500/[0.08] hover:border-sky-300/35 hover:bg-sky-500/[0.12]"
-                        : entry.status === "error" || entry.connectionState === "error"
-                          ? entryIsActive
-                            ? "border-rose-300/40 bg-rose-500/12 shadow-[0_10px_24px_rgba(244,63,94,0.14)]"
-                            : "border-rose-300/20 bg-rose-500/[0.08] hover:border-rose-300/35 hover:bg-rose-500/[0.12]"
-                          : entryIsActive
-                            ? "border-emerald-300/40 bg-emerald-500/12 shadow-[0_10px_24px_rgba(16,185,129,0.14)]"
-                            : "border-emerald-300/20 bg-emerald-500/[0.08] hover:border-emerald-300/35 hover:bg-emerald-500/[0.12]"
-
-                      return (
-                        <div
-                          key={`run-tab-${entry.id}`}
-                          className={`relative rounded-2xl border transition ${entryToneClass}`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setActiveConsoleTabId(entry.id)}
-                            className="flex h-11 items-center gap-2 px-3.5 pr-9 text-left"
-                          >
-                            <span className={`h-2 w-2 rounded-full ${entryStateMeta.dotClass}`} />
-                            <span className="max-w-[150px] truncate text-[12px] font-semibold text-white">
-                              {entry.label}
-                            </span>
-                          </button>
-
-                          {entryIsLive ? (
-                            <button
-                              type="button"
-                              onClick={() => handleCancelRun(entry.id)}
-                              className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-emerald-300/40 hover:bg-emerald-500/15 hover:text-emerald-100"
-                              aria-label={`${entry.label} islemini iptal et`}
-                            >
-                              <PauseIcon className="h-3 w-3" aria-hidden="true" />
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleCloseRunTab(entry.id)}
-                              className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[10px] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-                              aria-label={`${entry.label} sekmesini kapat`}
-                            >
-                              x
-                            </button>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="overflow-hidden rounded-[24px] border border-white/10 bg-ink-900/65 shadow-[0_24px_70px_rgba(2,6,23,0.2)]">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-                  <span className="h-2 w-2 rounded-full bg-sky-300/80" />
-                  <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-                  <div className="ml-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                      Komut ciktilari
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      {consoleTitle}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-                  <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300 sm:inline-flex">
-                    {activeRunSession ? "canli oturum" : "gecmis akis"}
-                  </span>
-                  <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                    {consoleLogs.length} satir
-                  </span>
-                  {canClearApplicationLogs && (
-                    <button
-                      type="button"
-                      onClick={handleClearLogs}
-                      disabled={!canViewApplicationLogs || consoleLogs.length === 0}
-                      className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Log temizle
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
-                {!canViewApplicationLogs ? (
-                  <div className="flex h-full items-center justify-center text-slate-500">
-                    Servis Konsolu log goruntuleme yetkiniz yok.
-                  </div>
-                ) : !activeRunSession && isLogsLoading ? (
-                  <div className="flex h-full items-center justify-center text-slate-500">
-                    Loglar yukleniyor...
-                  </div>
-                ) : (
-                  <div className="space-y-0.5">
-                    {!activeRunPrompt && (
-                      <p className="mb-2 text-[11px] text-slate-500">{consoleSubtitle}</p>
-                    )}
-                    {activeRunPrompt && isActiveRunLive && (
-                      <div className="mb-2 border-b border-white/10 pb-1.5">
-                        <div className="flex min-w-0 flex-col items-start gap-2 text-slate-300 sm:flex-row sm:flex-wrap sm:items-center">
-                          <span className="flex-none text-emerald-300">[PROMPT]</span>
-                          <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
-                          <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                          <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
-                          {activeRunPrompt.inputType === "text" && (
-                            <input
-                              type="text"
-                              value={activeRunPromptValue}
-                              onChange={(event) => {
-                                const targetRunId = String(activeRunId ?? "").trim()
-                                if (!targetRunId) return
-                                setPendingUserInputValueByRunId((prev) => ({
-                                  ...prev,
-                                  [targetRunId]: event.target.value,
-                                }))
-                              }}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter") {
-                                  event.preventDefault()
-                                  handleUserInputSubmit("", activeRunId)
-                                }
-                              }}
-                              placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
-                              className="h-7 w-full min-w-0 flex-1 border-0 border-b border-white/20 bg-transparent px-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-0 sm:min-w-[140px]"
-                            />
-                          )}
-                        </div>
-                        {activeRunPrompt.step && (
-                          <p className="mt-1 text-[11px] text-slate-500">Adim: {activeRunPrompt.step}</p>
-                        )}
-                        {activeRunPrompt.inputType === "choice" && (
-                          <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                            {activeRunPrompt.options.map((option) => (
-                              <button
-                                key={`choice-${option.value}`}
-                                type="button"
-                                onClick={() => handleUserInputSubmit(option.value, activeRunId)}
-                                className={terminalPromptButtonClass}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {activeRunPrompt.inputType === "confirm" && (
-                          <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                            <button
-                              type="button"
-                              onClick={() => handleUserInputSubmit("evet", activeRunId)}
-                              className={terminalPromptButtonClass}
-                            >
-                              Evet
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleUserInputSubmit("hayir", activeRunId)}
-                              className={terminalPromptButtonClass}
-                            >
-                              Hayir
-                            </button>
-                          </div>
-                        )}
-                        {activeRunPrompt.inputType === "text" && (
-                          <div className="mt-2">
-                            <button
-                              type="button"
-                              onClick={() => handleUserInputSubmit("", activeRunId)}
-                              className={terminalPromptButtonClass}
-                            >
-                              Gonder
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {visibleConsoleLogs.map((entry) => {
-                      const statusMeta = getConsoleStatusMeta(entry.status)
-                      const sanitizedMessage = sanitizeLogMessage(entry.message)
-                      const messageSegments = splitLogMessageLinks(sanitizedMessage)
-
-                      return (
-                        <div key={entry.id} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-200 sm:flex-nowrap">
-                          <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
-                          <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                          <span className={`flex-none ${statusMeta.textClass}`}>[{entry.time}]</span>
-                          <span className={`flex-none ${statusMeta.textClass}`}>{statusMeta.code}</span>
-                          <span className="min-w-0 break-words text-slate-100">
-                            {messageSegments.map((segment, index) =>
-                              segment.type === "link" ? (
-                                <button
-                                  key={`${entry.id}-segment-${index}`}
-                                  type="button"
-                                  onClick={() => void copyTextToClipboard(segment.value)}
-                                  className="inline break-all bg-transparent p-0 text-left align-baseline text-accent-200 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-accent-100 hover:decoration-accent-300 focus:outline-none"
-                                  title="Tiklayinca kopyalanir"
-                                >
-                                  {segment.value}
-                                </button>
-                              ) : (
-                                <span key={`${entry.id}-segment-${index}`}>{segment.value}</span>
-                              ),
-                            )}
-                          </span>
-                        </div>
-                      )
-                    })}
-
-                    {Array.from({ length: emptyConsoleLogRows }).map((_, index) => (
-                      <div key={`console-placeholder-${index}`} className="flex min-w-0 flex-wrap items-start gap-2 text-slate-700 sm:flex-nowrap">
-                        <span className="hidden flex-none text-slate-600 sm:inline">{commandPromptLabel}</span>
-                        <span className="flex-none text-slate-600 sm:hidden">&gt;</span>
-                        <span className="flex-none text-slate-700">[--:--]</span>
-                        <span className="flex-none text-slate-700">--</span>
-                        <span
-                          className={`truncate text-slate-700 ${
-                            consoleLogs.length === 0 && index === 0 ? "text-slate-500" : "opacity-0"
-                          }`}
-                        >
-                          {consoleLogs.length === 0 && index === 0 ? "bekleniyor..." : "placeholder"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
           </div>
         </section>
 
