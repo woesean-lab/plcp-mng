@@ -1449,9 +1449,19 @@ export default function ApplicationsTab({
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
-    `${terminalButtonBaseClass} border-emerald-300/40 bg-emerald-500/15 text-emerald-50 hover:border-emerald-300/60 hover:bg-emerald-500/25 focus:ring-emerald-500/30`
+    `${terminalButtonBaseClass} border-emerald-300/40 bg-emerald-500/15 text-emerald-50 shadow-[0_16px_36px_rgba(16,185,129,0.14)] hover:border-emerald-300/60 hover:bg-emerald-500/25 hover:shadow-[0_20px_44px_rgba(16,185,129,0.2)] focus:ring-emerald-500/30`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
+  const runSelectorButtonClass = `flex w-full min-h-11 items-start justify-between gap-3 rounded-lg border px-3 py-3 text-left text-[13px] text-slate-100 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 ${
+    isRunApplicationMenuOpen
+      ? "border-emerald-300/40 bg-ink-950 shadow-[0_18px_38px_rgba(2,6,23,0.34)]"
+      : "border-white/12 bg-ink-950 shadow-[0_12px_28px_rgba(2,6,23,0.22)] hover:border-emerald-300/20 hover:bg-ink-950"
+  }`
+  const historyConsoleTabClass = `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
+    activeRunSession
+      ? "border-sky-300/20 bg-sky-500/[0.09] text-sky-100 hover:border-sky-300/35 hover:bg-sky-500/[0.14]"
+      : "border-sky-300/30 bg-sky-500/15 text-white shadow-[0_10px_24px_rgba(56,189,248,0.18)]"
+  }`
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1532,7 +1542,7 @@ export default function ApplicationsTab({
                         setIsRunApplicationMenuOpen((prev) => !prev)
                       }}
                       disabled={!hasApplications}
-                      className={`${terminalFieldClass} flex h-auto min-h-11 items-start justify-between gap-3 py-3 text-left`}
+                      className={runSelectorButtonClass}
                     >
                       <div className="min-w-0">
                         <p className="truncate text-[13px] font-semibold text-slate-100">
@@ -1542,11 +1552,16 @@ export default function ApplicationsTab({
                           {selectedApplication?.about || "Calistirmak icin bir servis sec."}
                         </p>
                       </div>
-                      <ChevronUpDownIcon className="mt-0.5 h-5 w-5 flex-none text-slate-500" aria-hidden="true" />
+                      <ChevronUpDownIcon
+                        className={`mt-0.5 h-5 w-5 flex-none transition ${
+                          isRunApplicationMenuOpen ? "text-emerald-200" : "text-slate-500"
+                        }`}
+                        aria-hidden="true"
+                      />
                     </button>
 
                     {isRunApplicationMenuOpen && hasApplications && (
-                      <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-ink-950 shadow-[0_18px_36px_rgba(2,6,23,0.42)]">
+                      <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-white/12 bg-ink-950/95 shadow-[0_24px_52px_rgba(2,6,23,0.54)] backdrop-blur-xl">
                         <div className="max-h-72 overflow-y-auto p-2">
                           {runDropdownApplications.map((entry) => {
                             const isSelected = entry.id === selectedApplicationId
@@ -1558,14 +1573,18 @@ export default function ApplicationsTab({
                                   setSelectedApplicationId(entry.id)
                                   setIsRunApplicationMenuOpen(false)
                                 }}
-                                className={`flex w-full flex-col rounded-lg px-3 py-2.5 text-left transition ${
+                                className={`group flex w-full flex-col rounded-lg border px-3 py-2.5 text-left transition ${
                                   isSelected
-                                    ? "border border-white/10 bg-white/[0.06] text-white"
-                                    : "text-slate-200 hover:bg-white/[0.05] hover:text-white"
+                                    ? "border-emerald-300/25 bg-emerald-500/[0.14] text-white shadow-[0_12px_28px_rgba(16,185,129,0.12)]"
+                                    : "border-transparent bg-ink-900/90 text-slate-200 hover:border-white/10 hover:bg-ink-800 hover:text-white"
                                 }`}
                               >
                                 <span className="truncate text-[13px] font-semibold">{entry.name}</span>
-                                <span className="mt-1 line-clamp-2 text-[11px] leading-5 text-slate-400">
+                                <span
+                                  className={`mt-1 line-clamp-2 text-[11px] leading-5 ${
+                                    isSelected ? "text-emerald-50/75" : "text-slate-400 group-hover:text-slate-300"
+                                  }`}
+                                >
                                   {entry.about}
                                 </span>
                               </button>
@@ -1618,13 +1637,9 @@ export default function ApplicationsTab({
                     <button
                       type="button"
                       onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                      className={`inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
-                        activeRunSession
-                          ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
-                          : "border-accent-400/25 bg-accent-500/8 text-slate-100 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
-                      }`}
+                      className={historyConsoleTabClass}
                     >
-                      <span className="h-2 w-2 rounded-full bg-slate-500" />
+                      <span className={`h-2 w-2 rounded-full ${activeRunSession ? "bg-sky-300/90" : "bg-sky-200"}`} />
                       <span className="text-[12px] font-semibold">Log</span>
                     </button>
 
