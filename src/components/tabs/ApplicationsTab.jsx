@@ -1466,7 +1466,7 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(2,6,23,0.76))] shadow-[0_24px_80px_rgba(2,6,23,0.22)]">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 shadow-card">
               <div className="border-b border-white/10 px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
@@ -1550,7 +1550,7 @@ export default function ApplicationsTab({
                 </div>
               </div>
 
-              <div className="border-b border-white/10 px-4 py-3 sm:px-5">
+              <div className="border-b border-white/10 bg-white/[0.02] px-4 py-3 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">
                     Oturumlar
@@ -1565,7 +1565,7 @@ export default function ApplicationsTab({
                     <button
                       type="button"
                       onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                      className={`inline-flex h-11 items-center gap-2 rounded-2xl border px-3.5 text-left transition ${
+                      className={`inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
                         activeRunSession
                           ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
                           : "border-accent-400/40 bg-accent-500/10 text-accent-50 shadow-[0_10px_24px_rgba(71,85,105,0.14)]"
@@ -1594,7 +1594,7 @@ export default function ApplicationsTab({
                       return (
                         <div
                           key={`run-tab-${entry.id}`}
-                          className={`relative rounded-2xl border transition ${entryToneClass}`}
+                          className={`relative rounded-xl border transition ${entryToneClass}`}
                         >
                           <button
                             type="button"
@@ -1633,7 +1633,7 @@ export default function ApplicationsTab({
                 </div>
               </div>
 
-              <section className="overflow-hidden bg-ink-900/55">
+              <section className="overflow-hidden bg-white/[0.03]">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-rose-300/80" />
@@ -1668,7 +1668,7 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/25 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                   {!canViewApplicationLogs ? (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Servis Konsolu log goruntuleme yetkiniz yok.
