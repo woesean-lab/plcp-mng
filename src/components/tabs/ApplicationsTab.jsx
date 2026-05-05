@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronUpDownIcon, PauseIcon, PlayIcon } from "@heroicons/react/20/solid"
+import { Squares2X2Icon } from "@heroicons/react/24/outline"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import { renderActionToast } from "../../utils/actionToast"
@@ -144,8 +145,8 @@ const getConsoleStatusMeta = (status) => {
   if (normalized === "success") {
     return {
       code: "OK",
-      dotClass: "bg-sky-300",
-      textClass: "text-sky-300",
+      dotClass: "bg-emerald-300",
+      textClass: "text-emerald-300",
     }
   }
   if (normalized === "error") {
@@ -164,8 +165,8 @@ const getConsoleStatusMeta = (status) => {
   }
   return {
     code: "RUN",
-    dotClass: "bg-emerald-300",
-    textClass: "text-emerald-300",
+    dotClass: "bg-sky-300",
+    textClass: "text-sky-300",
   }
 }
 
@@ -1447,18 +1448,19 @@ export default function ApplicationsTab({
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
-    `${terminalButtonBaseClass} border-emerald-300/45 bg-emerald-500/18 text-emerald-50 shadow-[0_12px_26px_rgba(16,185,129,0.16)] hover:border-emerald-300/65 hover:bg-emerald-500/26 focus:ring-emerald-500/25`
+    `${terminalButtonBaseClass} border-emerald-400/45 bg-emerald-500/16 text-emerald-50 hover:border-emerald-300/65 hover:bg-emerald-500/24 focus:ring-emerald-500/25`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
-  const runSelectorButtonClass = `flex h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left text-[13px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_22px_rgba(2,6,23,0.18)] transition focus:outline-none focus:ring-2 focus:ring-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 ${
+  const isHistoryConsoleActive = activeConsoleTabId === HISTORY_CONSOLE_TAB_ID
+  const runSelectorButtonClass = `flex h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left text-[13px] text-slate-100 transition focus:outline-none focus:ring-2 focus:ring-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 ${
     isRunApplicationMenuOpen
-      ? "border-sky-300/35 bg-[#111a2b] text-white"
-      : "border-white/10 bg-[#0a0f18] hover:border-white/15 hover:bg-[#0d1320]"
+      ? "border-sky-300/35 bg-[#101827] text-white"
+      : "border-white/10 bg-[#0b1018] hover:border-sky-300/20 hover:bg-[#0f1622]"
   }`
   const historyConsoleTabClass = `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
-    activeRunSession
-      ? "border-white/10 bg-ink-900/80 text-slate-300 hover:border-white/15 hover:bg-ink-900/95"
-      : "border-sky-300/30 bg-sky-500/14 text-sky-50 shadow-[0_10px_24px_rgba(56,189,248,0.14)]"
+    isHistoryConsoleActive
+      ? "border-sky-300/35 bg-sky-500/14 text-sky-50 hover:border-sky-300/45 hover:bg-sky-500/18"
+      : "border-white/10 bg-[#0b1119] text-slate-300 hover:border-white/15 hover:bg-[#101825]"
   }`
 
   if (isTabLoading) {
@@ -1503,7 +1505,7 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#121722] shadow-card">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f141d] shadow-card">
               <section className="overflow-hidden rounded-2xl bg-white/[0.02]">
                 <div className="border-b border-white/10 px-3 py-3 sm:px-4">
                   <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
@@ -1514,7 +1516,7 @@ export default function ApplicationsTab({
                         <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
                         <div className="ml-1">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                            Komut ciktilari
+                            Core
                           </p>
                           <p className="text-[10px] text-slate-500">
                             {consoleTitle}
@@ -1533,24 +1535,26 @@ export default function ApplicationsTab({
                           disabled={!hasApplications}
                           className={runSelectorButtonClass}
                         >
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                              Servis listesi
-                            </p>
-                            <p className="mt-0.5 truncate text-[13px] font-semibold text-slate-100">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-lg border border-sky-300/18 bg-sky-500/10 text-sky-200">
+                              <Squares2X2Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                            </span>
+                            <p className="truncate text-[13px] font-semibold text-slate-100">
                               {selectedApplication?.name || "Kayitli servis yok"}
                             </p>
                           </div>
-                          <ChevronUpDownIcon
-                            className={`h-5 w-5 flex-none transition ${
+                          <span className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-lg border border-white/10 bg-white/[0.03]">
+                            <ChevronUpDownIcon
+                              className={`h-4 w-4 transition ${
                               isRunApplicationMenuOpen ? "text-sky-200" : "text-slate-500"
-                            }`}
-                            aria-hidden="true"
-                          />
+                              }`}
+                              aria-hidden="true"
+                            />
+                          </span>
                         </button>
 
                         {isRunApplicationMenuOpen && hasApplications && (
-                          <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b1019] shadow-[0_18px_40px_rgba(2,6,23,0.45)]">
+                          <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0a0f17] shadow-[0_20px_45px_rgba(2,6,23,0.5)]">
                             <div className="max-h-72 overflow-y-auto p-2">
                               {runDropdownApplications.map((entry) => {
                                 const isSelected = entry.id === selectedApplicationId
@@ -1564,8 +1568,8 @@ export default function ApplicationsTab({
                                     }}
                                     className={`group flex w-full flex-col rounded-lg border px-3 py-2.5 text-left transition ${
                                       isSelected
-                                        ? "border-sky-300/20 bg-sky-500/[0.08] text-white"
-                                        : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.03] hover:text-white"
+                                        ? "border-sky-300/25 bg-sky-500/[0.09] text-white"
+                                        : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
                                     }`}
                                   >
                                     <span className="truncate text-[13px] font-semibold">{entry.name}</span>
@@ -1604,7 +1608,7 @@ export default function ApplicationsTab({
                           onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
                           className={historyConsoleTabClass}
                         >
-                          <span className={`h-2 w-2 rounded-full ${activeRunSession ? "bg-sky-300/90" : "bg-sky-200"}`} />
+                          <span className={`h-2 w-2 rounded-full ${isHistoryConsoleActive ? "bg-sky-300/90" : "bg-slate-500"}`} />
                           <span className="text-[12px] font-semibold">Log</span>
                         </button>
 
@@ -1668,27 +1672,27 @@ export default function ApplicationsTab({
                         })}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-2.5 py-2">
+                      <span className="inline-flex h-7 items-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
                         {runSessions.length} acik
-                      </p>
-                      <p className="text-[10px] text-slate-500">
+                      </span>
+                      <span className="inline-flex h-7 items-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                         {activeRunSession ? "canli oturum" : "log akis"}
-                      </p>
+                      </span>
+                      <span className="inline-flex h-7 items-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                        {consoleLogs.length} satir
+                      </span>
+                      {canClearApplicationLogs && (
+                        <button
+                          type="button"
+                          onClick={handleClearLogs}
+                          disabled={!canViewApplicationLogs || consoleLogs.length === 0}
+                          className="inline-flex h-7 items-center rounded-lg border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Log temizle
+                        </button>
+                      )}
                     </div>
-                    <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                      {consoleLogs.length} satir
-                    </span>
-                    {canClearApplicationLogs && (
-                      <button
-                        type="button"
-                        onClick={handleClearLogs}
-                        disabled={!canViewApplicationLogs || consoleLogs.length === 0}
-                        className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        Log temizle
-                      </button>
-                    )}
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
                     {!hasWsUrl && (
@@ -1696,15 +1700,10 @@ export default function ApplicationsTab({
                         websocket adresi kayitli degil
                       </span>
                     )}
-                    {selectedApplication && !selectedApplication.isActive && (
-                      <span className="rounded-full border border-rose-300/20 bg-rose-500/8 px-2.5 py-1 text-rose-200">
-                        secili servis kapali
-                      </span>
-                    )}
                   </div>
                 </div>
 
-                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/30 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-[#070b12] px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
                   {!canViewApplicationLogs ? (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Servis Konsolu log goruntuleme yetkiniz yok.
