@@ -3057,19 +3057,6 @@ export default function ProductsTab({
                     placeholder="Urun adi ara"
                     className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                   />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={() => setQuery("")}
-                      className="inline-flex h-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-                      title="Temizle"
-                      aria-label="Temizle"
-                    >
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em]">
-                        Temizle
-                      </span>
-                    </button>
-                  )}
                 </div>
               </div>
               {(canRefresh || canRefreshAllStocks || canUseBulkUsedDelete || (canUseBulkPriceActions && filteredList.length > 0)) && (
@@ -3256,14 +3243,6 @@ export default function ProductsTab({
                       >
                         Filtredekileri sec
                       </button>
-                      <button
-                        type="button"
-                        onClick={clearSelectedPriceOffers}
-                        disabled={isBulkPriceRunning || selectedPriceCount === 0}
-                        className="h-8 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/15 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        Temizle
-                      </button>
                     </div>
                   </div>
                       {(isBulkPriceRunning || bulkPriceCommandLogEntries.length > 0) && (
@@ -3283,21 +3262,6 @@ export default function ProductsTab({
                                   ? "Yukleniyor"
                                   : `${bulkPriceCommandLogEntries.length} satir`}
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  void clearBulkPriceCommandLogs()
-                                }}
-                                disabled={
-                                  bulkPriceCommandLogEntries.length === 0 ||
-                                  isBulkPriceRunning ||
-                                  bulkPriceLogsLoading ||
-                                  bulkPriceLogsClearing
-                                }
-                                className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {bulkPriceLogsClearing ? "..." : "Log temizle"}
-                              </button>
                             </div>
                           </div>
                           <div className="no-scrollbar h-[220px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:text-[12px] sm:leading-6">
@@ -4419,16 +4383,6 @@ export default function ProductsTab({
             >
               {priceCommandConnectionLabel}
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                void clearPriceCommandLogs(offerId)
-              }}
-              disabled={priceCommandLogEntries.length === 0 || isPriceCommandLogsClearing}
-              className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isPriceCommandLogsClearing ? "..." : "Log temizle"}
-            </button>
           </div>
         </div>
         <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
@@ -4769,21 +4723,6 @@ export default function ProductsTab({
                                           <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                                             {automationRunLogEntries.length} satir
                                           </span>
-                                          {canClearAutomationLogs && (
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                void clearAutomationRunLogs(offerId)
-                                              }}
-                                              disabled={
-                                                isAutomationLogsClearing ||
-                                                automationRunLogEntries.length === 0
-                                              }
-                                              className="inline-flex h-7 items-center rounded-md border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                              {isAutomationLogsClearing ? "..." : "Log temizle"}
-                                            </button>
-                                          )}
                                         </div>
                                       </div>
                                       <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-ink-950/35 px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">

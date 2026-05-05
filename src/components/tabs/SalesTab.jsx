@@ -714,13 +714,6 @@ export default function SalesTab({
           >
             Kaydet
           </button>
-          <button
-            type="button"
-            onClick={() => setSalesForm((prev) => ({ ...prev, amount: "" }))}
-            className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-          >
-            Temizle
-          </button>
         </div>
       </div>
     </div>

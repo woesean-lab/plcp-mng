@@ -259,19 +259,6 @@ export default function MessagesTab({
                     placeholder="Sablon ara"
                     className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                   />
-                  {templateQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setTemplateQuery("")}
-                      className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-                      title="Temizle"
-                      aria-label="Temizle"
-                    >
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em]">
-                        Temizle
-                      </span>
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
@@ -489,13 +476,6 @@ export default function MessagesTab({
                   className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
                 >
                   Kaydet
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMessage("")}
-                  className="min-w-[110px] rounded-lg border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-                >
-                  Temizle
                 </button>
               </div>
             </div>

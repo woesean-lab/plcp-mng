@@ -1680,7 +1680,7 @@ export default function ApplicationsTab({
                   </div>
                 </div>
 
-                <div className="no-scrollbar h-[280px] overflow-y-auto overflow-x-hidden bg-[#070b12] px-3 py-3 font-mono text-[11px] leading-5 sm:h-[336px] sm:text-[12px] sm:leading-6">
+                <div className="no-scrollbar h-[360px] overflow-y-auto overflow-x-hidden bg-[#070b12] px-3 py-3 font-mono text-[11px] leading-5 md:h-[336px] md:text-[12px] md:leading-6">
                   {!canViewApplicationLogs ? (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Servis Konsolu log goruntuleme yetkiniz yok.
@@ -1701,48 +1701,51 @@ export default function ApplicationsTab({
                         <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/[0.03] px-2 font-mono">
                           {consoleLogs.length} satir
                         </span>
-                        {canClearApplicationLogs && (
-                          <button
-                            type="button"
-                            onClick={handleClearLogs}
-                            disabled={!canViewApplicationLogs || consoleLogs.length === 0}
-                            className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/[0.03] px-2 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Log temizle
-                          </button>
-                        )}
                       </div>
                       {!activeRunPrompt && (
                         <p className="mb-2 text-[11px] text-slate-500">{consoleSubtitle}</p>
                       )}
                       {activeRunPrompt && isActiveRunLive && (
-                        <div className="mb-2 border-b border-white/10 pb-1.5">
-                          <div className="flex min-w-0 flex-col items-start gap-2 text-slate-300 sm:flex-row sm:flex-wrap sm:items-center">
-                            <span className="flex-none text-emerald-300">[PROMPT]</span>
-                            <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
-                            <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                            <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
+                        <div className="mb-2 rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
+                          <div className="flex min-w-0 flex-col gap-2 text-slate-300">
+                            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                              <span className="inline-flex h-6 items-center rounded-md border border-emerald-300/25 bg-emerald-500/10 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-200">
+                                Prompt
+                              </span>
+                              <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
+                              <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                              <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
+                            </div>
                             {activeRunPrompt.inputType === "text" && (
-                              <input
-                                type="text"
-                                value={activeRunPromptValue}
-                                onChange={(event) => {
-                                  const targetRunId = String(activeRunId ?? "").trim()
-                                  if (!targetRunId) return
-                                  setPendingUserInputValueByRunId((prev) => ({
-                                    ...prev,
-                                    [targetRunId]: event.target.value,
-                                  }))
-                                }}
-                                onKeyDown={(event) => {
-                                  if (event.key === "Enter") {
-                                    event.preventDefault()
-                                    handleUserInputSubmit("", activeRunId)
-                                  }
-                                }}
-                                placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
-                                className="h-7 w-full min-w-0 flex-1 border-0 border-b border-white/20 bg-transparent px-1 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-0 sm:min-w-[140px]"
-                              />
+                              <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+                                <input
+                                  type="text"
+                                  value={activeRunPromptValue}
+                                  onChange={(event) => {
+                                    const targetRunId = String(activeRunId ?? "").trim()
+                                    if (!targetRunId) return
+                                    setPendingUserInputValueByRunId((prev) => ({
+                                      ...prev,
+                                      [targetRunId]: event.target.value,
+                                    }))
+                                  }}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                      event.preventDefault()
+                                      handleUserInputSubmit("", activeRunId)
+                                    }
+                                  }}
+                                  placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
+                                  className="h-10 w-full min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a1018] px-3 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleUserInputSubmit("", activeRunId)}
+                                  className="inline-flex h-10 items-center justify-center rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25"
+                                >
+                                  Gonder
+                                </button>
+                              </div>
                             )}
                           </div>
                           {activeRunPrompt.step && (
@@ -1777,17 +1780,6 @@ export default function ApplicationsTab({
                                 className={terminalPromptButtonClass}
                               >
                                 Hayir
-                              </button>
-                            </div>
-                          )}
-                          {activeRunPrompt.inputType === "text" && (
-                            <div className="mt-2">
-                              <button
-                                type="button"
-                                onClick={() => handleUserInputSubmit("", activeRunId)}
-                                className={terminalPromptButtonClass}
-                              >
-                                Gonder
                               </button>
                             </div>
                           )}

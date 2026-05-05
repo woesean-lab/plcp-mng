@@ -30,7 +30,7 @@
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
+            className="rounded-lg border border-rose-400/60 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
           >
             Kapat
           </button>
@@ -200,14 +200,14 @@
             <button
               type="button"
               onClick={onSave}
-              className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+              className="min-w-[140px] rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25"
             >
               Kaydet
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
+              className="min-w-[120px] rounded-lg border border-rose-400/60 bg-rose-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
             >
               İptal
             </button>
