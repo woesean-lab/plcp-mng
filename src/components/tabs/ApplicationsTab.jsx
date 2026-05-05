@@ -1442,7 +1442,7 @@ export default function ApplicationsTab({
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
-    `${terminalButtonBaseClass} border-transparent bg-emerald-500/85 text-white hover:bg-emerald-400/90 focus:ring-emerald-500/25`
+    `${terminalButtonBaseClass} rounded-xl border border-emerald-300/60 bg-emerald-500/15 px-4 text-emerald-50 hover:border-emerald-200 hover:bg-emerald-500/25 focus:ring-emerald-500/25`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const isHistoryConsoleActive = activeConsoleTabId === HISTORY_CONSOLE_TAB_ID
@@ -1453,8 +1453,8 @@ export default function ApplicationsTab({
   }`
   const historyConsoleTabClass = `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
     isHistoryConsoleActive
-      ? "border-transparent bg-sky-500/80 text-white hover:bg-sky-400/85"
-      : "border-transparent bg-[#101825] text-slate-300 hover:bg-[#152033] hover:text-slate-100"
+      ? "border-sky-300/60 bg-sky-500/15 text-sky-100 hover:border-sky-200 hover:bg-sky-500/25"
+      : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-slate-100"
   }`
 
   if (isTabLoading) {
@@ -1515,9 +1515,6 @@ export default function ApplicationsTab({
                               Core
                             </span>
                           </div>
-                          <p className="mt-0.5 text-[11px] italic text-slate-500">
-                            Service core agent
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -1666,27 +1663,6 @@ export default function ApplicationsTab({
                         })}
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-2.5 py-2">
-                      <span className="inline-flex h-7 items-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">
-                        {runSessions.length} acik
-                      </span>
-                      <span className="inline-flex h-7 items-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                        {activeRunSession ? "canli oturum" : "log akis"}
-                      </span>
-                      <span className="inline-flex h-7 items-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-400">
-                        {consoleLogs.length} satir
-                      </span>
-                      {canClearApplicationLogs && (
-                        <button
-                          type="button"
-                          onClick={handleClearLogs}
-                          disabled={!canViewApplicationLogs || consoleLogs.length === 0}
-                          className="inline-flex h-7 items-center rounded-lg border border-white/15 bg-white/5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Log temizle
-                        </button>
-                      )}
-                    </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
                     {!hasWsUrl && (
@@ -1708,6 +1684,27 @@ export default function ApplicationsTab({
                     </div>
                   ) : (
                     <div className="space-y-0.5">
+                      <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[9px] uppercase tracking-[0.12em] text-slate-500">
+                        <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/[0.03] px-2">
+                          {runSessions.length} acik
+                        </span>
+                        <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/[0.03] px-2">
+                          {activeRunSession ? "canli oturum" : "log akis"}
+                        </span>
+                        <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/[0.03] px-2 font-mono">
+                          {consoleLogs.length} satir
+                        </span>
+                        {canClearApplicationLogs && (
+                          <button
+                            type="button"
+                            onClick={handleClearLogs}
+                            disabled={!canViewApplicationLogs || consoleLogs.length === 0}
+                            className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/[0.03] px-2 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Log temizle
+                          </button>
+                        )}
+                      </div>
                       {!activeRunPrompt && (
                         <p className="mb-2 text-[11px] text-slate-500">{consoleSubtitle}</p>
                       )}
