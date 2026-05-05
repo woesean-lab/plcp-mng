@@ -1560,13 +1560,13 @@ export default function ApplicationsTab({
                                     className={`group flex w-full flex-col rounded-lg border px-3 py-2.5 text-left transition ${
                                       isSelected
                                         ? "border-sky-300/25 bg-sky-500/[0.09] text-white"
-                                        : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
+                                        : "border-transparent bg-transparent text-slate-200 hover:border-sky-300/20 hover:bg-sky-500/[0.08] hover:text-white"
                                     }`}
                                   >
                                     <span className="truncate text-[13px] font-semibold">{entry.name}</span>
                                     <span
                                       className={`mt-1 line-clamp-2 text-[11px] leading-5 ${
-                                        isSelected ? "text-sky-50/75" : "text-slate-400 group-hover:text-slate-300"
+                                        isSelected ? "text-sky-50/75" : "text-slate-400 group-hover:text-sky-100/80"
                                       }`}
                                     >
                                       {entry.about}
@@ -1628,16 +1628,21 @@ export default function ApplicationsTab({
                               <button
                                 type="button"
                                 onClick={() => setActiveConsoleTabId(entry.id)}
-                                className="flex h-11 items-center gap-2 px-3.5 pr-9 text-left"
+                                className="flex h-12 items-center gap-2 px-3.5 pr-9 text-left"
                                 title={entry.label}
                               >
                                 <span className={`h-2 w-2 rounded-full ${entryStateMeta.dotClass}`} />
-                                <span
-                                  className={`max-w-[150px] truncate text-[12px] font-semibold ${
-                                    entryIsActive ? "text-slate-100" : "text-white"
-                                  }`}
-                                >
-                                  {entryDisplayLabel}
+                                <span className="min-w-0">
+                                  <span
+                                    className={`block max-w-[150px] truncate text-[12px] font-semibold ${
+                                      entryIsActive ? "text-slate-100" : "text-white"
+                                    }`}
+                                  >
+                                    {entryDisplayLabel}
+                                  </span>
+                                  <span className="mt-0.5 block max-w-[150px] truncate text-[10px] text-slate-400">
+                                    {entry.applicationName}
+                                  </span>
                                 </span>
                               </button>
 
