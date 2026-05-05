@@ -1447,13 +1447,13 @@ export default function ApplicationsTab({
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
-    `${terminalButtonBaseClass} border-emerald-300/55 bg-emerald-500/12 text-emerald-50 shadow-[0_10px_24px_rgba(16,185,129,0.14)] hover:border-emerald-300/70 hover:bg-emerald-500/18 focus:ring-emerald-500/25`
+    `${terminalButtonBaseClass} border-emerald-300/45 bg-emerald-500/18 text-emerald-50 shadow-[0_12px_26px_rgba(16,185,129,0.16)] hover:border-emerald-300/65 hover:bg-emerald-500/26 focus:ring-emerald-500/25`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
-  const runSelectorButtonClass = `flex h-11 w-full items-center justify-between gap-3 rounded-xl border px-3.5 text-left text-[13px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:outline-none focus:ring-2 focus:ring-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 ${
+  const runSelectorButtonClass = `flex h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left text-[13px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_22px_rgba(2,6,23,0.18)] transition focus:outline-none focus:ring-2 focus:ring-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 ${
     isRunApplicationMenuOpen
-      ? "border-sky-300/30 bg-sky-500/[0.12] text-white"
-      : "border-white/10 bg-ink-900/80 hover:border-white/15 hover:bg-ink-900/95"
+      ? "border-sky-300/35 bg-[#111a2b] text-white"
+      : "border-white/10 bg-[#0a0f18] hover:border-white/15 hover:bg-[#0d1320]"
   }`
   const historyConsoleTabClass = `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
     activeRunSession
@@ -1511,9 +1511,9 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#141826] shadow-card">
-              <div className="grid gap-3 border-b border-white/10 p-3 sm:p-5 xl:grid-cols-[minmax(0,1.4fr)_260px]">
-                <div className="min-w-0 rounded-2xl border border-white/10 bg-[#0b0f1980] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#121722] shadow-card">
+              <div className="border-b border-white/10 p-3 sm:p-5">
+                <div className="min-w-0 rounded-2xl border border-white/10 bg-[#0a0f18] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
@@ -1542,7 +1542,7 @@ export default function ApplicationsTab({
                     </div>
                   </div>
 
-                  <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_148px]">
+                  <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_152px]">
                     <div ref={runApplicationMenuRef} className="relative min-w-0">
                       <button
                         type="button"
@@ -1570,7 +1570,7 @@ export default function ApplicationsTab({
                       </button>
 
                       {isRunApplicationMenuOpen && hasApplications && (
-                        <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-ink-900/95 shadow-card">
+                        <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b1019] shadow-[0_18px_40px_rgba(2,6,23,0.45)]">
                           <div className="max-h-72 overflow-y-auto p-2">
                             {runDropdownApplications.map((entry) => {
                               const isSelected = entry.id === selectedApplicationId
@@ -1584,8 +1584,8 @@ export default function ApplicationsTab({
                                   }}
                                   className={`group flex w-full flex-col rounded-lg border px-3 py-2.5 text-left transition ${
                                     isSelected
-                                      ? "border-sky-300/20 bg-sky-500/[0.10] text-white"
-                                      : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
+                                      ? "border-sky-300/20 bg-sky-500/[0.08] text-white"
+                                      : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.03] hover:text-white"
                                   }`}
                                 >
                                   <span className="truncate text-[13px] font-semibold">{entry.name}</span>
@@ -1628,139 +1628,105 @@ export default function ApplicationsTab({
                     )}
                   </div>
                 </div>
-
-                <aside className="min-w-0 rounded-2xl border border-white/10 bg-ink-900/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
-                      Calisma durumu
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-white">
-                      {activeRunSession ? activeRunSession.label : selectedApplication?.name || "Servis bekleniyor"}
-                    </p>
-                    <p className="mt-1 text-[11px] leading-6 text-slate-500">
-                      {activeRunSession
-                        ? "Canli oturum acik. Akis ve komut ciktilari altta izlenebilir."
-                        : "Secimi yap, butona bas ve log akisini bu panelden takip et."}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Durum</span>
-                      <span className="text-[11px] font-semibold text-slate-100">{connectionLabel}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Hazirlik</span>
-                      <span className="text-[11px] font-semibold text-slate-100">
-                        {runActionDisabled ? "Beklemede" : "Calistirilabilir"}
-                      </span>
-                    </div>
-                  </div>
-                </aside>
-              </div>
-
-              <div className="border-b border-white/10 bg-white/[0.02] px-4 py-3 sm:px-5">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300/80">
-                    Oturumlar
-                  </p>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                    {runSessions.length} acik
-                  </span>
-                </div>
-
-                <div className="mt-3 no-scrollbar overflow-x-auto">
-                  <div className="flex min-w-max items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
-                      className={historyConsoleTabClass}
-                    >
-                      <span className={`h-2 w-2 rounded-full ${activeRunSession ? "bg-sky-300/90" : "bg-sky-200"}`} />
-                      <span className="text-[12px] font-semibold">Log</span>
-                    </button>
-
-                    {runSessions.map((entry) => {
-                      const entryIsActive = activeConsoleTabId === entry.id
-                      const entryIsLive = isRunLive(entry.status)
-                      const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
-                      const entryToneClass = entry.status === "success"
-                        ? entryIsActive
-                          ? "border-sky-300/25 bg-sky-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
-                          : "border-sky-300/15 bg-sky-500/[0.06] hover:border-sky-300/25 hover:bg-sky-500/[0.10]"
-                        : entry.status === "error" || entry.connectionState === "error"
-                          ? entryIsActive
-                            ? "border-rose-300/25 bg-rose-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
-                            : "border-rose-300/15 bg-rose-500/[0.06] hover:border-rose-300/25 hover:bg-rose-500/[0.10]"
-                          : entryIsActive
-                            ? "border-emerald-300/25 bg-emerald-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
-                            : "border-emerald-300/15 bg-emerald-500/[0.06] hover:border-emerald-300/25 hover:bg-emerald-500/[0.10]"
-
-                      return (
-                        <div
-                          key={`run-tab-${entry.id}`}
-                          className={`relative rounded-xl border transition ${entryToneClass}`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setActiveConsoleTabId(entry.id)}
-                            className="flex h-11 items-center gap-2 px-3.5 pr-9 text-left"
-                          >
-                            <span className={`h-2 w-2 rounded-full ${entryStateMeta.dotClass}`} />
-                            <span
-                              className={`max-w-[150px] truncate text-[12px] font-semibold ${
-                                entryIsActive ? "text-slate-100" : "text-white"
-                              }`}
-                            >
-                              {entry.label}
-                            </span>
-                          </button>
-
-                          {entryIsLive ? (
-                            <button
-                              type="button"
-                              onClick={() => handleCancelRun(entry.id)}
-                              className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-emerald-300/40 hover:bg-emerald-500/15 hover:text-emerald-100"
-                              aria-label={`${entry.label} islemini iptal et`}
-                            >
-                              <PauseIcon className="h-3 w-3" aria-hidden="true" />
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleCloseRunTab(entry.id)}
-                              className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[10px] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-                              aria-label={`${entry.label} sekmesini kapat`}
-                            >
-                              x
-                            </button>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
               </div>
 
               <section className="overflow-hidden rounded-b-2xl bg-white/[0.02]">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-                    <span className="h-2 w-2 rounded-full bg-sky-300/80" />
-                    <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-                    <div className="ml-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                        Komut ciktilari
-                      </p>
-                      <p className="text-[10px] text-slate-500">
-                        {consoleTitle}
-                      </p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                      <span className="h-2 w-2 rounded-full bg-sky-300/80" />
+                      <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                      <div className="ml-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                          Komut ciktilari
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          {consoleTitle}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 no-scrollbar overflow-x-auto">
+                      <div className="flex min-w-max items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
+                          className={historyConsoleTabClass}
+                        >
+                          <span className={`h-2 w-2 rounded-full ${activeRunSession ? "bg-sky-300/90" : "bg-sky-200"}`} />
+                          <span className="text-[12px] font-semibold">Log</span>
+                        </button>
+
+                        {runSessions.map((entry) => {
+                          const entryIsActive = activeConsoleTabId === entry.id
+                          const entryIsLive = isRunLive(entry.status)
+                          const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
+                          const entryToneClass = entry.status === "success"
+                            ? entryIsActive
+                              ? "border-sky-300/25 bg-sky-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+                              : "border-sky-300/15 bg-sky-500/[0.06] hover:border-sky-300/25 hover:bg-sky-500/[0.10]"
+                            : entry.status === "error" || entry.connectionState === "error"
+                              ? entryIsActive
+                                ? "border-rose-300/25 bg-rose-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+                                : "border-rose-300/15 bg-rose-500/[0.06] hover:border-rose-300/25 hover:bg-rose-500/[0.10]"
+                              : entryIsActive
+                                ? "border-emerald-300/25 bg-emerald-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+                                : "border-emerald-300/15 bg-emerald-500/[0.06] hover:border-emerald-300/25 hover:bg-emerald-500/[0.10]"
+
+                          return (
+                            <div
+                              key={`run-tab-${entry.id}`}
+                              className={`relative rounded-xl border transition ${entryToneClass}`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setActiveConsoleTabId(entry.id)}
+                                className="flex h-11 items-center gap-2 px-3.5 pr-9 text-left"
+                              >
+                                <span className={`h-2 w-2 rounded-full ${entryStateMeta.dotClass}`} />
+                                <span
+                                  className={`max-w-[150px] truncate text-[12px] font-semibold ${
+                                    entryIsActive ? "text-slate-100" : "text-white"
+                                  }`}
+                                >
+                                  {entry.label}
+                                </span>
+                              </button>
+
+                              {entryIsLive ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCancelRun(entry.id)}
+                                  className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-emerald-300/40 hover:bg-emerald-500/15 hover:text-emerald-100"
+                                  aria-label={`${entry.label} islemini iptal et`}
+                                >
+                                  <PauseIcon className="h-3 w-3" aria-hidden="true" />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCloseRunTab(entry.id)}
+                                  className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[10px] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                                  aria-label={`${entry.label} sekmesini kapat`}
+                                >
+                                  x
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                   <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-                    <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300 sm:inline-flex">
-                      {activeRunSession ? "canli oturum" : "log akis"}
-                    </span>
+                    <div className="text-right">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                        {runSessions.length} acik
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        {activeRunSession ? "canli oturum" : "log akis"}
+                      </p>
+                    </div>
                     <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
                       {consoleLogs.length} satir
                     </span>
