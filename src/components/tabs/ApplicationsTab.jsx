@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChevronUpDownIcon, PauseIcon, PlayIcon } from "@heroicons/react/20/solid"
-import { Squares2X2Icon } from "@heroicons/react/24/outline"
 import { toast } from "react-hot-toast"
 import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
 import { renderActionToast } from "../../utils/actionToast"
@@ -1435,11 +1434,6 @@ export default function ApplicationsTab({
         : "Hazir"
   const runActionDisabled =
     !canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl
-  const consoleTitle = activeRunSession
-    ? activeRunSession.label
-    : selectedApplication?.name
-      ? `${selectedApplication.name} loglari`
-      : "Servis loglari"
   const consoleSubtitle = activeRunSession
     ? "Canli oturum akisi ve kullanici girdileri"
     : "Secili servisin kayitli log akisi"
@@ -1448,7 +1442,7 @@ export default function ApplicationsTab({
   const terminalButtonNeutralClass =
     `${terminalButtonBaseClass} border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 focus:ring-slate-300/20`
   const terminalRunButtonClass =
-    `${terminalButtonBaseClass} border-emerald-400/45 bg-emerald-500/16 text-emerald-50 hover:border-emerald-300/65 hover:bg-emerald-500/24 focus:ring-emerald-500/25`
+    `${terminalButtonBaseClass} border-transparent bg-emerald-500/85 text-white hover:bg-emerald-400/90 focus:ring-emerald-500/25`
   const terminalPromptButtonClass =
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const isHistoryConsoleActive = activeConsoleTabId === HISTORY_CONSOLE_TAB_ID
@@ -1459,8 +1453,8 @@ export default function ApplicationsTab({
   }`
   const historyConsoleTabClass = `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
     isHistoryConsoleActive
-      ? "border-sky-300/35 bg-sky-500/14 text-sky-50 hover:border-sky-300/45 hover:bg-sky-500/18"
-      : "border-white/10 bg-[#0b1119] text-slate-300 hover:border-white/15 hover:bg-[#101825]"
+      ? "border-transparent bg-sky-500/80 text-white hover:bg-sky-400/85"
+      : "border-transparent bg-[#101825] text-slate-300 hover:bg-[#152033] hover:text-slate-100"
   }`
 
   if (isTabLoading) {
@@ -1510,21 +1504,24 @@ export default function ApplicationsTab({
                 <div className="border-b border-white/10 px-3 py-3 sm:px-4">
                   <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-                        <span className="h-2 w-2 rounded-full bg-sky-300/80" />
-                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-                        <div className="ml-1">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                            Core
-                          </p>
-                          <p className="text-[10px] text-slate-500">
-                            {consoleTitle}
+                      <div className="inline-flex items-center gap-3 rounded-xl border border-white/10 bg-[#0b1119] px-3 py-2">
+                        <span className="h-6 w-1 rounded-full bg-accent-400/80 shadow-glow" />
+                        <div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-accent-200">
+                              Pulcip
+                            </span>
+                            <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-400">
+                              Core
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[11px] italic text-slate-500">
+                            Service core agent
                           </p>
                         </div>
                       </div>
                     </div>
-                    <div className="flex w-full flex-col gap-2 xl:w-auto xl:min-w-[440px] xl:flex-row">
+                    <div className="flex w-full flex-col gap-2 xl:w-auto xl:min-w-[440px] xl:flex-row xl:items-stretch">
                       <div ref={runApplicationMenuRef} className="relative min-w-0 flex-1">
                         <button
                           type="button"
@@ -1535,10 +1532,7 @@ export default function ApplicationsTab({
                           disabled={!hasApplications}
                           className={runSelectorButtonClass}
                         >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <span className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-lg border border-sky-300/18 bg-sky-500/10 text-sky-200">
-                              <Squares2X2Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                            </span>
+                          <div className="min-w-0">
                             <p className="truncate text-[13px] font-semibold text-slate-100">
                               {selectedApplication?.name || "Kayitli servis yok"}
                             </p>
@@ -1600,7 +1594,7 @@ export default function ApplicationsTab({
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="mt-3 space-y-3">
                     <div className="no-scrollbar overflow-x-auto">
                       <div className="flex min-w-max items-center gap-2">
                         <button
