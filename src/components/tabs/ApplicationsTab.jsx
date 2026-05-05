@@ -1452,14 +1452,22 @@ export default function ApplicationsTab({
     `${terminalButtonNeutralClass} min-w-0 w-full justify-start break-words px-3 text-left sm:w-auto sm:justify-center sm:text-center`
   const runSelectorButtonClass = `flex h-11 w-full items-center justify-between gap-3 rounded-xl border px-3.5 text-left text-[13px] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:outline-none focus:ring-2 focus:ring-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 ${
     isRunApplicationMenuOpen
-      ? "border-sky-300/35 bg-sky-500/[0.08] text-white"
-      : "border-white/10 bg-white/[0.04] hover:border-white/15 hover:bg-white/[0.06]"
+      ? "border-sky-300/35 bg-sky-500/[0.10] text-white"
+      : "border-white/10 bg-ink-950/70 hover:border-white/15 hover:bg-ink-950/90"
   }`
   const historyConsoleTabClass = `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
     activeRunSession
-      ? "border-sky-300/25 bg-sky-500/[0.12] text-sky-100 hover:border-sky-300/40 hover:bg-sky-500/[0.16]"
+      ? "border-sky-300/25 bg-ink-950/80 text-sky-100 hover:border-sky-300/40 hover:bg-ink-950"
       : "border-sky-300/40 bg-sky-500/20 text-white shadow-[0_10px_24px_rgba(56,189,248,0.18)]"
   }`
+  const selectedServiceStateClass = selectedApplication?.isActive
+    ? "border-emerald-300/30 bg-emerald-500/12 text-emerald-100"
+    : "border-rose-300/30 bg-rose-500/12 text-rose-100"
+  const serviceConnectionClass = hasWsUrl
+    ? activeRunSession
+      ? "border-sky-300/25 bg-sky-500/12 text-sky-100"
+      : "border-white/10 bg-white/[0.04] text-slate-200"
+    : "border-amber-300/30 bg-amber-500/12 text-amber-100"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1503,92 +1511,103 @@ export default function ApplicationsTab({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-ink-900/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-              <div className="rounded-t-2xl border-b border-white/10 bg-white/[0.02] px-4 py-4 sm:px-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300/80">
-                      Secili servis
-                    </p>
-                    <p className="mt-1 truncate text-sm font-semibold text-white">
-                      {selectedApplication?.name || "Servis bekleniyor"}
-                    </p>
-                  </div>
+            <div className="relative overflow-visible rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(15,23,42,0.72))] shadow-card">
+              <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              <div className="pointer-events-none absolute -right-10 top-6 h-36 w-36 rounded-full bg-sky-500/10 blur-3xl" />
+              <div className="pointer-events-none absolute left-6 top-10 h-24 w-24 rounded-full bg-emerald-500/10 blur-3xl" />
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                        selectedApplication?.isActive
-                          ? "border-emerald-300/20 bg-emerald-500/8 text-emerald-200"
-                          : "border-rose-300/20 bg-rose-500/8 text-rose-200"
-                      }`}
-                    >
-                      {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
-                    </span>
-                    <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                      {connectionLabel}
-                    </span>
-                  </div>
-                </div>
+              <div className="grid gap-4 border-b border-white/10 p-4 sm:p-5 xl:grid-cols-[minmax(0,1.4fr)_220px]">
+                <div className="min-w-0 rounded-2xl border border-white/10 bg-[linear-gradient(145deg,rgba(11,15,25,0.94),rgba(15,23,42,0.76))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        Secili servis
+                      </p>
+                      <p className="mt-2 truncate font-display text-xl font-semibold text-white">
+                        {selectedApplication?.name || "Servis bekleniyor"}
+                      </p>
+                      <p className="mt-2 max-w-2xl text-[12px] leading-6 text-slate-400">
+                        {selectedApplication?.about || "Calistirmak icin bir servis sec."}
+                      </p>
+                    </div>
 
-                <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_152px] lg:items-center">
-                  <div ref={runApplicationMenuRef} className="relative min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!hasApplications) return
-                        setIsRunApplicationMenuOpen((prev) => !prev)
-                      }}
-                      disabled={!hasApplications}
-                      className={runSelectorButtonClass}
-                    >
-                      <span className="truncate text-[13px] font-semibold text-slate-100">
-                        {selectedApplication?.name || "Kayitli servis yok"}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${selectedServiceStateClass}`}>
+                        {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
                       </span>
-                      <ChevronUpDownIcon
-                        className={`h-5 w-5 flex-none transition ${
-                          isRunApplicationMenuOpen ? "text-sky-200" : "text-slate-500"
-                        }`}
-                        aria-hidden="true"
-                      />
-                    </button>
+                      <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${serviceConnectionClass}`}>
+                        {connectionLabel}
+                      </span>
+                      {runningRunCount > 0 && (
+                        <span className="inline-flex items-center rounded-full border border-sky-300/20 bg-sky-500/[0.10] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-100">
+                          {runningRunCount} acik oturum
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                    {isRunApplicationMenuOpen && hasApplications && (
-                      <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/12 bg-[#101827] shadow-[0_24px_52px_rgba(2,6,23,0.58)]">
-                        <div className="max-h-72 overflow-y-auto p-2">
-                          {runDropdownApplications.map((entry) => {
-                            const isSelected = entry.id === selectedApplicationId
-                            return (
-                              <button
-                                key={`run-app-${entry.id}`}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedApplicationId(entry.id)
-                                  setIsRunApplicationMenuOpen(false)
-                                }}
-                                className={`group flex w-full flex-col rounded-lg border px-3 py-2.5 text-left transition ${
-                                  isSelected
-                                    ? "border-sky-300/20 bg-sky-500/[0.14] text-white shadow-[0_10px_22px_rgba(56,189,248,0.12)]"
-                                    : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
-                                }`}
-                              >
-                                <span className="truncate text-[13px] font-semibold">{entry.name}</span>
-                                <span
-                                  className={`mt-1 line-clamp-2 text-[11px] leading-5 ${
-                                    isSelected ? "text-sky-50/75" : "text-slate-400 group-hover:text-slate-300"
+                  <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_148px]">
+                    <div ref={runApplicationMenuRef} className="relative min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!hasApplications) return
+                          setIsRunApplicationMenuOpen((prev) => !prev)
+                        }}
+                        disabled={!hasApplications}
+                        className={runSelectorButtonClass}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Servis listesi
+                          </p>
+                          <p className="mt-0.5 truncate text-[13px] font-semibold text-slate-100">
+                            {selectedApplication?.name || "Kayitli servis yok"}
+                          </p>
+                        </div>
+                        <ChevronUpDownIcon
+                          className={`h-5 w-5 flex-none transition ${
+                            isRunApplicationMenuOpen ? "text-sky-200" : "text-slate-500"
+                          }`}
+                          aria-hidden="true"
+                        />
+                      </button>
+
+                      {isRunApplicationMenuOpen && hasApplications && (
+                        <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-2xl border border-white/12 bg-[#101827] shadow-[0_24px_52px_rgba(2,6,23,0.58)]">
+                          <div className="max-h-72 overflow-y-auto p-2">
+                            {runDropdownApplications.map((entry) => {
+                              const isSelected = entry.id === selectedApplicationId
+                              return (
+                                <button
+                                  key={`run-app-${entry.id}`}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedApplicationId(entry.id)
+                                    setIsRunApplicationMenuOpen(false)
+                                  }}
+                                  className={`group flex w-full flex-col rounded-xl border px-3 py-2.5 text-left transition ${
+                                    isSelected
+                                      ? "border-sky-300/20 bg-sky-500/[0.14] text-white shadow-[0_10px_22px_rgba(56,189,248,0.12)]"
+                                      : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
                                   }`}
                                 >
-                                  {entry.about}
-                                </span>
-                              </button>
-                            )
-                          })}
+                                  <span className="truncate text-[13px] font-semibold">{entry.name}</span>
+                                  <span
+                                    className={`mt-1 line-clamp-2 text-[11px] leading-5 ${
+                                      isSelected ? "text-sky-50/75" : "text-slate-400 group-hover:text-slate-300"
+                                    }`}
+                                  >
+                                    {entry.about}
+                                  </span>
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
 
-                  <div className="w-full">
                     <button
                       type="button"
                       onClick={handleRun}
@@ -1599,24 +1618,49 @@ export default function ApplicationsTab({
                       Calistir
                     </button>
                   </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                    {!hasWsUrl && (
+                      <span className="rounded-full border border-amber-300/20 bg-amber-500/8 px-2.5 py-1 text-amber-200">
+                        websocket adresi kayitli degil
+                      </span>
+                    )}
+                    {selectedApplication && !selectedApplication.isActive && (
+                      <span className="rounded-full border border-rose-300/20 bg-rose-500/8 px-2.5 py-1 text-rose-200">
+                        secili servis kapali
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <p className="mt-2 text-[11px] text-slate-400">
-                  {selectedApplication?.about || "Calistirmak icin bir servis sec."}
-                </p>
+                <aside className="flex min-w-0 flex-col justify-between rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(17,24,39,0.92),rgba(15,23,42,0.72))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                      Calisma durumu
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      {activeRunSession ? activeRunSession.label : selectedApplication?.name || "Servis bekleniyor"}
+                    </p>
+                    <p className="mt-1 text-[12px] leading-6 text-slate-400">
+                      {activeRunSession
+                        ? "Canli oturum acik. Akis ve komut ciktilari altta izlenebilir."
+                        : "Secimi yap, butona bas ve log akisini bu panelden takip et."}
+                    </p>
+                  </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                  {!hasWsUrl && (
-                    <span className="rounded-full border border-amber-300/20 bg-amber-500/8 px-2.5 py-1 text-amber-200">
-                      websocket adresi kayitli degil
-                    </span>
-                  )}
-                  {selectedApplication && !selectedApplication.isActive && (
-                    <span className="rounded-full border border-rose-300/20 bg-rose-500/8 px-2.5 py-1 text-rose-200">
-                      secili servis kapali
-                    </span>
-                  )}
-                </div>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Durum</span>
+                      <span className="text-[11px] font-semibold text-slate-100">{connectionLabel}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Hazirlik</span>
+                      <span className="text-[11px] font-semibold text-slate-100">
+                        {runActionDisabled ? "Beklemede" : "Calistirilabilir"}
+                      </span>
+                    </div>
+                  </div>
+                </aside>
               </div>
 
               <div className="border-b border-white/10 bg-white/[0.02] px-4 py-3 sm:px-5">
