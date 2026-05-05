@@ -1460,14 +1460,6 @@ export default function ApplicationsTab({
       ? "border-white/10 bg-ink-900/80 text-slate-300 hover:border-white/15 hover:bg-ink-900/95"
       : "border-sky-300/30 bg-sky-500/14 text-sky-50 shadow-[0_10px_24px_rgba(56,189,248,0.14)]"
   }`
-  const selectedServiceStateClass = selectedApplication?.isActive
-    ? "border-emerald-300/20 bg-emerald-500/10 text-emerald-100"
-    : "border-rose-300/20 bg-rose-500/10 text-rose-100"
-  const serviceConnectionClass = hasWsUrl
-    ? activeRunSession
-      ? "border-sky-300/20 bg-sky-500/10 text-sky-100"
-      : "border-white/10 bg-white/5 text-slate-200"
-    : "border-amber-300/20 bg-amber-500/10 text-amber-100"
 
   if (isTabLoading) {
     return <ApplicationsSkeleton panelClass={panelClass} />
@@ -1512,141 +1504,100 @@ export default function ApplicationsTab({
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#121722] shadow-card">
-              <div className="border-b border-white/10 p-3 sm:p-5">
-                <div className="min-w-0 rounded-2xl border border-white/10 bg-[#0a0f18] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <section className="overflow-hidden rounded-2xl bg-white/[0.02]">
+                <div className="border-b border-white/10 px-3 py-3 sm:px-4">
+                  <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
-                        Secili servis
-                      </p>
-                      <p className="mt-1 truncate text-base font-semibold text-white sm:text-lg">
-                        {selectedApplication?.name || "Servis bekleniyor"}
-                      </p>
-                      <p className="mt-1 max-w-2xl text-[11px] leading-6 text-slate-500">
-                        {selectedApplication?.about || "Calistirmak icin bir servis sec."}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${selectedServiceStateClass}`}>
-                        {selectedApplication ? (selectedApplication.isActive ? "Acik" : "Kapali") : "Bekliyor"}
-                      </span>
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${serviceConnectionClass}`}>
-                        {connectionLabel}
-                      </span>
-                      {runningRunCount > 0 && (
-                        <span className="inline-flex items-center rounded-full border border-sky-300/20 bg-sky-500/[0.10] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100">
-                          {runningRunCount} acik oturum
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_152px]">
-                    <div ref={runApplicationMenuRef} className="relative min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!hasApplications) return
-                          setIsRunApplicationMenuOpen((prev) => !prev)
-                        }}
-                        disabled={!hasApplications}
-                        className={runSelectorButtonClass}
-                      >
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                            Servis listesi
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-rose-300/80" />
+                        <span className="h-2 w-2 rounded-full bg-sky-300/80" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
+                        <div className="ml-1">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                            Komut ciktilari
                           </p>
-                          <p className="mt-0.5 truncate text-[13px] font-semibold text-slate-100">
-                            {selectedApplication?.name || "Kayitli servis yok"}
+                          <p className="text-[10px] text-slate-500">
+                            {consoleTitle}
                           </p>
                         </div>
-                        <ChevronUpDownIcon
-                          className={`h-5 w-5 flex-none transition ${
-                            isRunApplicationMenuOpen ? "text-sky-200" : "text-slate-500"
-                          }`}
-                          aria-hidden="true"
-                        />
-                      </button>
-
-                      {isRunApplicationMenuOpen && hasApplications && (
-                        <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b1019] shadow-[0_18px_40px_rgba(2,6,23,0.45)]">
-                          <div className="max-h-72 overflow-y-auto p-2">
-                            {runDropdownApplications.map((entry) => {
-                              const isSelected = entry.id === selectedApplicationId
-                              return (
-                                <button
-                                  key={`run-app-${entry.id}`}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedApplicationId(entry.id)
-                                    setIsRunApplicationMenuOpen(false)
-                                  }}
-                                  className={`group flex w-full flex-col rounded-lg border px-3 py-2.5 text-left transition ${
-                                    isSelected
-                                      ? "border-sky-300/20 bg-sky-500/[0.08] text-white"
-                                      : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.03] hover:text-white"
-                                  }`}
-                                >
-                                  <span className="truncate text-[13px] font-semibold">{entry.name}</span>
-                                  <span
-                                    className={`mt-1 line-clamp-2 text-[11px] leading-5 ${
-                                      isSelected ? "text-sky-50/75" : "text-slate-400 group-hover:text-slate-300"
-                                    }`}
-                                  >
-                                    {entry.about}
-                                  </span>
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleRun}
-                      disabled={runActionDisabled}
-                      className={`${terminalRunButtonClass} h-11 w-full gap-2 text-[11px]`}
-                    >
-                      <PlayIcon className="h-4 w-4" aria-hidden="true" />
-                      Calistir
-                    </button>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                    {!hasWsUrl && (
-                      <span className="rounded-full border border-amber-300/20 bg-amber-500/8 px-2.5 py-1 text-amber-200">
-                        websocket adresi kayitli degil
-                      </span>
-                    )}
-                    {selectedApplication && !selectedApplication.isActive && (
-                      <span className="rounded-full border border-rose-300/20 bg-rose-500/8 px-2.5 py-1 text-rose-200">
-                        secili servis kapali
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <section className="overflow-hidden rounded-b-2xl bg-white/[0.02]">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-rose-300/80" />
-                      <span className="h-2 w-2 rounded-full bg-sky-300/80" />
-                      <span className="h-2 w-2 rounded-full bg-emerald-300/80" />
-                      <div className="ml-1">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                          Komut ciktilari
-                        </p>
-                        <p className="text-[10px] text-slate-500">
-                          {consoleTitle}
-                        </p>
                       </div>
                     </div>
-                    <div className="mt-3 no-scrollbar overflow-x-auto">
+                    <div className="flex w-full flex-col gap-2 xl:w-auto xl:min-w-[440px] xl:flex-row">
+                      <div ref={runApplicationMenuRef} className="relative min-w-0 flex-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!hasApplications) return
+                            setIsRunApplicationMenuOpen((prev) => !prev)
+                          }}
+                          disabled={!hasApplications}
+                          className={runSelectorButtonClass}
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                              Servis listesi
+                            </p>
+                            <p className="mt-0.5 truncate text-[13px] font-semibold text-slate-100">
+                              {selectedApplication?.name || "Kayitli servis yok"}
+                            </p>
+                          </div>
+                          <ChevronUpDownIcon
+                            className={`h-5 w-5 flex-none transition ${
+                              isRunApplicationMenuOpen ? "text-sky-200" : "text-slate-500"
+                            }`}
+                            aria-hidden="true"
+                          />
+                        </button>
+
+                        {isRunApplicationMenuOpen && hasApplications && (
+                          <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b1019] shadow-[0_18px_40px_rgba(2,6,23,0.45)]">
+                            <div className="max-h-72 overflow-y-auto p-2">
+                              {runDropdownApplications.map((entry) => {
+                                const isSelected = entry.id === selectedApplicationId
+                                return (
+                                  <button
+                                    key={`run-app-${entry.id}`}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedApplicationId(entry.id)
+                                      setIsRunApplicationMenuOpen(false)
+                                    }}
+                                    className={`group flex w-full flex-col rounded-lg border px-3 py-2.5 text-left transition ${
+                                      isSelected
+                                        ? "border-sky-300/20 bg-sky-500/[0.08] text-white"
+                                        : "border-transparent bg-transparent text-slate-200 hover:border-white/10 hover:bg-white/[0.03] hover:text-white"
+                                    }`}
+                                  >
+                                    <span className="truncate text-[13px] font-semibold">{entry.name}</span>
+                                    <span
+                                      className={`mt-1 line-clamp-2 text-[11px] leading-5 ${
+                                        isSelected ? "text-sky-50/75" : "text-slate-400 group-hover:text-slate-300"
+                                      }`}
+                                    >
+                                      {entry.about}
+                                    </span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleRun}
+                        disabled={runActionDisabled}
+                        className={`${terminalRunButtonClass} h-12 w-full gap-2 text-[11px] xl:w-[152px]`}
+                      >
+                        <PlayIcon className="h-4 w-4" aria-hidden="true" />
+                        Calistir
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="no-scrollbar overflow-x-auto">
                       <div className="flex min-w-max items-center gap-2">
                         <button
                           type="button"
@@ -1717,8 +1668,6 @@ export default function ApplicationsTab({
                         })}
                       </div>
                     </div>
-                  </div>
-                  <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                     <div className="text-right">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                         {runSessions.length} acik
@@ -1739,6 +1688,18 @@ export default function ApplicationsTab({
                       >
                         Log temizle
                       </button>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                    {!hasWsUrl && (
+                      <span className="rounded-full border border-amber-300/20 bg-amber-500/8 px-2.5 py-1 text-amber-200">
+                        websocket adresi kayitli degil
+                      </span>
+                    )}
+                    {selectedApplication && !selectedApplication.isActive && (
+                      <span className="rounded-full border border-rose-300/20 bg-rose-500/8 px-2.5 py-1 text-rose-200">
+                        secili servis kapali
+                      </span>
                     )}
                   </div>
                 </div>
