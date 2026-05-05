@@ -898,9 +898,22 @@ export default function StockTab({
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-200" htmlFor="stock-code">
-                          Anahtar / Kod
-                        </label>
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
+                          <label htmlFor="stock-code">Anahtar / Kod</label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const selectedProduct =
+                                products.find((prd) => String(prd?.id ?? "") === String(stockForm.productId ?? "")) ||
+                                null
+                              if (selectedProduct) openStockModal(selectedProduct)
+                            }}
+                            disabled={!stockForm.productId}
+                            className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Genişlet
+                          </button>
+                        </div>
                         <textarea
                           id="stock-code"
                           rows={4}

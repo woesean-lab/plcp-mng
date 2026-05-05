@@ -651,7 +651,7 @@ export default function TasksTab({
                           })),
                       )
                     }
-                    className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
+                    className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
                   >
                     {"Geni\u015flet"}
                   </button>
@@ -730,11 +730,7 @@ export default function TasksTab({
                       return (
                         <label
                           key={day.value}
-                          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
-                            isActive
-                              ? "border-accent-300 bg-accent-500/20 text-accent-50"
-                              : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60"
-                          }`}
+                          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200 transition"
                         >
                           <input
                             type="checkbox"

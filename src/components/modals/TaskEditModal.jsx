@@ -69,7 +69,7 @@
                       ),
                   )
                 }
-                className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
+                className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
               >
                 Genişlet
               </button>
@@ -155,11 +155,7 @@
                   return (
                     <label
                       key={day.value}
-                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
-                        isActive
-                          ? "border-accent-300 bg-accent-500/20 text-accent-50"
-                          : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60"
-                      }`}
+                      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200 transition"
                     >
                       <input
                         type="checkbox"
@@ -207,13 +203,6 @@
               className="min-w-[140px] rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25"
             >
               Kaydet
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="min-w-[120px] rounded-lg border border-rose-400/60 bg-rose-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20"
-            >
-              İptal
             </button>
           </div>
         </div>

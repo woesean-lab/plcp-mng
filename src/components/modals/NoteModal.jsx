@@ -15,6 +15,7 @@ export default function NoteModal({
   onSave,
 }) {
   if (!isOpen) return null
+
   const safeImages = Array.isArray(images) ? images : []
   const [zoomImage, setZoomImage] = useState("")
   const maxImages = 10
@@ -70,20 +71,11 @@ export default function NoteModal({
         className="w-full max-w-3xl overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-card"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-white/10 bg-ink-800 px-4 py-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-              Not editörü
-            </p>
-            <p className="text-xs text-slate-400">{draft.length} karakter</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-          >
-            Kapat
-          </button>
+        <div className="border-b border-white/10 bg-ink-800 px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300/80">
+            Not editörü
+          </p>
+          <p className="text-xs text-slate-400">{draft.length} karakter</p>
         </div>
 
         <div className="flex max-h-[420px] overflow-hidden">
@@ -107,6 +99,7 @@ export default function NoteModal({
             className="flex-1 resize-none overflow-auto bg-ink-900 px-4 py-3 font-mono text-[13px] leading-6 text-slate-100 placeholder:text-slate-500 focus:outline-none"
           />
         </div>
+
         {safeImages.length > 0 && (
           <div className="border-t border-white/10 bg-ink-900 px-4 py-3">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -147,22 +140,13 @@ export default function NoteModal({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-ink-800 px-4 py-3">
           <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Esc ile kapat</p>
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={onSave}
-              className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
-            >
-              Kaydet
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-            >
-              İptal
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onSave}
+            className="min-w-[140px] rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25"
+          >
+            Kaydet
+          </button>
         </div>
       </div>
       {zoomImage && (
@@ -176,7 +160,7 @@ export default function NoteModal({
           >
             <img
               src={zoomImage}
-              alt="Buyutulmus gorsel"
+              alt="Büyütülmüş görsel"
               className="max-h-[90vh] w-full rounded-2xl border border-white/10 object-contain"
             />
             <button

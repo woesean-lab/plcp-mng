@@ -1713,26 +1713,35 @@ export default function ApplicationsTab({
                             <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
                             <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
                             {activeRunPrompt.inputType === "text" && (
-                              <input
-                                type="text"
-                                value={activeRunPromptValue}
-                                onChange={(event) => {
-                                  const targetRunId = String(activeRunId ?? "").trim()
-                                  if (!targetRunId) return
-                                  setPendingUserInputValueByRunId((prev) => ({
-                                    ...prev,
-                                    [targetRunId]: event.target.value,
-                                  }))
-                                }}
-                                onKeyDown={(event) => {
-                                  if (event.key === "Enter") {
-                                    event.preventDefault()
-                                    handleUserInputSubmit("", activeRunId)
-                                  }
-                                }}
-                                placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
-                                className="h-9 w-full min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a1018] px-3 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 sm:min-w-[180px]"
-                              />
+                              <div className="flex min-w-0 w-full flex-1 items-stretch gap-2 sm:min-w-[220px]">
+                                <input
+                                  type="text"
+                                  value={activeRunPromptValue}
+                                  onChange={(event) => {
+                                    const targetRunId = String(activeRunId ?? "").trim()
+                                    if (!targetRunId) return
+                                    setPendingUserInputValueByRunId((prev) => ({
+                                      ...prev,
+                                      [targetRunId]: event.target.value,
+                                    }))
+                                  }}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                      event.preventDefault()
+                                      handleUserInputSubmit("", activeRunId)
+                                    }
+                                  }}
+                                  placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
+                                  className="h-11 min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a1018] px-3 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 md:h-9 md:text-[11px]"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleUserInputSubmit("", activeRunId)}
+                                  className="inline-flex h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-200 transition hover:border-white/20 hover:bg-white/10 md:h-9"
+                                >
+                                  Gonder
+                                </button>
+                              </div>
                             )}
                           </div>
                           {activeRunPrompt.step && (
@@ -1767,17 +1776,6 @@ export default function ApplicationsTab({
                                 className={terminalPromptButtonClass}
                               >
                                 Hayir
-                              </button>
-                            </div>
-                          )}
-                          {activeRunPrompt.inputType === "text" && (
-                            <div className="mt-2">
-                              <button
-                                type="button"
-                                onClick={() => handleUserInputSubmit("", activeRunId)}
-                                className={terminalPromptButtonClass}
-                              >
-                                Gonder
                               </button>
                             </div>
                           )}
