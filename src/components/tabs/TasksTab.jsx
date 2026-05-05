@@ -651,7 +651,7 @@ export default function TasksTab({
                           })),
                       )
                     }
-                    className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
+                    className="inline-flex items-center text-[11px] font-medium text-slate-400 underline decoration-white/15 underline-offset-4 transition hover:text-slate-200"
                   >
                     {"Geni\u015flet"}
                   </button>
@@ -736,7 +736,7 @@ export default function TasksTab({
                             type="checkbox"
                             checked={isActive}
                             onChange={() => toggleRepeatDay(day.value, setTaskForm)}
-                            className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-accent-400 focus:ring-accent-400/50"
+                            className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-slate-400 focus:ring-0"
                           />
                           {day.label}
                         </label>

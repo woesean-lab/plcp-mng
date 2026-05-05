@@ -209,6 +209,19 @@ export default function StockTab({
                             placeholder="Ürün ya da kod"
                             className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
                           />
+                          {productSearch && (
+                            <button
+                              type="button"
+                              onClick={() => setProductSearch("")}
+                              className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                              title="Temizle"
+                              aria-label="Temizle"
+                            >
+                              <span className="text-[10px] font-semibold uppercase tracking-[0.12em]">
+                                Temizle
+                              </span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -909,7 +922,7 @@ export default function StockTab({
                               if (selectedProduct) openStockModal(selectedProduct)
                             }}
                             disabled={!stockForm.productId}
-                            className="rounded-full border border-sky-300/60 bg-sky-500/15 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex items-center text-[11px] font-medium text-slate-400 underline decoration-white/15 underline-offset-4 transition hover:text-slate-200 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60"
                           >
                             Genişlet
                           </button>
