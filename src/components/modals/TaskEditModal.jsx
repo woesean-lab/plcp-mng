@@ -153,18 +153,22 @@
                 {taskRepeatDays.map((day) => {
                   const isActive = normalizeRepeatDays(draft.repeatDays).includes(day.value)
                   return (
-                    <button
+                    <label
                       key={day.value}
-                      type="button"
-                      onClick={() => toggleRepeatDay(day.value, setDraft)}
-                      className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
                         isActive
-                          ? "border-accent-300 bg-accent-500/20 text-accent-50 shadow-glow"
-                          : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60 hover:text-accent-100"
+                          ? "border-accent-300 bg-accent-500/20 text-accent-50"
+                          : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60"
                       }`}
                     >
+                      <input
+                        type="checkbox"
+                        checked={isActive}
+                        onChange={() => toggleRepeatDay(day.value, setDraft)}
+                        className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-accent-400 focus:ring-accent-400/50"
+                      />
                       {day.label}
-                    </button>
+                    </label>
                   )
                 })}
               </div>

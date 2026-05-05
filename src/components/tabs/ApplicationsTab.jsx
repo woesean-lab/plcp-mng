@@ -1706,46 +1706,33 @@ export default function ApplicationsTab({
                         <p className="mb-2 text-[11px] text-slate-500">{consoleSubtitle}</p>
                       )}
                       {activeRunPrompt && isActiveRunLive && (
-                        <div className="mb-2 rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
-                          <div className="flex min-w-0 flex-col gap-2 text-slate-300">
-                            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                              <span className="inline-flex h-6 items-center rounded-md border border-emerald-300/25 bg-emerald-500/10 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-200">
-                                Prompt
-                              </span>
-                              <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
-                              <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
-                              <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
-                            </div>
+                        <div className="mb-2 border-b border-white/10 pb-1.5">
+                          <div className="flex min-w-0 flex-col items-start gap-2 text-slate-300 sm:flex-row sm:flex-wrap sm:items-center">
+                            <span className="flex-none text-emerald-300">[PROMPT]</span>
+                            <span className="hidden flex-none text-slate-500 sm:inline">{commandPromptLabel}</span>
+                            <span className="flex-none text-slate-500 sm:hidden">&gt;</span>
+                            <span className="min-w-0 break-words text-slate-100">{activeRunPrompt.message}</span>
                             {activeRunPrompt.inputType === "text" && (
-                              <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
-                                <input
-                                  type="text"
-                                  value={activeRunPromptValue}
-                                  onChange={(event) => {
-                                    const targetRunId = String(activeRunId ?? "").trim()
-                                    if (!targetRunId) return
-                                    setPendingUserInputValueByRunId((prev) => ({
-                                      ...prev,
-                                      [targetRunId]: event.target.value,
-                                    }))
-                                  }}
-                                  onKeyDown={(event) => {
-                                    if (event.key === "Enter") {
-                                      event.preventDefault()
-                                      handleUserInputSubmit("", activeRunId)
-                                    }
-                                  }}
-                                  placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
-                                  className="h-10 w-full min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a1018] px-3 text-[12px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleUserInputSubmit("", activeRunId)}
-                                  className="inline-flex h-10 items-center justify-center rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-50 transition hover:border-emerald-200 hover:bg-emerald-500/25"
-                                >
-                                  Gonder
-                                </button>
-                              </div>
+                              <input
+                                type="text"
+                                value={activeRunPromptValue}
+                                onChange={(event) => {
+                                  const targetRunId = String(activeRunId ?? "").trim()
+                                  if (!targetRunId) return
+                                  setPendingUserInputValueByRunId((prev) => ({
+                                    ...prev,
+                                    [targetRunId]: event.target.value,
+                                  }))
+                                }}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter") {
+                                    event.preventDefault()
+                                    handleUserInputSubmit("", activeRunId)
+                                  }
+                                }}
+                                placeholder={activeRunPrompt.placeholder || "cevap yaz ve Enter"}
+                                className="h-9 w-full min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a1018] px-3 text-[11px] text-slate-100 placeholder:text-slate-500 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 sm:min-w-[180px]"
+                              />
                             )}
                           </div>
                           {activeRunPrompt.step && (
@@ -1780,6 +1767,17 @@ export default function ApplicationsTab({
                                 className={terminalPromptButtonClass}
                               >
                                 Hayir
+                              </button>
+                            </div>
+                          )}
+                          {activeRunPrompt.inputType === "text" && (
+                            <div className="mt-2">
+                              <button
+                                type="button"
+                                onClick={() => handleUserInputSubmit("", activeRunId)}
+                                className={terminalPromptButtonClass}
+                              >
+                                Gonder
                               </button>
                             </div>
                           )}

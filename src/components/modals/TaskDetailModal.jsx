@@ -36,7 +36,7 @@ export default function TaskDetailModal({
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-300/80">
-              GÃ¶rev detayÄ±
+              Görev detayı
             </p>
             <p className="text-lg font-semibold text-slate-100">{target.title}</p>
           </div>
@@ -50,7 +50,7 @@ export default function TaskDetailModal({
                 }}
                 className="rounded-lg border border-sky-300/60 bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
               >
-                DÃ¼zenle
+                Düzenle
               </button>
             )}
             <button
@@ -70,10 +70,10 @@ export default function TaskDetailModal({
             </span>
           )}
           <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
-            Durum: {taskStatusMeta[target.status]?.label || "YapÄ±lacak"}
+            Durum: {taskStatusMeta[target.status]?.label || "Yapılacak"}
           </span>
           <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-200">
-            BitiÅŸ: {getTaskDueLabel(target)}
+            Bitiş: {getTaskDueLabel(target)}
           </span>
         </div>
 
@@ -101,7 +101,7 @@ export default function TaskDetailModal({
           </div>
           {Array.isArray(detailNoteImages) && detailNoteImages.length > 0 && (
             <div className="border-t border-white/10 bg-ink-900 px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Not gÃ¶rselleri</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Not görselleri</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {detailNoteImages.map((src, index) => (
                   <button
@@ -109,17 +109,17 @@ export default function TaskDetailModal({
                     type="button"
                     onClick={() => handleZoomOpen(src)}
                     className="group relative overflow-hidden rounded-lg border border-white/10"
-                    aria-label="GÃ¶rseli bÃ¼yÃ¼t"
+                    aria-label="Görseli büyüt"
                   >
                     <img
                       src={src}
-                      alt={`Not gÃ¶rseli ${index + 1}`}
+                      alt={`Not görseli ${index + 1}`}
                       className="h-28 w-full object-cover"
                       loading="lazy"
                       decoding="async"
                     />
                     <span className="absolute right-2 top-2 rounded-full border border-white/10 bg-ink-900/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-200 opacity-0 transition group-hover:opacity-100">
-                      Buyut
+                      Büyüt
                     </span>
                   </button>
                 ))}
@@ -139,7 +139,7 @@ export default function TaskDetailModal({
           >
             <img
               src={zoomImage}
-              alt="Buyutulmus gorsel"
+              alt="Büyütülmüş görsel"
               className="max-h-[90vh] w-full rounded-2xl border border-white/10 object-contain"
             />
             <button
