@@ -1453,7 +1453,7 @@ export default function ApplicationsTab({
   }`
   const historyConsoleTabClass = `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-left transition ${
     isHistoryConsoleActive
-      ? "border-sky-300/60 bg-sky-500/15 text-sky-100 hover:border-sky-200 hover:bg-sky-500/25"
+      ? "border-white/15 bg-white/[0.08] text-slate-100 hover:border-white/20 hover:bg-white/[0.1]"
       : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-slate-100"
   }`
 
@@ -1502,9 +1502,9 @@ export default function ApplicationsTab({
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f141d] shadow-card">
               <section className="overflow-hidden rounded-2xl bg-white/[0.02]">
                 <div className="border-b border-white/10 px-3 py-3 sm:px-4">
-                  <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="flex flex-col gap-3 xl:flex-row xl:items-stretch xl:justify-between">
                     <div className="min-w-0">
-                      <div className="inline-flex items-center gap-3 rounded-xl border border-white/10 bg-[#0b1119] px-3 py-2">
+                      <div className="inline-flex h-12 items-center gap-3 rounded-xl border border-white/10 bg-[#0b1119] px-3">
                         <span className="h-6 w-1 rounded-full bg-accent-400/80 shadow-glow" />
                         <div>
                           <div className="flex items-baseline gap-2">
@@ -1591,7 +1591,7 @@ export default function ApplicationsTab({
                     </div>
                   </div>
 
-                  <div className="mt-3 space-y-3">
+                  <div className="mt-3 flex flex-col gap-2">
                     <div className="no-scrollbar overflow-x-auto">
                       <div className="flex min-w-max items-center gap-2">
                         <button
@@ -1599,7 +1599,7 @@ export default function ApplicationsTab({
                           onClick={() => setActiveConsoleTabId(HISTORY_CONSOLE_TAB_ID)}
                           className={historyConsoleTabClass}
                         >
-                          <span className={`h-2 w-2 rounded-full ${isHistoryConsoleActive ? "bg-sky-300/90" : "bg-slate-500"}`} />
+                          <span className="h-2 w-2 rounded-full bg-slate-500" />
                           <span className="text-[12px] font-semibold">Log</span>
                         </button>
 
@@ -1607,6 +1607,7 @@ export default function ApplicationsTab({
                           const entryIsActive = activeConsoleTabId === entry.id
                           const entryIsLive = isRunLive(entry.status)
                           const entryStateMeta = getRunSessionStateMeta(entry.status, entry.connectionState)
+                          const entryDisplayLabel = entry.serial > 0 ? `[#${entry.serial}]` : `[#${entry.id}]`
                           const entryToneClass = entry.status === "success"
                             ? entryIsActive
                               ? "border-sky-300/25 bg-sky-500/10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
@@ -1628,6 +1629,7 @@ export default function ApplicationsTab({
                                 type="button"
                                 onClick={() => setActiveConsoleTabId(entry.id)}
                                 className="flex h-11 items-center gap-2 px-3.5 pr-9 text-left"
+                                title={entry.label}
                               >
                                 <span className={`h-2 w-2 rounded-full ${entryStateMeta.dotClass}`} />
                                 <span
@@ -1635,7 +1637,7 @@ export default function ApplicationsTab({
                                     entryIsActive ? "text-slate-100" : "text-white"
                                   }`}
                                 >
-                                  {entry.label}
+                                  {entryDisplayLabel}
                                 </span>
                               </button>
 
@@ -1684,7 +1686,7 @@ export default function ApplicationsTab({
                     </div>
                   ) : (
                     <div className="space-y-0.5">
-                      <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[9px] uppercase tracking-[0.12em] text-slate-500">
+                      <div className="mb-2 flex flex-wrap items-center justify-end gap-1.5 text-[9px] uppercase tracking-[0.12em] text-slate-500">
                         <span className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/[0.03] px-2">
                           {runSessions.length} acik
                         </span>
