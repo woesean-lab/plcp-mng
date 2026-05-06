@@ -3114,25 +3114,6 @@ export default function ProductsTab({
               <span className="text-sky-100/80">Liste kullanilabilir, bitince otomatik guncellenecek.</span>
             </div>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof onNavigateToTabRef.current === "function") {
-                onNavigateToTabRef.current("messages")
-              }
-            }}
-            className="mt-3 group flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-4 py-3 text-left transition hover:border-white/20 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))]"
-          >
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-100">Teslimat mesaji ekle</p>
-              <p className="mt-1 text-xs text-slate-400">
-                Mesaji Mesajlar sekmesinden olustur, sonra urunlerde kullan.
-              </p>
-            </div>
-            <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-300 transition group-hover:border-white/20 group-hover:text-white">
-              Mesajlara git
-            </span>
-          </button>
           {isBulkPriceModeOpen && canUseBulkPriceActions && filteredList.length > 0 && (
             <div className="mt-3 overflow-hidden rounded-xl border border-sky-400/20 bg-[linear-gradient(135deg,rgba(8,13,24,0.98),rgba(12,18,34,0.96))] shadow-card">
               <div className="px-3 py-3">
