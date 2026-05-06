@@ -666,6 +666,7 @@ export default function ProductsTab({
   const [bulkPriceLogsClearing, setBulkPriceLogsClearing] = useState(false)
   const [keyFadeById, setKeyFadeById] = useState({})
   const [selectFlashByKey, setSelectFlashByKey] = useState({})
+  const [isToolbarAvailableDownloadRunning, setIsToolbarAvailableDownloadRunning] = useState(false)
   const commandPromptLabel = `${String(activeUsername ?? "").trim() || "kullanici"}>`
   const stockModalLineRef = useRef(null)
   const stockModalTextareaRef = useRef(null)
@@ -1336,6 +1337,20 @@ export default function ProductsTab({
     selectedPriceOfferIds,
   ])
   const apiFetchBulkPriceLog = useCallback(async (input, init = {}) => {
+    const headers = new Headers(init.headers || {})
+    if (typeof window !== "undefined") {
+      try {
+        const token = String(localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "").trim()
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`)
+        }
+      } catch {
+        // Ignore localStorage read errors.
+      }
+    }
+    return fetch(input, { ...init, headers })
+  }, [])
+  const apiFetchWithAuth = useCallback(async (input, init = {}) => {
     const headers = new Headers(init.headers || {})
     if (typeof window !== "undefined") {
       try {
@@ -2206,32 +2221,65 @@ export default function ProductsTab({
       allProducts.reduce((total, product) => {
         const offerId = String(product?.id ?? "").trim()
         const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
-        return total + getAvailableStockCodes(product, loadedKeys).length
+        if (loadedKeys) {
+          return total + getAvailableStockCodes(product, loadedKeys).length
+        }
+        const rawAvailableCount = Number(product?.stockCount)
+        return total + (Number.isFinite(rawAvailableCount) ? Math.max(0, rawAvailableCount) : 0)
       }, 0),
     [allProducts, keysByOffer],
   )
-  const handleToolbarAvailableDownload = () => {
-    const selected = allProducts.flatMap((product) => {
-      const productName = String(product?.name ?? "").trim() || "Isimsiz urun"
-      const offerId = String(product?.id ?? "").trim()
-      const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
-      return getAvailableStockCodes(product, loadedKeys).map((code) => `${productName} | ${code}`)
-    })
+  const handleToolbarAvailableDownload = async () => {
+    if (isToolbarAvailableDownloadRunning) return
+    setIsToolbarAvailableDownloadRunning(true)
+    try {
+      const selected = []
 
-    if (selected.length === 0) {
-      toast.error("Indirilecek aktif stok yok.")
-      return
+      for (const product of allProducts) {
+        const productName = String(product?.name ?? "").trim() || "Isimsiz urun"
+        const offerId = String(product?.id ?? "").trim()
+        if (!offerId) continue
+
+        let availableCodes = []
+        const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
+        if (loadedKeys) {
+          availableCodes = getAvailableStockCodes(product, loadedKeys)
+        } else {
+          const rawAvailableCount = Number(product?.stockCount)
+          if (Number.isFinite(rawAvailableCount) && rawAvailableCount > 0) {
+            const res = await apiFetchWithAuth(`/api/eldorado/keys/${encodeURIComponent(offerId)}`)
+            if (!res.ok) {
+              throw new Error(`${productName} aktif stoklari alinamadi.`)
+            }
+            const payload = await res.json()
+            availableCodes = getAvailableStockCodes(null, payload)
+          }
+        }
+
+        availableCodes.forEach((code) => {
+          selected.push(`${productName} | ${code}`)
+        })
+      }
+
+      if (selected.length === 0) {
+        toast.error("Indirilecek aktif stok yok.")
+        return
+      }
+
+      const downloadUrl = URL.createObjectURL(new Blob([selected.join("\r\n")], { type: "text/plain;charset=utf-8" }))
+      const anchor = document.createElement("a")
+      anchor.href = downloadUrl
+      anchor.download = `tum-urunler-aktif-stoklar-${formatDownloadDateToken()}.txt`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(downloadUrl)
+      toast.success(`${selected.length} aktif stok tek dosyada indirildi.`)
+    } catch (error) {
+      toast.error(error?.message || "Toplu aktif stok indirilemedi.")
+    } finally {
+      setIsToolbarAvailableDownloadRunning(false)
     }
-
-    const downloadUrl = URL.createObjectURL(new Blob([selected.join("\r\n")], { type: "text/plain;charset=utf-8" }))
-    const anchor = document.createElement("a")
-    anchor.href = downloadUrl
-    anchor.download = `tum-urunler-aktif-stoklar-${formatDownloadDateToken()}.txt`
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
-    URL.revokeObjectURL(downloadUrl)
-    toast.success(`${selected.length} aktif stok tek dosyada indirildi.`)
   }
   const armBulkUsedDeleteConfirm = () => {
     setConfirmBulkUsedDelete(true)
@@ -3219,9 +3267,9 @@ export default function ProductsTab({
                     <button
                       type="button"
                       onClick={handleToolbarAvailableDownload}
-                      disabled={toolbarAvailableStockCount <= 0}
+                      disabled={toolbarAvailableStockCount <= 0 || isToolbarAvailableDownloadRunning}
                       className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition ${
-                        toolbarAvailableStockCount <= 0
+                        toolbarAvailableStockCount <= 0 || isToolbarAvailableDownloadRunning
                           ? "cursor-not-allowed border-white/5 text-slate-600"
                           : "border-white/10 text-slate-300 hover:border-sky-300/40 hover:bg-sky-500/10 hover:text-sky-100"
                       }`}
