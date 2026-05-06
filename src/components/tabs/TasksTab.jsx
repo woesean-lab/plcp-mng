@@ -94,6 +94,7 @@ export default function TasksTab({
   const isTasksTabLoading = isLoading
   const [viewMode, setViewMode] = useState("list")
   const [hideStaffTasks, setHideStaffTasks] = useState(false)
+  const [expandedBoardTaskIds, setExpandedBoardTaskIds] = useState([])
 
   useEffect(() => {
     try {
@@ -141,6 +142,12 @@ export default function TasksTab({
 
   const getVisibleTasks = (status) =>
     Array.isArray(taskGroups?.[status]) ? taskGroups[status].filter(shouldShowTask) : []
+
+  const toggleBoardTaskExpanded = (taskId) => {
+    setExpandedBoardTaskIds((prev) =>
+      prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId],
+    )
+  }
 
   if (isTasksTabLoading) {
     return <TasksSkeleton panelClass={panelClass} />
@@ -283,7 +290,7 @@ export default function TasksTab({
                           )}
                           {visibleTasks.map((task) => {
                             const isOwner = activeUser?.username && task.owner === activeUser.username
-                            const isExpanded = true
+                            const isExpanded = expandedBoardTaskIds.includes(task.id)
                             return (
                               <div
                                 key={task.id}
@@ -292,7 +299,15 @@ export default function TasksTab({
                                   canProgressTasks ? (event) => handleTaskDragStart(event, task.id) : undefined
                                 }
                                 onDragEnd={canProgressTasks ? handleTaskDragEnd : undefined}
-                                className={`flex flex-col gap-3 rounded-xl border p-3 shadow-inner transition hover:shadow-glow cursor-grab ${
+                                onClick={() => toggleBoardTaskExpanded(task.id)}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault()
+                                    toggleBoardTaskExpanded(task.id)
+                                  }
+                                }}
+                                tabIndex={0}
+                                className={`flex cursor-pointer flex-col gap-3 rounded-xl border p-3 shadow-inner transition hover:shadow-glow ${
                                   isOwner
                                     ? status === "todo"
                                       ? "border-amber-300/60 bg-amber-500/15 hover:border-amber-200/70 hover:bg-amber-500/20"
@@ -305,7 +320,7 @@ export default function TasksTab({
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="space-y-1">
                                     <p className="text-sm font-semibold text-slate-100">{task.title}</p>
-                                    {task.note && (
+                                    {isExpanded && task.note && (
                                       <p
                                         className="text-xs text-slate-400 break-words"
                                         style={{
@@ -333,18 +348,19 @@ export default function TasksTab({
                                       </span>
                                     )}
                                   </div>
+                                  <span className="text-xs text-slate-400">{isExpanded ? "-" : "+"}</span>
                                 </div>
-                                <span
-                                  className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ${
-                                    isTaskDueToday(task)
-                                      ? "bg-rose-500/15 text-rose-100"
-                                      : "bg-white/5 text-slate-300"
-                                  }`}
-                                >
-                                  {"Biti\u015f:"} {getTaskDueLabel(task)}
-                                </span>
                                 {isExpanded && (
                                   <>
+                                    <span
+                                      className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ${
+                                        isTaskDueToday(task)
+                                          ? "bg-rose-500/15 text-rose-100"
+                                          : "bg-white/5 text-slate-300"
+                                      }`}
+                                    >
+                                      {"Biti\u015f:"} {getTaskDueLabel(task)}
+                                    </span>
                                     <div className="flex flex-wrap gap-2">
                                       {canProgressTasks && status !== "done" && (
                                         <button
