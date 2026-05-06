@@ -60,6 +60,7 @@ function StockSkeleton({ panelClass }) {
 export default function StockTab({
   isLoading,
   panelClass,
+  onNavigateToTab,
   canCreateProducts,
   canEditProducts,
   canDeleteProducts,
@@ -226,6 +227,26 @@ export default function StockTab({
                       </div>
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof onNavigateToTab === "function") {
+                        onNavigateToTab("messages")
+                      }
+                    }}
+                    className="mt-4 group flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-4 py-3 text-left transition hover:border-white/20 hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))]"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-100">Teslimat mesajı ekle</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Mesajı Mesajlar sekmesinden oluştur, sonra ürünlerde kullan.
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-300 transition group-hover:border-white/20 group-hover:text-white">
+                      Mesajlara git
+                    </span>
+                  </button>
 
                   <div className="mt-4 grid gap-4">
                     {isStockTabLoading ? (
