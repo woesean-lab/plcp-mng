@@ -3219,7 +3219,7 @@ export default function ProductsTab({
                       type="button"
                       onClick={handleToolbarAvailableDownload}
                       disabled={toolbarAvailableStockCount <= 0}
-                      className={`inline-flex h-8 items-center justify-center rounded-lg border px-3 text-[11px] font-semibold uppercase tracking-wide transition ${
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition ${
                         toolbarAvailableStockCount <= 0
                           ? "cursor-not-allowed border-white/5 text-slate-600"
                           : "border-white/10 text-slate-300 hover:border-sky-300/40 hover:bg-sky-500/10 hover:text-sky-100"
@@ -3227,8 +3227,7 @@ export default function ProductsTab({
                       title="Tum urunlerin aktif stoklarini indir"
                       aria-label="Tum urunlerin aktif stoklarini indir"
                     >
-                      <span className="hidden sm:inline">Toplu stok indir</span>
-                      <ArrowDownTrayIcon aria-hidden="true" className="h-4 w-4 sm:hidden" />
+                      <ArrowDownTrayIcon aria-hidden="true" className="h-4 w-4" />
                     </button>
                   )}
                   {canUseBulkPriceActions && filteredList.length > 0 && (
