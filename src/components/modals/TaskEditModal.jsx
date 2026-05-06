@@ -49,7 +49,7 @@
                 setDraft((prev) => (prev ? { ...prev, title: event.target.value } : prev))
               }
               placeholder="Örn: Stok raporunu güncelle"
-              className="w-full rounded-lg border border-white/10 bg-ink-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+              className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
             />
           </div>
 
@@ -82,7 +82,7 @@
                 setDraft((prev) => (prev ? { ...prev, note: event.target.value } : prev))
               }
               placeholder="Kısa not veya kontrol listesi"
-              className="w-full rounded-lg border border-white/10 bg-ink-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+              className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
             />
           </div>
 
@@ -96,7 +96,7 @@
               onChange={(event) =>
                 setDraft((prev) => (prev ? { ...prev, owner: event.target.value } : prev))
               }
-              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-950 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
             >
               <option value="" disabled>
                 Sorumlu sec
@@ -131,7 +131,7 @@
                   }
                 })
               }}
-              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-950 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+              className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 pr-3 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
             >
               {taskDueTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -188,7 +188,7 @@
                 onChange={(event) =>
                   setDraft((prev) => (prev ? { ...prev, dueDate: event.target.value } : prev))
                 }
-                className="w-full rounded-lg border border-white/10 bg-ink-950 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+                className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
               />
             </div>
           )}
