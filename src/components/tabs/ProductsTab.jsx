@@ -2212,9 +2212,10 @@ export default function ProductsTab({
   )
   const handleToolbarAvailableDownload = () => {
     const selected = allProducts.flatMap((product) => {
+      const productName = String(product?.name ?? "").trim() || "Isimsiz urun"
       const offerId = String(product?.id ?? "").trim()
       const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
-      return getAvailableStockCodes(product, loadedKeys)
+      return getAvailableStockCodes(product, loadedKeys).map((code) => `${productName} | ${code}`)
     })
 
     if (selected.length === 0) {
