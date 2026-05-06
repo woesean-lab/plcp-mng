@@ -120,6 +120,10 @@
     display: none;
   }
 
+  .save-button {
+    @apply border-emerald-300/70 bg-emerald-500/15 text-emerald-50 shadow-glow hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-70;
+  }
+
   .automation-target-row-selected {
     background-color: #0b0f1999;
   }

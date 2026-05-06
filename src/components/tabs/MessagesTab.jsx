@@ -486,7 +486,7 @@ export default function MessagesTab({
                 <button
                   type="button"
                   onClick={handleAdd}
-                  className="flex-1 min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                  className="save-button flex-1 min-w-[140px] rounded-lg border px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide transition hover:-translate-y-0.5"
                 >
                   Kaydet
                 </button>

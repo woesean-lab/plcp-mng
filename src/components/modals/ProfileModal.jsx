@@ -25,13 +25,6 @@ export default function ProfileModal({
               {"De\u011fi\u015fiklik i\u00e7in mevcut \u015fifre gerekli."}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-          >
-            Kapat
-          </button>
         </div>
 
         <div className="space-y-4 p-4">
@@ -88,16 +81,9 @@ export default function ProfileModal({
               type="button"
               onClick={onSave}
               disabled={isSaving}
-              className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-70"
+              className="save-button min-w-[140px] rounded-lg border px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide transition hover:-translate-y-0.5"
             >
               {isSaving ? "Kaydediliyor" : "Kaydet"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-            >
-              {"\u0130ptal"}
             </button>
           </div>
         </div>

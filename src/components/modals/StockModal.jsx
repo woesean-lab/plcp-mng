@@ -27,13 +27,6 @@ export default function StockModal({
               {targetName || "Ürün"} · {draft.length} karakter
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-accent-300 hover:text-accent-100"
-          >
-            Kapat
-          </button>
         </div>
 
         <div className="flex max-h-[420px] overflow-hidden">
@@ -63,16 +56,9 @@ export default function StockModal({
             <button
               type="button"
               onClick={onSave}
-              className="min-w-[140px] rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+              className="save-button min-w-[140px] rounded-lg border px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide transition hover:-translate-y-0.5"
             >
               Kaydet
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="min-w-[120px] rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-accent-400 hover:text-accent-100"
-            >
-              İptal
             </button>
           </div>
         </div>

@@ -158,16 +158,6 @@ export default function TasksTab({
               Not ve tarih ile gorevlerini takipe al. Hepsi lokal tutulur.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:items-end">
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-                Toplam: {taskCountText}
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-                Acik: {taskStats.todo + taskStats.doing}
-              </span>
-            </div>
-          </div>
         </div>
       </header>
 

@@ -872,17 +872,13 @@ export default function AdminTab({
                         return (
                           <label
                             key={item.id}
-                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
-                              isActive
-                                ? "border-accent-300 bg-accent-500/20 text-accent-50"
-                                : "border-white/10 bg-white/5 text-slate-200 hover:border-accent-300/60"
-                            }`}
+                            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:border-white/20"
                           >
                             <input
                               type="checkbox"
                               checked={isActive}
                               onChange={() => toggleRolePermission(item.id)}
-                              className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-accent-400 focus:ring-accent-400/50"
+                              className="h-3.5 w-3.5 rounded border-white/30 bg-transparent accent-slate-200 focus:ring-0"
                             />
                             {item.label}
                           </label>
@@ -896,7 +892,7 @@ export default function AdminTab({
               <button
                 type="button"
                 onClick={handleRoleSave}
-                className="w-full rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                className="save-button w-full rounded-lg border px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide transition hover:-translate-y-0.5"
               >
                 {isRoleEditing ? "Rol guncelle" : "Rol ekle"}
               </button>
@@ -1019,7 +1015,7 @@ export default function AdminTab({
               <button
                 type="button"
                 onClick={handleUserSave}
-                className="w-full rounded-lg border border-accent-400/70 bg-accent-500/15 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25"
+                className="save-button w-full rounded-lg border px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide transition hover:-translate-y-0.5"
               >
                 {isUserEditing ? "Kullanici guncelle" : "Kullanici ekle"}
               </button>
@@ -1111,7 +1107,13 @@ export default function AdminTab({
             </div>
 
             <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-              <button type="button" onClick={() => { void saveWsUrl() }} className={wsActionSecondaryButtonClass}>
+              <button
+                type="button"
+                onClick={() => {
+                  void saveWsUrl()
+                }}
+                className={`${wsActionButtonBaseClass} save-button border`}
+              >
                 Kaydet
               </button>
               <button

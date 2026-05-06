@@ -1416,22 +1416,6 @@ export default function ApplicationsTab({
   const isTabLoading = isLoading || isApplicationsLoading
   const hasWsUrl = String(automationWsUrl ?? "").trim().length > 0
   const commandPromptLabel = `${String(activeUsername ?? "").trim() || "kullanici"}>`
-  const activeConnectionState = String(activeRunSession?.connectionState ?? "").trim().toLowerCase()
-  const connectionLabel = !hasWsUrl
-    ? "Baglanti yok"
-    : activeRunSession
-      ? activeConnectionState === "connecting"
-        ? "Baglaniliyor"
-        : activeConnectionState === "error"
-          ? "Baglanti hatasi"
-          : activeRunSession.status === "success"
-            ? "Tamamlandi"
-            : isActiveRunLive
-              ? "Baglanildi"
-              : "Hazir"
-      : runningRunCount > 0
-        ? `${runningRunCount} calisiyor`
-        : "Hazir"
   const runActionDisabled =
     !canRunApplications || !selectedApplication || !selectedApplication.isActive || !hasWsUrl
   const consoleSubtitle = activeRunSession
@@ -1470,17 +1454,6 @@ export default function ApplicationsTab({
             <p className="max-w-2xl text-sm text-slate-200/80">
               Servis ekle, servis sec ve calistir.
             </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Kayit: {applications.length}
-            </span>
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Map: {applicationBackendOptions.length}
-            </span>
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Durum: {connectionLabel}
-            </span>
           </div>
         </div>
       </header>
