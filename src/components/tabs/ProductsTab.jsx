@@ -515,13 +515,6 @@ export default function ProductsTab({
   keysByOffer = {},
   keysLoading = {},
   keysDeleting = {},
-  groups = [],
-  groupAssignments = {},
-  messageGroups = [],
-  messageGroupAssignments = {},
-  messageGroupTemplates = {},
-  messageTemplatesByOffer = {},
-  templates = [],
   activeUsername = "",
   stockEnabledByOffer = {},
   automationWsUrl = "",
@@ -539,17 +532,7 @@ export default function ProductsTab({
   onUpdateKeyCode,
   onBulkCopy,
   onBulkDelete,
-  onDeleteGroup,
   onCopyKey,
-  onCreateGroup,
-  onAssignGroup,
-  onCreateMessageGroup,
-  onAssignMessageGroup,
-  onDeleteMessageGroup,
-  onAddMessageTemplate,
-  onAddMessageGroupTemplate,
-  onRemoveMessageGroupTemplate,
-  onRemoveMessageTemplate,
   onToggleStock,
   onSaveAutomation,
   onAddAutomationTarget,
@@ -569,8 +552,6 @@ export default function ProductsTab({
   canCopyKeys = false,
   canEditKeys: canEditKeysProp = false,
   canChangeKeyStatus: canChangeKeyStatusProp = false,
-  canManageGroups: canManageGroupsProp,
-  canManageMessages: canManageMessagesProp,
   canToggleStock: canToggleStockProp,
   canToggleCard: canToggleCardProp,
   canManageAutomation: canManageAutomationProp,
@@ -589,21 +570,13 @@ export default function ProductsTab({
   const [query, setQuery] = useState("")
   const [openOffers, setOpenOffers] = useState({})
   const [confirmKeyTarget, setConfirmKeyTarget] = useState(null)
-  const [groupDrafts, setGroupDrafts] = useState({})
-  const [groupSelectionDrafts, setGroupSelectionDrafts] = useState({})
   const [bulkCounts, setBulkCounts] = useState({})
   const [stockModalDraft, setStockModalDraft] = useState("")
   const [stockModalTarget, setStockModalTarget] = useState(null)
   const [editingKeys, setEditingKeys] = useState({})
   const [savingKeys, setSavingKeys] = useState({})
-  const [confirmGroupDelete, setConfirmGroupDelete] = useState(null)
   const [activePanelByOffer, setActivePanelByOffer] = useState({})
-  const [messageTemplateDrafts, setMessageTemplateDrafts] = useState({})
-  const [messageGroupDrafts, setMessageGroupDrafts] = useState({})
-  const [messageGroupSelectionDrafts, setMessageGroupSelectionDrafts] = useState({})
   const [refreshingOffers, setRefreshingOffers] = useState({})
-  const [confirmMessageGroupDelete, setConfirmMessageGroupDelete] = useState(null)
-  const [confirmMessageTemplateDelete, setConfirmMessageTemplateDelete] = useState(null)
   const [confirmOfferDelete, setConfirmOfferDelete] = useState(null)
   const allProductsRef = useRef([])
   const starredOffersRef = useRef(starredOffers)
@@ -675,8 +648,6 @@ export default function ProductsTab({
   const bulkUsedDeleteConfirmTimerRef = useRef(null)
   const bulkPriceSessionHydratedRef = useRef(false)
   const bulkPriceCancelRequestedRef = useRef(false)
-  const prevGroupAssignments = useRef(groupAssignments)
-  const prevMessageGroupAssignments = useRef(messageGroupAssignments)
   useEffect(
     () => () => {
       if (bulkUsedDeleteConfirmTimerRef.current) {
@@ -745,16 +716,10 @@ export default function ProductsTab({
         .filter((offerId) => activePanelByOffer?.[offerId] === "price"),
     [activePanelByOffer, openOffers],
   )
-  const canManageGroups = typeof canManageGroupsProp === "boolean" ? canManageGroupsProp : canAddKeys
   const canManageStock =
     typeof canToggleStockProp === "boolean"
       ? canToggleStockProp
       : canAddKeys && typeof onToggleStock === "function"
-  const canManageMessages =
-    typeof canManageMessagesProp === "boolean"
-      ? canManageMessagesProp
-      : canAddKeys &&
-        (typeof onAddMessageGroupTemplate === "function" || typeof onAddMessageTemplate === "function")
   const canManagePrices =
     typeof canManagePricesProp === "boolean" ? canManagePricesProp : canAddKeys
   const canViewPriceDetails =
@@ -765,12 +730,6 @@ export default function ProductsTab({
       : canManagePrices
   const canTogglePrice =
     typeof canTogglePriceProp === "boolean" ? canTogglePriceProp : canManagePrices
-  const canDeleteMessageGroup =
-    canManageMessages && typeof onDeleteMessageGroup === "function"
-  const canRemoveMessageTemplate =
-    canManageMessages &&
-    (typeof onRemoveMessageTemplate === "function" ||
-      typeof onRemoveMessageGroupTemplate === "function")
   const canUpdateKeys =
     typeof onUpdateKeyStatus === "function" &&
     (typeof canChangeKeyStatusProp === "boolean" ? canChangeKeyStatusProp : canCopyKeys)
@@ -1126,10 +1085,7 @@ export default function ProductsTab({
       const usedCount = hasLoadedKeys ? usedCountFromKeys : rawUsedCount
       const availableCount = hasLoadedKeys ? availableCountFromKeys : rawAvailableCount
       const totalCount = Math.max(0, availableCount + usedCount)
-      const groupId = String(
-        groupAssignments?.[offerId] ?? product?.stockGroupId ?? "",
-      ).trim()
-      const countKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+      const countKey = `offer:${offerId}`
       const shouldCountStock = !countedGroups.has(countKey)
       if (shouldCountStock) {
         countedGroups.add(countKey)
@@ -1141,7 +1097,7 @@ export default function ProductsTab({
       }
     })
     return totals
-  }, [allProducts, automationEnabledByOffer, groupAssignments, keysByOffer, stockEnabledByOffer])
+  }, [allProducts, automationEnabledByOffer, keysByOffer, stockEnabledByOffer])
   const automationWsSummary = useMemo(() => {
     const values = Object.values(automationConnectionStateByOffer || {})
       .map((value) => String(value ?? "").trim().toLowerCase())
@@ -2223,8 +2179,7 @@ export default function ProductsTab({
       return allProducts.reduce((total, product) => {
         const offerId = String(product?.id ?? "").trim()
         if (!offerId || !Boolean(stockEnabledByOffer?.[offerId])) return total
-        const groupId = String(groupAssignments?.[offerId] ?? "").trim()
-        const sourceKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+        const sourceKey = `offer:${offerId}`
         if (seenSources.has(sourceKey)) return total
         seenSources.add(sourceKey)
         const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
@@ -2235,7 +2190,7 @@ export default function ProductsTab({
         return total + (Number.isFinite(rawAvailableCount) ? Math.max(0, rawAvailableCount) : 0)
       }, 0)
     },
-    [allProducts, groupAssignments, keysByOffer, stockEnabledByOffer],
+    [allProducts, keysByOffer, stockEnabledByOffer],
   )
   const handleToolbarAvailableDownload = async () => {
     if (isToolbarAvailableDownloadRunning) return
@@ -2249,8 +2204,7 @@ export default function ProductsTab({
         const productName = String(product?.name ?? "").trim() || "Isimsiz urun"
         const offerId = String(product?.id ?? "").trim()
         if (!offerId || !Boolean(stockEnabledByOffer?.[offerId])) continue
-        const groupId = String(groupAssignments?.[offerId] ?? "").trim()
-        const sourceKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+        const sourceKey = `offer:${offerId}`
         if (seenSources.has(sourceKey)) continue
         seenSources.add(sourceKey)
 
@@ -2443,42 +2397,6 @@ export default function ProductsTab({
       setIsBulkStockRefreshRunning(false)
     }
   }
-  const handleGroupDraftChange = (offerId, value) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setGroupDrafts((prev) => ({ ...prev, [normalizedId]: value }))
-  }
-  const handleGroupCreate = async (offerId) => {
-    if (typeof onCreateGroup !== "function" || typeof onAssignGroup !== "function") return
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    const draft = groupDrafts[normalizedId] ?? ""
-    const created = await onCreateGroup(draft)
-    if (!created) return
-    setGroupDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
-    setConfirmGroupDelete(null)
-    onAssignGroup(normalizedId, created.id)
-  }
-  const handleGroupAssign = (offerId, groupId) => {
-    if (typeof onAssignGroup !== "function") return
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setConfirmGroupDelete(null)
-    onAssignGroup(normalizedId, groupId)
-  }
-  const handleGroupDelete = (offerId, groupId) => {
-    if (typeof onDeleteGroup !== "function") return
-    const normalizedOfferId = String(offerId ?? "").trim()
-    const normalizedGroupId = String(groupId ?? "").trim()
-    if (!normalizedOfferId || !normalizedGroupId) return
-    if (confirmGroupDelete === normalizedGroupId) {
-      setConfirmGroupDelete(null)
-      onDeleteGroup(normalizedGroupId)
-      return
-    }
-    setConfirmGroupDelete(normalizedGroupId)
-    toast("Grubu silmek icin tekrar tikla", { position: "top-right" })
-  }
   const setActivePanel = (offerId, panel) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
@@ -2487,102 +2405,6 @@ export default function ProductsTab({
       const next = current === panel ? "none" : panel
       return { ...prev, [normalizedId]: next }
     })
-  }
-  const handleMessageTemplateDraftChange = (offerId, value) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setMessageTemplateDrafts((prev) => ({ ...prev, [normalizedId]: value }))
-  }
-  const handleMessageGroupDraftChange = (offerId, value) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setMessageGroupDrafts((prev) => ({ ...prev, [normalizedId]: value }))
-  }
-  const handleMessageGroupCreate = async (offerId) => {
-    if (typeof onCreateMessageGroup !== "function" || typeof onAssignMessageGroup !== "function") {
-      return
-    }
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    const draft = String(messageGroupDrafts[normalizedId] ?? "").trim()
-    if (!draft) return
-    const created = await onCreateMessageGroup(draft)
-    if (!created) return
-    setMessageGroupDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
-    onAssignMessageGroup(normalizedId, created.id)
-  }
-  const handleMessageGroupAssign = (offerId, value) => {
-    if (typeof onAssignMessageGroup !== "function") return
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    setConfirmMessageGroupDelete(null)
-    onAssignMessageGroup(normalizedId, value)
-  }
-  const handleMessageGroupDelete = (groupId) => {
-    if (!canDeleteMessageGroup) return
-    const normalizedGroupId = String(groupId ?? "").trim()
-    if (!normalizedGroupId) return
-    if (confirmMessageGroupDelete === normalizedGroupId) {
-      setConfirmMessageGroupDelete(null)
-      onDeleteMessageGroup(normalizedGroupId)
-      return
-    }
-    setConfirmMessageGroupDelete(normalizedGroupId)
-    toast("Mesaj grubunu silmek icin tekrar tikla", { position: "top-right" })
-  }
-  const handleMessageTemplateAdd = (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return
-    const selected = String(messageTemplateDrafts[normalizedId] ?? "").trim()
-    if (!selected) return
-    const groupId = String(messageGroupAssignments?.[normalizedId] ?? "").trim()
-    if (groupId) {
-      if (typeof onAddMessageGroupTemplate !== "function") return
-      const ok = onAddMessageGroupTemplate(groupId, selected)
-      if (!ok) return
-    } else {
-      if (typeof onAddMessageTemplate !== "function") return
-      const ok = onAddMessageTemplate(normalizedId, selected)
-      if (!ok) return
-    }
-    setMessageTemplateDrafts((prev) => ({ ...prev, [normalizedId]: "" }))
-  }
-  const handleMessageTemplateRemove = (offerId, label) => {
-    if (!canRemoveMessageTemplate) return
-    const normalizedId = String(offerId ?? "").trim()
-    const normalizedLabel = String(label ?? "").trim()
-    if (!normalizedId || !normalizedLabel) return
-    const groupId = String(messageGroupAssignments?.[normalizedId] ?? "").trim()
-    const target = `${normalizedId}:${groupId || "independent"}:${normalizedLabel}`
-    if (confirmMessageTemplateDelete !== target) {
-      setConfirmMessageTemplateDelete(target)
-      return
-    }
-    setConfirmMessageTemplateDelete(null)
-    if (groupId) {
-      if (typeof onRemoveMessageGroupTemplate !== "function") return
-      onRemoveMessageGroupTemplate(groupId, normalizedLabel)
-      return
-    }
-    if (typeof onRemoveMessageTemplate !== "function") return
-    onRemoveMessageTemplate(normalizedId, normalizedLabel)
-  }
-  const handleMessageTemplateCopy = async (label) => {
-    const normalizedLabel = String(label ?? "").trim()
-    if (!normalizedLabel) return
-    const message = templates.find((tpl) => tpl.label === normalizedLabel)?.value
-    const trimmedMessage = String(message ?? "").trim()
-    if (!trimmedMessage) {
-      toast.error("Mesaj şablonu bulunamadı.")
-      return
-    }
-    try {
-      await navigator.clipboard.writeText(trimmedMessage)
-      toast.success("Mesaj kopyalandı", { duration: 1500, position: "top-right" })
-    } catch (error) {
-      console.error(error)
-      toast.error("Kopyalanamadı")
-    }
   }
   const handleStockToggle = (offerId) => {
     if (!canManageStock) return
@@ -2716,40 +2538,6 @@ export default function ProductsTab({
   useEffect(() => {
     setOpenOffers({})
   }, [allProducts.length])
-  useEffect(() => {
-    if (groupAssignments !== prevGroupAssignments.current) {
-      const nextAssignments = groupAssignments ?? {}
-      setGroupSelectionDrafts((prev) => {
-        const next = { ...prev }
-        Object.entries(next).forEach(([offerId, draftValue]) => {
-          const assigned = String(nextAssignments?.[offerId] ?? "").trim()
-          const normalizedDraft = String(draftValue ?? "").trim()
-          if (normalizedDraft === assigned) {
-            delete next[offerId]
-          }
-        })
-        return next
-      })
-      prevGroupAssignments.current = groupAssignments
-    }
-  }, [groupAssignments])
-  useEffect(() => {
-    if (messageGroupAssignments !== prevMessageGroupAssignments.current) {
-      const nextAssignments = messageGroupAssignments ?? {}
-      setMessageGroupSelectionDrafts((prev) => {
-        const next = { ...prev }
-        Object.entries(next).forEach(([offerId, draftValue]) => {
-          const assigned = String(nextAssignments?.[offerId] ?? "").trim()
-          const normalizedDraft = String(draftValue ?? "").trim()
-          if (normalizedDraft === assigned) {
-            delete next[offerId]
-          }
-        })
-        return next
-      })
-      prevMessageGroupAssignments.current = messageGroupAssignments
-    }
-  }, [messageGroupAssignments])
   useEffect(() => {
     const defaultBackend = String(stockFetchAutomationBackendOptions?.[0]?.key ?? "").trim()
     setAutomationTargetDraftsByOffer((prev) => {
@@ -3501,13 +3289,6 @@ export default function ProductsTab({
                   const totalCount = hasLoadedKeys ? totalCountFromKeys : rawTotalCount
                   const usedCount = hasLoadedKeys ? usedCountFromKeys : rawUsedCount
                   const availableCount = hasLoadedKeys ? availableCountFromKeys : rawAvailableCount
-                  const groupId = String(
-                    groupAssignments?.[offerId] ?? product?.stockGroupId ?? "",
-                  ).trim()
-                  const group = groupId ? groups.find((entry) => entry.id === groupId) : null
-                  const groupName = String(group?.name ?? product?.stockGroupName ?? "").trim()
-                  const groupSelectionValue = groupSelectionDrafts[offerId] ?? groupId
-                  const isGroupSelectionDirty = groupSelectionValue !== groupId
                   const categoryKey = getCategoryKey(product)
                   const categoryLabel =
                     categoryKey === "diger" ? "Diğer" : formatCategoryLabel(categoryKey)
@@ -3515,7 +3296,6 @@ export default function ProductsTab({
                   const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
                   const isOutOfStock = isStockEnabled && availableCount === 0
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
-                  const groupDraftValue = groupDrafts[offerId] ?? ""
                   const availablePanels = ["inventory"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
                   const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
@@ -3595,9 +3375,6 @@ export default function ProductsTab({
                   }
                   if (isPriceEnabled) {
                     availablePanels.push("price")
-                  }
-                  if (isStockEnabled) {
-                    availablePanels.push("stock-group")
                   }
                   const storedPanel = activePanelByOffer[offerId]
                   const defaultPanel = availablePanels[0] ?? "inventory"
@@ -4046,134 +3823,10 @@ export default function ProductsTab({
                                   <span>Fiyat</span>
                                 </button>
                               )}
-                              {isStockEnabled && (
-                                <button
-                                  type="button"
-                                  onClick={() => setActivePanel(offerId, "stock-group")}
-                                  className={`group flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-[12px] font-semibold transition sm:w-auto sm:justify-start sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-1 sm:py-0 sm:pb-2 ${
-                                    activePanel === "stock-group"
-                                      ? "border-accent-400 bg-accent-500/10 text-white sm:bg-transparent"
-                                      : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-slate-200 sm:border-transparent sm:bg-transparent sm:hover:border-white/30 sm:hover:bg-transparent"
-                                  }`}
-                                  aria-pressed={activePanel === "stock-group"}
-                                >
-                                  <span>Stok grubu</span>
-                                  <span
-                                    className={`ml-auto max-w-[220px] whitespace-normal break-words rounded-full border px-2 py-0.5 text-left text-[10px] font-semibold leading-snug sm:ml-0 ${
-                                      activePanel === "stock-group"
-                                        ? "border-accent-400/60 bg-accent-500/10 text-accent-100"
-                                        : "border-white/10 bg-white/5 text-slate-300 group-hover:text-slate-200"
-                                    }`}
-                                  >
-                                    {groupName || "Bağımsız"}
-                                  </span>
-                                </button>
-                              )}
                             </div>
                           </div>
                           {activePanel !== "inventory" && (
                           <div className={`grid min-w-0 items-start gap-3 ${isStockEnabled ? "lg:grid-cols-2" : ""}`}>
-{isStockEnabled && activePanel === "stock-group" && (
-  <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
-    {isOfferRefreshing ? (
-      <div className="space-y-3">
-        <SkeletonBlock className="h-4 w-24 rounded-lg" />
-        <SkeletonBlock className="h-28 w-full rounded-xl" />
-        <SkeletonBlock className="h-28 w-full rounded-xl" />
-      </div>
-    ) : (
-      <div className="mt-1 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
-        <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
-          <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Stok grubu</label>
-          <div
-            className={`mt-1 grid gap-2 sm:flex sm:flex-wrap sm:items-center ${
-              selectFlashByKey[`${offerId}:stock-group`] ? "animate-noteSwap" : ""
-            }`}
-          >
-            <select
-              value={groupSelectionValue}
-              onChange={(event) =>
-                setGroupSelectionDrafts((prev) => ({
-                  ...prev,
-                  [offerId]: event.target.value,
-                }))
-              }
-              disabled={!canManageGroups}
-              className="min-w-0 w-full appearance-none rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-slate-100 h-9 sm:min-w-[160px] sm:flex-1 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <option value="">Bağımsız</option>
-              {groups.map((groupOption) => (
-                <option key={groupOption.id} value={groupOption.id}>
-                  {groupOption.name}
-                </option>
-              ))}
-            </select>
-            {groupSelectionValue && canManageGroups && (
-              <button
-                type="button"
-                onClick={() => {
-                  setGroupSelectionDrafts((prev) => ({
-                    ...prev,
-                    [offerId]: "",
-                  }))
-                  triggerSelectFlash(offerId, "stock-group")
-                }}
-                className="w-full rounded-lg border border-amber-300/60 bg-amber-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-50 h-9 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-500/25 sm:w-auto"
-              >
-                KALDIR
-              </button>
-            )}
-            {canManageGroups && (
-              <button
-                type="button"
-                onClick={() => {
-                  handleGroupAssign(offerId, groupSelectionValue)
-                  triggerSelectFlash(offerId, "stock-group")
-                }}
-                disabled={!isGroupSelectionDirty}
-                className="w-full rounded-lg border border-emerald-300/60 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-9 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-              >
-                KAYDET
-              </button>
-            )}
-            {groupId && canManageGroups && (
-              <button
-                type="button"
-                onClick={() => handleGroupDelete(offerId, groupId)}
-                className="w-full rounded-lg border border-rose-300/60 bg-rose-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 h-9 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-500/25 sm:w-auto"
-              >
-                {confirmGroupDelete === groupId ? "ONAYLA" : "SİL"}
-              </button>
-            )}
-          </div>
-        </div>
-        {canManageGroups && (
-          <div className="rounded-xl border border-white/10 bg-ink-900/50 p-4">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Yeni grup</label>
-            <div className="mt-1 grid gap-2 sm:flex sm:flex-wrap sm:items-center">
-              <input
-                type="text"
-                value={groupDraftValue}
-                onChange={(event) => handleGroupDraftChange(offerId, event.target.value)}
-                placeholder="Yeni grup adı"
-                disabled={!canManageGroups}
-                className="min-w-0 w-full rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 h-9 sm:min-w-[160px] sm:flex-1 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-              <button
-                type="button"
-                onClick={() => handleGroupCreate(offerId)}
-                disabled={!canManageGroups || !groupDraftValue.trim()}
-                className="w-full rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-9 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-              >
-                OLUŞTUR
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    )}
-  </div>
-)}
 {activePanel === "price" && isPriceEnabled && (
   <div className="relative -mt-2 w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-3 shadow-card animate-panelFade sm:p-5 lg:col-span-2">
     <div className="relative grid w-full min-w-0 max-w-full gap-3 xl:grid-cols-[minmax(0,1fr)_280px]">
