@@ -1126,10 +1126,7 @@ export default function ProductsTab({
       const usedCount = hasLoadedKeys ? usedCountFromKeys : rawUsedCount
       const availableCount = hasLoadedKeys ? availableCountFromKeys : rawAvailableCount
       const totalCount = Math.max(0, availableCount + usedCount)
-      const groupId = String(
-        groupAssignments?.[offerId] ?? product?.stockGroupId ?? "",
-      ).trim()
-      const countKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+      const countKey = `offer:${offerId}`
       const shouldCountStock = !countedGroups.has(countKey)
       if (shouldCountStock) {
         countedGroups.add(countKey)
@@ -1141,7 +1138,7 @@ export default function ProductsTab({
       }
     })
     return totals
-  }, [allProducts, automationEnabledByOffer, groupAssignments, keysByOffer, stockEnabledByOffer])
+  }, [allProducts, automationEnabledByOffer, keysByOffer, stockEnabledByOffer])
   const automationWsSummary = useMemo(() => {
     const values = Object.values(automationConnectionStateByOffer || {})
       .map((value) => String(value ?? "").trim().toLowerCase())
@@ -2223,8 +2220,7 @@ export default function ProductsTab({
       return allProducts.reduce((total, product) => {
         const offerId = String(product?.id ?? "").trim()
         if (!offerId || !Boolean(stockEnabledByOffer?.[offerId])) return total
-        const groupId = String(groupAssignments?.[offerId] ?? "").trim()
-        const sourceKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+        const sourceKey = `offer:${offerId}`
         if (seenSources.has(sourceKey)) return total
         seenSources.add(sourceKey)
         const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
@@ -2235,7 +2231,7 @@ export default function ProductsTab({
         return total + (Number.isFinite(rawAvailableCount) ? Math.max(0, rawAvailableCount) : 0)
       }, 0)
     },
-    [allProducts, groupAssignments, keysByOffer, stockEnabledByOffer],
+    [allProducts, keysByOffer, stockEnabledByOffer],
   )
   const handleToolbarAvailableDownload = async () => {
     if (isToolbarAvailableDownloadRunning) return
@@ -2249,8 +2245,7 @@ export default function ProductsTab({
         const productName = String(product?.name ?? "").trim() || "Isimsiz urun"
         const offerId = String(product?.id ?? "").trim()
         if (!offerId || !Boolean(stockEnabledByOffer?.[offerId])) continue
-        const groupId = String(groupAssignments?.[offerId] ?? "").trim()
-        const sourceKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+        const sourceKey = `offer:${offerId}`
         if (seenSources.has(sourceKey)) continue
         seenSources.add(sourceKey)
 
@@ -3501,13 +3496,6 @@ export default function ProductsTab({
                   const totalCount = hasLoadedKeys ? totalCountFromKeys : rawTotalCount
                   const usedCount = hasLoadedKeys ? usedCountFromKeys : rawUsedCount
                   const availableCount = hasLoadedKeys ? availableCountFromKeys : rawAvailableCount
-                  const groupId = String(
-                    groupAssignments?.[offerId] ?? product?.stockGroupId ?? "",
-                  ).trim()
-                  const group = groupId ? groups.find((entry) => entry.id === groupId) : null
-                  const groupName = String(group?.name ?? product?.stockGroupName ?? "").trim()
-                  const groupSelectionValue = groupSelectionDrafts[offerId] ?? groupId
-                  const isGroupSelectionDirty = groupSelectionValue !== groupId
                   const categoryKey = getCategoryKey(product)
                   const categoryLabel =
                     categoryKey === "diger" ? "Diğer" : formatCategoryLabel(categoryKey)
@@ -3515,7 +3503,6 @@ export default function ProductsTab({
                   const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
                   const isOutOfStock = isStockEnabled && availableCount === 0
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
-                  const groupDraftValue = groupDrafts[offerId] ?? ""
                   const availablePanels = ["inventory"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
                   const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
@@ -3604,33 +3591,6 @@ export default function ProductsTab({
                       : availablePanels.includes(storedPanel)
                         ? storedPanel
                         : defaultPanel
-                  const messageTemplateDraftValue = messageTemplateDrafts[offerId] ?? ""
-                  const messageGroupDraftValue = messageGroupDrafts[offerId] ?? ""
-                  const normalizedTemplateValue = String(messageTemplateDraftValue ?? "").trim()
-                  const isMessageTemplateValid = templates.some(
-                    (tpl) => tpl.label === normalizedTemplateValue,
-                  )
-                  const messageGroupId = String(
-                    messageGroupAssignments?.[offerId] ?? "",
-                  ).trim()
-                  const messageGroup = messageGroupId
-                    ? messageGroups.find((group) => group.id === messageGroupId)
-                    : null
-                  const messageGroupName = String(messageGroup?.name ?? "").trim()
-                  const messageGroupSelectionValue =
-                    messageGroupSelectionDrafts[offerId] ?? messageGroupId
-                  const isMessageGroupSelectionDirty =
-                    messageGroupSelectionValue !== messageGroupId
-                  const independentMessages = Array.isArray(messageTemplatesByOffer?.[offerId])
-                    ? messageTemplatesByOffer[offerId]
-                    : []
-                  const messageGroupMessages = messageGroupId
-                    ? Array.isArray(messageGroupTemplates?.[messageGroupId])
-                      ? messageGroupTemplates[messageGroupId]
-                      : []
-                    : independentMessages
-                  const messageGroupLabel =
-                    messageGroupName || (messageGroupMessages.length > 0 ? "Bağımsız" : "Yok")
                   const priceDraft = priceDrafts[offerId] ?? { base: "", percent: DEFAULT_PRICE_PERCENT }
                   const savedPriceEntry = savedPricesByOffer?.[offerId] ?? null
                   const baseInputValue = String(priceDraft.base ?? "").trim()
@@ -3705,9 +3665,6 @@ export default function ProductsTab({
                         : canSavePrice
                           ? "Fiyat ayari kaydedilmeye hazir."
                           : "Sonuc icin baz fiyat ve katsayi secin."
-                  const canDeleteMessageItem = messageGroupId
-                    ? typeof onRemoveMessageGroupTemplate === "function"
-                    : typeof onRemoveMessageTemplate === "function"
                   const isOfferRefreshing = Boolean(refreshingOffers[offerId])
                   const rawHref = String(product?.href ?? "").trim()
                   const href = rawHref
