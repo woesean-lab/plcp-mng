@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import {
+  ArrowDownTrayIcon,
   ArrowPathIcon,
   CheckIcon,
   ChevronLeftIcon,
@@ -26,6 +27,7 @@ import {
   normalizePricePayloadValues,
   roundPriceNumber,
 } from "../../utils/priceMath"
+import { splitStocks } from "../../utils/stockUtils"
 import StockModal from "../modals/StockModal"
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />
@@ -2171,6 +2173,65 @@ export default function ProductsTab({
     URL.revokeObjectURL(downloadUrl)
     toast.success(`${selected.length} kullanilan stok indirildi.`)
   }
+  const getAvailableStockCodes = (product, loadedKeys = null) => {
+    const list = Array.isArray(loadedKeys) ? loadedKeys : splitStocks(product?.stocks).available
+    return Array.isArray(list)
+      ? list.map((item) => String(item?.code ?? "").trim()).filter(Boolean)
+      : []
+  }
+  const handleAvailableBulkDownload = (offerId, productName, list) => {
+    const normalizedId = String(offerId ?? "").trim()
+    if (!normalizedId) return
+
+    const selected = Array.isArray(list) ? getAvailableStockCodes(null, list) : []
+    if (selected.length === 0) {
+      toast.error("Indirilecek aktif stok yok.")
+      return
+    }
+
+    const filenameBase =
+      normalizeDownloadName(productName) || normalizeDownloadName(normalizedId) || "aktif-stoklar"
+    const downloadUrl = URL.createObjectURL(new Blob([selected.join("\r\n")], { type: "text/plain;charset=utf-8" }))
+    const anchor = document.createElement("a")
+    anchor.href = downloadUrl
+    anchor.download = `${filenameBase}-aktif-stoklar-${formatDownloadDateToken()}.txt`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(downloadUrl)
+    toast.success(`${selected.length} aktif stok indirildi.`)
+  }
+  const toolbarAvailableStockCount = useMemo(
+    () =>
+      allProducts.reduce((total, product) => {
+        const offerId = String(product?.id ?? "").trim()
+        const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
+        return total + getAvailableStockCodes(product, loadedKeys).length
+      }, 0),
+    [allProducts, keysByOffer],
+  )
+  const handleToolbarAvailableDownload = () => {
+    const selected = allProducts.flatMap((product) => {
+      const offerId = String(product?.id ?? "").trim()
+      const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
+      return getAvailableStockCodes(product, loadedKeys)
+    })
+
+    if (selected.length === 0) {
+      toast.error("Indirilecek aktif stok yok.")
+      return
+    }
+
+    const downloadUrl = URL.createObjectURL(new Blob([selected.join("\r\n")], { type: "text/plain;charset=utf-8" }))
+    const anchor = document.createElement("a")
+    anchor.href = downloadUrl
+    anchor.download = `tum-urunler-aktif-stoklar-${formatDownloadDateToken()}.txt`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(downloadUrl)
+    toast.success(`${selected.length} aktif stok tek dosyada indirildi.`)
+  }
   const armBulkUsedDeleteConfirm = () => {
     setConfirmBulkUsedDelete(true)
     if (bulkUsedDeleteConfirmTimerRef.current) {
@@ -2701,6 +2762,16 @@ export default function ProductsTab({
       toast.error("Sonuc kopyalanamadi", { position: "top-right" })
     }
   }
+  const copyOfferLinkToClipboard = async (href) => {
+    const valueToCopy = String(href ?? "").trim()
+    if (!valueToCopy) return
+    try {
+      await navigator.clipboard.writeText(valueToCopy)
+      toast.success("Link kopyalandi", { position: "top-right" })
+    } catch {
+      toast.error("Link kopyalanamadi", { position: "top-right" })
+    }
+  }
   const schedulePopupValueCopy = () => {
     if (isPopupValueEditing) return
     if (popupValueCopyTimerRef.current) {
@@ -3072,7 +3143,7 @@ export default function ProductsTab({
                   )}
                 </div>
               </div>
-              {(canRefresh || canRefreshAllStocks || canUseBulkUsedDelete || (canUseBulkPriceActions && filteredList.length > 0)) && (
+              {(canRefresh || canRefreshAllStocks || canUseBulkUsedDelete || canCopyKeys || (canUseBulkPriceActions && filteredList.length > 0)) && (
                 <div className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-2 shadow-card">
                   {canRefresh && (
                     <button
@@ -3141,6 +3212,23 @@ export default function ProductsTab({
                         aria-hidden="true"
                         className={`h-4 w-4 ${isBulkUsedDeleteRunning ? "animate-pulse" : ""}`}
                       />
+                    </button>
+                  )}
+                  {canCopyKeys && (
+                    <button
+                      type="button"
+                      onClick={handleToolbarAvailableDownload}
+                      disabled={toolbarAvailableStockCount <= 0}
+                      className={`inline-flex h-8 items-center justify-center rounded-lg border px-3 text-[11px] font-semibold uppercase tracking-wide transition ${
+                        toolbarAvailableStockCount <= 0
+                          ? "cursor-not-allowed border-white/5 text-slate-600"
+                          : "border-white/10 text-slate-300 hover:border-sky-300/40 hover:bg-sky-500/10 hover:text-sky-100"
+                      }`}
+                      title="Tum urunlerin aktif stoklarini indir"
+                      aria-label="Tum urunlerin aktif stoklarini indir"
+                    >
+                      <span className="hidden sm:inline">Toplu stok indir</span>
+                      <ArrowDownTrayIcon aria-hidden="true" className="h-4 w-4 sm:hidden" />
                     </button>
                   )}
                   {canUseBulkPriceActions && filteredList.length > 0 && (
@@ -3814,15 +3902,17 @@ export default function ProductsTab({
                               </button>
                             )}
                             {href && canViewLinks && (
-                              <a
-                                href={href}
-                                target="_blank"
-                                rel="noreferrer"
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void copyOfferLinkToClipboard(href)
+                                }}
                                 className="relative inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-200/80 transition hover:text-white before:content-[''] before:absolute before:-inset-y-0 before:-inset-x-0.5 before:rounded-lg before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition sm:h-7 sm:w-7"
-                                aria-label="Ürün linki"
+                                aria-label="Urun linkini kopyala"
+                                title="Linki kopyala"
                               >
                                 <LinkIcon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                              </a>
+                              </button>
                             )}
                             {canAddKeys && (
                               <button
@@ -4897,6 +4987,13 @@ export default function ProductsTab({
                                           className="rounded-md border border-sky-300/60 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 h-8 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/25"
                                         >
                                           Kopyala
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleAvailableBulkDownload(offerId, name, availableKeys)}
+                                          className="rounded-md border border-emerald-300/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 h-8 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20"
+                                        >
+                                          Aktif indir
                                         </button>
                           </div>
                         </div>
