@@ -878,7 +878,7 @@ export default function AdminTab({
                               type="checkbox"
                               checked={isActive}
                               onChange={() => toggleRolePermission(item.id)}
-                              className="h-3.5 w-3.5 rounded border-white/30 bg-transparent accent-rose-500 focus:ring-0"
+                              className="h-3.5 w-3.5 rounded border-white/30 bg-ink-900 text-rose-500 focus:ring-rose-500/40"
                             />
                             {item.label}
                           </label>
