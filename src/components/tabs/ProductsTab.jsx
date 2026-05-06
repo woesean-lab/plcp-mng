@@ -2217,28 +2217,41 @@ export default function ProductsTab({
     toast.success(`${selected.length} aktif stok indirildi.`)
   }
   const toolbarAvailableStockCount = useMemo(
-    () =>
-      allProducts.reduce((total, product) => {
+    () => {
+      const seenSources = new Set()
+      return allProducts.reduce((total, product) => {
         const offerId = String(product?.id ?? "").trim()
+        if (!offerId || !Boolean(stockEnabledByOffer?.[offerId])) return total
+        const groupId = String(groupAssignments?.[offerId] ?? "").trim()
+        const sourceKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+        if (seenSources.has(sourceKey)) return total
+        seenSources.add(sourceKey)
         const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
         if (loadedKeys) {
           return total + getAvailableStockCodes(product, loadedKeys).length
         }
         const rawAvailableCount = Number(product?.stockCount)
         return total + (Number.isFinite(rawAvailableCount) ? Math.max(0, rawAvailableCount) : 0)
-      }, 0),
-    [allProducts, keysByOffer],
+      }, 0)
+    },
+    [allProducts, groupAssignments, keysByOffer, stockEnabledByOffer],
   )
   const handleToolbarAvailableDownload = async () => {
     if (isToolbarAvailableDownloadRunning) return
     setIsToolbarAvailableDownloadRunning(true)
     try {
       const selected = []
+      const seenSources = new Set()
+      const seenLines = new Set()
 
       for (const product of allProducts) {
         const productName = String(product?.name ?? "").trim() || "Isimsiz urun"
         const offerId = String(product?.id ?? "").trim()
-        if (!offerId) continue
+        if (!offerId || !Boolean(stockEnabledByOffer?.[offerId])) continue
+        const groupId = String(groupAssignments?.[offerId] ?? "").trim()
+        const sourceKey = groupId ? `group:${groupId}` : `offer:${offerId}`
+        if (seenSources.has(sourceKey)) continue
+        seenSources.add(sourceKey)
 
         let availableCodes = []
         const loadedKeys = Array.isArray(keysByOffer?.[offerId]) ? keysByOffer[offerId] : null
@@ -2257,7 +2270,10 @@ export default function ProductsTab({
         }
 
         availableCodes.forEach((code) => {
-          selected.push(`${productName} | ${code}`)
+          const line = `${productName} | ${code}`
+          if (seenLines.has(line)) return
+          seenLines.add(line)
+          selected.push(line)
         })
       }
 
