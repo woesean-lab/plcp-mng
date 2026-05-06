@@ -137,14 +137,6 @@ export default function ListsTab({
               Yeni liste oluştur, listeleri görüntüle ve hücreleri Excel benzeri biçimde düzenle.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Toplam liste: {listCountText}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent-200">
-              Aktif: {activeList?.name || "Seçilmedi"}
-            </span>
-          </div>
         </div>
       </header>
 

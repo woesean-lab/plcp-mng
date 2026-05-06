@@ -788,7 +788,7 @@ export default function AdminTab({
   const wsActionButtonBaseClass =
     "w-full min-w-0 rounded-lg px-1.5 py-1.5 text-center text-[9px] font-semibold uppercase tracking-[0.04em] transition sm:text-[10px]"
   const wsActionPrimaryButtonClass =
-    `${wsActionButtonBaseClass} border border-emerald-300/60 bg-emerald-500/15 text-emerald-50 hover:border-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-60`
+    `${wsActionButtonBaseClass} border border-sky-300/60 bg-sky-500/15 text-sky-50 hover:border-sky-200 hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-60`
   const wsActionSecondaryButtonClass =
     `${wsActionButtonBaseClass} border border-white/15 bg-white/[0.06] text-slate-200 hover:border-white/25 hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-60`
 
@@ -878,7 +878,7 @@ export default function AdminTab({
                               type="checkbox"
                               checked={isActive}
                               onChange={() => toggleRolePermission(item.id)}
-                              className="h-3.5 w-3.5 rounded border-white/30 bg-transparent accent-slate-200 focus:ring-0"
+                              className="h-3.5 w-3.5 rounded border-white/30 bg-transparent accent-[#4e4e4f] focus:ring-0"
                             />
                             {item.label}
                           </label>

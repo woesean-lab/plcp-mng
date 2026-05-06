@@ -726,7 +726,7 @@ export default function TasksTab({
                             type="checkbox"
                             checked={isActive}
                             onChange={() => toggleRepeatDay(day.value, setTaskForm)}
-                            className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-slate-400 focus:ring-0"
+                            className="h-3.5 w-3.5 rounded border-white/30 bg-transparent accent-[#4e4e4f] focus:ring-0"
                           />
                           {day.label}
                         </label>
