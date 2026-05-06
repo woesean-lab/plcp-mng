@@ -2189,7 +2189,8 @@ export default function ProductsTab({
     toast.success(`${selected.length} kullanilan stok indirildi.`)
   }
   const getAvailableStockCodes = (product, loadedKeys = null) => {
-    const list = Array.isArray(loadedKeys) ? loadedKeys : splitStocks(product?.stocks).available
+    const sourceList = Array.isArray(loadedKeys) ? loadedKeys : product?.stocks
+    const list = splitStocks(sourceList).available
     return Array.isArray(list)
       ? list.map((item) => String(item?.code ?? "").trim()).filter(Boolean)
       : []
