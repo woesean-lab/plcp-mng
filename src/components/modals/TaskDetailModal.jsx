@@ -48,7 +48,7 @@ export default function TaskDetailModal({
                   onEdit(target)
                   onClose()
                 }}
-                className="rounded-lg border border-sky-300/60 bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-100 transition hover:border-sky-200 hover:bg-sky-500/25"
+                className="rounded-lg border border-slate-300/40 bg-slate-500/10 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-slate-300/60 hover:bg-slate-500/20"
               >
                 Düzenle
               </button>
