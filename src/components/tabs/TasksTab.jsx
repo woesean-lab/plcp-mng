@@ -215,7 +215,7 @@ export default function TasksTab({
                       type="checkbox"
                       checked={hideStaffTasks}
                       onChange={(event) => setHideStaffTasks(event.target.checked)}
-                      className="h-4 w-4 rounded border-white/30 bg-ink-900 text-accent-400 focus:ring-accent-400/40"
+                      className="h-4 w-4 rounded border-white/30 bg-ink-900 text-rose-500 focus:ring-rose-500/40"
                     />
                     {"Bana ait g\u00f6revler"}
                   </label>
@@ -350,17 +350,17 @@ export default function TasksTab({
                                   </div>
                                   <span className="text-xs text-slate-400">{isExpanded ? "-" : "+"}</span>
                                 </div>
+                                <span
+                                  className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ${
+                                    isTaskDueToday(task)
+                                      ? "bg-rose-500/15 text-rose-100"
+                                      : "bg-white/5 text-slate-300"
+                                  }`}
+                                >
+                                  {"Biti\u015f:"} {getTaskDueLabel(task)}
+                                </span>
                                 {isExpanded && (
                                   <>
-                                    <span
-                                      className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ${
-                                        isTaskDueToday(task)
-                                          ? "bg-rose-500/15 text-rose-100"
-                                          : "bg-white/5 text-slate-300"
-                                      }`}
-                                    >
-                                      {"Biti\u015f:"} {getTaskDueLabel(task)}
-                                    </span>
                                     <div className="flex flex-wrap gap-2">
                                       {canProgressTasks && status !== "done" && (
                                         <button
@@ -742,7 +742,7 @@ export default function TasksTab({
                             type="checkbox"
                             checked={isActive}
                             onChange={() => toggleRepeatDay(day.value, setTaskForm)}
-                            className="h-3.5 w-3.5 rounded border-white/30 bg-transparent accent-[#4e4e4f] focus:ring-0"
+                            className="h-3.5 w-3.5 rounded border-white/30 bg-transparent accent-rose-500 focus:ring-0"
                           />
                           {day.label}
                         </label>
@@ -786,25 +786,6 @@ export default function TasksTab({
 
           )}
 
-          <div className={`${panelClass} bg-ink-800/60`}>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">
-              {"G\u00f6rev \u00f6zeti"}
-            </p>
-            <div className="mt-3 space-y-2 text-sm text-slate-300">
-              <p>- Acik gorev: {taskStats.todo + taskStats.doing}</p>
-              <p>- Tamamlanan: {taskStats.done}</p>
-            </div>
-            <div className="mt-4 rounded-xl border border-white/10 bg-ink-900/70 px-4 py-3 text-sm text-slate-200 shadow-inner">
-              {focusTask ? (
-                <>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Siradaki odak</p>
-                  <p className="mt-1 text-sm text-slate-100">{focusTask.title}</p>
-                </>
-              ) : (
-                <p>{"G\u00f6rev kalmad\u0131. Yeni g\u00f6rev ekleyebilirsin."}</p>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>
