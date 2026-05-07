@@ -240,6 +240,7 @@ function App() {
     handleEldoradoOfferDelete,
     refreshEldoradoOffer,
     templates,
+    refreshTemplates,
     isProblemsTabLoading,
     openProblems,
     resolvedProblems,
@@ -1236,6 +1237,7 @@ function App() {
               automationTargetsByOffer={eldoradoAutomationTargetsByOffer}
               automationBackendOptions={eldoradoAutomationBackendOptions}
               templates={templates}
+              onRefreshTemplates={refreshTemplates}
               deliveryTemplatesByOffer={eldoradoDeliveryTemplatesByOffer}
               savedPricesByOffer={eldoradoOfferPrices}
               priceEnabledByOffer={eldoradoOfferPriceEnabledByOffer}

@@ -4238,6 +4238,11 @@ const handleEldoradoNoteSave = useCallback(
     [apiFetch],
   )
 
+  const refreshTemplates = useCallback(async () => {
+    const controller = new AbortController()
+    await loadTemplates(controller.signal)
+  }, [loadTemplates])
+
   useEffect(() => {
     if (!isAuthed) return
     const controller = new AbortController()
@@ -5921,6 +5926,7 @@ const handleEldoradoNoteSave = useCallback(
     openProducts,
     toggleProductOpen,
     templates,
+    refreshTemplates,
     handleProductCopyMessage,
     editingProduct,
     handleEditStart,

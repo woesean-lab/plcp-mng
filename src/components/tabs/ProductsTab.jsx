@@ -547,6 +547,7 @@ export default function ProductsTab({
   onToggleOfferStar,
   onDeleteOffer,
   onRefreshOffer,
+  onRefreshTemplates,
   canManagePrices: canManagePricesProp,
   canViewPriceDetails: canViewPriceDetailsProp,
   canViewPriceCommandLogs: canViewPriceCommandLogsProp,
@@ -619,6 +620,7 @@ export default function ProductsTab({
   const [deliveryTemplateQueryByOffer, setDeliveryTemplateQueryByOffer] = useState({})
   const [deliveryTemplateOpenCategoriesByOffer, setDeliveryTemplateOpenCategoriesByOffer] = useState({})
   const [activeDeliveryCopyOfferId, setActiveDeliveryCopyOfferId] = useState("")
+  const [isRefreshingTemplateOptions, setIsRefreshingTemplateOptions] = useState(false)
   const [automationTargetDeletingByOffer, setAutomationTargetDeletingByOffer] = useState({})
   const [automationTargetStarringByOffer, setAutomationTargetStarringByOffer] = useState({})
   const [automationResultPopup, setAutomationResultPopup] = useState({
@@ -3047,6 +3049,31 @@ export default function ProductsTab({
               </p>
               <p className="mt-1 text-base font-semibold text-white">Sablon sec</p>
             </div>
+            <button
+              type="button"
+              onClick={async () => {
+                if (typeof onRefreshTemplates !== "function" || isRefreshingTemplateOptions) return
+                setIsRefreshingTemplateOptions(true)
+                try {
+                  await onRefreshTemplates()
+                  toast.success("Mesajlar guncellendi", { duration: 1400, position: "top-right" })
+                } catch (error) {
+                  console.error(error)
+                  toast.error("Mesajlar guncellenemedi")
+                } finally {
+                  setIsRefreshingTemplateOptions(false)
+                }
+              }}
+              disabled={typeof onRefreshTemplates !== "function" || isRefreshingTemplateOptions}
+              className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:border-accent-500/60 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label="Mesajlari yenile"
+              title="Mesajlari yenile"
+            >
+              <ArrowPathIcon
+                aria-hidden="true"
+                className={`h-4 w-4 ${isRefreshingTemplateOptions ? "animate-spin" : ""}`}
+              />
+            </button>
           </div>
           <div className="mt-4 flex h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-ink-900 px-4 shadow-inner">
             <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
