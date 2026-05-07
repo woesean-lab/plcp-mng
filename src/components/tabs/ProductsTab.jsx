@@ -3025,7 +3025,9 @@ export default function ProductsTab({
     acc[category].push(template)
     return acc
   }, {})
-  const openDeliveryTemplateCategories = Object.keys(openDeliveryTemplateGroups)
+  const openDeliveryTemplateCategories = Object.keys(openDeliveryTemplateGroups).sort((a, b) =>
+    a.localeCompare(b, "tr"),
+  )
   const deliveryEditorModalContent =
     openDeliveryEditorOfferId && canManageDeliveryMessages ? (
       <div
@@ -3033,7 +3035,7 @@ export default function ProductsTab({
         onClick={() => closeDeliveryEditor(openDeliveryEditorOfferId)}
       >
         <div
-          className="h-[88vh] w-full max-w-4xl rounded-2xl border border-white/10 bg-[#121621] p-5 shadow-card"
+          className="h-[82vh] w-full max-w-3xl rounded-2xl border border-white/10 bg-[#121621] p-5 shadow-card"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-start gap-3">
@@ -3060,7 +3062,7 @@ export default function ProductsTab({
               />
             </div>
           </div>
-          <div className="no-scrollbar mt-4 max-h-[62vh] space-y-3 overflow-y-auto pr-1">
+          <div className="no-scrollbar mt-4 max-h-[66vh] space-y-3 overflow-y-auto pr-1">
             {openDeliveryTemplateCategories.map((category) => {
               const categoryTemplates = openDeliveryTemplateGroups[category] ?? []
               const isOpen = openDeliveryTemplateQuery
@@ -3069,7 +3071,7 @@ export default function ProductsTab({
               return (
                 <div
                   key={`delivery-modal-category-${openDeliveryEditorOfferId}-${category}`}
-                  className="rounded-2xl border border-white/10 bg-ink-800/70 p-3 shadow-inner"
+                  className="rounded-2xl border border-white/10 bg-[#151a27] p-3 shadow-inner"
                 >
                   <button
                     type="button"
@@ -3098,7 +3100,7 @@ export default function ProductsTab({
                     </span>
                   </button>
                   {isOpen && (
-                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                       {categoryTemplates.map((template) => {
                         const isSelected = openDeliveryTemplateEntry?.id === template.id
                         return (
