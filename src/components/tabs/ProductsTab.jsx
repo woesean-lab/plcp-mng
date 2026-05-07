@@ -3015,7 +3015,7 @@ export default function ProductsTab({
               />
             </div>
           </div>
-          <div className="mt-4 grid max-h-[320px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+          <div className="no-scrollbar mt-4 grid max-h-[320px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
             {openDeliveryTemplates.map((template) => {
               const isSelected = openDeliveryTemplateEntry?.id === template.id
               return (
@@ -4706,7 +4706,7 @@ export default function ProductsTab({
                                   disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
                                   className={`h-full w-full rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
                                     deliveryTemplateEntry
-                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                      ? "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
                                       : "border-white/10 bg-white/5 text-slate-400 hover:bg-ink-800/70 hover:text-slate-200"
                                   }`}
                                 >
