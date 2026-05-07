@@ -4704,13 +4704,9 @@ export default function ProductsTab({
                                     }
                                   }}
                                   disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
-                                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
-                                    deliveryTemplateEntry
-                                      ? "border-accent-400 bg-accent-500/10 text-accent-100"
-                                      : "border-white/10 bg-white/5 text-slate-300"
-                                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60`}
                                 >
-                                  <p className="font-display text-sm sm:text-base">
+                                  <p className="font-display text-base sm:text-lg">
                                     {deliveryTemplateEntry?.label || "Teslimat mesaji ekle"}
                                   </p>
                                 </button>
@@ -4718,7 +4714,7 @@ export default function ProductsTab({
                                   <button
                                     type="button"
                                     onClick={() => openDeliveryEditor(offerId)}
-                                    className="absolute right-2 top-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-900/85 text-slate-400 transition"
+                                    className="absolute right-2 top-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-900 text-slate-300 transition hover:border-accent-500/60 hover:text-accent-100"
                                     aria-label="Teslimat mesajini duzenle"
                                     title="Duzenle"
                                   >
