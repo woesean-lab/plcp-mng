@@ -4692,8 +4692,8 @@ export default function ProductsTab({
                               <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                               <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="space-y-4">
-                            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-px">
-                              <div className="relative flex items-center gap-px">
+                            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-[5px]">
+                              <div className="relative flex items-center gap-[5px]">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -4706,11 +4706,11 @@ export default function ProductsTab({
                                   disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
                                   className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
                                     deliveryTemplateEntry
-                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 hover:border-accent-300 hover:bg-accent-500/15 hover:shadow-glow"
-                                      : "border-white/10 bg-white/5 text-slate-300 hover:border-accent-300/40 hover:bg-white/10"
+                                      ? "border-accent-400 bg-accent-500/10 text-accent-100"
+                                      : "border-white/10 bg-white/5 text-slate-300"
                                   } disabled:cursor-not-allowed disabled:opacity-60`}
                                 >
-                                  <p className="font-display text-base sm:text-lg">
+                                  <p className="font-display text-sm sm:text-base">
                                     {deliveryTemplateEntry?.label || "Teslimat mesaji ekle"}
                                   </p>
                                 </button>
@@ -4718,7 +4718,7 @@ export default function ProductsTab({
                                   <button
                                     type="button"
                                     onClick={() => openDeliveryEditor(offerId)}
-                                    className="absolute right-2 top-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-900/85 text-slate-400 transition hover:border-accent-300/60 hover:bg-ink-900 hover:text-accent-100"
+                                    className="absolute right-2 top-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-900/85 text-slate-400 transition"
                                     aria-label="Teslimat mesajini duzenle"
                                     title="Duzenle"
                                   >
