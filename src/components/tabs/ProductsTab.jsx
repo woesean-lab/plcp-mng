@@ -615,6 +615,7 @@ export default function ProductsTab({
   const [deliveryTemplateDraftByOffer, setDeliveryTemplateDraftByOffer] = useState({})
   const [deliveryEditorOpenByOffer, setDeliveryEditorOpenByOffer] = useState({})
   const [deliveryTemplateSavingByOffer, setDeliveryTemplateSavingByOffer] = useState({})
+  const [deliveryTemplateQueryByOffer, setDeliveryTemplateQueryByOffer] = useState({})
   const [automationTargetDeletingByOffer, setAutomationTargetDeletingByOffer] = useState({})
   const [automationTargetStarringByOffer, setAutomationTargetStarringByOffer] = useState({})
   const [automationResultPopup, setAutomationResultPopup] = useState({
@@ -1870,14 +1871,6 @@ export default function ProductsTab({
     }
     return null
   }
-  const getDeliveryTemplateDraftValue = (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId) return ""
-    const draftValue = deliveryTemplateDraftByOffer?.[normalizedId]
-    if (draftValue !== undefined) return String(draftValue)
-    const currentTemplate = getDeliveryTemplateEntry(normalizedId)
-    return currentTemplate?.id ? String(currentTemplate.id) : ""
-  }
   const openDeliveryEditor = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
@@ -1887,6 +1880,7 @@ export default function ProductsTab({
       ...prev,
       [normalizedId]: currentTemplate?.id ? String(currentTemplate.id) : "",
     }))
+    setDeliveryTemplateQueryByOffer((prev) => ({ ...prev, [normalizedId]: "" }))
   }
   const closeDeliveryEditor = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -1897,29 +1891,56 @@ export default function ProductsTab({
       delete next[normalizedId]
       return next
     })
+    setDeliveryTemplateQueryByOffer((prev) => {
+      const next = { ...prev }
+      delete next[normalizedId]
+      return next
+    })
   }
-  const handleDeliveryTemplateDraftChange = (offerId, value) => {
+  const handleDeliveryTemplateQueryChange = (offerId, value) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    setDeliveryTemplateDraftByOffer((prev) => ({ ...prev, [normalizedId]: String(value ?? "") }))
+    setDeliveryTemplateQueryByOffer((prev) => ({ ...prev, [normalizedId]: String(value ?? "") }))
   }
-  const handleDeliveryTemplateSave = async (offerId) => {
-    const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId || !canManageDeliveryMessages || typeof onSaveDeliveryTemplate !== "function") {
+  const handleDeliveryTemplateCopy = async (offerId) => {
+    const entry = getDeliveryTemplateEntry(offerId)
+    const valueToCopy = String(entry?.value ?? "").trim()
+    if (!valueToCopy) {
+      toast.error("Kopyalanacak teslimat mesaji yok.")
       return
     }
-    const draftValue = getDeliveryTemplateDraftValue(normalizedId)
-    const templateId = Number(draftValue)
-    if (!Number.isInteger(templateId) || templateId <= 0) {
-      toast.error("Mesaj secin.")
+    try {
+      await navigator.clipboard.writeText(valueToCopy)
+      toast.success("Teslimat mesaji kopyalandi", {
+        duration: 1500,
+        position: "top-right",
+      })
+    } catch (error) {
+      console.error(error)
+      toast.error("Teslimat mesaji kopyalanamadi", {
+        duration: 1500,
+        position: "top-right",
+      })
+    }
+  }
+  const handleDeliveryTemplateSelect = async (offerId, templateId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    const normalizedTemplateId = Number(templateId)
+    if (
+      !normalizedId ||
+      !canManageDeliveryMessages ||
+      typeof onSaveDeliveryTemplate !== "function" ||
+      !Number.isInteger(normalizedTemplateId) ||
+      normalizedTemplateId <= 0
+    ) {
       return
     }
     setDeliveryTemplateSavingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     try {
-      const saved = await onSaveDeliveryTemplate(normalizedId, templateId)
+      const saved = await onSaveDeliveryTemplate(normalizedId, normalizedTemplateId)
       if (saved) {
         closeDeliveryEditor(normalizedId)
-        toast.success("Teslimat mesaji kaydedildi", {
+        toast.success("Teslimat mesaji eklendi", {
           duration: 1500,
           position: "top-right",
         })
@@ -3396,8 +3417,21 @@ export default function ProductsTab({
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
                   const deliveryTemplateEntry = getDeliveryTemplateEntry(offerId)
                   const isDeliveryEditorOpen = Boolean(deliveryEditorOpenByOffer?.[offerId])
-                  const deliveryTemplateDraftValue = getDeliveryTemplateDraftValue(offerId)
                   const isDeliveryTemplateSaving = Boolean(deliveryTemplateSavingByOffer?.[offerId])
+                  const deliveryTemplateQuery = String(
+                    deliveryTemplateQueryByOffer?.[offerId] ?? "",
+                  ).trim().toLowerCase()
+                  const visibleDeliveryTemplates = templates.filter((template) => {
+                    if (!deliveryTemplateQuery) return true
+                    const label = String(template?.label ?? "").trim().toLowerCase()
+                    const category = String(template?.category ?? "").trim().toLowerCase()
+                    const value = String(template?.value ?? "").trim().toLowerCase()
+                    return (
+                      label.includes(deliveryTemplateQuery) ||
+                      category.includes(deliveryTemplateQuery) ||
+                      value.includes(deliveryTemplateQuery)
+                    )
+                  })
                   const availablePanels = ["inventory"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
                   const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
@@ -4575,7 +4609,32 @@ export default function ProductsTab({
                                   ? `Teslimat mesaji: ${deliveryTemplateEntry.label}`
                                   : "Bu urun icin teslimat mesaji yok."}
                               </p>
-                              {canManageDeliveryMessages ? (
+                              {deliveryTemplateEntry ? (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      void handleDeliveryTemplateCopy(offerId)
+                                    }}
+                                    className="rounded-md border border-sky-300/40 bg-sky-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/20"
+                                  >
+                                    Kopyala
+                                  </button>
+                                  {canManageDeliveryMessages ? (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        isDeliveryEditorOpen
+                                          ? closeDeliveryEditor(offerId)
+                                          : openDeliveryEditor(offerId)
+                                      }
+                                      className="rounded-md border border-emerald-300/40 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20"
+                                    >
+                                      {isDeliveryEditorOpen ? "Vazgec" : "Degistir"}
+                                    </button>
+                                  ) : null}
+                                </div>
+                              ) : canManageDeliveryMessages ? (
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -4585,49 +4644,57 @@ export default function ProductsTab({
                                   }
                                   className="mt-3 rounded-md border border-emerald-300/40 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20"
                                 >
-                                  {isDeliveryEditorOpen
-                                    ? "Vazgec"
-                                    : deliveryTemplateEntry
-                                      ? "Degistir"
-                                      : "Ekle"}
+                                  {isDeliveryEditorOpen ? "Vazgec" : "Ekle"}
                                 </button>
                               ) : null}
                               {isDeliveryEditorOpen && canManageDeliveryMessages && (
-                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                  <select
-                                    value={deliveryTemplateDraftValue}
+                                <div className="mt-3 space-y-2">
+                                  <input
+                                    type="text"
+                                    value={deliveryTemplateQueryByOffer?.[offerId] ?? ""}
                                     onChange={(event) =>
-                                      handleDeliveryTemplateDraftChange(offerId, event.target.value)
+                                      handleDeliveryTemplateQueryChange(offerId, event.target.value)
                                     }
+                                    placeholder="Mesaj ara"
                                     disabled={isDeliveryTemplateSaving || templates.length === 0}
-                                    className="h-10 min-w-[220px] flex-1 appearance-none rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    <option value="">
-                                      {templates.length === 0 ? "Mesaj bulunamadi" : "Mesaj sec"}
-                                    </option>
-                                    {templates.map((template) => (
-                                      <option
-                                        key={`delivery-template-${offerId}-${template.id}`}
-                                        value={template.id}
-                                      >
-                                        {template.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      void handleDeliveryTemplateSave(offerId)
-                                    }}
-                                    disabled={
-                                      isDeliveryTemplateSaving ||
-                                      !deliveryTemplateDraftValue ||
-                                      templates.length === 0
-                                    }
-                                    className="rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    Kaydet
-                                  </button>
+                                    className="h-10 w-full rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                  />
+                                  <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+                                    {visibleDeliveryTemplates.map((template) => {
+                                      const isSelected = deliveryTemplateEntry?.id === template.id
+                                      return (
+                                        <button
+                                          key={`delivery-template-${offerId}-${template.id}`}
+                                          type="button"
+                                          onClick={() => {
+                                            void handleDeliveryTemplateSelect(offerId, template.id)
+                                          }}
+                                          disabled={isDeliveryTemplateSaving}
+                                          className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                                            isSelected
+                                              ? "border-emerald-300/50 bg-emerald-500/10"
+                                              : "border-white/10 bg-ink-900/60 hover:border-accent-300/40 hover:bg-ink-900/80"
+                                          } disabled:cursor-not-allowed disabled:opacity-60`}
+                                        >
+                                          <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-semibold text-slate-100">
+                                              {template.label}
+                                            </span>
+                                            {template.category?.trim() && (
+                                              <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                                                {template.category}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </button>
+                                      )
+                                    })}
+                                    {visibleDeliveryTemplates.length === 0 && (
+                                      <div className="rounded-lg border border-white/10 bg-ink-900/40 px-3 py-2 text-xs text-slate-500">
+                                        Eslesen mesaj bulunamadi.
+                                      </div>
+                                    )}
+                                  </div>
                                   {deliveryTemplateEntry ? (
                                     <button
                                       type="button"
