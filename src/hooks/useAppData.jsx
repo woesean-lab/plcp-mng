@@ -102,6 +102,7 @@ export default function useAppData() {
   const templateLoadTimerRef = useRef(null)
   const listLoadErrorRef = useRef(false)
   const listSaveErrorRef = useRef(false)
+  const eldoradoStoreLoadErrorRef = useRef(false)
   const [isEditingActiveTemplate, setIsEditingActiveTemplate] = useState(false)
   const [activeTemplateDraft, setActiveTemplateDraft] = useState("")
   const [isTemplateSaving, setIsTemplateSaving] = useState(false)
@@ -418,6 +419,7 @@ export default function useAppData() {
         const res = await apiFetch("/api/eldorado/store", { signal })
         if (!res.ok) throw new Error("api_error")
         const data = await res.json()
+        eldoradoStoreLoadErrorRef.current = false
         setEldoradoGroups(Array.isArray(data?.stockGroups) ? data.stockGroups : [])
         setEldoradoGroupAssignments(
           data?.stockGroupAssignments && typeof data.stockGroupAssignments === "object"
@@ -524,7 +526,10 @@ export default function useAppData() {
         )
       } catch (error) {
         if (error?.name === "AbortError") return
-        toast.error("Ayarlar alinamadi (API/Server kontrol edin).")
+        if (!eldoradoStoreLoadErrorRef.current) {
+          eldoradoStoreLoadErrorRef.current = true
+          toast.error("Urun ayarlari alinamadi (API/Server kontrol edin).")
+        }
       }
     },
     [apiFetch, readApiError],

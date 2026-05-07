@@ -491,6 +491,19 @@ const loadEldoradoCatalog = async () => {
 }
 
 const loadEldoradoStore = async () => {
+  let deliveryTemplateRows = []
+  try {
+    deliveryTemplateRows = await prisma.eldoradoOfferDeliveryTemplate.findMany({
+      include: {
+        template: {
+          select: { id: true, label: true, value: true, category: true },
+        },
+      },
+    })
+  } catch (error) {
+    if (error?.code !== "P2021") throw error
+  }
+
   const [
     stockGroups,
     stockAssignments,
@@ -508,7 +521,6 @@ const loadEldoradoStore = async () => {
     messageAssignments,
     messageGroupTemplateRows,
     messageTemplateRows,
-    deliveryTemplateRows,
     offerStars,
   ] = await Promise.all([
     prisma.eldoradoStockGroup.findMany({ orderBy: { createdAt: "asc" } }),
@@ -532,13 +544,6 @@ const loadEldoradoStore = async () => {
     prisma.eldoradoMessageGroupAssignment.findMany(),
     prisma.eldoradoMessageGroupTemplate.findMany(),
     prisma.eldoradoMessageTemplate.findMany(),
-    prisma.eldoradoOfferDeliveryTemplate.findMany({
-      include: {
-        template: {
-          select: { id: true, label: true, value: true, category: true },
-        },
-      },
-    }),
     prisma.eldoradoOfferStar.findMany(),
   ])
 

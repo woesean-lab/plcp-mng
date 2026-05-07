@@ -4569,148 +4569,80 @@ export default function ProductsTab({
                               <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                               <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="space-y-4">
-                            <section className="rounded-2xl border border-white/10 bg-ink-900/50 p-4">
-                              <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                    Teslimat mesaji
-                                  </p>
-                                  <p className="mt-1 text-[11px] text-slate-500">
-                                    Mesaj sekmesindeki sablonlardan sadece 1 tane secilir.
-                                  </p>
-                                </div>
-                                {deliveryTemplateEntry ? (
-                                  <span className="rounded-full border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100">
-                                    Secili
-                                  </span>
-                                ) : (
-                                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                    Bos
-                                  </span>
-                                )}
-                              </div>
-
-                              {deliveryTemplateEntry ? (
-                                <div className="mt-4 space-y-3">
-                                  <div className="rounded-xl border border-white/10 bg-ink-950/40 p-3">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className="rounded-md border border-sky-300/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100">
-                                        {deliveryTemplateEntry.label}
-                                      </span>
-                                      {deliveryTemplateEntry.category?.trim() && (
-                                        <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-slate-300">
-                                          {deliveryTemplateEntry.category}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-5 text-slate-200">
-                                      {deliveryTemplateEntry.value}
-                                    </p>
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {canManageDeliveryMessages && (
-                                      <button
-                                        type="button"
-                                        onClick={() => openDeliveryEditor(offerId)}
-                                        className="rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-100 transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/15 hover:text-accent-50"
-                                      >
-                                        Degistir
-                                      </button>
-                                    )}
-                                    {canManageDeliveryMessages && (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          void handleDeliveryTemplateRemove(offerId)
-                                        }}
-                                        disabled={isDeliveryTemplateSaving}
-                                        className="rounded-md border border-rose-300/40 bg-rose-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                      >
-                                        Kaldir
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-white/[0.03] p-4">
-                                  <p className="text-xs text-slate-400">
-                                    Bu urun icin teslimat mesaji yok.
-                                  </p>
-                                  {canManageDeliveryMessages ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => openDeliveryEditor(offerId)}
-                                      className="mt-3 rounded-md border border-emerald-300/40 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20"
-                                    >
-                                      Ekle
-                                    </button>
-                                  ) : (
-                                    <p className="mt-3 text-[11px] text-slate-500">
-                                      Mesaj atamak icin yetki gerekiyor.
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-
+                            <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-white/[0.03] p-4">
+                              <p className="text-xs text-slate-400">
+                                {deliveryTemplateEntry
+                                  ? `Teslimat mesaji: ${deliveryTemplateEntry.label}`
+                                  : "Bu urun icin teslimat mesaji yok."}
+                              </p>
+                              {canManageDeliveryMessages ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    isDeliveryEditorOpen
+                                      ? closeDeliveryEditor(offerId)
+                                      : openDeliveryEditor(offerId)
+                                  }
+                                  className="mt-3 rounded-md border border-emerald-300/40 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20"
+                                >
+                                  {isDeliveryEditorOpen
+                                    ? "Vazgec"
+                                    : deliveryTemplateEntry
+                                      ? "Degistir"
+                                      : "Ekle"}
+                                </button>
+                              ) : null}
                               {isDeliveryEditorOpen && canManageDeliveryMessages && (
-                                <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-ink-950/40 p-3">
-                                  <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                                    Sablon sec
-                                  </label>
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
                                   <select
                                     value={deliveryTemplateDraftValue}
                                     onChange={(event) =>
                                       handleDeliveryTemplateDraftChange(offerId, event.target.value)
                                     }
                                     disabled={isDeliveryTemplateSaving || templates.length === 0}
-                                    className="h-10 w-full appearance-none rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="h-10 min-w-[220px] flex-1 appearance-none rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     <option value="">
                                       {templates.length === 0 ? "Mesaj bulunamadi" : "Mesaj sec"}
                                     </option>
                                     {templates.map((template) => (
-                                      <option key={`delivery-template-${offerId}-${template.id}`} value={template.id}>
+                                      <option
+                                        key={`delivery-template-${offerId}-${template.id}`}
+                                        value={template.id}
+                                      >
                                         {template.label}
                                       </option>
                                     ))}
                                   </select>
-                                  {deliveryTemplateDraftValue && (
-                                    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
-                                      <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                                        Onizleme
-                                      </p>
-                                      <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-slate-200">
-                                        {templates.find((template) => String(template.id) === deliveryTemplateDraftValue)?.value || ""}
-                                      </p>
-                                    </div>
-                                  )}
-                                  <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      void handleDeliveryTemplateSave(offerId)
+                                    }}
+                                    disabled={
+                                      isDeliveryTemplateSaving ||
+                                      !deliveryTemplateDraftValue ||
+                                      templates.length === 0
+                                    }
+                                    className="rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Kaydet
+                                  </button>
+                                  {deliveryTemplateEntry ? (
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        void handleDeliveryTemplateSave(offerId)
+                                        void handleDeliveryTemplateRemove(offerId)
                                       }}
-                                      disabled={
-                                        isDeliveryTemplateSaving ||
-                                        !deliveryTemplateDraftValue ||
-                                        templates.length === 0
-                                      }
-                                      className="rounded-md border border-emerald-300/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      Kaydet
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => closeDeliveryEditor(offerId)}
                                       disabled={isDeliveryTemplateSaving}
-                                      className="rounded-md border border-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/15 hover:text-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="rounded-md border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                      Iptal
+                                      Temizle
                                     </button>
-                                  </div>
+                                  ) : null}
                                 </div>
                               )}
-                            </section>
+                            </div>
                           </div>
                           <div className="order-2 space-y-4 lg:col-start-2 lg:row-start-1 lg:order-none">
                             {isOfferRefreshing ? (
