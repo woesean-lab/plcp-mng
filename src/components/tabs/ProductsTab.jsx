@@ -4604,7 +4604,7 @@ export default function ProductsTab({
                               <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                               <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="space-y-4">
-                            <div className="mt-4 overflow-hidden rounded-[24px] border border-white/10 bg-[radial-gradient(120%_120%_at_0%_0%,rgba(58,199,255,0.16),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                            <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-inner">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-300">
@@ -4621,18 +4621,18 @@ export default function ProductsTab({
                                           onClick={() => {
                                             void handleDeliveryTemplateCopy(offerId)
                                           }}
-                                          className="group flex w-full items-center justify-between rounded-2xl border border-sky-300/30 bg-sky-500/12 px-4 py-3 text-left shadow-[0_8px_24px_rgba(14,165,233,0.14)] transition hover:-translate-y-0.5 hover:border-sky-200/50 hover:bg-sky-500/18"
+                                          className="group flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-accent-300/40 hover:bg-white/10"
                                         >
                                           <div>
-                                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-100/80">
-                                              Mesaji Kopyala
+                                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                              Teslimat mesaji
                                             </p>
-                                            <p className="mt-1 text-sm font-semibold text-sky-50">
-                                              Hazir teslimat metni
+                                            <p className="mt-1 text-sm font-semibold text-slate-100">
+                                              Kopyalamak icin karta tikla
                                             </p>
                                           </div>
-                                          <span className="rounded-full border border-sky-200/30 bg-white/10 px-3 py-1 text-[11px] font-semibold text-sky-50 transition group-hover:bg-white/15">
-                                            Kopyala
+                                          <span className="rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-[11px] font-semibold text-slate-300 transition group-hover:border-accent-300/40 group-hover:text-accent-100">
+                                            {deliveryTemplateEntry.label}
                                           </span>
                                         </button>
                                       </div>
@@ -4662,7 +4662,7 @@ export default function ProductsTab({
                                 ) : null}
                               </div>
                               {isDeliveryEditorOpen && canManageDeliveryMessages && (
-                                <div className="mt-4 rounded-2xl border border-white/10 bg-ink-950/45 p-3">
+                                <div className="mt-4 rounded-xl border border-white/10 bg-ink-950/45 p-3">
                                   <div className="flex h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-ink-900 px-4 shadow-inner">
                                     <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
                                     <div className="flex flex-1 items-center gap-2">
@@ -4679,7 +4679,7 @@ export default function ProductsTab({
                                       />
                                     </div>
                                   </div>
-                                  <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
+                                  <div className="mt-3 grid max-h-56 grid-cols-1 gap-2 overflow-y-auto pr-1">
                                     {visibleDeliveryTemplates.map((template) => {
                                       const isSelected = deliveryTemplateEntry?.id === template.id
                                       return (
@@ -4690,15 +4690,22 @@ export default function ProductsTab({
                                             void handleDeliveryTemplateSelect(offerId, template.id)
                                           }}
                                           disabled={isDeliveryTemplateSaving}
-                                          className={`w-full rounded-2xl border px-3 py-3 text-left transition ${
+                                          className={`w-full rounded-xl border px-3 py-3 text-left transition ${
                                             isSelected
                                               ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                                              : "border-white/10 bg-ink-900/60 hover:border-accent-300/40 hover:bg-ink-900/80"
+                                              : "border-white/10 bg-ink-900/70 text-slate-200 hover:border-accent-300/40 hover:bg-ink-900"
                                           } disabled:cursor-not-allowed disabled:opacity-60`}
                                         >
-                                          <span className={`text-sm font-semibold ${isSelected ? "text-accent-100" : "text-slate-100"}`}>
-                                            {template.label}
-                                          </span>
+                                          <div className="flex items-center justify-between gap-3">
+                                            <span className={`text-sm font-semibold ${isSelected ? "text-accent-100" : "text-slate-100"}`}>
+                                              {template.label}
+                                            </span>
+                                            <span className={`text-[10px] uppercase tracking-[0.14em] ${
+                                              isSelected ? "text-accent-200" : "text-slate-500"
+                                            }`}>
+                                              Tikla
+                                            </span>
+                                          </div>
                                         </button>
                                       )
                                     })}
