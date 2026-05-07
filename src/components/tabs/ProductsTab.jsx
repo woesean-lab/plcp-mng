@@ -11,6 +11,7 @@ import {
   CurrencyDollarIcon,
   LinkIcon,
   MagnifyingGlassIcon,
+  PencilSquareIcon,
   PlusIcon,
   PowerIcon,
   StarIcon as StarOutlineIcon,
@@ -1901,27 +1902,6 @@ export default function ProductsTab({
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     setDeliveryTemplateQueryByOffer((prev) => ({ ...prev, [normalizedId]: String(value ?? "") }))
-  }
-  const handleDeliveryTemplateCopy = async (offerId) => {
-    const entry = getDeliveryTemplateEntry(offerId)
-    const valueToCopy = String(entry?.value ?? "").trim()
-    if (!valueToCopy) {
-      toast.error("Kopyalanacak teslimat mesaji yok.")
-      return
-    }
-    try {
-      await navigator.clipboard.writeText(valueToCopy)
-      toast.success("Teslimat mesaji kopyalandi", {
-        duration: 1500,
-        position: "top-right",
-      })
-    } catch (error) {
-      console.error(error)
-      toast.error("Teslimat mesaji kopyalanamadi", {
-        duration: 1500,
-        position: "top-right",
-      })
-    }
   }
   const handleDeliveryTemplateSelect = async (offerId, templateId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -4603,63 +4583,68 @@ export default function ProductsTab({
                               <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                               <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="space-y-4">
-                            <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-white/[0.03] p-4">
-                              <p className="text-xs text-slate-400">
-                                {deliveryTemplateEntry
-                                  ? `Teslimat mesaji: ${deliveryTemplateEntry.label}`
-                                  : "Bu urun icin teslimat mesaji yok."}
-                              </p>
-                              {deliveryTemplateEntry ? (
-                                <div className="mt-3 flex flex-wrap gap-2">
+                            <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 shadow-inner">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+                                    Teslimat mesaji
+                                  </span>
+                                  <div className="mt-3 min-w-0">
+                                    {deliveryTemplateEntry ? (
+                                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                                        <span className="rounded-full border border-accent-400/30 bg-accent-500/10 px-3 py-1 text-xs font-semibold text-accent-100">
+                                          {deliveryTemplateEntry.label}
+                                        </span>
+                                        {deliveryTemplateEntry.category?.trim() && (
+                                          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-400">
+                                            {deliveryTemplateEntry.category}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-slate-400">
+                                        Bu urun icin teslimat mesaji yok.
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                {canManageDeliveryMessages ? (
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      void handleDeliveryTemplateCopy(offerId)
-                                    }}
-                                    className="rounded-md border border-sky-300/40 bg-sky-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-500/20"
-                                  >
-                                    Kopyala
-                                  </button>
-                                  {canManageDeliveryMessages ? (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        isDeliveryEditorOpen
-                                          ? closeDeliveryEditor(offerId)
-                                          : openDeliveryEditor(offerId)
-                                      }
-                                      className="rounded-md border border-emerald-300/40 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20"
-                                    >
-                                      {isDeliveryEditorOpen ? "Vazgec" : "Degistir"}
-                                    </button>
-                                  ) : null}
-                                </div>
-                              ) : canManageDeliveryMessages ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    isDeliveryEditorOpen
-                                      ? closeDeliveryEditor(offerId)
-                                      : openDeliveryEditor(offerId)
-                                  }
-                                  className="mt-3 rounded-md border border-emerald-300/40 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-500/20"
-                                >
-                                  {isDeliveryEditorOpen ? "Vazgec" : "Ekle"}
-                                </button>
-                              ) : null}
-                              {isDeliveryEditorOpen && canManageDeliveryMessages && (
-                                <div className="mt-3 space-y-2">
-                                  <input
-                                    type="text"
-                                    value={deliveryTemplateQueryByOffer?.[offerId] ?? ""}
-                                    onChange={(event) =>
-                                      handleDeliveryTemplateQueryChange(offerId, event.target.value)
+                                    onClick={() =>
+                                      isDeliveryEditorOpen
+                                        ? closeDeliveryEditor(offerId)
+                                        : openDeliveryEditor(offerId)
                                     }
-                                    placeholder="Mesaj ara"
-                                    disabled={isDeliveryTemplateSaving || templates.length === 0}
-                                    className="h-10 w-full rounded-md border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-1 focus:ring-accent-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                                  />
-                                  <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+                                    className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:-translate-y-0.5 hover:border-accent-300/60 hover:bg-white/10 hover:text-accent-100 ${
+                                      isDeliveryEditorOpen ? "border-accent-300/60 text-accent-100" : ""
+                                    }`}
+                                    aria-label={isDeliveryEditorOpen ? "Secimi kapat" : "Teslimat mesajini duzenle"}
+                                    title={isDeliveryEditorOpen ? "Kapat" : "Duzenle"}
+                                  >
+                                    <PencilSquareIcon aria-hidden="true" className="h-4 w-4" />
+                                  </button>
+                                ) : null}
+                              </div>
+                              {isDeliveryEditorOpen && canManageDeliveryMessages && (
+                                <div className="mt-4 rounded-2xl border border-white/10 bg-ink-900/50 p-3">
+                                  <div className="flex h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-ink-900 px-4 shadow-inner">
+                                    <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
+                                    <div className="flex flex-1 items-center gap-2">
+                                      <MagnifyingGlassIcon aria-hidden="true" className="h-4 w-4 text-slate-500" />
+                                      <input
+                                        type="text"
+                                        value={deliveryTemplateQueryByOffer?.[offerId] ?? ""}
+                                        onChange={(event) =>
+                                          handleDeliveryTemplateQueryChange(offerId, event.target.value)
+                                        }
+                                        placeholder="Sablon ara"
+                                        disabled={isDeliveryTemplateSaving || templates.length === 0}
+                                        className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
                                     {visibleDeliveryTemplates.map((template) => {
                                       const isSelected = deliveryTemplateEntry?.id === template.id
                                       return (
@@ -4672,16 +4657,20 @@ export default function ProductsTab({
                                           disabled={isDeliveryTemplateSaving}
                                           className={`w-full rounded-lg border px-3 py-2 text-left transition ${
                                             isSelected
-                                              ? "border-emerald-300/50 bg-emerald-500/10"
+                                              ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
                                               : "border-white/10 bg-ink-900/60 hover:border-accent-300/40 hover:bg-ink-900/80"
                                           } disabled:cursor-not-allowed disabled:opacity-60`}
                                         >
                                           <div className="flex items-center justify-between gap-2">
-                                            <span className="text-sm font-semibold text-slate-100">
+                                            <span className={`text-sm font-semibold ${isSelected ? "text-accent-100" : "text-slate-100"}`}>
                                               {template.label}
                                             </span>
                                             {template.category?.trim() && (
-                                              <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                                              <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] ${
+                                                isSelected
+                                                  ? "border-accent-300/40 bg-accent-500/10 text-accent-100"
+                                                  : "border-white/10 bg-white/5 text-slate-400"
+                                              }`}>
                                                 {template.category}
                                               </span>
                                             )}
@@ -4690,7 +4679,7 @@ export default function ProductsTab({
                                       )
                                     })}
                                     {visibleDeliveryTemplates.length === 0 && (
-                                      <div className="rounded-lg border border-white/10 bg-ink-900/40 px-3 py-2 text-xs text-slate-500">
+                                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
                                         Eslesen mesaj bulunamadi.
                                       </div>
                                     )}
