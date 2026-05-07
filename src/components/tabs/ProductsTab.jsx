@@ -3042,20 +3042,6 @@ export default function ProductsTab({
               </div>
             )}
           </div>
-          {openDeliveryTemplateEntry ? (
-            <div className="mt-4 flex justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  void handleDeliveryTemplateRemove(openDeliveryEditorOfferId)
-                }}
-                disabled={Boolean(deliveryTemplateSavingByOffer?.[openDeliveryEditorOfferId])}
-                className="rounded-md border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Temizle
-              </button>
-            </div>
-          ) : null}
         </div>
       </div>
     ) : null
@@ -4693,7 +4679,7 @@ export default function ProductsTab({
                               <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="space-y-4">
                             <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-[5px]">
-                              <div className="flex items-center gap-[5px]">
+                              <div className="flex items-stretch gap-[5px]">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -4706,8 +4692,8 @@ export default function ProductsTab({
                                   disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
                                   className={`h-full w-full rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
                                     deliveryTemplateEntry
-                                      ? "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
-                                      : "border-white/10 bg-white/5 text-slate-400 hover:bg-ink-800/70 hover:text-slate-200"
+                                      ? "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100 active:border-accent-400 active:bg-accent-500/10 active:text-accent-100 active:shadow-glow"
+                                      : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 active:bg-ink-800/50"
                                   }`}
                                 >
                                   <p className="font-display text-xs sm:text-sm">
@@ -4715,15 +4701,29 @@ export default function ProductsTab({
                                   </p>
                                 </button>
                                 {canManageDeliveryMessages ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => openDeliveryEditor(offerId)}
-                                    className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-800/70 text-slate-300 transition hover:border-accent-500/60 hover:bg-ink-700/80 hover:text-accent-100"
-                                    aria-label="Teslimat mesajini duzenle"
-                                    title="Duzenle"
-                                  >
-                                    <PencilIcon aria-hidden="true" className="h-3.5 w-3.5" />
-                                  </button>
+                                  <div className="flex flex-col justify-center gap-[5px]">
+                                    <button
+                                      type="button"
+                                      onClick={() => openDeliveryEditor(offerId)}
+                                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-800/70 text-slate-300 transition hover:border-accent-500/60 hover:bg-ink-700/80 hover:text-accent-100"
+                                      aria-label="Teslimat mesajini duzenle"
+                                      title="Duzenle"
+                                    >
+                                      <PencilIcon aria-hidden="true" className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        void handleDeliveryTemplateRemove(offerId)
+                                      }}
+                                      disabled={!deliveryTemplateEntry}
+                                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-rose-300/40 bg-rose-500/10 text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                      aria-label="Teslimat mesajini kaldir"
+                                      title="Kaldir"
+                                    >
+                                      <TrashIcon aria-hidden="true" className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
                                 ) : null}
                               </div>
                             </div>
