@@ -1903,6 +1903,16 @@ export default function ProductsTab({
     if (!normalizedId) return
     setDeliveryTemplateQueryByOffer((prev) => ({ ...prev, [normalizedId]: String(value ?? "") }))
   }
+  const getVisibleDeliveryTemplates = (offerId) => {
+    const normalizedId = String(offerId ?? "").trim()
+    const query = String(deliveryTemplateQueryByOffer?.[normalizedId] ?? "").trim().toLowerCase()
+    return templates.filter((template) => {
+      if (!query) return true
+      const label = String(template?.label ?? "").trim().toLowerCase()
+      const value = String(template?.value ?? "").trim().toLowerCase()
+      return label.includes(query) || value.includes(query)
+    })
+  }
   const handleDeliveryTemplateCopy = async (offerId) => {
     const entry = getDeliveryTemplateEntry(offerId)
     const valueToCopy = String(entry?.value ?? "").trim()
@@ -1969,6 +1979,9 @@ export default function ProductsTab({
       setDeliveryTemplateSavingByOffer((prev) => ({ ...prev, [normalizedId]: false }))
     }
   }
+  const openDeliveryEditorOfferId = Object.entries(deliveryEditorOpenByOffer).find(
+    ([, isOpen]) => Boolean(isOpen),
+  )?.[0] ?? ""
   const handlePriceToggle = async (offerId) => {
     if (!canTogglePrice) return
     const normalizedId = String(offerId ?? "").trim()
@@ -2956,6 +2969,89 @@ export default function ProductsTab({
       </div>
     </div>
   ) : null
+  const openDeliveryTemplateEntry = getDeliveryTemplateEntry(openDeliveryEditorOfferId)
+  const openDeliveryTemplates = getVisibleDeliveryTemplates(openDeliveryEditorOfferId)
+  const deliveryEditorModalContent =
+    openDeliveryEditorOfferId && canManageDeliveryMessages ? (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
+        <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
+                Teslimat Mesaji
+              </p>
+              <p className="mt-1 text-base font-semibold text-white">Sablon sec</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => closeDeliveryEditor(openDeliveryEditorOfferId)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+              aria-label="Kapat"
+              title="Kapat"
+            >
+              x
+            </button>
+          </div>
+          <div className="mt-4 flex h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-ink-900 px-4 shadow-inner">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
+            <div className="flex flex-1 items-center gap-2">
+              <MagnifyingGlassIcon aria-hidden="true" className="h-4 w-4 text-slate-500" />
+              <input
+                type="text"
+                value={deliveryTemplateQueryByOffer?.[openDeliveryEditorOfferId] ?? ""}
+                onChange={(event) =>
+                  handleDeliveryTemplateQueryChange(openDeliveryEditorOfferId, event.target.value)
+                }
+                placeholder="Sablon ara"
+                disabled={Boolean(deliveryTemplateSavingByOffer?.[openDeliveryEditorOfferId]) || templates.length === 0}
+                className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
+              />
+            </div>
+          </div>
+          <div className="mt-4 grid max-h-[320px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+            {openDeliveryTemplates.map((template) => {
+              const isSelected = openDeliveryTemplateEntry?.id === template.id
+              return (
+                <button
+                  key={`delivery-modal-template-${openDeliveryEditorOfferId}-${template.id}`}
+                  type="button"
+                  onClick={() => {
+                    void handleDeliveryTemplateSelect(openDeliveryEditorOfferId, template.id)
+                  }}
+                  disabled={Boolean(deliveryTemplateSavingByOffer?.[openDeliveryEditorOfferId])}
+                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
+                    isSelected
+                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                      : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  <p className="font-display text-base sm:text-lg">{template.label}</p>
+                </button>
+              )
+            })}
+            {openDeliveryTemplates.length === 0 && (
+              <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                Eslesen sablon bulunamadi.
+              </div>
+            )}
+          </div>
+          {openDeliveryTemplateEntry ? (
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  void handleDeliveryTemplateRemove(openDeliveryEditorOfferId)
+                }}
+                disabled={Boolean(deliveryTemplateSavingByOffer?.[openDeliveryEditorOfferId])}
+                className="rounded-md border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Temizle
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    ) : null
   return (
     <div className="space-y-6">
       <header className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-900 via-ink-800 to-ink-700 p-4 shadow-card sm:p-6">
@@ -3417,22 +3513,7 @@ export default function ProductsTab({
                   const isOutOfStock = isStockEnabled && availableCount === 0
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
                   const deliveryTemplateEntry = getDeliveryTemplateEntry(offerId)
-                  const isDeliveryEditorOpen = Boolean(deliveryEditorOpenByOffer?.[offerId])
                   const isDeliveryTemplateSaving = Boolean(deliveryTemplateSavingByOffer?.[offerId])
-                  const deliveryTemplateQuery = String(
-                    deliveryTemplateQueryByOffer?.[offerId] ?? "",
-                  ).trim().toLowerCase()
-                  const visibleDeliveryTemplates = templates.filter((template) => {
-                    if (!deliveryTemplateQuery) return true
-                    const label = String(template?.label ?? "").trim().toLowerCase()
-                    const category = String(template?.category ?? "").trim().toLowerCase()
-                    const value = String(template?.value ?? "").trim().toLowerCase()
-                    return (
-                      label.includes(deliveryTemplateQuery) ||
-                      category.includes(deliveryTemplateQuery) ||
-                      value.includes(deliveryTemplateQuery)
-                    )
-                  })
                   const availablePanels = ["inventory"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
                   const isAutomationEnabled = Boolean(automationEnabledByOffer?.[offerId])
@@ -4604,131 +4685,40 @@ export default function ProductsTab({
                               <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                               <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="space-y-4">
-                            <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-900/60 p-4 shadow-inner">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                                    Teslimat
-                                  </span>
-                                  <div className="mt-3 min-w-0">
-                                    {deliveryTemplateEntry ? (
-                                      <div className="space-y-3">
-                                        <p className="text-sm font-semibold text-white">
-                                          {deliveryTemplateEntry.label}
-                                        </p>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            void handleDeliveryTemplateCopy(offerId)
-                                          }}
-                                          className="group flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-accent-300/40 hover:bg-white/10"
-                                        >
-                                          <div>
-                                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                                              Teslimat mesaji
-                                            </p>
-                                            <p className="mt-1 text-sm font-semibold text-slate-100">
-                                              Kopyalamak icin karta tikla
-                                            </p>
-                                          </div>
-                                          <span className="rounded-full border border-white/10 bg-ink-900/80 px-3 py-1 text-[11px] font-semibold text-slate-300 transition group-hover:border-accent-300/40 group-hover:text-accent-100">
-                                            {deliveryTemplateEntry.label}
-                                          </span>
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <p className="text-sm text-slate-400">
-                                        Bu urun icin teslimat mesaji yok.
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
+                            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (deliveryTemplateEntry) {
+                                      void handleDeliveryTemplateCopy(offerId)
+                                    } else if (canManageDeliveryMessages) {
+                                      openDeliveryEditor(offerId)
+                                    }
+                                  }}
+                                  disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
+                                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
+                                    deliveryTemplateEntry
+                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                      : "border-white/10 bg-white/5 text-slate-300 hover:border-accent-300/40 hover:bg-white/10"
+                                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                                >
+                                  <p className="font-display text-base sm:text-lg">
+                                    {deliveryTemplateEntry?.label || "Teslimat mesaji ekle"}
+                                  </p>
+                                </button>
                                 {canManageDeliveryMessages ? (
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      isDeliveryEditorOpen
-                                        ? closeDeliveryEditor(offerId)
-                                        : openDeliveryEditor(offerId)
-                                    }
-                                    className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:-translate-y-0.5 hover:border-accent-300/60 hover:bg-white/10 hover:text-accent-100 ${
-                                      isDeliveryEditorOpen ? "border-accent-300/60 bg-accent-500/10 text-accent-100" : ""
-                                    }`}
-                                    aria-label={isDeliveryEditorOpen ? "Secimi kapat" : "Teslimat mesajini duzenle"}
-                                    title={isDeliveryEditorOpen ? "Kapat" : "Duzenle"}
+                                    onClick={() => openDeliveryEditor(offerId)}
+                                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:border-accent-300/60 hover:bg-white/10 hover:text-accent-100"
+                                    aria-label="Teslimat mesajini duzenle"
+                                    title="Duzenle"
                                   >
-                                    <PencilSquareIcon aria-hidden="true" className="h-4.5 w-4.5" />
+                                    <PencilSquareIcon aria-hidden="true" className="h-4 w-4" />
                                   </button>
                                 ) : null}
                               </div>
-                              {isDeliveryEditorOpen && canManageDeliveryMessages && (
-                                <div className="mt-4 rounded-xl border border-white/10 bg-ink-950/45 p-3">
-                                  <div className="flex h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-ink-900 px-4 shadow-inner">
-                                    <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
-                                    <div className="flex flex-1 items-center gap-2">
-                                      <MagnifyingGlassIcon aria-hidden="true" className="h-4 w-4 text-slate-500" />
-                                      <input
-                                        type="text"
-                                        value={deliveryTemplateQueryByOffer?.[offerId] ?? ""}
-                                        onChange={(event) =>
-                                          handleDeliveryTemplateQueryChange(offerId, event.target.value)
-                                        }
-                                        placeholder="Sablon ara"
-                                        disabled={isDeliveryTemplateSaving || templates.length === 0}
-                                        className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="mt-3 grid max-h-56 grid-cols-1 gap-2 overflow-y-auto pr-1">
-                                    {visibleDeliveryTemplates.map((template) => {
-                                      const isSelected = deliveryTemplateEntry?.id === template.id
-                                      return (
-                                        <button
-                                          key={`delivery-template-${offerId}-${template.id}`}
-                                          type="button"
-                                          onClick={() => {
-                                            void handleDeliveryTemplateSelect(offerId, template.id)
-                                          }}
-                                          disabled={isDeliveryTemplateSaving}
-                                          className={`w-full rounded-xl border px-3 py-3 text-left transition ${
-                                            isSelected
-                                              ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                                              : "border-white/10 bg-ink-900/70 text-slate-200 hover:border-accent-300/40 hover:bg-ink-900"
-                                          } disabled:cursor-not-allowed disabled:opacity-60`}
-                                        >
-                                          <div className="flex items-center justify-between gap-3">
-                                            <span className={`text-sm font-semibold ${isSelected ? "text-accent-100" : "text-slate-100"}`}>
-                                              {template.label}
-                                            </span>
-                                            <span className={`text-[10px] uppercase tracking-[0.14em] ${
-                                              isSelected ? "text-accent-200" : "text-slate-500"
-                                            }`}>
-                                              Tikla
-                                            </span>
-                                          </div>
-                                        </button>
-                                      )
-                                    })}
-                                    {visibleDeliveryTemplates.length === 0 && (
-                                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
-                                        Eslesen mesaj bulunamadi.
-                                      </div>
-                                    )}
-                                  </div>
-                                  {deliveryTemplateEntry ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        void handleDeliveryTemplateRemove(offerId)
-                                      }}
-                                      disabled={isDeliveryTemplateSaving}
-                                      className="rounded-md border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-rose-50 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      Temizle
-                                    </button>
-                                  ) : null}
-                                </div>
-                              )}
                             </div>
                           </div>
                           <div className="order-2 space-y-4 lg:col-start-2 lg:row-start-1 lg:order-none">
@@ -5136,6 +5126,9 @@ export default function ProductsTab({
       />
       {typeof document !== "undefined" && resultModalContent
         ? createPortal(resultModalContent, document.body)
+        : null}
+      {typeof document !== "undefined" && deliveryEditorModalContent
+        ? createPortal(deliveryEditorModalContent, document.body)
         : null}
     </div>
   )
