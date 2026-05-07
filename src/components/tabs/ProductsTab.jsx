@@ -617,6 +617,7 @@ export default function ProductsTab({
   const [deliveryEditorOpenByOffer, setDeliveryEditorOpenByOffer] = useState({})
   const [deliveryTemplateSavingByOffer, setDeliveryTemplateSavingByOffer] = useState({})
   const [deliveryTemplateQueryByOffer, setDeliveryTemplateQueryByOffer] = useState({})
+  const [deliveryTemplateOpenCategoriesByOffer, setDeliveryTemplateOpenCategoriesByOffer] = useState({})
   const [activeDeliveryCopyOfferId, setActiveDeliveryCopyOfferId] = useState("")
   const [automationTargetDeletingByOffer, setAutomationTargetDeletingByOffer] = useState({})
   const [automationTargetStarringByOffer, setAutomationTargetStarringByOffer] = useState({})
@@ -1877,12 +1878,26 @@ export default function ProductsTab({
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     const currentTemplate = getDeliveryTemplateEntry(normalizedId)
+    const groupedByCategory = templates.reduce((acc, template) => {
+      const category = String(template?.category ?? "").trim() || "Genel"
+      if (!acc[category]) acc[category] = 0
+      acc[category] += 1
+      return acc
+    }, {})
+    const defaultOpenState = Object.keys(groupedByCategory).reduce((acc, category) => {
+      acc[category] = true
+      return acc
+    }, {})
     setDeliveryEditorOpenByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     setDeliveryTemplateDraftByOffer((prev) => ({
       ...prev,
       [normalizedId]: currentTemplate?.id ? String(currentTemplate.id) : "",
     }))
     setDeliveryTemplateQueryByOffer((prev) => ({ ...prev, [normalizedId]: "" }))
+    setDeliveryTemplateOpenCategoriesByOffer((prev) => ({
+      ...prev,
+      [normalizedId]: defaultOpenState,
+    }))
   }
   const closeDeliveryEditor = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -1898,11 +1913,28 @@ export default function ProductsTab({
       delete next[normalizedId]
       return next
     })
+    setDeliveryTemplateOpenCategoriesByOffer((prev) => {
+      const next = { ...prev }
+      delete next[normalizedId]
+      return next
+    })
   }
   const handleDeliveryTemplateQueryChange = (offerId, value) => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     setDeliveryTemplateQueryByOffer((prev) => ({ ...prev, [normalizedId]: String(value ?? "") }))
+  }
+  const toggleDeliveryTemplateCategory = (offerId, category) => {
+    const normalizedId = String(offerId ?? "").trim()
+    const normalizedCategory = String(category ?? "").trim()
+    if (!normalizedId || !normalizedCategory) return
+    setDeliveryTemplateOpenCategoriesByOffer((prev) => ({
+      ...prev,
+      [normalizedId]: {
+        ...(prev?.[normalizedId] ?? {}),
+        [normalizedCategory]: !(prev?.[normalizedId]?.[normalizedCategory] ?? true),
+      },
+    }))
   }
   const getVisibleDeliveryTemplates = (offerId) => {
     const normalizedId = String(offerId ?? "").trim()
@@ -2982,6 +3014,18 @@ export default function ProductsTab({
   ) : null
   const openDeliveryTemplateEntry = getDeliveryTemplateEntry(openDeliveryEditorOfferId)
   const openDeliveryTemplates = getVisibleDeliveryTemplates(openDeliveryEditorOfferId)
+  const openDeliveryTemplateQuery = String(
+    deliveryTemplateQueryByOffer?.[openDeliveryEditorOfferId] ?? "",
+  )
+    .trim()
+    .toLowerCase()
+  const openDeliveryTemplateGroups = openDeliveryTemplates.reduce((acc, template) => {
+    const category = String(template?.category ?? "").trim() || "Genel"
+    if (!acc[category]) acc[category] = []
+    acc[category].push(template)
+    return acc
+  }, {})
+  const openDeliveryTemplateCategories = Object.keys(openDeliveryTemplateGroups)
   const deliveryEditorModalContent =
     openDeliveryEditorOfferId && canManageDeliveryMessages ? (
       <div
@@ -3016,29 +3060,66 @@ export default function ProductsTab({
               />
             </div>
           </div>
-          <div className="no-scrollbar mt-4 grid max-h-[320px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-            {openDeliveryTemplates.map((template) => {
-              const isSelected = openDeliveryTemplateEntry?.id === template.id
+          <div className="no-scrollbar mt-4 max-h-[320px] space-y-3 overflow-y-auto pr-1">
+            {openDeliveryTemplateCategories.map((category) => {
+              const categoryTemplates = openDeliveryTemplateGroups[category] ?? []
+              const isOpen = openDeliveryTemplateQuery
+                ? true
+                : deliveryTemplateOpenCategoriesByOffer?.[openDeliveryEditorOfferId]?.[category] ?? true
               return (
-                <button
-                  key={`delivery-modal-template-${openDeliveryEditorOfferId}-${template.id}`}
-                  type="button"
-                  onClick={() => {
-                    void handleDeliveryTemplateSelect(openDeliveryEditorOfferId, template.id)
-                  }}
-                  disabled={Boolean(deliveryTemplateSavingByOffer?.[openDeliveryEditorOfferId])}
-                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
-                    isSelected
-                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                      : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                <div
+                  key={`delivery-modal-category-${openDeliveryEditorOfferId}-${category}`}
+                  className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner"
                 >
-                  <p className="font-display text-base sm:text-lg">{template.label}</p>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleDeliveryTemplateCategory(openDeliveryEditorOfferId, category)}
+                    className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200">
+                        {category}
+                      </span>
+                      <span className="text-xs text-slate-400">{categoryTemplates.length} sablon</span>
+                    </span>
+                    <span
+                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-200 transition ${
+                        isOpen ? "rotate-180 border-accent-300/60 bg-white/10 text-accent-200" : ""
+                      }`}
+                      aria-hidden="true"
+                    >
+                      &gt;
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {categoryTemplates.map((template) => {
+                        const isSelected = openDeliveryTemplateEntry?.id === template.id
+                        return (
+                          <button
+                            key={`delivery-modal-template-${openDeliveryEditorOfferId}-${template.id}`}
+                            type="button"
+                            onClick={() => {
+                              void handleDeliveryTemplateSelect(openDeliveryEditorOfferId, template.id)
+                            }}
+                            disabled={Boolean(deliveryTemplateSavingByOffer?.[openDeliveryEditorOfferId])}
+                            className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
+                              isSelected
+                                ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                            } disabled:cursor-not-allowed disabled:opacity-60`}
+                          >
+                            <p className="font-display text-base sm:text-lg">{template.label}</p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               )
             })}
             {openDeliveryTemplates.length === 0 && (
-              <div className="col-span-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
                 Eslesen sablon bulunamadi.
               </div>
             )}
