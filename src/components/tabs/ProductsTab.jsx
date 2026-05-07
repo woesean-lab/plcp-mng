@@ -617,6 +617,7 @@ export default function ProductsTab({
   const [deliveryEditorOpenByOffer, setDeliveryEditorOpenByOffer] = useState({})
   const [deliveryTemplateSavingByOffer, setDeliveryTemplateSavingByOffer] = useState({})
   const [deliveryTemplateQueryByOffer, setDeliveryTemplateQueryByOffer] = useState({})
+  const [activeDeliveryCopyOfferId, setActiveDeliveryCopyOfferId] = useState("")
   const [automationTargetDeletingByOffer, setAutomationTargetDeletingByOffer] = useState({})
   const [automationTargetStarringByOffer, setAutomationTargetStarringByOffer] = useState({})
   const [automationResultPopup, setAutomationResultPopup] = useState({
@@ -4684,6 +4685,7 @@ export default function ProductsTab({
                                   type="button"
                                   onClick={() => {
                                     if (deliveryTemplateEntry) {
+                                      setActiveDeliveryCopyOfferId(offerId)
                                       void handleDeliveryTemplateCopy(offerId)
                                     } else if (canManageDeliveryMessages) {
                                       openDeliveryEditor(offerId)
@@ -4692,7 +4694,9 @@ export default function ProductsTab({
                                   disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
                                   className={`h-full w-full rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
                                     deliveryTemplateEntry
-                                      ? "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100 active:border-accent-400 active:bg-accent-500/10 active:text-accent-100 active:shadow-glow"
+                                      ? activeDeliveryCopyOfferId === offerId
+                                        ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                        : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
                                       : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 active:bg-ink-800/50"
                                   }`}
                                 >
