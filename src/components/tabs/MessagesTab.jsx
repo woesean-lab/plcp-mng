@@ -383,61 +383,6 @@ export default function MessagesTab({
         <div className="space-y-6">
           {activeTemplatePanel}
 
-          {canManageCategories && (
-            <div className={`${panelClass} bg-ink-800/60`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
-                <p className="text-sm text-slate-400">Yeni kategori ekle, ardından mesaj alanından seç.</p>
-              </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                {categoryCountText} kategori
-              </span>
-            </div>
-
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <input
-                id="category-new"
-                type="text"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                placeholder="Örn: Duyuru"
-                className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
-              />
-              <button
-                type="button"
-                onClick={handleCategoryAdd}
-                className="w-full min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 sm:w-auto"
-              >
-                Ekle
-              </button>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <span
-                  key={cat}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs ${getCategoryClass(cat)}`}
-                >
-                  <span className="font-semibold">{cat}</span>
-                  {cat !== "Genel" && (
-                    <button
-                      type="button"
-                      onClick={() => handleCategoryDeleteWithConfirm(cat)}
-                      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
-                        confirmCategoryTarget === cat
-                          ? "border-rose-300 bg-rose-500/20 text-rose-50"
-                          : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
-                      }`}
-                    >
-                      {confirmCategoryTarget === cat ? "Emin misin?" : "Sil"}
-                    </button>
-                  )}
-                </span>
-              ))}
-            </div>
-          </div>
-          )}
-
           {canCreateTemplates && (
           <div className={`${panelClass} bg-ink-900/60`}>
             <div>
@@ -506,6 +451,63 @@ export default function MessagesTab({
             </div>
           </div>
           )}
+
+          {canManageCategories && (
+            <div className={`${panelClass} bg-ink-800/60`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-300/80">Kategori ekle</p>
+                <p className="text-sm text-slate-400">Yeni kategori ekle, ardından mesaj alanından seç.</p>
+              </div>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
+                {categoryCountText} kategori
+              </span>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input
+                id="category-new"
+                type="text"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="Örn: Duyuru"
+                className="flex-1 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+              />
+              <button
+                type="button"
+                onClick={handleCategoryAdd}
+                className="w-full min-w-[140px] rounded-xl border border-accent-400/70 bg-accent-500/15 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-accent-50 shadow-glow transition hover:-translate-y-0.5 hover:border-accent-300 hover:bg-accent-500/25 sm:w-auto"
+              >
+                Ekle
+              </button>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <span
+                  key={cat}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs ${getCategoryClass(cat)}`}
+                >
+                  <span className="font-semibold">{cat}</span>
+                  {cat !== "Genel" && (
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryDeleteWithConfirm(cat)}
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition ${
+                        confirmCategoryTarget === cat
+                          ? "border-rose-300 bg-rose-500/20 text-rose-50"
+                          : "border-rose-400/60 bg-rose-500/10 text-rose-100 hover:border-rose-300 hover:bg-rose-500/20"
+                      }`}
+                    >
+                      {confirmCategoryTarget === cat ? "Emin misin?" : "Sil"}
+                    </button>
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+          )}
+
+          
 
         </div>
       </div>

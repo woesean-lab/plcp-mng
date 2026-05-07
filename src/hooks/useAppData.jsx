@@ -172,7 +172,9 @@ export default function useAppData() {
   const [eldoradoMessageGroupAssignments, setEldoradoMessageGroupAssignments] = useState({})
   const [eldoradoMessageGroupTemplates, setEldoradoMessageGroupTemplates] = useState({})
   const [eldoradoMessageTemplatesByOffer, setEldoradoMessageTemplatesByOffer] = useState({})
+  const [eldoradoWelcomeTemplatesByOffer, setEldoradoWelcomeTemplatesByOffer] = useState({})
   const [eldoradoDeliveryTemplatesByOffer, setEldoradoDeliveryTemplatesByOffer] = useState({})
+  const [eldoradoSuggestionTemplatesByOffer, setEldoradoSuggestionTemplatesByOffer] = useState({})
   const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState({})
   const [eldoradoAutomationWsUrl, setEldoradoAutomationWsUrl] = useState("")
   const [eldoradoAutomationEnabledByOffer, setEldoradoAutomationEnabledByOffer] = useState({})
@@ -457,9 +459,19 @@ export default function useAppData() {
             ? data.messageTemplatesByOffer
             : {},
         )
+        setEldoradoWelcomeTemplatesByOffer(
+          data?.welcomeTemplatesByOffer && typeof data.welcomeTemplatesByOffer === "object"
+            ? data.welcomeTemplatesByOffer
+            : {},
+        )
         setEldoradoDeliveryTemplatesByOffer(
           data?.deliveryTemplatesByOffer && typeof data.deliveryTemplatesByOffer === "object"
             ? data.deliveryTemplatesByOffer
+            : {},
+        )
+        setEldoradoSuggestionTemplatesByOffer(
+          data?.suggestionTemplatesByOffer && typeof data.suggestionTemplatesByOffer === "object"
+            ? data.suggestionTemplatesByOffer
             : {},
         )
         setEldoradoStarredOffers(
@@ -3155,20 +3167,50 @@ const handleEldoradoNoteSave = useCallback(
   )
 
   const handleEldoradoOfferDeliveryTemplateSave = useCallback(
-    async (offerId, templateId) => {
+    async (offerId, templateId, messageType = "delivery") => {
       const normalizedOfferId = String(offerId ?? "").trim()
       if (!normalizedOfferId) return false
+      const normalizedMessageType = String(messageType ?? "delivery").trim().toLowerCase()
+      const endpointByType = {
+        welcome: "welcome-template",
+        delivery: "delivery-template",
+        suggestion: "suggestion-template",
+      }
+      const responseKeyByType = {
+        welcome: "welcomeTemplate",
+        delivery: "deliveryTemplate",
+        suggestion: "suggestionTemplate",
+      }
+      const labelByType = {
+        welcome: "Karsilama mesaji",
+        delivery: "Teslimat mesaji",
+        suggestion: "Oneri mesaji",
+      }
+      const endpoint = endpointByType[normalizedMessageType] || endpointByType.delivery
+      const responseKey = responseKeyByType[normalizedMessageType] || responseKeyByType.delivery
+      const saveLabel = labelByType[normalizedMessageType] || labelByType.delivery
+      const setTemplateMap = (updater) => {
+        if (normalizedMessageType === "welcome") {
+          setEldoradoWelcomeTemplatesByOffer(updater)
+          return
+        }
+        if (normalizedMessageType === "suggestion") {
+          setEldoradoSuggestionTemplatesByOffer(updater)
+          return
+        }
+        setEldoradoDeliveryTemplatesByOffer(updater)
+      }
 
       try {
         if (templateId === null || templateId === undefined || templateId === "") {
-          const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/delivery-template`, {
+          const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/${endpoint}`, {
             method: "DELETE",
           })
           if (!res.ok) {
             const detail = await readApiError(res)
             throw new Error(detail || "api_error")
           }
-          setEldoradoDeliveryTemplatesByOffer((prev) => {
+          setTemplateMap((prev) => {
             const next = { ...prev }
             delete next[normalizedOfferId]
             return next
@@ -3182,7 +3224,7 @@ const handleEldoradoNoteSave = useCallback(
           return false
         }
 
-        const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/delivery-template`, {
+        const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ templateId: normalizedTemplateId }),
@@ -3193,22 +3235,22 @@ const handleEldoradoNoteSave = useCallback(
         }
 
         const payload = await res.json()
-        const deliveryTemplate =
-          payload?.deliveryTemplate && typeof payload.deliveryTemplate === "object"
-            ? payload.deliveryTemplate
+        const messageTemplate =
+          payload?.[responseKey] && typeof payload[responseKey] === "object"
+            ? payload[responseKey]
             : null
 
-        setEldoradoDeliveryTemplatesByOffer((prev) => ({
+        setTemplateMap((prev) => ({
           ...prev,
-          [normalizedOfferId]: deliveryTemplate,
+          [normalizedOfferId]: messageTemplate,
         }))
         return true
       } catch (error) {
         const detail = String(error?.message || "").trim()
         toast.error(
           detail
-            ? `Teslimat mesaji kaydedilemedi (${detail}).`
-            : "Teslimat mesaji kaydedilemedi (API/Server kontrol edin).",
+            ? `${saveLabel} kaydedilemedi (${detail}).`
+            : `${saveLabel} kaydedilemedi (API/Server kontrol edin).`,
         )
         return false
       }
@@ -5864,7 +5906,9 @@ const handleEldoradoNoteSave = useCallback(
     eldoradoMessageGroupAssignments,
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
+    eldoradoWelcomeTemplatesByOffer,
     eldoradoDeliveryTemplatesByOffer,
+    eldoradoSuggestionTemplatesByOffer,
     eldoradoStockEnabledByOffer,
     eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,

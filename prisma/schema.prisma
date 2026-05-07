@@ -206,6 +206,26 @@ model EldoradoOfferDeliveryTemplate {
   @@index([templateId])
 }
 
+model EldoradoOfferWelcomeTemplate {
+  offerId    String   @id
+  templateId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+}
+
+model EldoradoOfferSuggestionTemplate {
+  offerId    String   @id
+  templateId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+}
+
 model EldoradoStockEnabled {
   offerId String  @id
   enabled Boolean @default(true)

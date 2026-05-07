@@ -524,7 +524,9 @@ export default function ProductsTab({
   automationTargetsByOffer: automationTargetsByOfferProp = {},
   automationBackendOptions = [],
   templates = [],
+  welcomeTemplatesByOffer = {},
   deliveryTemplatesByOffer = {},
+  suggestionTemplatesByOffer = {},
   priceEnabledByOffer: priceEnabledByOfferProp = {},
   savedPricesByOffer: savedPricesByOfferProp = {},
   starredOffers = {},
@@ -620,6 +622,7 @@ export default function ProductsTab({
   const [deliveryTemplateQueryByOffer, setDeliveryTemplateQueryByOffer] = useState({})
   const [deliveryTemplateOpenCategoriesByOffer, setDeliveryTemplateOpenCategoriesByOffer] = useState({})
   const [activeDeliveryCopyOfferId, setActiveDeliveryCopyOfferId] = useState("")
+  const [activeMessageEditorTypeByOffer, setActiveMessageEditorTypeByOffer] = useState({})
   const [isRefreshingTemplateOptions, setIsRefreshingTemplateOptions] = useState(false)
   const [automationTargetDeletingByOffer, setAutomationTargetDeletingByOffer] = useState({})
   const [automationTargetStarringByOffer, setAutomationTargetStarringByOffer] = useState({})
@@ -1862,10 +1865,20 @@ export default function ProductsTab({
       handleStockModalClose()
     }
   }
-  const getDeliveryTemplateEntry = (offerId) => {
+  const getMessageTemplateMapByType = (messageType) => {
+    if (messageType === "welcome") return welcomeTemplatesByOffer
+    if (messageType === "suggestion") return suggestionTemplatesByOffer
+    return deliveryTemplatesByOffer
+  }
+  const getMessageTypeLabel = (messageType) => {
+    if (messageType === "welcome") return "Karsilama"
+    if (messageType === "suggestion") return "Oneri"
+    return "Teslimat"
+  }
+  const getDeliveryTemplateEntry = (offerId, messageType = "delivery") => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return null
-    const saved = deliveryTemplatesByOffer?.[normalizedId]
+    const saved = getMessageTemplateMapByType(messageType)?.[normalizedId]
     if (saved?.templateId) {
       const matchedTemplate = templates.find((item) => item.id === saved.templateId)
       if (matchedTemplate) return matchedTemplate
@@ -1876,10 +1889,10 @@ export default function ProductsTab({
     }
     return null
   }
-  const openDeliveryEditor = (offerId) => {
+  const openDeliveryEditor = (offerId, messageType = "delivery") => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
-    const currentTemplate = getDeliveryTemplateEntry(normalizedId)
+    const currentTemplate = getDeliveryTemplateEntry(normalizedId, messageType)
     const groupedByCategory = templates.reduce((acc, template) => {
       const category = String(template?.category ?? "").trim() || "Genel"
       if (!acc[category]) acc[category] = 0
@@ -1891,6 +1904,7 @@ export default function ProductsTab({
       return acc
     }, {})
     setDeliveryEditorOpenByOffer((prev) => ({ ...prev, [normalizedId]: true }))
+    setActiveMessageEditorTypeByOffer((prev) => ({ ...prev, [normalizedId]: messageType }))
     setDeliveryTemplateDraftByOffer((prev) => ({
       ...prev,
       [normalizedId]: currentTemplate?.id ? String(currentTemplate.id) : "",
@@ -1905,6 +1919,11 @@ export default function ProductsTab({
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId) return
     setDeliveryEditorOpenByOffer((prev) => ({ ...prev, [normalizedId]: false }))
+    setActiveMessageEditorTypeByOffer((prev) => {
+      const next = { ...prev }
+      delete next[normalizedId]
+      return next
+    })
     setDeliveryTemplateDraftByOffer((prev) => {
       const next = { ...prev }
       delete next[normalizedId]
@@ -1948,28 +1967,29 @@ export default function ProductsTab({
       return label.includes(query) || value.includes(query)
     })
   }
-  const handleDeliveryTemplateCopy = async (offerId) => {
-    const entry = getDeliveryTemplateEntry(offerId)
+  const handleDeliveryTemplateCopy = async (offerId, messageType = "delivery") => {
+    const entry = getDeliveryTemplateEntry(offerId, messageType)
+    const messageTypeLabel = getMessageTypeLabel(messageType)
     const valueToCopy = String(entry?.value ?? "").trim()
     if (!valueToCopy) {
-      toast.error("Kopyalanacak teslimat mesaji yok.")
+      toast.error(`Kopyalanacak ${messageTypeLabel.toLowerCase()} mesaji yok.`)
       return
     }
     try {
       await navigator.clipboard.writeText(valueToCopy)
-      toast.success("Teslimat mesaji kopyalandi", {
+      toast.success(`${messageTypeLabel} mesaji kopyalandi`, {
         duration: 1500,
         position: "top-right",
       })
     } catch (error) {
       console.error(error)
-      toast.error("Teslimat mesaji kopyalanamadi", {
+      toast.error(`${messageTypeLabel} mesaji kopyalanamadi`, {
         duration: 1500,
         position: "top-right",
       })
     }
   }
-  const handleDeliveryTemplateSelect = async (offerId, templateId) => {
+  const handleDeliveryTemplateSelect = async (offerId, templateId, messageType = "delivery") => {
     const normalizedId = String(offerId ?? "").trim()
     const normalizedTemplateId = Number(templateId)
     if (
@@ -1983,10 +2003,10 @@ export default function ProductsTab({
     }
     setDeliveryTemplateSavingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     try {
-      const saved = await onSaveDeliveryTemplate(normalizedId, normalizedTemplateId)
+      const saved = await onSaveDeliveryTemplate(normalizedId, normalizedTemplateId, messageType)
       if (saved) {
         closeDeliveryEditor(normalizedId)
-        toast.success("Teslimat mesaji eklendi", {
+        toast.success(`${getMessageTypeLabel(messageType)} mesaji eklendi`, {
           duration: 1500,
           position: "top-right",
         })
@@ -1995,17 +2015,17 @@ export default function ProductsTab({
       setDeliveryTemplateSavingByOffer((prev) => ({ ...prev, [normalizedId]: false }))
     }
   }
-  const handleDeliveryTemplateRemove = async (offerId) => {
+  const handleDeliveryTemplateRemove = async (offerId, messageType = "delivery") => {
     const normalizedId = String(offerId ?? "").trim()
     if (!normalizedId || !canManageDeliveryMessages || typeof onSaveDeliveryTemplate !== "function") {
       return
     }
     setDeliveryTemplateSavingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
     try {
-      const removed = await onSaveDeliveryTemplate(normalizedId, null)
+      const removed = await onSaveDeliveryTemplate(normalizedId, null, messageType)
       if (removed) {
         closeDeliveryEditor(normalizedId)
-        toast.success("Teslimat mesaji kaldirildi", {
+        toast.success(`${getMessageTypeLabel(messageType)} mesaji kaldirildi`, {
           duration: 1500,
           position: "top-right",
         })
@@ -2017,6 +2037,9 @@ export default function ProductsTab({
   const openDeliveryEditorOfferId = Object.entries(deliveryEditorOpenByOffer).find(
     ([, isOpen]) => Boolean(isOpen),
   )?.[0] ?? ""
+  const openDeliveryEditorMessageType = String(
+    activeMessageEditorTypeByOffer?.[openDeliveryEditorOfferId] ?? "delivery",
+  ).trim().toLowerCase()
   useEffect(() => {
     if (!openDeliveryEditorOfferId) return undefined
     const handleKeyDown = (event) => {
@@ -3014,7 +3037,10 @@ export default function ProductsTab({
       </div>
     </div>
   ) : null
-  const openDeliveryTemplateEntry = getDeliveryTemplateEntry(openDeliveryEditorOfferId)
+  const openDeliveryTemplateEntry = getDeliveryTemplateEntry(
+    openDeliveryEditorOfferId,
+    openDeliveryEditorMessageType,
+  )
   const openDeliveryTemplates = getVisibleDeliveryTemplates(openDeliveryEditorOfferId)
   const openDeliveryTemplateQuery = String(
     deliveryTemplateQueryByOffer?.[openDeliveryEditorOfferId] ?? "",
@@ -3045,7 +3071,7 @@ export default function ProductsTab({
           <div className="flex items-start gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
-                Teslimat Mesaji
+                {getMessageTypeLabel(openDeliveryEditorMessageType)} Mesaji
               </p>
               <p className="mt-1 text-base font-semibold text-white">Sablon sec</p>
             </div>
@@ -3150,7 +3176,11 @@ export default function ProductsTab({
                             key={`delivery-modal-template-${openDeliveryEditorOfferId}-${template.id}`}
                             type="button"
                             onClick={() => {
-                              void handleDeliveryTemplateSelect(openDeliveryEditorOfferId, template.id)
+                              void handleDeliveryTemplateSelect(
+                                openDeliveryEditorOfferId,
+                                template.id,
+                                openDeliveryEditorMessageType,
+                              )
                             }}
                             disabled={Boolean(deliveryTemplateSavingByOffer?.[openDeliveryEditorOfferId])}
                             className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
@@ -3637,7 +3667,9 @@ export default function ProductsTab({
                   const isStockEnabled = Boolean(stockEnabledByOffer?.[offerId])
                   const isOutOfStock = isStockEnabled && availableCount === 0
                   const isKeysLoading = Boolean(keysLoading?.[offerId])
-                  const deliveryTemplateEntry = getDeliveryTemplateEntry(offerId)
+                  const welcomeTemplateEntry = getDeliveryTemplateEntry(offerId, "welcome")
+                  const deliveryTemplateEntry = getDeliveryTemplateEntry(offerId, "delivery")
+                  const suggestionTemplateEntry = getDeliveryTemplateEntry(offerId, "suggestion")
                   const isDeliveryTemplateSaving = Boolean(deliveryTemplateSavingByOffer?.[offerId])
                   const availablePanels = ["inventory"]
                   const isPriceEnabled = Boolean(priceEnabledByOffer?.[offerId])
@@ -4810,57 +4842,70 @@ export default function ProductsTab({
                               <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                               <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="space-y-4">
-                            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-[5px]">
-                              <div className="flex items-stretch gap-[5px]">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (deliveryTemplateEntry) {
-                                      setActiveDeliveryCopyOfferId(offerId)
-                                      void handleDeliveryTemplateCopy(offerId)
-                                    } else if (canManageDeliveryMessages) {
-                                      openDeliveryEditor(offerId)
-                                    }
-                                  }}
-                                  disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
-                                  className={`h-full w-full rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                                    deliveryTemplateEntry
-                                      ? activeDeliveryCopyOfferId === offerId
-                                        ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
-                                        : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
-                                      : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 active:bg-ink-800/50"
-                                  }`}
-                                >
-                                  <p className="font-display text-xs sm:text-sm">
-                                    {deliveryTemplateEntry?.label || "Teslimat mesaji ekle"}
+                            <div className="mt-4 space-y-2">
+                              {[
+                                { type: "welcome", title: "Karsilama", entry: welcomeTemplateEntry },
+                                { type: "delivery", title: "Teslimat", entry: deliveryTemplateEntry },
+                                { type: "suggestion", title: "Oneri", entry: suggestionTemplateEntry },
+                              ].map((messageCard) => (
+                                <div key={`${offerId}-${messageCard.type}`}>
+                                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                    {messageCard.title}
                                   </p>
-                                </button>
-                                {canManageDeliveryMessages ? (
-                                  <div className="flex flex-col justify-center gap-[5px]">
-                                    <button
-                                      type="button"
-                                      onClick={() => openDeliveryEditor(offerId)}
-                                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-800/70 text-slate-300 transition hover:border-accent-500/60 hover:bg-ink-700/80 hover:text-accent-100"
-                                      aria-label="Teslimat mesajini duzenle"
-                                      title="Duzenle"
-                                    >
-                                      <PencilIcon aria-hidden="true" className="h-3.5 w-3.5" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        void handleDeliveryTemplateRemove(offerId)
-                                      }}
-                                      disabled={!deliveryTemplateEntry}
-                                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-rose-300/40 bg-rose-500/10 text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                                      aria-label="Teslimat mesajini kaldir"
-                                      title="Kaldir"
-                                    >
-                                      <TrashIcon aria-hidden="true" className="h-3.5 w-3.5" />
-                                    </button>
+                                  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-[5px]">
+                                    <div className="flex items-stretch gap-[5px]">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (messageCard.entry) {
+                                            setActiveDeliveryCopyOfferId(`${offerId}:${messageCard.type}`)
+                                            void handleDeliveryTemplateCopy(offerId, messageCard.type)
+                                          } else if (canManageDeliveryMessages) {
+                                            openDeliveryEditor(offerId, messageCard.type)
+                                          }
+                                        }}
+                                        disabled={!messageCard.entry && !canManageDeliveryMessages}
+                                        className={`h-full w-full rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                          messageCard.entry
+                                            ? activeDeliveryCopyOfferId === `${offerId}:${messageCard.type}`
+                                              ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                              : "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100"
+                                            : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 active:bg-ink-800/50"
+                                        }`}
+                                      >
+                                        <p className="font-display text-xs sm:text-sm">
+                                          {messageCard.entry?.label || `${messageCard.title} mesaji ekle`}
+                                        </p>
+                                      </button>
+                                      {canManageDeliveryMessages ? (
+                                        <div className="flex flex-col justify-center gap-[5px]">
+                                          <button
+                                            type="button"
+                                            onClick={() => openDeliveryEditor(offerId, messageCard.type)}
+                                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-800/70 text-slate-300 transition hover:border-accent-500/60 hover:bg-ink-700/80 hover:text-accent-100"
+                                            aria-label={`${messageCard.title} mesajini duzenle`}
+                                            title="Duzenle"
+                                          >
+                                            <PencilIcon aria-hidden="true" className="h-3.5 w-3.5" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              void handleDeliveryTemplateRemove(offerId, messageCard.type)
+                                            }}
+                                            disabled={!messageCard.entry}
+                                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-rose-300/40 bg-rose-500/10 text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                            aria-label={`${messageCard.title} mesajini kaldir`}
+                                            title="Kaldir"
+                                          >
+                                            <TrashIcon aria-hidden="true" className="h-3.5 w-3.5" />
+                                          </button>
+                                        </div>
+                                      ) : null}
+                                    </div>
                                   </div>
-                                ) : null}
-                              </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                           <div className="order-2 space-y-4 lg:col-start-2 lg:row-start-1 lg:order-none">

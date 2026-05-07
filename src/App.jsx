@@ -194,7 +194,9 @@ function App() {
     eldoradoMessageGroupAssignments,
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
+    eldoradoWelcomeTemplatesByOffer,
     eldoradoDeliveryTemplatesByOffer,
+    eldoradoSuggestionTemplatesByOffer,
     eldoradoStockEnabledByOffer,
     eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
@@ -1238,7 +1240,9 @@ function App() {
               automationBackendOptions={eldoradoAutomationBackendOptions}
               templates={templates}
               onRefreshTemplates={refreshTemplates}
+              welcomeTemplatesByOffer={eldoradoWelcomeTemplatesByOffer}
               deliveryTemplatesByOffer={eldoradoDeliveryTemplatesByOffer}
+              suggestionTemplatesByOffer={eldoradoSuggestionTemplatesByOffer}
               savedPricesByOffer={eldoradoOfferPrices}
               priceEnabledByOffer={eldoradoOfferPriceEnabledByOffer}
               starredOffers={eldoradoStarredOffers}

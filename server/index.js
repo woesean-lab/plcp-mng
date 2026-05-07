@@ -492,8 +492,24 @@ const loadEldoradoCatalog = async () => {
 
 const loadEldoradoStore = async () => {
   let deliveryTemplateRows = []
+  let welcomeTemplateRows = []
+  let suggestionTemplateRows = []
   try {
     deliveryTemplateRows = await prisma.eldoradoOfferDeliveryTemplate.findMany({
+      include: {
+        template: {
+          select: { id: true, label: true, value: true, category: true },
+        },
+      },
+    })
+    welcomeTemplateRows = await prisma.eldoradoOfferWelcomeTemplate.findMany({
+      include: {
+        template: {
+          select: { id: true, label: true, value: true, category: true },
+        },
+      },
+    })
+    suggestionTemplateRows = await prisma.eldoradoOfferSuggestionTemplate.findMany({
       include: {
         template: {
           select: { id: true, label: true, value: true, category: true },
@@ -660,9 +676,29 @@ const loadEldoradoStore = async () => {
   })
 
   const deliveryTemplatesByOffer = {}
+  const welcomeTemplatesByOffer = {}
+  const suggestionTemplatesByOffer = {}
   deliveryTemplateRows.forEach((entry) => {
     if (!entry?.offerId || !entry?.template?.id) return
     deliveryTemplatesByOffer[entry.offerId] = {
+      templateId: entry.template.id,
+      label: String(entry.template.label ?? "").trim(),
+      value: String(entry.template.value ?? "").trim(),
+      category: String(entry.template.category ?? "").trim(),
+    }
+  })
+  welcomeTemplateRows.forEach((entry) => {
+    if (!entry?.offerId || !entry?.template?.id) return
+    welcomeTemplatesByOffer[entry.offerId] = {
+      templateId: entry.template.id,
+      label: String(entry.template.label ?? "").trim(),
+      value: String(entry.template.value ?? "").trim(),
+      category: String(entry.template.category ?? "").trim(),
+    }
+  })
+  suggestionTemplateRows.forEach((entry) => {
+    if (!entry?.offerId || !entry?.template?.id) return
+    suggestionTemplatesByOffer[entry.offerId] = {
       templateId: entry.template.id,
       label: String(entry.template.label ?? "").trim(),
       value: String(entry.template.value ?? "").trim(),
@@ -708,7 +744,9 @@ const loadEldoradoStore = async () => {
     messageGroupAssignments,
     messageGroupTemplates,
     messageTemplatesByOffer,
+    welcomeTemplatesByOffer,
     deliveryTemplatesByOffer,
+    suggestionTemplatesByOffer,
     starredOffers,
   }
 }
@@ -4660,6 +4698,96 @@ app.delete("/api/eldorado/offers/:id/delivery-template", async (req, res) => {
   await prisma.eldoradoOfferDeliveryTemplate.deleteMany({ where: { offerId } })
 
   res.json({ offerId, deliveryTemplate: null })
+})
+
+app.post("/api/eldorado/offers/:id/welcome-template", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+  const templateId = Number(req.body?.templateId)
+  if (!Number.isInteger(templateId) || templateId <= 0) {
+    res.status(400).json({ error: "valid templateId is required" })
+    return
+  }
+  const template = await prisma.template.findUnique({
+    where: { id: templateId },
+    select: { id: true, label: true, value: true, category: true },
+  })
+  if (!template) {
+    res.status(404).json({ error: "Template not found" })
+    return
+  }
+  await prisma.eldoradoOfferWelcomeTemplate.upsert({
+    where: { offerId },
+    update: { templateId: template.id },
+    create: { offerId, templateId: template.id },
+  })
+  res.json({
+    offerId,
+    welcomeTemplate: {
+      templateId: template.id,
+      label: String(template.label ?? "").trim(),
+      value: String(template.value ?? "").trim(),
+      category: String(template.category ?? "").trim(),
+    },
+  })
+})
+
+app.delete("/api/eldorado/offers/:id/welcome-template", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+  await prisma.eldoradoOfferWelcomeTemplate.deleteMany({ where: { offerId } })
+  res.json({ offerId, welcomeTemplate: null })
+})
+
+app.post("/api/eldorado/offers/:id/suggestion-template", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+  const templateId = Number(req.body?.templateId)
+  if (!Number.isInteger(templateId) || templateId <= 0) {
+    res.status(400).json({ error: "valid templateId is required" })
+    return
+  }
+  const template = await prisma.template.findUnique({
+    where: { id: templateId },
+    select: { id: true, label: true, value: true, category: true },
+  })
+  if (!template) {
+    res.status(404).json({ error: "Template not found" })
+    return
+  }
+  await prisma.eldoradoOfferSuggestionTemplate.upsert({
+    where: { offerId },
+    update: { templateId: template.id },
+    create: { offerId, templateId: template.id },
+  })
+  res.json({
+    offerId,
+    suggestionTemplate: {
+      templateId: template.id,
+      label: String(template.label ?? "").trim(),
+      value: String(template.value ?? "").trim(),
+      category: String(template.category ?? "").trim(),
+    },
+  })
+})
+
+app.delete("/api/eldorado/offers/:id/suggestion-template", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+  await prisma.eldoradoOfferSuggestionTemplate.deleteMany({ where: { offerId } })
+  res.json({ offerId, suggestionTemplate: null })
 })
 
 app.post("/api/eldorado/offers/:id/star", async (req, res) => {
