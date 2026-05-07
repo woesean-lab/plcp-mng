@@ -11,7 +11,7 @@ import {
   CurrencyDollarIcon,
   LinkIcon,
   MagnifyingGlassIcon,
-  PencilSquareIcon,
+  PencilIcon,
   PlusIcon,
   PowerIcon,
   StarIcon as StarOutlineIcon,
@@ -4704,9 +4704,13 @@ export default function ProductsTab({
                                     }
                                   }}
                                   disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
-                                  className={`h-full w-full rounded-xl border px-4 py-3 text-left transition border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100 disabled:cursor-not-allowed disabled:opacity-60`}
+                                  className={`h-full w-full rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                    deliveryTemplateEntry
+                                      ? "border-white/10 bg-ink-900 text-slate-200 hover:border-accent-500/60 hover:text-accent-100 active:border-accent-400 active:bg-accent-500/10 active:text-accent-100 active:shadow-glow"
+                                      : "border-white/10 bg-white/5 text-slate-400"
+                                  }`}
                                 >
-                                  <p className="font-display text-base sm:text-lg">
+                                  <p className="font-display text-sm sm:text-base">
                                     {deliveryTemplateEntry?.label || "Teslimat mesaji ekle"}
                                   </p>
                                 </button>
@@ -4714,11 +4718,11 @@ export default function ProductsTab({
                                   <button
                                     type="button"
                                     onClick={() => openDeliveryEditor(offerId)}
-                                    className="absolute right-2 top-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-900 text-slate-300 transition hover:border-accent-500/60 hover:text-accent-100"
+                                    className="absolute right-2 top-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-900 text-slate-300 transition hover:border-accent-500/60 hover:text-accent-100"
                                     aria-label="Teslimat mesajini duzenle"
                                     title="Duzenle"
                                   >
-                                    <PencilSquareIcon aria-hidden="true" className="h-4 w-4" />
+                                    <PencilIcon aria-hidden="true" className="h-3.5 w-3.5" />
                                   </button>
                                 ) : null}
                               </div>
