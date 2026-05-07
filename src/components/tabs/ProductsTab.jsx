@@ -570,6 +570,9 @@ export default function ProductsTab({
   canStarAutomationTargets: canStarAutomationTargetsProp,
   canViewAutomationTargetDetails: canViewAutomationTargetDetailsProp,
   canManageDeliveryMessages = false,
+  canAddDeliveryMessages = false,
+  canEditDeliveryMessages = false,
+  canDeleteDeliveryMessages = false,
   canViewLinks = false,
   canStarOffers: canStarOffersProp,
   canDeleteOffers = false,
@@ -1994,7 +1997,7 @@ export default function ProductsTab({
     const normalizedTemplateId = Number(templateId)
     if (
       !normalizedId ||
-      !canManageDeliveryMessages ||
+      !(canAddDeliveryMessages || canEditDeliveryMessages) ||
       typeof onSaveDeliveryTemplate !== "function" ||
       !Number.isInteger(normalizedTemplateId) ||
       normalizedTemplateId <= 0
@@ -2017,7 +2020,7 @@ export default function ProductsTab({
   }
   const handleDeliveryTemplateRemove = async (offerId, messageType = "delivery") => {
     const normalizedId = String(offerId ?? "").trim()
-    if (!normalizedId || !canManageDeliveryMessages || typeof onSaveDeliveryTemplate !== "function") {
+    if (!normalizedId || !canDeleteDeliveryMessages || typeof onSaveDeliveryTemplate !== "function") {
       return
     }
     setDeliveryTemplateSavingByOffer((prev) => ({ ...prev, [normalizedId]: true }))
@@ -3059,7 +3062,7 @@ export default function ProductsTab({
     return a.localeCompare(b, "tr")
   })
   const deliveryEditorModalContent =
-    openDeliveryEditorOfferId && canManageDeliveryMessages ? (
+    openDeliveryEditorOfferId && (canAddDeliveryMessages || canEditDeliveryMessages) ? (
       <div
         className="fixed inset-0 z-[70] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm"
         onClick={() => closeDeliveryEditor(openDeliveryEditorOfferId)}
@@ -4857,11 +4860,11 @@ export default function ProductsTab({
                                           if (messageCard.entry) {
                                             setActiveDeliveryCopyOfferId(`${offerId}:${messageCard.type}`)
                                             void handleDeliveryTemplateCopy(offerId, messageCard.type)
-                                          } else if (canManageDeliveryMessages) {
+                                          } else if (canAddDeliveryMessages || canEditDeliveryMessages) {
                                             openDeliveryEditor(offerId, messageCard.type)
                                           }
                                         }}
-                                        disabled={!messageCard.entry && !canManageDeliveryMessages}
+                                        disabled={!messageCard.entry && !(canAddDeliveryMessages || canEditDeliveryMessages)}
                                         className={`h-full w-full rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
                                           messageCard.entry
                                             ? activeDeliveryCopyOfferId === `${offerId}:${messageCard.type}`
@@ -4874,29 +4877,33 @@ export default function ProductsTab({
                                           {messageCard.entry?.label || `${messageCard.title} mesaji ekle`}
                                         </p>
                                       </button>
-                                      {canManageDeliveryMessages ? (
+                                      {canEditDeliveryMessages || canDeleteDeliveryMessages ? (
                                         <div className="flex flex-col justify-center gap-[5px]">
-                                          <button
-                                            type="button"
-                                            onClick={() => openDeliveryEditor(offerId, messageCard.type)}
-                                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-800/70 text-slate-300 transition hover:border-accent-500/60 hover:bg-ink-700/80 hover:text-accent-100"
-                                            aria-label={`${messageCard.title} mesajini duzenle`}
-                                            title="Duzenle"
-                                          >
-                                            <PencilIcon aria-hidden="true" className="h-3.5 w-3.5" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              void handleDeliveryTemplateRemove(offerId, messageCard.type)
-                                            }}
-                                            disabled={!messageCard.entry}
-                                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-rose-300/40 bg-rose-500/10 text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                                            aria-label={`${messageCard.title} mesajini kaldir`}
-                                            title="Kaldir"
-                                          >
-                                            <TrashIcon aria-hidden="true" className="h-3.5 w-3.5" />
-                                          </button>
+                                          {canEditDeliveryMessages ? (
+                                            <button
+                                              type="button"
+                                              onClick={() => openDeliveryEditor(offerId, messageCard.type)}
+                                              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-800/70 text-slate-300 transition hover:border-accent-500/60 hover:bg-ink-700/80 hover:text-accent-100"
+                                              aria-label={`${messageCard.title} mesajini duzenle`}
+                                              title="Duzenle"
+                                            >
+                                              <PencilIcon aria-hidden="true" className="h-3.5 w-3.5" />
+                                            </button>
+                                          ) : null}
+                                          {canDeleteDeliveryMessages ? (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                void handleDeliveryTemplateRemove(offerId, messageCard.type)
+                                              }}
+                                              disabled={!messageCard.entry}
+                                              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-rose-300/40 bg-rose-500/10 text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                              aria-label={`${messageCard.title} mesajini kaldir`}
+                                              title="Kaldir"
+                                            >
+                                              <TrashIcon aria-hidden="true" className="h-3.5 w-3.5" />
+                                            </button>
+                                          ) : null}
                                         </div>
                                       ) : null}
                                     </div>

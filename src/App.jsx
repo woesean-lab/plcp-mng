@@ -442,6 +442,24 @@ function App() {
   ])
   const canManageProductMessages = hasAnyPermission([
     PERMISSIONS.productsMessageManage,
+    PERMISSIONS.productsMessageTemplateAdd,
+    PERMISSIONS.productsMessageTemplateEdit,
+    PERMISSIONS.productsMessageTemplateDelete,
+    PERMISSIONS.productsManage,
+  ])
+  const canAddProductMessages = hasAnyPermission([
+    PERMISSIONS.productsMessageTemplateAdd,
+    PERMISSIONS.productsMessageManage,
+    PERMISSIONS.productsManage,
+  ])
+  const canEditProductMessages = hasAnyPermission([
+    PERMISSIONS.productsMessageTemplateEdit,
+    PERMISSIONS.productsMessageManage,
+    PERMISSIONS.productsManage,
+  ])
+  const canDeleteProductMessages = hasAnyPermission([
+    PERMISSIONS.productsMessageTemplateDelete,
+    PERMISSIONS.productsMessageManage,
     PERMISSIONS.productsManage,
   ])
   const canManageProductPrices = hasAnyPermission([
@@ -1285,6 +1303,9 @@ function App() {
               canStarAutomationTargets={canStarProductAutomationTargets}
               canViewAutomationTargetDetails={canViewProductAutomationTargetDetails}
               canManageDeliveryMessages={canManageProductMessages}
+              canAddDeliveryMessages={canAddProductMessages}
+              canEditDeliveryMessages={canEditProductMessages}
+              canDeleteDeliveryMessages={canDeleteProductMessages}
               canViewLinks={canViewProductLinks}
               canStarOffers={canStarProducts}
               canDeleteOffers={canDeleteOffers}
