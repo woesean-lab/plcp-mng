@@ -4701,93 +4701,125 @@ app.delete("/api/eldorado/offers/:id/delivery-template", async (req, res) => {
 })
 
 app.post("/api/eldorado/offers/:id/welcome-template", async (req, res) => {
-  const offerId = String(req.params.id ?? "").trim()
-  if (!offerId) {
-    res.status(400).json({ error: "offerId is required" })
-    return
+  try {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+    const templateId = Number(req.body?.templateId)
+    if (!Number.isInteger(templateId) || templateId <= 0) {
+      res.status(400).json({ error: "valid templateId is required" })
+      return
+    }
+    const template = await prisma.template.findUnique({
+      where: { id: templateId },
+      select: { id: true, label: true, value: true, category: true },
+    })
+    if (!template) {
+      res.status(404).json({ error: "Template not found" })
+      return
+    }
+    await prisma.eldoradoOfferWelcomeTemplate.upsert({
+      where: { offerId },
+      update: { templateId: template.id },
+      create: { offerId, templateId: template.id },
+    })
+    res.json({
+      offerId,
+      welcomeTemplate: {
+        templateId: template.id,
+        label: String(template.label ?? "").trim(),
+        value: String(template.value ?? "").trim(),
+        category: String(template.category ?? "").trim(),
+      },
+    })
+  } catch (error) {
+    if (error?.code === "P2021") {
+      res.status(409).json({ error: "welcome_template_table_missing_run_prisma_db_push" })
+      return
+    }
+    res.status(500).json({ error: "welcome_template_save_failed" })
   }
-  const templateId = Number(req.body?.templateId)
-  if (!Number.isInteger(templateId) || templateId <= 0) {
-    res.status(400).json({ error: "valid templateId is required" })
-    return
-  }
-  const template = await prisma.template.findUnique({
-    where: { id: templateId },
-    select: { id: true, label: true, value: true, category: true },
-  })
-  if (!template) {
-    res.status(404).json({ error: "Template not found" })
-    return
-  }
-  await prisma.eldoradoOfferWelcomeTemplate.upsert({
-    where: { offerId },
-    update: { templateId: template.id },
-    create: { offerId, templateId: template.id },
-  })
-  res.json({
-    offerId,
-    welcomeTemplate: {
-      templateId: template.id,
-      label: String(template.label ?? "").trim(),
-      value: String(template.value ?? "").trim(),
-      category: String(template.category ?? "").trim(),
-    },
-  })
 })
 
 app.delete("/api/eldorado/offers/:id/welcome-template", async (req, res) => {
-  const offerId = String(req.params.id ?? "").trim()
-  if (!offerId) {
-    res.status(400).json({ error: "offerId is required" })
-    return
+  try {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+    await prisma.eldoradoOfferWelcomeTemplate.deleteMany({ where: { offerId } })
+    res.json({ offerId, welcomeTemplate: null })
+  } catch (error) {
+    if (error?.code === "P2021") {
+      res.status(409).json({ error: "welcome_template_table_missing_run_prisma_db_push" })
+      return
+    }
+    res.status(500).json({ error: "welcome_template_delete_failed" })
   }
-  await prisma.eldoradoOfferWelcomeTemplate.deleteMany({ where: { offerId } })
-  res.json({ offerId, welcomeTemplate: null })
 })
 
 app.post("/api/eldorado/offers/:id/suggestion-template", async (req, res) => {
-  const offerId = String(req.params.id ?? "").trim()
-  if (!offerId) {
-    res.status(400).json({ error: "offerId is required" })
-    return
+  try {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+    const templateId = Number(req.body?.templateId)
+    if (!Number.isInteger(templateId) || templateId <= 0) {
+      res.status(400).json({ error: "valid templateId is required" })
+      return
+    }
+    const template = await prisma.template.findUnique({
+      where: { id: templateId },
+      select: { id: true, label: true, value: true, category: true },
+    })
+    if (!template) {
+      res.status(404).json({ error: "Template not found" })
+      return
+    }
+    await prisma.eldoradoOfferSuggestionTemplate.upsert({
+      where: { offerId },
+      update: { templateId: template.id },
+      create: { offerId, templateId: template.id },
+    })
+    res.json({
+      offerId,
+      suggestionTemplate: {
+        templateId: template.id,
+        label: String(template.label ?? "").trim(),
+        value: String(template.value ?? "").trim(),
+        category: String(template.category ?? "").trim(),
+      },
+    })
+  } catch (error) {
+    if (error?.code === "P2021") {
+      res.status(409).json({ error: "suggestion_template_table_missing_run_prisma_db_push" })
+      return
+    }
+    res.status(500).json({ error: "suggestion_template_save_failed" })
   }
-  const templateId = Number(req.body?.templateId)
-  if (!Number.isInteger(templateId) || templateId <= 0) {
-    res.status(400).json({ error: "valid templateId is required" })
-    return
-  }
-  const template = await prisma.template.findUnique({
-    where: { id: templateId },
-    select: { id: true, label: true, value: true, category: true },
-  })
-  if (!template) {
-    res.status(404).json({ error: "Template not found" })
-    return
-  }
-  await prisma.eldoradoOfferSuggestionTemplate.upsert({
-    where: { offerId },
-    update: { templateId: template.id },
-    create: { offerId, templateId: template.id },
-  })
-  res.json({
-    offerId,
-    suggestionTemplate: {
-      templateId: template.id,
-      label: String(template.label ?? "").trim(),
-      value: String(template.value ?? "").trim(),
-      category: String(template.category ?? "").trim(),
-    },
-  })
 })
 
 app.delete("/api/eldorado/offers/:id/suggestion-template", async (req, res) => {
-  const offerId = String(req.params.id ?? "").trim()
-  if (!offerId) {
-    res.status(400).json({ error: "offerId is required" })
-    return
+  try {
+    const offerId = String(req.params.id ?? "").trim()
+    if (!offerId) {
+      res.status(400).json({ error: "offerId is required" })
+      return
+    }
+    await prisma.eldoradoOfferSuggestionTemplate.deleteMany({ where: { offerId } })
+    res.json({ offerId, suggestionTemplate: null })
+  } catch (error) {
+    if (error?.code === "P2021") {
+      res.status(409).json({ error: "suggestion_template_table_missing_run_prisma_db_push" })
+      return
+    }
+    res.status(500).json({ error: "suggestion_template_delete_failed" })
   }
-  await prisma.eldoradoOfferSuggestionTemplate.deleteMany({ where: { offerId } })
-  res.json({ offerId, suggestionTemplate: null })
 })
 
 app.post("/api/eldorado/offers/:id/star", async (req, res) => {

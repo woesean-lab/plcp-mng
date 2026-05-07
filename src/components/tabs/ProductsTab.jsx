@@ -4849,9 +4849,6 @@ export default function ProductsTab({
                                 { type: "suggestion", title: "Oneri", entry: suggestionTemplateEntry },
                               ].map((messageCard) => (
                                 <div key={`${offerId}-${messageCard.type}`}>
-                                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                                    {messageCard.title}
-                                  </p>
                                   <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-[5px]">
                                     <div className="flex items-stretch gap-[5px]">
                                       <button
