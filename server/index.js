@@ -508,6 +508,7 @@ const loadEldoradoStore = async () => {
     messageAssignments,
     messageGroupTemplateRows,
     messageTemplateRows,
+    deliveryTemplateRows,
     offerStars,
   ] = await Promise.all([
     prisma.eldoradoStockGroup.findMany({ orderBy: { createdAt: "asc" } }),
@@ -531,6 +532,13 @@ const loadEldoradoStore = async () => {
     prisma.eldoradoMessageGroupAssignment.findMany(),
     prisma.eldoradoMessageGroupTemplate.findMany(),
     prisma.eldoradoMessageTemplate.findMany(),
+    prisma.eldoradoOfferDeliveryTemplate.findMany({
+      include: {
+        template: {
+          select: { id: true, label: true, value: true, category: true },
+        },
+      },
+    }),
     prisma.eldoradoOfferStar.findMany(),
   ])
 
@@ -646,6 +654,17 @@ const loadEldoradoStore = async () => {
     messageTemplatesByOffer[entry.offerId].push(entry.label)
   })
 
+  const deliveryTemplatesByOffer = {}
+  deliveryTemplateRows.forEach((entry) => {
+    if (!entry?.offerId || !entry?.template?.id) return
+    deliveryTemplatesByOffer[entry.offerId] = {
+      templateId: entry.template.id,
+      label: String(entry.template.label ?? "").trim(),
+      value: String(entry.template.value ?? "").trim(),
+      category: String(entry.template.category ?? "").trim(),
+    }
+  })
+
   const starredOffers = {}
   offerStars.forEach((entry) => {
     if (!entry?.offerId) return
@@ -684,6 +703,7 @@ const loadEldoradoStore = async () => {
     messageGroupAssignments,
     messageGroupTemplates,
     messageTemplatesByOffer,
+    deliveryTemplatesByOffer,
     starredOffers,
   }
 }
@@ -4583,6 +4603,58 @@ app.get("/api/eldorado/store", async (_req, res, next) => {
   } catch (error) {
     next(error)
   }
+})
+
+app.post("/api/eldorado/offers/:id/delivery-template", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+
+  const templateIdRaw = req.body?.templateId
+  const templateId = Number(templateIdRaw)
+  if (!Number.isInteger(templateId) || templateId <= 0) {
+    res.status(400).json({ error: "valid templateId is required" })
+    return
+  }
+
+  const template = await prisma.template.findUnique({
+    where: { id: templateId },
+    select: { id: true, label: true, value: true, category: true },
+  })
+  if (!template) {
+    res.status(404).json({ error: "Template not found" })
+    return
+  }
+
+  await prisma.eldoradoOfferDeliveryTemplate.upsert({
+    where: { offerId },
+    update: { templateId: template.id },
+    create: { offerId, templateId: template.id },
+  })
+
+  res.json({
+    offerId,
+    deliveryTemplate: {
+      templateId: template.id,
+      label: String(template.label ?? "").trim(),
+      value: String(template.value ?? "").trim(),
+      category: String(template.category ?? "").trim(),
+    },
+  })
+})
+
+app.delete("/api/eldorado/offers/:id/delivery-template", async (req, res) => {
+  const offerId = String(req.params.id ?? "").trim()
+  if (!offerId) {
+    res.status(400).json({ error: "offerId is required" })
+    return
+  }
+
+  await prisma.eldoradoOfferDeliveryTemplate.deleteMany({ where: { offerId } })
+
+  res.json({ offerId, deliveryTemplate: null })
 })
 
 app.post("/api/eldorado/offers/:id/star", async (req, res) => {

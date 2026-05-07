@@ -192,6 +192,7 @@ function App() {
     eldoradoMessageGroupAssignments,
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
+    eldoradoDeliveryTemplatesByOffer,
     eldoradoStockEnabledByOffer,
     eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
@@ -224,6 +225,7 @@ function App() {
     handleEldoradoMessageGroupTemplateRemove,
     handleEldoradoMessageTemplateAdd,
     handleEldoradoMessageTemplateRemove,
+    handleEldoradoOfferDeliveryTemplateSave,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
     handleEldoradoOfferAutomationSave,
@@ -1229,6 +1231,8 @@ function App() {
               automationBackendsByOffer={eldoradoAutomationBackendsByOffer}
               automationTargetsByOffer={eldoradoAutomationTargetsByOffer}
               automationBackendOptions={eldoradoAutomationBackendOptions}
+              templates={templates}
+              deliveryTemplatesByOffer={eldoradoDeliveryTemplatesByOffer}
               savedPricesByOffer={eldoradoOfferPrices}
               priceEnabledByOffer={eldoradoOfferPriceEnabledByOffer}
               starredOffers={eldoradoStarredOffers}
@@ -1245,6 +1249,7 @@ function App() {
               onAddAutomationTarget={handleEldoradoOfferAutomationTargetAdd}
               onDeleteAutomationTarget={handleEldoradoOfferAutomationTargetDelete}
               onToggleAutomationTargetStar={handleEldoradoOfferAutomationTargetStarToggle}
+              onSaveDeliveryTemplate={handleEldoradoOfferDeliveryTemplateSave}
               onSavePrice={handleEldoradoOfferPriceSave}
               onTogglePrice={handleEldoradoOfferPriceToggle}
               onToggleOfferStar={handleEldoradoOfferStarToggle}
@@ -1269,6 +1274,7 @@ function App() {
               canClearAutomationLogs={canClearProductAutomationLogs}
               canStarAutomationTargets={canStarProductAutomationTargets}
               canViewAutomationTargetDetails={canViewProductAutomationTargetDetails}
+              canManageDeliveryMessages={canManageProductMessages}
               canViewLinks={canViewProductLinks}
               canStarOffers={canStarProducts}
               canDeleteOffers={canDeleteOffers}

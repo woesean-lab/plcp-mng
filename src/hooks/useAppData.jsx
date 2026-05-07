@@ -170,6 +170,7 @@ export default function useAppData() {
   const [eldoradoMessageGroupAssignments, setEldoradoMessageGroupAssignments] = useState({})
   const [eldoradoMessageGroupTemplates, setEldoradoMessageGroupTemplates] = useState({})
   const [eldoradoMessageTemplatesByOffer, setEldoradoMessageTemplatesByOffer] = useState({})
+  const [eldoradoDeliveryTemplatesByOffer, setEldoradoDeliveryTemplatesByOffer] = useState({})
   const [eldoradoStockEnabledByOffer, setEldoradoStockEnabledByOffer] = useState({})
   const [eldoradoAutomationWsUrl, setEldoradoAutomationWsUrl] = useState("")
   const [eldoradoAutomationEnabledByOffer, setEldoradoAutomationEnabledByOffer] = useState({})
@@ -451,6 +452,11 @@ export default function useAppData() {
         setEldoradoMessageTemplatesByOffer(
           data?.messageTemplatesByOffer && typeof data.messageTemplatesByOffer === "object"
             ? data.messageTemplatesByOffer
+            : {},
+        )
+        setEldoradoDeliveryTemplatesByOffer(
+          data?.deliveryTemplatesByOffer && typeof data.deliveryTemplatesByOffer === "object"
+            ? data.deliveryTemplatesByOffer
             : {},
         )
         setEldoradoStarredOffers(
@@ -3140,6 +3146,68 @@ const handleEldoradoNoteSave = useCallback(
     [apiFetch, readApiError],
   )
 
+  const handleEldoradoOfferDeliveryTemplateSave = useCallback(
+    async (offerId, templateId) => {
+      const normalizedOfferId = String(offerId ?? "").trim()
+      if (!normalizedOfferId) return false
+
+      try {
+        if (templateId === null || templateId === undefined || templateId === "") {
+          const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/delivery-template`, {
+            method: "DELETE",
+          })
+          if (!res.ok) {
+            const detail = await readApiError(res)
+            throw new Error(detail || "api_error")
+          }
+          setEldoradoDeliveryTemplatesByOffer((prev) => {
+            const next = { ...prev }
+            delete next[normalizedOfferId]
+            return next
+          })
+          return true
+        }
+
+        const normalizedTemplateId = Number(templateId)
+        if (!Number.isInteger(normalizedTemplateId) || normalizedTemplateId <= 0) {
+          toast.error("Gecerli bir mesaj secin.")
+          return false
+        }
+
+        const res = await apiFetch(`/api/eldorado/offers/${normalizedOfferId}/delivery-template`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId: normalizedTemplateId }),
+        })
+        if (!res.ok) {
+          const detail = await readApiError(res)
+          throw new Error(detail || "api_error")
+        }
+
+        const payload = await res.json()
+        const deliveryTemplate =
+          payload?.deliveryTemplate && typeof payload.deliveryTemplate === "object"
+            ? payload.deliveryTemplate
+            : null
+
+        setEldoradoDeliveryTemplatesByOffer((prev) => ({
+          ...prev,
+          [normalizedOfferId]: deliveryTemplate,
+        }))
+        return true
+      } catch (error) {
+        const detail = String(error?.message || "").trim()
+        toast.error(
+          detail
+            ? `Teslimat mesaji kaydedilemedi (${detail}).`
+            : "Teslimat mesaji kaydedilemedi (API/Server kontrol edin).",
+        )
+        return false
+      }
+    },
+    [apiFetch, readApiError],
+  )
+
   const handleEldoradoOfferStarToggle = useCallback(
     async (offerId) => {
       const normalizedOfferId = String(offerId ?? "").trim()
@@ -4046,6 +4114,7 @@ const handleEldoradoNoteSave = useCallback(
       setEldoradoMessageGroupAssignments({})
       setEldoradoMessageGroupTemplates({})
       setEldoradoMessageTemplatesByOffer({})
+      setEldoradoDeliveryTemplatesByOffer({})
       setEldoradoStockEnabledByOffer({})
       setEldoradoAutomationWsUrl("")
       setEldoradoAutomationEnabledByOffer({})
@@ -5768,6 +5837,7 @@ const handleEldoradoNoteSave = useCallback(
     eldoradoMessageGroupAssignments,
     eldoradoMessageGroupTemplates,
     eldoradoMessageTemplatesByOffer,
+    eldoradoDeliveryTemplatesByOffer,
     eldoradoStockEnabledByOffer,
     eldoradoAutomationWsUrl,
     eldoradoAutomationEnabledByOffer,
@@ -5801,6 +5871,7 @@ const handleEldoradoNoteSave = useCallback(
     handleEldoradoMessageGroupTemplateRemove,
     handleEldoradoMessageTemplateAdd,
     handleEldoradoMessageTemplateRemove,
+    handleEldoradoOfferDeliveryTemplateSave,
     refreshEldoradoOffer,
     handleEldoradoNoteSave,
     handleEldoradoStockToggle,
