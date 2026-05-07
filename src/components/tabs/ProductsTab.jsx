@@ -1982,6 +1982,16 @@ export default function ProductsTab({
   const openDeliveryEditorOfferId = Object.entries(deliveryEditorOpenByOffer).find(
     ([, isOpen]) => Boolean(isOpen),
   )?.[0] ?? ""
+  useEffect(() => {
+    if (!openDeliveryEditorOfferId) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeDeliveryEditor(openDeliveryEditorOfferId)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [openDeliveryEditorOfferId])
   const handlePriceToggle = async (offerId) => {
     if (!canTogglePrice) return
     const normalizedId = String(offerId ?? "").trim()
@@ -2973,24 +2983,21 @@ export default function ProductsTab({
   const openDeliveryTemplates = getVisibleDeliveryTemplates(openDeliveryEditorOfferId)
   const deliveryEditorModalContent =
     openDeliveryEditorOfferId && canManageDeliveryMessages ? (
-      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm">
-        <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card">
-          <div className="flex items-start justify-between gap-3">
+      <div
+        className="fixed inset-0 z-[70] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm"
+        onClick={() => closeDeliveryEditor(openDeliveryEditorOfferId)}
+      >
+        <div
+          className="w-full max-w-xl rounded-2xl border border-white/10 bg-ink-900/95 p-5 shadow-card"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex items-start gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
                 Teslimat Mesaji
               </p>
               <p className="mt-1 text-base font-semibold text-white">Sablon sec</p>
             </div>
-            <button
-              type="button"
-              onClick={() => closeDeliveryEditor(openDeliveryEditorOfferId)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-              aria-label="Kapat"
-              title="Kapat"
-            >
-              x
-            </button>
           </div>
           <div className="mt-4 flex h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-ink-900 px-4 shadow-inner">
             <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ara</span>
@@ -4685,8 +4692,8 @@ export default function ProductsTab({
                               <div className="min-w-0 rounded-2xl rounded-t-none border border-white/10 bg-[#141826] p-4 shadow-card -mt-2 animate-panelFade sm:p-5 lg:col-span-2">
                               <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)]">
                           <div className="space-y-4">
-                            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4">
-                              <div className="flex items-center gap-2">
+                            <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-px">
+                              <div className="relative flex items-center gap-px">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -4699,7 +4706,7 @@ export default function ProductsTab({
                                   disabled={!deliveryTemplateEntry && !canManageDeliveryMessages}
                                   className={`h-full w-full rounded-xl border px-4 py-3 text-left transition ${
                                     deliveryTemplateEntry
-                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 shadow-glow"
+                                      ? "border-accent-400 bg-accent-500/10 text-accent-100 hover:border-accent-300 hover:bg-accent-500/15 hover:shadow-glow"
                                       : "border-white/10 bg-white/5 text-slate-300 hover:border-accent-300/40 hover:bg-white/10"
                                   } disabled:cursor-not-allowed disabled:opacity-60`}
                                 >
@@ -4711,7 +4718,7 @@ export default function ProductsTab({
                                   <button
                                     type="button"
                                     onClick={() => openDeliveryEditor(offerId)}
-                                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:border-accent-300/60 hover:bg-white/10 hover:text-accent-100"
+                                    className="absolute right-2 top-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-ink-900/85 text-slate-400 transition hover:border-accent-300/60 hover:bg-ink-900 hover:text-accent-100"
                                     aria-label="Teslimat mesajini duzenle"
                                     title="Duzenle"
                                   >
