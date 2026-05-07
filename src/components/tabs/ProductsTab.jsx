@@ -19,7 +19,7 @@ import {
 } from "@heroicons/react/24/outline"
 import { PlayIcon, StarIcon as StarSolidIcon } from "@heroicons/react/20/solid"
 import { toast } from "react-hot-toast"
-import { AUTH_TOKEN_STORAGE_KEY } from "../../constants/appConstants"
+import { AUTH_TOKEN_STORAGE_KEY, categoryPalette } from "../../constants/appConstants"
 import useEldoradoAutomationRuntime from "../../hooks/useEldoradoAutomationRuntime"
 import useEldoradoPriceCommandRuntime from "../../hooks/useEldoradoPriceCommandRuntime"
 import { renderActionToast } from "../../utils/actionToast"
@@ -1885,7 +1885,7 @@ export default function ProductsTab({
       return acc
     }, {})
     const defaultOpenState = Object.keys(groupedByCategory).reduce((acc, category) => {
-      acc[category] = true
+      acc[category] = false
       return acc
     }, {})
     setDeliveryEditorOpenByOffer((prev) => ({ ...prev, [normalizedId]: true }))
@@ -3033,7 +3033,7 @@ export default function ProductsTab({
         onClick={() => closeDeliveryEditor(openDeliveryEditorOfferId)}
       >
         <div
-          className="w-full max-w-xl rounded-2xl border border-white/10 bg-[#121621] p-5 shadow-card"
+          className="h-[88vh] w-full max-w-4xl rounded-2xl border border-white/10 bg-[#121621] p-5 shadow-card"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-start gap-3">
@@ -3060,7 +3060,7 @@ export default function ProductsTab({
               />
             </div>
           </div>
-          <div className="no-scrollbar mt-4 max-h-[320px] space-y-3 overflow-y-auto pr-1">
+          <div className="no-scrollbar mt-4 max-h-[62vh] space-y-3 overflow-y-auto pr-1">
             {openDeliveryTemplateCategories.map((category) => {
               const categoryTemplates = openDeliveryTemplateGroups[category] ?? []
               const isOpen = openDeliveryTemplateQuery
@@ -3069,7 +3069,7 @@ export default function ProductsTab({
               return (
                 <div
                   key={`delivery-modal-category-${openDeliveryEditorOfferId}-${category}`}
-                  className="rounded-2xl border border-white/10 bg-ink-900/60 p-3 shadow-inner"
+                  className="rounded-2xl border border-white/10 bg-ink-800/70 p-3 shadow-inner"
                 >
                   <button
                     type="button"
@@ -3077,7 +3077,13 @@ export default function ProductsTab({
                     className="flex w-full items-center justify-between rounded-xl px-2 py-1 text-left text-sm font-semibold text-slate-100"
                   >
                     <span className="inline-flex items-center gap-2">
-                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200">
+                      <span
+                        className={`rounded-full border px-3 py-1 text-[11px] ${
+                          categoryPalette[
+                            openDeliveryTemplateCategories.indexOf(category) % categoryPalette.length
+                          ] || "border-white/10 bg-white/5 text-slate-200"
+                        }`}
+                      >
                         {category}
                       </span>
                       <span className="text-xs text-slate-400">{categoryTemplates.length} sablon</span>
