@@ -61,6 +61,8 @@ export default function MessagesTab({
   selectedCategory,
   getCategoryClass,
   isEditingActiveTemplate,
+  activeTemplateTitleDraft,
+  setActiveTemplateTitleDraft,
   handleActiveTemplateEditCancel,
   handleActiveTemplateEditStart,
   handleDeleteWithConfirm,
@@ -171,15 +173,25 @@ export default function MessagesTab({
           )}
         </div>
         {showEditMode ? (
-          <textarea
-            value={activeTemplateDraft}
-            onChange={(e) => setActiveTemplateDraft(e.target.value)}
-            rows={4}
-            autoFocus
-            disabled={isTemplateSaving}
-            placeholder="Mesaj içeriğini güncelle"
-            className="mt-3 w-full rounded-lg border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
-          />
+          <div className="mt-3 space-y-2">
+            <input
+              type="text"
+              value={activeTemplateTitleDraft}
+              onChange={(e) => setActiveTemplateTitleDraft(e.target.value)}
+              disabled={isTemplateSaving}
+              placeholder="Mesaj başlığını güncelle"
+              className="w-full rounded-lg border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+            />
+            <textarea
+              value={activeTemplateDraft}
+              onChange={(e) => setActiveTemplateDraft(e.target.value)}
+              rows={4}
+              autoFocus
+              disabled={isTemplateSaving}
+              placeholder="Mesaj içeriğini güncelle"
+              className="w-full rounded-lg border border-white/10 bg-ink-900/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30"
+            />
+          </div>
         ) : (
           <p className="mt-3 text-sm leading-relaxed text-slate-200/90">
             {activeTemplate?.value ||

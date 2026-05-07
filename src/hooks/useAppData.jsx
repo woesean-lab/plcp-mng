@@ -104,6 +104,7 @@ export default function useAppData() {
   const listSaveErrorRef = useRef(false)
   const eldoradoStoreLoadErrorRef = useRef(false)
   const [isEditingActiveTemplate, setIsEditingActiveTemplate] = useState(false)
+  const [activeTemplateTitleDraft, setActiveTemplateTitleDraft] = useState("")
   const [activeTemplateDraft, setActiveTemplateDraft] = useState("")
   const [isTemplateSaving, setIsTemplateSaving] = useState(false)
   const [openCategories, setOpenCategories] = useState({})
@@ -711,10 +712,12 @@ export default function useAppData() {
 
   useEffect(() => {
     if (!activeTemplate) {
+      setActiveTemplateTitleDraft("")
       setActiveTemplateDraft("")
       setIsEditingActiveTemplate(false)
       return
     }
+    setActiveTemplateTitleDraft(activeTemplate.label || "")
     setActiveTemplateDraft(activeTemplate.value || "")
     setIsEditingActiveTemplate(false)
   }, [activeTemplate])
@@ -4348,23 +4351,30 @@ const handleEldoradoNoteSave = useCallback(
 
   const handleActiveTemplateEditStart = () => {
     if (!activeTemplate || showLoading) return
+    setActiveTemplateTitleDraft(activeTemplate.label || "")
     setActiveTemplateDraft(activeTemplate.value || "")
     setIsEditingActiveTemplate(true)
   }
 
   const handleActiveTemplateEditCancel = () => {
     setIsEditingActiveTemplate(false)
+    setActiveTemplateTitleDraft(activeTemplate?.label || "")
     setActiveTemplateDraft(activeTemplate?.value || "")
   }
 
   const handleActiveTemplateEditSave = async () => {
     if (!activeTemplate || showLoading) return
+    const nextTitle = activeTemplateTitleDraft.trim()
     const nextValue = activeTemplateDraft.trim()
+    if (!nextTitle) {
+      toast.error("Mesaj basligi bos olamaz.")
+      return
+    }
     if (!nextValue) {
       toast.error("Mesaj bo\u015F olamaz.")
       return
     }
-    if ((activeTemplate.value || "").trim() === nextValue) {
+    if ((activeTemplate.label || "").trim() === nextTitle && (activeTemplate.value || "").trim() === nextValue) {
       setIsEditingActiveTemplate(false)
       return
     }
@@ -4375,16 +4385,21 @@ const handleEldoradoNoteSave = useCallback(
         const res = await apiFetch(`/api/templates/${activeTemplate.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ value: nextValue }),
+          body: JSON.stringify({ label: nextTitle, value: nextValue }),
         })
         if (!res.ok) throw new Error("template_update_failed")
         const updated = await res.json()
         setTemplates((prev) => prev.map((tpl) => (tpl.id === updated.id ? updated : tpl)))
+        setSelectedTemplate(updated.label)
       } else {
         setTemplates((prev) =>
-          prev.map((tpl) => (tpl.label === activeTemplate.label ? { ...tpl, value: nextValue } : tpl)),
+          prev.map((tpl) =>
+            tpl.label === activeTemplate.label ? { ...tpl, label: nextTitle, value: nextValue } : tpl,
+          ),
         )
+        setSelectedTemplate(nextTitle)
       }
+      setActiveTemplateTitleDraft(nextTitle)
       setActiveTemplateDraft(nextValue)
       setIsEditingActiveTemplate(false)
       toast.success("\u015Eablon g\u00FCncellendi")
@@ -5706,6 +5721,8 @@ const handleEldoradoNoteSave = useCallback(
     selectedCategory,
     getCategoryClass,
     isEditingActiveTemplate,
+    activeTemplateTitleDraft,
+    setActiveTemplateTitleDraft,
     handleActiveTemplateEditCancel,
     handleActiveTemplateEditStart,
     handleDeleteWithConfirm,

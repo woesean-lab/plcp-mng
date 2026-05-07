@@ -3025,9 +3025,11 @@ export default function ProductsTab({
     acc[category].push(template)
     return acc
   }, {})
-  const openDeliveryTemplateCategories = Object.keys(openDeliveryTemplateGroups).sort((a, b) =>
-    a.localeCompare(b, "tr"),
-  )
+  const openDeliveryTemplateCategories = Object.keys(openDeliveryTemplateGroups).sort((a, b) => {
+    if (a === "Genel" && b !== "Genel") return -1
+    if (a !== "Genel" && b === "Genel") return 1
+    return a.localeCompare(b, "tr")
+  })
   const deliveryEditorModalContent =
     openDeliveryEditorOfferId && canManageDeliveryMessages ? (
       <div
@@ -3060,6 +3062,19 @@ export default function ProductsTab({
                 disabled={Boolean(deliveryTemplateSavingByOffer?.[openDeliveryEditorOfferId]) || templates.length === 0}
                 className="w-full min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none disabled:cursor-not-allowed"
               />
+              {deliveryTemplateQueryByOffer?.[openDeliveryEditorOfferId] ? (
+                <button
+                  type="button"
+                  onClick={() => handleDeliveryTemplateQueryChange(openDeliveryEditorOfferId, "")}
+                  className="inline-flex h-7 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                  title="Temizle"
+                  aria-label="Temizle"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em]">
+                    Temizle
+                  </span>
+                </button>
+              ) : null}
             </div>
           </div>
           <div className="no-scrollbar mt-4 max-h-[66vh] space-y-3 overflow-y-auto pr-1">

@@ -58,6 +58,8 @@ function App() {
     selectedCategory,
     getCategoryClass,
     isEditingActiveTemplate,
+    activeTemplateTitleDraft,
+    setActiveTemplateTitleDraft,
     handleActiveTemplateEditCancel,
     handleActiveTemplateEditStart,
     handleDeleteWithConfirm,
@@ -1039,6 +1041,8 @@ function App() {
               selectedCategory={selectedCategory}
               getCategoryClass={getCategoryClass}
               isEditingActiveTemplate={isEditingActiveTemplate}
+              activeTemplateTitleDraft={activeTemplateTitleDraft}
+              setActiveTemplateTitleDraft={setActiveTemplateTitleDraft}
               handleActiveTemplateEditCancel={handleActiveTemplateEditCancel}
               handleActiveTemplateEditStart={handleActiveTemplateEditStart}
               handleDeleteWithConfirm={handleDeleteWithConfirm}
